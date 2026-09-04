@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- FORM JURNAL TRANSAKSI -->
+    <record id="view_sif_jurnal_entry_form" model="ir.ui.view">
+        <field name="name">sif.jurnal.entry.form</field>
+        <field name="model">sif.jurnal.entry</field>
+        <field name="arch" type="xml">
+            <form string="Input Jurnal Transaksi">
+                <header>
+                    <button name="action_post" string="Validasi / Posting" type="object" class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_draft" string="Kembalikan ke Draft" type="object" invisible="state != 'posted'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,posted"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="date" readonly="state == 'posted'"/>
+                            <field name="reference" readonly="state == 'posted'"/>
+                            <field name="source_document"/>
+                        </group>
+                        <group>
+                            <field name="unit_dept" readonly="state == 'posted'"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Baris Jurnal">
+                            <field name="line_ids" readonly="state == 'posted'">
+                                <list editable="bottom">
+                                    <field name="account_id"/>
+                                    <field name="name"/>
+                                    <field name="debit" sum="Total Debit"/>
+                                    <field name="credit" sum="Total Kredit"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sif_jurnal_entry_tree" model="ir.ui.view">
+        <field name="name">sif.jurnal.entry.list</field>
+        <field name="model">sif.jurnal.entry</field>
+        <field name="arch" type="xml">
+            <list string="Daftar Jurnal Umum">
+                <field name="date"/>
+                <field name="name"/>
+                <field name="reference"/>
+                <field name="source_document"/>
+                <field name="unit_dept"/>
+                <field name="total_debit"/>
+                <field name="total_credit"/>
+                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'posted'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_sif_jurnal_entry" model="ir.actions.act_window">
+        <field name="name">Input Jurnal Dasar</field>
+        <field name="res_model">sif.jurnal.entry</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- LIST VIEW BUKU BESAR -->
+    <record id="view_sif_buku_besar_tree" model="ir.ui.view">
+        <field name="name">sif.jurnal.line.buku.besar.list</field>
+        <field name="model">sif.jurnal.line</field>
+        <field name="arch" type="xml">
+            <list string="Buku Besar" create="false" edit="false">
+                <field name="date"/>
+                <field name="account_id"/>
+                <field name="entry_id" string="No. Referensi Jurnal"/>
+                <field name="name" string="Keterangan"/>
+                <field name="unit_dept"/>
+                <field name="debit" sum="Total Debit"/>
+                <field name="credit" sum="Total Kredit"/>
+                <field name="state" widget="badge" decoration-success="state == 'posted'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- SEARCH VIEW & FILTER BUKU BESAR -->
+    <record id="view_sif_buku_besar_search" model="ir.ui.view">
+        <field name="name">sif.jurnal.line.search</field>
+        <field name="model">sif.jurnal.line</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="account_id"/>
+                <field name="unit_dept"/>
+                <field name="entry_id"/>
+                <filter string="Sudah Diposting" name="filter_posted" domain="[('state', '=', 'posted')]"/>
+                <separator/>
+                <filter string="Kelompokkan Akun Rekening" name="group_by_account" context="{'group_by': 'account_id'}"/>
+                <filter string="Kelompokkan Unit Kerja" name="group_by_unit" context="{'group_by': 'unit_dept'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_sif_buku_besar" model="ir.actions.act_window">
+        <field name="name">Buku Besar</field>
+        <field name="res_model">sif.jurnal.line</field>
+        <field name="view_mode">list</field>
+        <field name="search_view_id" ref="view_sif_buku_besar_search"/>
+        <field name="context">{'search_default_filter_posted': 1, 'search_default_group_by_account': 1}</field>
+    </record>
+</odoo>

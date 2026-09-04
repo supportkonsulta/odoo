@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_sif_coa_user,sif.coa.user,model_sif_coa,base.group_user,1,1,1,1
+access_sif_jurnal_entry_user,sif.jurnal.entry.user,model_sif_jurnal_entry,base.group_user,1,1,1,1
+access_sif_jurnal_line_user,sif.jurnal.line.user,model_sif_jurnal_line,base.group_user,1,1,1,1
