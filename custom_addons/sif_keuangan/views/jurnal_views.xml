@@ -65,7 +65,7 @@
         <field name="view_mode">list,form</field>
     </record>
 
-    <!-- LIST VIEW BUKU BESAR -->
+    <!-- LIST VIEW BUKU BESAR DENGAN RUNNING BALANCE & PERIODE -->
     <record id="view_sif_buku_besar_tree" model="ir.ui.view">
         <field name="name">sif.jurnal.line.buku.besar.list</field>
         <field name="model">sif.jurnal.line</field>
@@ -73,29 +73,54 @@
             <list string="Buku Besar" create="false" edit="false">
                 <field name="date"/>
                 <field name="account_id"/>
+                <field name="account_type"/>
                 <field name="entry_id" string="No. Referensi Jurnal"/>
                 <field name="name" string="Keterangan"/>
                 <field name="unit_dept"/>
                 <field name="debit" sum="Total Debit"/>
                 <field name="credit" sum="Total Kredit"/>
+                <field name="balance" sum="Total Saldo Mutasi"/>
+                <field name="period_key" string="Periode" optional="show"/>
                 <field name="state" widget="badge" decoration-success="state == 'posted'"/>
             </list>
         </field>
     </record>
 
-    <!-- SEARCH VIEW & FILTER BUKU BESAR -->
+    <!-- SEARCH VIEW & FILTER BULANAN BUKU BESAR (SRS 3.3.2) -->
     <record id="view_sif_buku_besar_search" model="ir.ui.view">
         <field name="name">sif.jurnal.line.search</field>
         <field name="model">sif.jurnal.line</field>
         <field name="arch" type="xml">
-            <search>
+            <search string="Pencarian Buku Besar">
                 <field name="account_id"/>
                 <field name="unit_dept"/>
                 <field name="entry_id"/>
+                <field name="period_key"/>
+                
+                <!-- Filter Status Posted -->
                 <filter string="Sudah Diposting" name="filter_posted" domain="[('state', '=', 'posted')]"/>
                 <separator/>
+                
+                <!-- Filter Periode Bulanan Spesifik -->
+                <filter string="Januari" name="m_01" domain="[('period_month', '=', '01')]"/>
+                <filter string="Februari" name="m_02" domain="[('period_month', '=', '02')]"/>
+                <filter string="Maret" name="m_03" domain="[('period_month', '=', '03')]"/>
+                <filter string="April" name="m_04" domain="[('period_month', '=', '04')]"/>
+                <filter string="Mei" name="m_05" domain="[('period_month', '=', '05')]"/>
+                <filter string="Juni" name="m_06" domain="[('period_month', '=', '06')]"/>
+                <filter string="Juli" name="m_07" domain="[('period_month', '=', '07')]"/>
+                <filter string="Agustus" name="m_08" domain="[('period_month', '=', '08')]"/>
+                <filter string="September" name="m_09" domain="[('period_month', '=', '09')]"/>
+                <filter string="Oktober" name="m_10" domain="[('period_month', '=', '10')]"/>
+                <filter string="November" name="m_11" domain="[('period_month', '=', '11')]"/>
+                <filter string="Desember" name="m_12" domain="[('period_month', '=', '12')]"/>
+                <separator/>
+                
+                <!-- Grouping -->
                 <filter string="Kelompokkan Akun Rekening" name="group_by_account" context="{'group_by': 'account_id'}"/>
+                <filter string="Kelompokkan Periode Bulanan" name="group_by_period" context="{'group_by': 'period_key'}"/>
                 <filter string="Kelompokkan Unit Kerja" name="group_by_unit" context="{'group_by': 'unit_dept'}"/>
+                <filter string="Kelompokkan Tanggal" name="group_by_date" context="{'group_by': 'date:month'}"/>
             </search>
         </field>
     </record>

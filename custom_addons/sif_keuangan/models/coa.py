@@ -15,11 +15,18 @@ class SifChartOfAccounts(models.Model):
         ('income', 'Pendapatan'),
         ('expense', 'Beban / Biaya'),
     ], string='Kategori Akun', required=True, default='expense')
+    parent_id = fields.Many2one('sif.coa', string='Induk Akun (Parent)', ondelete='restrict', index=True)
+    level = fields.Integer(string='Level Akun', compute='_compute_level', store=True, recursive=True)
     display_name = fields.Char(string='Tampilan Akun', compute='_compute_display_name', store=True)
 
     _sql_constraints = [
         ('code_unique', 'unique(code)', 'Kode Akun sudah terdaftar! Gunakan kode unik.'),
     ]
+
+    @api.depends('parent_id', 'parent_id.level')
+    def _compute_level(self):
+        for rec in self:
+            rec.level = (rec.parent_id.level + 1) if rec.parent_id else 1
 
     @api.depends('code', 'name')
     def _compute_display_name(self):
