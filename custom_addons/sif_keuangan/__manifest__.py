@@ -9,6 +9,7 @@
     'data': [
         'security/security_groups.xml',
         'security/ir.model.access.csv',
+        'data/sif_coa_data.xml',  
         'views/coa_views.xml',
         'views/jurnal_views.xml',
         'views/menu_views.xml',
