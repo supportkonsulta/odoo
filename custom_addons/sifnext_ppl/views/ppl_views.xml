@@ -1,0 +1,144 @@
+<odoo>
+    <record id="view_sifnext_ppl_list" model="ir.ui.view">
+        <field name="name">sifnext.ppl.list</field>
+        <field name="model">sifnext.ppl</field>
+        <field name="arch" type="xml">
+            <list decoration-info="state == 'submitted'" decoration-success="state in ('approved', 'paid', 'done')">
+                <field name="name"/>
+                <field name="request_date"/>
+                <field name="applicant_id"/>
+                <field name="partner_id"/>
+                <field name="title"/>
+                <field name="total_amount" sum="Total"/>
+                <field name="state" widget="badge"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_sifnext_ppl_search" model="ir.ui.view">
+        <field name="name">sifnext.ppl.search</field>
+        <field name="model">sifnext.ppl</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="title"/>
+                <field name="applicant_id"/>
+                <field name="partner_id"/>
+                <filter name="my_ppl" string="PPL Saya" domain="[('applicant_id', '=', uid)]"/>
+                <filter name="to_verify" string="Menunggu Verifikasi" domain="[('state', '=', 'submitted')]"/>
+                <group>
+                    <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                    <filter name="group_date" string="Tanggal" context="{'group_by': 'request_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sifnext_ppl_form" model="ir.ui.view">
+        <field name="name">sifnext.ppl.form</field>
+        <field name="model">sifnext.ppl</field>
+        <field name="arch" type="xml">
+            <form string="Permintaan Pembayaran Langsung">
+                <header>
+                    <button name="action_submit" type="object" string="Ajukan" class="btn-primary"
+                            invisible="state != 'draft'"/>
+                    <button name="action_verify" type="object" string="Verifikasi" class="btn-primary"
+                            groups="sifnext_ppl.group_ppl_finance" invisible="state != 'submitted'"/>
+                    <button name="action_approve" type="object" string="Setujui" class="btn-primary"
+                            groups="sifnext_ppl.group_ppl_approver" invisible="state != 'verified'"/>
+                    <button name="action_pay" type="object" string="Konfirmasi Pembayaran" class="btn-primary"
+                            groups="sifnext_ppl.group_ppl_finance" invisible="state != 'approved'"/>
+                    <button name="action_done" type="object" string="Selesaikan" class="btn-primary"
+                            groups="sifnext_ppl.group_ppl_finance" invisible="state != 'paid'"/>
+                    <button name="action_return_to_draft" type="object" string="Kembalikan ke Draft"
+                            groups="sifnext_ppl.group_ppl_finance" invisible="state not in ('submitted', 'verified')"
+                            context="{'return_reason': 'Dikembalikan Finance untuk revisi'}"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,verified,approved,paid,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name"/></h1>
+                        <h2><field name="title" placeholder="Tujuan pembayaran..."/></h2>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="request_date" readonly="state != 'draft'"/>
+                            <field name="applicant_id"/>
+                            <field name="partner_id" readonly="state != 'draft'"/>
+                            <field name="source_type" readonly="state != 'draft'"/>
+                        </group>
+                        <group>
+                            <field name="company_id" groups="base.group_multi_company" readonly="state != 'draft'"/>
+                            <field name="currency_id" readonly="state != 'draft'"/>
+                            <field name="total_amount"/>
+                            <field name="return_reason" invisible="not return_reason"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="description" readonly="state != 'draft'"/>
+                    </group>
+                    <notebook>
+                        <page string="Detail Kebutuhan">
+                            <field name="line_ids" readonly="state not in ('draft', 'submitted')">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="description" readonly="parent.state != 'draft'"/>
+                                    <field name="quantity" readonly="parent.state != 'draft'"/>
+                                    <field name="unit_price" readonly="parent.state != 'draft'"/>
+                                    <field name="subtotal"/>
+                                    <field name="account_id" string="COA" groups="sifnext_ppl.group_ppl_finance"
+                                           readonly="parent.state not in ('draft', 'submitted')"/>
+                                    <field name="budget_status" string="Status Budget" groups="sifnext_ppl.group_ppl_finance"/>
+                                    <field name="currency_id" column_invisible="True"/>
+                                    <field name="company_id" column_invisible="True"/>
+                                </list>
+                            </field>
+                            <group class="oe_subtotal_footer oe_right">
+                                <field name="total_amount"/>
+                            </group>
+                        </page>
+                        <page string="Pembayaran" groups="sifnext_ppl.group_ppl_finance">
+                            <group>
+                                <field name="payment_method" readonly="state != 'approved'"/>
+                                <field name="payment_date" readonly="state != 'approved'"/>
+                                <field name="payment_reference" readonly="state != 'approved'"/>
+                            </group>
+                            <div class="text-muted">PPL hanya mencatat pembayaran administratif. Jurnal transaksi dikelola modul Jurnal Besar.</div>
+                        </page>
+                        <page string="Audit">
+                            <group>
+                                <group>
+                                    <field name="submitted_by"/>
+                                    <field name="submitted_at"/>
+                                    <field name="verified_by"/>
+                                    <field name="verified_at"/>
+                                    <field name="approved_by"/>
+                                    <field name="approved_at"/>
+                                </group>
+                                <group>
+                                    <field name="paid_by"/>
+                                    <field name="paid_at"/>
+                                    <field name="done_by"/>
+                                    <field name="done_at"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sifnext_ppl" model="ir.actions.act_window">
+        <field name="name">PPL</field>
+        <field name="res_model">sifnext.ppl</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_sifnext_ppl_search"/>
+    </record>
+
+    <menuitem id="menu_sifnext_finance_root" name="SIFNEXT Keuangan" sequence="30" groups="base.group_user"/>
+    <menuitem id="menu_sifnext_ppl" name="PPL" parent="menu_sifnext_finance_root" action="action_sifnext_ppl" sequence="10"/>
+</odoo>
