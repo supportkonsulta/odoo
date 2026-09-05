@@ -10,6 +10,11 @@ class TestPPLWorkflow(TransactionCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        cls.unit = cls.env["sifnext.unit"].create({
+            "name": "Unit UAT PPL",
+            "code": "uat",
+            "company_id": cls.env.company.id,
+        })
         cls.user = new_test_user(
             cls.env,
             login="ppl_user",
@@ -34,6 +39,7 @@ class TestPPLWorkflow(TransactionCase):
             groups="sifnext_ppl.group_ppl_approver",
             company_id=cls.env.company.id,
         )
+        (cls.user | cls.other_user | cls.finance | cls.director).write({"unit_id": cls.unit.id})
         cls.account = cls.env["account.account"].create({
             "name": "Biaya PPL Test",
             "code": "PPLTEST",
@@ -52,9 +58,64 @@ class TestPPLWorkflow(TransactionCase):
             })],
         })
 
+    def test_id_and_number_are_automatic_and_immutable(self):
+        ppl = self.env["sifnext.ppl"].with_user(self.user).create({
+            "name": "NOMOR-DARI-KLIEN",
+            "request_date": "2026-09-05",
+            "title": "Uji nomor otomatis",
+            "description": "Nomor wajib berasal dari sequence",
+        })
+
+        self.assertIsInstance(ppl.id, int)
+        self.assertGreater(ppl.id, 0)
+        self.assertRegex(ppl.name, r"^UAT/PPL/09/2026/\d{5}$")
+        self.assertNotEqual(ppl.name, "NOMOR-DARI-KLIEN")
+        with self.assertRaises(UserError):
+            ppl.with_user(self.user).write({"name": "UAT/PPL/09/2026/99999"})
+
+    def test_copy_gets_a_new_number_and_keeps_unit(self):
+        ppl = self._create_ppl()
+        duplicate = ppl.with_user(self.user).copy()
+
+        self.assertEqual(duplicate.unit_id, self.unit)
+        self.assertNotEqual(duplicate.name, ppl.name)
+        self.assertRegex(duplicate.name, r"^UAT/PPL/\d{2}/\d{4}/\d{5}$")
+
+    def test_unit_code_is_normalized_and_unique_per_company(self):
+        self.assertEqual(self.unit.code, "UAT")
+        with self.assertRaises(Exception), self.cr.savepoint():
+            self.env["sifnext.unit"].create({
+                "name": "Duplikat UAT",
+                "code": " uat ",
+                "company_id": self.env.company.id,
+            })
+
+    def test_number_keeps_original_value_when_draft_date_changes(self):
+        ppl = self.env["sifnext.ppl"].with_user(self.user).create({
+            "request_date": "2026-09-05",
+            "title": "Uji perubahan tanggal",
+            "description": "Nomor tidak diterbitkan ulang",
+        })
+        original_number = ppl.name
+
+        ppl.with_user(self.user).write({"request_date": "2027-01-10"})
+
+        self.assertEqual(ppl.name, original_number)
+        self.assertEqual(str(ppl.request_date), "2027-01-10")
+
+    def test_new_ppl_requires_applicant_unit(self):
+        self.user.write({"unit_id": False})
+        with self.assertRaises(ValidationError):
+            self.env["sifnext.ppl"].with_user(self.user).create({
+                "title": "Tanpa Unit",
+                "description": "Harus ditolak",
+            })
+        self.user.write({"unit_id": self.unit.id})
+
     def test_employee_submit_without_coa_then_finance_verify(self):
         ppl = self._create_ppl()
         self.assertEqual(ppl.applicant_id, self.user)
+        self.assertEqual(ppl.unit_id, self.unit)
         self.assertEqual(ppl.source_type, "manual")
         self.assertEqual(ppl.total_amount, 100_000)
         self.assertNotEqual(ppl.name, "New")
@@ -111,6 +172,41 @@ class TestPPLWorkflow(TransactionCase):
             ppl.with_user(self.user).write({"title": "Diubah"})
         with self.assertRaises(UserError):
             ppl.line_ids.with_user(self.finance).write({"unit_price": 1})
+        with self.assertRaises(UserError):
+            ppl.with_user(self.finance).write({
+                "line_ids": [Command.update(ppl.line_ids.id, {"unit_price": 1})],
+            })
+        with self.assertRaises(UserError):
+            ppl.with_user(self.finance).write({
+                "line_ids": [Command.create({
+                    "description": "Baris tambahan",
+                    "quantity": 1,
+                    "unit_price": 10_000,
+                })],
+            })
+        with self.assertRaises(UserError):
+            ppl.with_user(self.finance).write({
+                "line_ids": [Command.delete(ppl.line_ids.id)],
+            })
+
+    def test_finance_can_set_submitted_coa_through_parent_form_payload(self):
+        ppl = self._create_ppl()
+        ppl.with_user(self.user).action_submit()
+
+        ppl.with_user(self.finance).write({
+            "request_date": ppl.request_date,
+            "applicant_id": ppl.applicant_id.id,
+            "unit_id": ppl.unit_id.id,
+            "partner_id": ppl.partner_id.id or False,
+            "title": ppl.title,
+            "description": ppl.description,
+            "source_type": ppl.source_type,
+            "line_ids": [Command.update(ppl.line_ids.id, {"account_id": self.account.id})],
+        })
+
+        self.assertEqual(ppl.line_ids.account_id, self.account)
+        ppl.with_user(self.finance).action_verify()
+        self.assertEqual(ppl.state, "verified")
 
     def test_employee_cannot_impersonate_applicant(self):
         with self.assertRaises(AccessError):

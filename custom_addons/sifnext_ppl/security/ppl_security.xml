@@ -24,6 +24,12 @@
         <field name="implied_ids" eval="[Command.link(ref('base.group_user'))]"/>
     </record>
 
+    <record id="unit_company_rule" model="ir.rule">
+        <field name="name">Unit multi-company</field>
+        <field name="model_id" ref="model_sifnext_unit"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+
     <record id="ppl_company_rule" model="ir.rule">
         <field name="name">PPL multi-company</field>
         <field name="model_id" ref="model_sifnext_ppl"/>

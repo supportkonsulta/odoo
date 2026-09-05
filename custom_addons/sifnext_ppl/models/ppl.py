@@ -1,4 +1,4 @@
-from odoo import api, fields, models, _
+from odoo import Command, api, fields, models, _
 from odoo.exceptions import AccessError, UserError, ValidationError
 
 
@@ -8,11 +8,19 @@ class SifnextPPL(models.Model):
     _inherit = ["mail.thread", "mail.activity.mixin"]
     _order = "request_date desc, id desc"
 
-    name = fields.Char(default="New", readonly=True, copy=False, tracking=True)
+    name = fields.Char(default="New", readonly=True, copy=False, tracking=True, index=True)
     request_date = fields.Date(required=True, default=fields.Date.context_today, tracking=True)
     applicant_id = fields.Many2one(
         "res.users", required=True, default=lambda self: self.env.user,
         readonly=True, tracking=True,
+    )
+    unit_id = fields.Many2one(
+        "sifnext.unit",
+        string="Unit",
+        default=lambda self: self.env.user.unit_id,
+        tracking=True,
+        domain="[('company_id', '=', company_id)]",
+        help="Wajib untuk PPL baru. Dibiarkan kosong hanya pada PPL lama sebelum master Unit diterapkan.",
     )
     partner_id = fields.Many2one("res.partner", string="Penerima/Vendor", tracking=True)
     title = fields.Char(required=True, tracking=True)
@@ -59,6 +67,11 @@ class SifnextPPL(models.Model):
     done_by = fields.Many2one("res.users", readonly=True, copy=False)
     done_at = fields.Datetime(readonly=True, copy=False)
 
+    _name_company_uniq = models.Constraint(
+        "unique (name, company_id)",
+        "Nomor PPL harus unik dalam satu perusahaan.",
+    )
+
     @api.depends("line_ids.subtotal")
     def _compute_total_amount(self):
         for record in self:
@@ -74,14 +87,44 @@ class SifnextPPL(models.Model):
     def create(self, vals_list):
         is_finance = self.env.user.has_group("sifnext_ppl.group_ppl_finance")
         for vals in vals_list:
-            if not is_finance and vals.get("applicant_id", self.env.user.id) != self.env.user.id:
+            applicant = self.env["res.users"].browse(vals.get("applicant_id", self.env.user.id))
+            if not is_finance and applicant != self.env.user:
                 raise AccessError(_("Pegawai hanya dapat membuat PPL atas nama sendiri."))
             if not is_finance:
-                vals["applicant_id"] = self.env.user.id
+                applicant = self.env.user
+                vals["applicant_id"] = applicant.id
                 vals["source_type"] = "manual"
-            if vals.get("name", "New") == "New":
-                vals["name"] = self.env["ir.sequence"].next_by_code("sifnext.ppl") or "New"
+            unit = self.env["sifnext.unit"].browse(vals.get("unit_id") or applicant.unit_id.id)
+            if not unit:
+                raise ValidationError(_("Unit pemohon wajib ditentukan sebelum membuat PPL."))
+            company = self.env["res.company"].browse(vals.get("company_id", self.env.company.id))
+            if unit.company_id != company:
+                raise ValidationError(_("Unit PPL harus berasal dari perusahaan yang sama."))
+            vals["unit_id"] = unit.id
+            request_date = fields.Date.to_date(vals.get("request_date")) or fields.Date.context_today(self)
+            sequence = self.env["ir.sequence"].next_by_code(
+                "sifnext.ppl", sequence_date=request_date,
+            ) or "New"
+            vals["name"] = f"{unit.code}/{sequence}"
         return super().create(vals_list)
+
+    def _is_submitted_coa_update(self, commands):
+        """Allow the one2many payload used by the form to update only existing COAs."""
+        if not self.env.user.has_group("sifnext_ppl.group_ppl_finance"):
+            return False
+        if any(record.state != "submitted" for record in self):
+            return False
+        line_ids = set(self.line_ids.ids)
+        for command in commands:
+            if not isinstance(command, (list, tuple)) or len(command) < 3:
+                return False
+            operation, line_id, values = command[0], command[1], command[2]
+            if operation != Command.UPDATE or line_id not in line_ids:
+                return False
+            classification_fields = {"account_id", "rka_id"}
+            if not isinstance(values, dict) or not values or set(values) - classification_fields:
+                return False
+        return bool(commands)
 
     def write(self, vals):
         if "name" in vals and any(record.name != vals["name"] for record in self):
@@ -96,11 +139,25 @@ class SifnextPPL(models.Model):
             if vals["applicant_id"] != self.env.user.id:
                 raise AccessError(_("Pegawai tidak dapat mengubah pemohon PPL."))
         protected = {
-            "request_date", "applicant_id", "partner_id", "title", "description",
-            "source_type", "line_ids",
+            "request_date", "applicant_id", "unit_id", "partner_id", "title", "description",
+            "source_type",
         }
-        if protected.intersection(vals) and any(record.state != "draft" for record in self):
-            raise UserError(_("Data pengajuan hanya dapat diubah pada status Draft."))
+        protected_values = {field: vals[field] for field in protected.intersection(vals)}
+        for record in self.filtered(lambda item: item.state != "draft"):
+            for field_name, new_value in protected_values.items():
+                field = record._fields[field_name]
+                current_value = record[field_name]
+                if field.type == "many2one":
+                    current_value = current_value.id or False
+                    new_value = new_value or False
+                elif field.type == "date":
+                    current_value = fields.Date.to_string(current_value)
+                    new_value = fields.Date.to_string(new_value) if new_value else False
+                if current_value != new_value:
+                    raise UserError(_("Data pengajuan hanya dapat diubah pada status Draft."))
+        if "line_ids" in vals and any(record.state != "draft" for record in self):
+            if not self._is_submitted_coa_update(vals["line_ids"]):
+                raise UserError(_("Detail kebutuhan hanya dapat diubah pada status Draft."))
         payment_fields = {"payment_method", "payment_date", "payment_reference"}
         if payment_fields.intersection(vals):
             if not self.env.user.has_group("sifnext_ppl.group_ppl_finance"):
@@ -151,6 +208,11 @@ class SifnextPPL(models.Model):
                     "id": self.applicant_id.id,
                     "name": self.applicant_id.name,
                 },
+                "unit": {
+                    "id": self.unit_id.id,
+                    "code": self.unit_id.code,
+                    "name": self.unit_id.name,
+                } if self.unit_id else None,
                 "partner": {
                     "id": self.partner_id.id,
                     "name": self.partner_id.name,
@@ -182,7 +244,7 @@ class SifnextPPL(models.Model):
                         "id": line.account_id.id,
                         "code": line.account_id.code,
                         "name": line.account_id.name,
-                    },
+                    } if line.account_id else None,
                 } for line in self.line_ids.sorted(key=lambda item: (item.sequence, item.id))],
             },
         }
@@ -195,6 +257,7 @@ class SifnextPPL(models.Model):
             "ppl_id": self.id,
             "ppl_number": self.name,
             "company_id": self.company_id.id,
+            "unit_id": self.unit_id.id,
             "request_date": fields.Date.to_string(self.request_date),
             "currency_id": self.currency_id.id,
             "total_amount": self.total_amount,
@@ -369,6 +432,9 @@ class SifnextPPLLine(models.Model):
         if any(vals.get("account_id") for vals in vals_list):
             if not self.env.user.has_group("sifnext_ppl.group_ppl_finance"):
                 raise AccessError(_("Hanya Finance yang dapat memilih COA."))
+        parent_ids = {vals.get("ppl_id") for vals in vals_list if vals.get("ppl_id")}
+        if parent_ids and any(ppl.state != "draft" for ppl in self.env["sifnext.ppl"].browse(parent_ids)):
+            raise UserError(_("Detail hanya dapat ditambahkan pada status Draft."))
         return super().create(vals_list)
 
     def write(self, vals):

@@ -5,5 +5,6 @@
         <field name="prefix">PPL/%(month)s/%(year)s/</field>
         <field name="padding">5</field>
         <field name="company_id" eval="False"/>
+        <field name="use_date_range" eval="True"/>
     </record>
 </odoo>

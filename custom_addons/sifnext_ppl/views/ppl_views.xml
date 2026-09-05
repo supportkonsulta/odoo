@@ -7,6 +7,7 @@
                 <field name="name"/>
                 <field name="request_date"/>
                 <field name="applicant_id"/>
+                <field name="unit_id"/>
                 <field name="partner_id"/>
                 <field name="title"/>
                 <field name="total_amount" sum="Total"/>
@@ -24,6 +25,7 @@
                 <field name="name"/>
                 <field name="title"/>
                 <field name="applicant_id"/>
+                <field name="unit_id"/>
                 <field name="partner_id"/>
                 <filter name="my_ppl" string="PPL Saya" domain="[('applicant_id', '=', uid)]"/>
                 <filter name="to_verify" string="Menunggu Verifikasi" domain="[('state', '=', 'submitted')]"/>
@@ -66,6 +68,7 @@
                         <group>
                             <field name="request_date" readonly="state != 'draft'"/>
                             <field name="applicant_id"/>
+                            <field name="unit_id" required="True" readonly="state != 'draft'"/>
                             <field name="partner_id" readonly="state != 'draft'"/>
                             <field name="source_type" readonly="state != 'draft'"/>
                         </group>
@@ -81,16 +84,55 @@
                     </group>
                     <notebook>
                         <page string="Detail Kebutuhan">
-                            <field name="line_ids" readonly="state not in ('draft', 'submitted')">
+                            <field name="line_ids" invisible="state != 'draft'">
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
-                                    <field name="description" readonly="parent.state != 'draft'"/>
-                                    <field name="quantity" readonly="parent.state != 'draft'"/>
-                                    <field name="unit_price" readonly="parent.state != 'draft'"/>
+                                    <field name="description"/>
+                                    <field name="quantity"/>
+                                    <field name="unit_price"/>
                                     <field name="subtotal"/>
-                                    <field name="account_id" string="COA" groups="sifnext_ppl.group_ppl_finance"
-                                           readonly="parent.state not in ('draft', 'submitted')"/>
+                                    <field name="account_id" string="COA" groups="sifnext_ppl.group_ppl_finance"/>
                                     <field name="budget_status" string="Status Budget" groups="sifnext_ppl.group_ppl_finance"/>
+                                    <field name="currency_id" column_invisible="True"/>
+                                    <field name="company_id" column_invisible="True"/>
+                                </list>
+                            </field>
+                            <field name="line_ids" groups="sifnext_ppl.group_ppl_finance"
+                                   invisible="state != 'submitted'">
+                                <list editable="bottom" create="false" delete="false">
+                                    <field name="sequence" readonly="True"/>
+                                    <field name="description" readonly="True"/>
+                                    <field name="quantity" readonly="True"/>
+                                    <field name="unit_price" readonly="True"/>
+                                    <field name="subtotal" readonly="True"/>
+                                    <field name="account_id" string="COA"/>
+                                    <field name="budget_status" string="Status Budget" readonly="True"/>
+                                    <field name="currency_id" column_invisible="True"/>
+                                    <field name="company_id" column_invisible="True"/>
+                                </list>
+                            </field>
+                            <field name="line_ids" readonly="True"
+                                   invisible="state in ('draft', 'submitted')">
+                                <list create="false" delete="false" edit="false">
+                                    <field name="sequence"/>
+                                    <field name="description"/>
+                                    <field name="quantity"/>
+                                    <field name="unit_price"/>
+                                    <field name="subtotal"/>
+                                    <field name="account_id" string="COA" groups="sifnext_ppl.group_ppl_finance"/>
+                                    <field name="budget_status" string="Status Budget" groups="sifnext_ppl.group_ppl_finance"/>
+                                    <field name="currency_id" column_invisible="True"/>
+                                    <field name="company_id" column_invisible="True"/>
+                                </list>
+                            </field>
+                            <field name="line_ids" readonly="True" groups="!sifnext_ppl.group_ppl_finance"
+                                   invisible="state != 'submitted'">
+                                <list create="false" delete="false" edit="false">
+                                    <field name="sequence"/>
+                                    <field name="description"/>
+                                    <field name="quantity"/>
+                                    <field name="unit_price"/>
+                                    <field name="subtotal"/>
                                     <field name="currency_id" column_invisible="True"/>
                                     <field name="company_id" column_invisible="True"/>
                                 </list>
