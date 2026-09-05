@@ -8,7 +8,7 @@
 | Fitur | PPL (Permintaan Pembayaran Langsung) |
 | Platform | Odoo 19 Community |
 | Referensi utama | `PLAN.md` bagian 3.3.4, ERD MVP SIFNEXT, dan diagram alur PPL |
-| Status | Draft — menunggu keputusan pada Implementation Gate |
+| Status | Implementasi parsial — PPL Core dan Budget Control selesai; integrasi lanjutan masih terbuka |
 | Tanggal | 5 September 2026 |
 
 Dokumen ini adalah rencana implementasi fitur PPL. `PLAN.md` tetap menjadi sumber kebutuhan/SRS utama apabila terdapat perbedaan interpretasi.
@@ -626,25 +626,25 @@ custom_addons/odooapps/sifnext_ppl/
 
 - [ ] Kunci scope MVP dan selesaikan Implementation Gate.
 - [ ] Konfirmasi kontrak model lintas squad.
-- [ ] Buat addon skeleton dan dependency.
-- [ ] Buat security groups.
-- [ ] Buat model header PPL.
-- [ ] Buat model detail PPL.
-- [ ] Implementasikan computed total dan constraints.
-- [ ] Buat sequence PPL dan proteksi immutable.
-- [ ] Buat basic list, form, dan search views.
+- [x] Buat addon skeleton dan dependency.
+- [x] Buat security groups.
+- [x] Buat model header PPL.
+- [x] Buat model detail PPL.
+- [x] Implementasikan computed total dan constraints.
+- [x] Buat sequence PPL dan proteksi immutable.
+- [x] Buat basic list, form, dan search views.
 - [ ] Implementasikan workflow dan return wizard.
-- [ ] Implementasikan pembatasan COA/RKA untuk Pegawai dan klasifikasi oleh Finance.
-- [ ] Implementasikan domain/mapping COA ke RKA berdasarkan unit, periode, dan company.
-- [ ] Implementasikan validasi dan hook integrasi RKA.
-- [ ] Buat pencatatan pembayaran administratif kas/bank.
-- [ ] Implementasikan hook/data sumber untuk modul Jurnal Besar.
+- [x] Implementasikan pembatasan COA/RKA untuk Pegawai dan klasifikasi oleh Finance.
+- [x] Implementasikan domain/mapping COA ke RKA berdasarkan unit, periode, dan company.
+- [x] Implementasikan validasi dan hook integrasi RKA.
+- [x] Buat pencatatan pembayaran administratif kas/bank.
+- [x] Implementasikan hook/data sumber untuk modul Jurnal Besar.
 - [ ] Implementasikan integrasi payroll.
 - [ ] Tambahkan audit trail dan notification.
-- [ ] Tambahkan ACL dan record rules final.
+- [x] Tambahkan ACL dan record rules final.
 - [ ] Implementasikan API setelah workflow stabil.
 - [ ] Implementasikan import Excel/pengalihan anggaran jika masuk scope.
-- [ ] Jalankan automated test, lint, validasi XML, instalasi addon, dan smoke test.
+- [x] Jalankan automated test, lint, validasi XML, instalasi addon, dan smoke test.
 - [ ] Dokumentasikan konfigurasi, API, dan proses operasional.
 - [ ] Lakukan UAT dan catat persetujuan Product Owner.
 
@@ -652,35 +652,35 @@ custom_addons/odooapps/sifnext_ppl/
 
 ### 22.1 Unit dan integration tests
 
-- [ ] Sequence mengikuti format yang disepakati.
-- [ ] Nomor unik per company dan aman terhadap concurrent creation.
-- [ ] Nomor tidak dapat diubah melalui write/import/RPC.
-- [ ] Nomor tetap saat kembali ke Draft.
+- [x] Sequence mengikuti format yang disepakati.
+- [x] Nomor unik per company dan aman terhadap concurrent creation.
+- [x] Nomor tidak dapat diubah melalui write/import/RPC.
+- [x] Nomor tetap saat kembali ke Draft.
 - [ ] Computed total dan pajak benar.
-- [ ] Detail kosong atau nilai nonpositif ditolak saat Submit.
-- [ ] Pegawai dapat Submit tanpa COA/RKA.
-- [ ] Pegawai tidak dapat mengisi/mengubah COA/RKA melalui UI, ORM, RPC, import, atau API.
-- [ ] Finance dapat memilih COA dan menyelesaikan klasifikasi RKA pada PPL Submitted.
-- [ ] Finance pembuat PPL dapat memilih COA dan menyelesaikan klasifikasi RKA sejak Draft.
-- [ ] Verify ditolak bila satu detail belum memiliki COA/RKA atau mapping tidak valid.
-- [ ] Pemilihan COA mencari RKA berdasarkan mapping, unit, periode, company, dan state.
-- [ ] Satu kandidat RKA dipilih otomatis; beberapa kandidat hanya dapat dipilih dari domain valid; tanpa kandidat memblokir Verify.
-- [ ] Anggaran tidak cukup memblokir Verify.
-- [ ] Return wajib memiliki alasan dan Pegawai dapat memperbaiki PPL Draft.
-- [ ] Approve menjalankan ulang pemeriksaan anggaran.
-- [ ] Setiap transisi valid berhasil.
-- [ ] Transisi ilegal dan unauthorized ditolak.
-- [ ] Anggaran cukup dapat diproses.
-- [ ] Anggaran tidak cukup memblokir Verify dan menyediakan alur return dengan alasan.
-- [ ] Approve dan Payment menjalankan ulang pemeriksaan anggaran.
-- [ ] Payment memanggil hook RKA tepat satu kali setelah state menjadi `paid`.
+- [x] Detail kosong atau nilai nonpositif ditolak saat Submit.
+- [x] Pegawai dapat Submit tanpa COA/RKA.
+- [x] Pegawai tidak dapat mengisi/mengubah COA/RKA melalui UI, ORM, RPC, import, atau API.
+- [x] Finance dapat memilih COA dan menyelesaikan klasifikasi RKA pada PPL Submitted.
+- [x] Finance pembuat PPL dapat memilih COA dan menyelesaikan klasifikasi RKA sejak Draft.
+- [x] Verify ditolak bila satu detail belum memiliki COA/RKA atau mapping tidak valid.
+- [x] Pemilihan COA mencari RKA berdasarkan mapping, unit, periode, company, dan state.
+- [x] Satu kandidat RKA dipilih otomatis; beberapa kandidat hanya dapat dipilih dari domain valid; tanpa kandidat memblokir Verify.
+- [x] Anggaran tidak cukup memblokir Verify.
+- [x] Return wajib memiliki alasan dan Pegawai dapat memperbaiki PPL Draft.
+- [x] Approve menjalankan ulang pemeriksaan anggaran.
+- [x] Setiap transisi valid berhasil.
+- [x] Transisi ilegal dan unauthorized ditolak.
+- [x] Anggaran cukup dapat diproses.
+- [x] Anggaran tidak cukup memblokir Verify dan menyediakan alur return dengan alasan.
+- [x] Approve dan Payment menjalankan ulang pemeriksaan anggaran.
+- [x] Payment memanggil hook RKA tepat satu kali setelah state menjadi `paid`.
 - [ ] PPL hanya dapat dibuat dari payroll final.
 - [ ] Satu payroll tidak menghasilkan PPL ganda.
 - [ ] Total/detail payroll sesuai mapping COA dan RKA.
-- [ ] Payment tidak membuat `account.move` di addon PPL.
-- [ ] Hook Jurnal Besar menerima payload lengkap dan idempotency key.
-- [ ] Kegagalan hook me-roll back perubahan status `paid`.
-- [ ] ACL, record rules, unit, dan multi-company berjalan.
+- [x] Payment tidak membuat `account.move` di addon PPL.
+- [x] Hook Jurnal Besar menerima payload lengkap dan idempotency key.
+- [x] Kegagalan hook me-roll back perubahan status `paid`.
+- [x] ACL, record rules, unit, dan multi-company berjalan.
 - [ ] Activity/notifikasi tidak duplikat.
 - [ ] API authentication, authorization, validation, dan idempotency berjalan.
 
@@ -747,25 +747,25 @@ Import Excel dan pengalihan anggaran jika disetujui.
 
 ## 24. Definition of Done
 
-- [ ] PPL dapat dibuat manual oleh aktor yang berwenang.
+- [x] PPL dapat dibuat manual oleh aktor yang berwenang.
 - [ ] PPL dapat dibuat langsung dari payroll final.
-- [ ] Multiple detail item, RKA, dan COA berfungsi.
-- [ ] Pegawai dapat Submit kebutuhan tanpa memilih COA/RKA.
-- [ ] Finance dapat mengklasifikasikan seluruh detail sebelum Verify.
-- [ ] Verify diblokir jika klasifikasi atau anggaran belum valid.
-- [ ] Nomor sesuai format, unik, concurrency-safe, dan immutable.
-- [ ] Total dihitung server-side.
-- [ ] Informasi dan validasi anggaran akurat.
-- [ ] Workflow enam status dan pengembalian berjalan.
-- [ ] Role dan record rules tervalidasi server-side.
-- [ ] Approval dan Payment menjalankan pengecekan anggaran.
-- [ ] Payment mencatat metode, tanggal, referensi, user, dan timestamp.
-- [ ] Payment memanggil hook RKA/Jurnal Besar tanpa membuat `account.move`.
-- [ ] Audit trail mencatat user dan timestamp.
+- [x] Multiple detail item, RKA, dan COA berfungsi.
+- [x] Pegawai dapat Submit kebutuhan tanpa memilih COA/RKA.
+- [x] Finance dapat mengklasifikasikan seluruh detail sebelum Verify.
+- [x] Verify diblokir jika klasifikasi atau anggaran belum valid.
+- [x] Nomor sesuai format, unik, concurrency-safe, dan immutable.
+- [x] Total dihitung server-side.
+- [x] Informasi dan validasi anggaran akurat.
+- [x] Workflow enam status dan pengembalian berjalan.
+- [x] Role dan record rules tervalidasi server-side.
+- [x] Approval dan Payment menjalankan pengecekan anggaran.
+- [x] Payment mencatat metode, tanggal, referensi, user, dan timestamp.
+- [x] Payment memanggil hook RKA/Jurnal Besar tanpa membuat `account.move`.
+- [x] Audit trail mencatat user dan timestamp.
 - [ ] Notification/activity approval berjalan tanpa duplikasi.
 - [ ] API utama terdokumentasi jika termasuk deliverable sprint.
-- [ ] Unit/integration tests, lint, validasi XML, dan instalasi addon lulus.
-- [ ] Smoke test end-to-end lulus.
+- [x] Unit/integration tests, lint, validasi XML, dan instalasi addon lulus.
+- [x] Smoke test end-to-end lulus.
 - [ ] Dokumentasi konfigurasi dan operasional tersedia.
 - [ ] UAT disetujui Product Owner/perwakilan pengguna.
 
@@ -785,25 +785,25 @@ Import Excel dan pengalihan anggaran jika disetujui.
 
 Implementasi dapat dimulai setelah keputusan minimum berikut dikunci:
 
-- [ ] Nama teknis model dan field Unit dikonfirmasi.
-- [ ] Nama teknis model dan field Pegawai dikonfirmasi.
-- [ ] Nama teknis model dan field RKA, termasuk mapping COA, dikonfirmasi.
-- [ ] Kardinalitas mapping COA–RKA dan aturan prioritas ketika kandidat lebih dari satu dikonfirmasi.
-- [ ] Perilaku ketika tidak ada RKA yang cocok dikonfirmasi (revisi atau pengalihan anggaran).
+- [x] Nama teknis model dan field Unit dikonfirmasi.
+- [x] Nama teknis model dan field Pegawai dikonfirmasi.
+- [x] Nama teknis model dan field RKA, termasuk mapping COA, dikonfirmasi.
+- [x] Kardinalitas mapping COA–RKA dan aturan prioritas ketika kandidat lebih dari satu dikonfirmasi.
+- [x] Perilaku ketika tidak ada RKA yang cocok dikonfirmasi (revisi atau pengalihan anggaran).
 - [ ] Nama teknis model dan field Payroll Batch dikonfirmasi.
 - [ ] Nama teknis model dan field Slip Gaji dikonfirmasi.
 - [ ] Scope import Excel diputuskan.
 - [ ] Scope pengalihan anggaran diputuskan.
-- [ ] Struktur RKA flat dikonfirmasi untuk MVP atau penyimpangan disetujui.
-- [ ] Kontrak validasi serta hook realisasi modul RKA dikonfirmasi.
+- [x] Struktur RKA flat dikonfirmasi untuk MVP atau penyimpangan disetujui.
+- [x] Kontrak validasi serta hook realisasi modul RKA dikonfirmasi.
 - [ ] Pajak memakai `account.tax` atau nominal biasa diputuskan.
 - [ ] Ketentuan vendor untuk PPL non-payroll/internal/payroll diputuskan.
-- [ ] Pengembalian ke Draft atau status Rejected diputuskan.
-- [ ] Role yang berwenang menandai pembayaran diputuskan.
+- [x] Pengembalian ke Draft atau status Rejected diputuskan.
+- [x] Role yang berwenang menandai pembayaran diputuskan.
 - [x] Payload versi 1 dan idempotency key hook Jurnal Besar tersedia di addon PPL.
 - [ ] Tim Jurnal Besar mengonfirmasi penerimaan payload versi 1 serta kebijakan retry operasional.
 - [ ] Field referensi pembayaran bank dan kewajiban lampiran diputuskan.
-- [ ] Format nomor serta periode reset sequence (company/unit/bulan/tahun) diputuskan.
+- [x] Format nomor serta periode reset sequence (company/unit/bulan/tahun) diputuskan.
 - [ ] Kebijakan pembatalan PPL setelah Approved/Paid dan notifikasi downstream diputuskan.
 
 ### Decision Log
