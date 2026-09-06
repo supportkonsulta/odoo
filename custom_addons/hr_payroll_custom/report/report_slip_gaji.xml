@@ -17,6 +17,7 @@
         <field name="email_from">{{ object.company_id.email_formatted or user.email_formatted or '' }}</field>
         <field name="use_default_to" eval="False"/>
         <field name="email_to">{{ object.employee_id.work_email or '' }}</field>
+        <field name="auto_delete" eval="False"/>
         <field name="body_html" type="html">
             <p>Dear <t t-out="object.employee_id.name"/>,</p>
             <p>Please find attached your payslip for <t t-out="object.payroll_batch_id.name"/>.</p>

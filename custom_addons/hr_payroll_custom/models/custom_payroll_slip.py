@@ -97,6 +97,15 @@ class CustomPayrollSlip(models.Model):
         'res.users', string='Email Sent By', readonly=True, copy=False
     )
     email_error = fields.Text(string='Email Error', readonly=True, copy=False)
+    email_mail_id = fields.Many2one(
+        'mail.mail', string='Email Record', readonly=True, copy=False
+    )
+    email_delivery_state = fields.Selection(
+        related='email_mail_id.state', string='Delivery State', readonly=True
+    )
+    email_delivery_error = fields.Text(
+        related='email_mail_id.failure_reason', string='Delivery Error', readonly=True
+    )
     currency_id = fields.Many2one('res.currency', string='Currency', default=lambda self: self.env.company.currency_id)
     company_id = fields.Many2one('res.company', string='Company', default=lambda self: self.env.company, required=True)
 
@@ -370,12 +379,22 @@ class CustomPayrollSlip(models.Model):
 
         template = self.env.ref('hr_payroll_custom.mail_template_payroll_slip')
         try:
-            template.send_mail(
+            mail_id = template.send_mail(
                 self.id,
                 force_send=True,
                 raise_exception=True,
                 email_layout_xmlid='mail.mail_notification_light',
             )
+
+            mail = self.env['mail.mail'].sudo().browse(mail_id)
+            if not mail.exists() or mail.state != 'sent':
+                error = mail.failure_reason if mail.exists() else 'Email record was not created.'
+                self.write({
+                    'email_status': 'failed',
+                    'email_mail_id': mail.id if mail.exists() else False,
+                    'email_error': error or 'Email was not accepted by the outgoing mail server.',
+                })
+                return 'failed'
         except Exception as error:
             self.write({
                 'email_status': 'failed',
@@ -388,6 +407,7 @@ class CustomPayrollSlip(models.Model):
             'email_sent_at': fields.Datetime.now(),
             'email_sent_by': self.env.user.id,
             'email_error': False,
+            'email_mail_id': mail.id,
         })
         self.message_post(
             body=_('Payslip emailed successfully to %s.') % self.employee_id.work_email,
@@ -419,7 +439,7 @@ class CustomPayrollSlip(models.Model):
                     'Sent: %(sent)d, skipped (no email): %(skipped)d, '
                     'not paid: %(not_paid)d, already sent: %(already_sent)d, failed: %(failed)d.'
                 ) % results,
-                'type': 'warning' if results['failed'] else 'success',
+                'type': 'warning' if any(results[key] for key in ('failed', 'skipped', 'not_paid')) else 'success',
                 'sticky': bool(results['failed']),
             },
         }
@@ -440,7 +460,7 @@ class CustomPayrollSlip(models.Model):
                     'Resent: %(sent)d, skipped (no email): %(skipped)d, '
                     'not paid: %(not_paid)d, failed: %(failed)d.'
                 ) % results,
-                'type': 'warning' if results['failed'] else 'success',
+                'type': 'warning' if any(results[key] for key in ('failed', 'skipped', 'not_paid')) else 'success',
                 'sticky': bool(results['failed']),
             },
         }
