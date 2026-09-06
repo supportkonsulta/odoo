@@ -37,6 +37,34 @@
         </field>
     </record>
 
+    <record id="view_sifnext_ppl_line_form" model="ir.ui.view">
+        <field name="name">sifnext.ppl.line.form</field>
+        <field name="model">sifnext.ppl.line</field>
+        <field name="arch" type="xml">
+            <form string="Detail PPL">
+                <sheet>
+                    <group>
+                        <field name="ppl_state" invisible="True"/>
+                        <field name="description" readonly="ppl_state != 'draft'"/>
+                        <field name="quantity" readonly="ppl_state != 'draft'"/>
+                        <field name="unit_price" readonly="ppl_state != 'draft'"/>
+                        <field name="subtotal" readonly="True"/>
+                        <field name="currency_id" invisible="True"/>
+                        <field name="company_id" invisible="True"/>
+                        <field name="journal_account_id" string="COA"
+                               groups="sifnext_ppl.group_ppl_finance,sifnext_ppl.group_ppl_approver"
+                               options="{'no_create': True, 'no_create_edit': True}"
+                               readonly="ppl_state not in ('draft', 'submitted')"/>
+                    </group>
+                    <group string="Lampiran Item">
+                        <field name="attachment_ids" widget="many2many_binary"
+                               readonly="ppl_state != 'draft'"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
     <record id="view_sifnext_ppl_form" model="ir.ui.view">
         <field name="name">sifnext.ppl.form</field>
         <field name="model">sifnext.ppl</field>
@@ -85,27 +113,32 @@
                     <notebook>
                         <page string="Detail Kebutuhan">
                             <field name="line_ids" invisible="state != 'draft'">
-                                <list editable="bottom">
+                                <list editable="bottom" open_form_view="True">
                                     <field name="sequence" widget="handle"/>
                                     <field name="description"/>
+                                    <field name="attachment_count" string="Lampiran" readonly="True" optional="show"/>
                                     <field name="quantity"/>
                                     <field name="unit_price"/>
                                     <field name="subtotal"/>
-                                    <field name="account_id" string="COA" groups="sifnext_ppl.group_ppl_finance"/>
-                                    <field name="budget_status" string="Status Budget" groups="sifnext_ppl.group_ppl_finance"/>
+                                    <field name="journal_account_id" string="COA"
+                                           groups="sifnext_ppl.group_ppl_finance,sifnext_ppl.group_ppl_approver"
+                                           options="{'no_create': True, 'no_create_edit': True}"/>
+                                    <field name="budget_status" string="Status Budget" groups="sifnext_ppl.group_ppl_finance,sifnext_ppl.group_ppl_approver"/>
                                     <field name="currency_id" column_invisible="True"/>
                                     <field name="company_id" column_invisible="True"/>
                                 </list>
                             </field>
                             <field name="line_ids" groups="sifnext_ppl.group_ppl_finance"
                                    invisible="state != 'submitted'">
-                                <list editable="bottom" create="false" delete="false">
+                                <list editable="bottom" create="false" delete="false" open_form_view="True">
                                     <field name="sequence" readonly="True"/>
                                     <field name="description" readonly="True"/>
+                                    <field name="attachment_count" string="Lampiran" readonly="True" optional="show"/>
                                     <field name="quantity" readonly="True"/>
                                     <field name="unit_price" readonly="True"/>
                                     <field name="subtotal" readonly="True"/>
-                                    <field name="account_id" string="COA"/>
+                                    <field name="journal_account_id" string="COA"
+                                           options="{'no_create': True, 'no_create_edit': True}"/>
                                     <field name="budget_status" string="Status Budget" readonly="True"/>
                                     <field name="currency_id" column_invisible="True"/>
                                     <field name="company_id" column_invisible="True"/>
@@ -113,23 +146,26 @@
                             </field>
                             <field name="line_ids" readonly="True"
                                    invisible="state in ('draft', 'submitted')">
-                                <list create="false" delete="false" edit="false">
+                                <list create="false" delete="false" edit="false" open_form_view="True">
                                     <field name="sequence"/>
                                     <field name="description"/>
+                                    <field name="attachment_count" string="Lampiran" optional="show"/>
                                     <field name="quantity"/>
                                     <field name="unit_price"/>
                                     <field name="subtotal"/>
-                                    <field name="account_id" string="COA" groups="sifnext_ppl.group_ppl_finance"/>
-                                    <field name="budget_status" string="Status Budget" groups="sifnext_ppl.group_ppl_finance"/>
+                                    <field name="journal_account_id" string="COA"
+                                           groups="sifnext_ppl.group_ppl_finance,sifnext_ppl.group_ppl_approver"/>
+                                    <field name="budget_status" string="Status Budget" groups="sifnext_ppl.group_ppl_finance,sifnext_ppl.group_ppl_approver"/>
                                     <field name="currency_id" column_invisible="True"/>
                                     <field name="company_id" column_invisible="True"/>
                                 </list>
                             </field>
                             <field name="line_ids" readonly="True" groups="!sifnext_ppl.group_ppl_finance"
                                    invisible="state != 'submitted'">
-                                <list create="false" delete="false" edit="false">
+                                <list create="false" delete="false" edit="false" open_form_view="True">
                                     <field name="sequence"/>
                                     <field name="description"/>
+                                    <field name="attachment_count" string="Lampiran" optional="show"/>
                                     <field name="quantity"/>
                                     <field name="unit_price"/>
                                     <field name="subtotal"/>
@@ -181,6 +217,6 @@
         <field name="search_view_id" ref="view_sifnext_ppl_search"/>
     </record>
 
-    <menuitem id="menu_sifnext_finance_root" name="SIFNEXT Keuangan" sequence="30" groups="base.group_user"/>
+    <menuitem id="menu_sifnext_finance_root" name="PPL" sequence="30" groups="base.group_user"/>
     <menuitem id="menu_sifnext_ppl" name="PPL" parent="menu_sifnext_finance_root" action="action_sifnext_ppl" sequence="10"/>
 </odoo>

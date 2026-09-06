@@ -7,6 +7,9 @@
 **Tugas Tim Saya Adalah Bagian Feature 3.3.4 PPL (Permintaan Pembayaran Langsung)**
 ---
 
+Jika sudah membaca halaman ini pergilah ke halaman berikutnya:
+- D:\projects\odoo\doc\ppl\PPL_IMPLEMENTATION_PLAN.md
+
 ## 1. Pendahuluan
 
 ### 1.1 Tujuan Dokumen
@@ -170,6 +173,8 @@ Modul ini merupakan integrasi dari 6 sub-modul yang saling terhubung.
 - **Fungsi:**
     - Membuat permintaan pembayaran (PPL) untuk berbagai keperluan.
     - **Use-case Prioritas:** Pengajuan pembayaran gaji dari hasil payroll final.
+    - Setiap item/detail PPL dapat memiliki beberapa lampiran bukti pendukung.
+    - Lampiran item bersifat opsional dan hanya dapat ditambah, diubah, atau dihapus saat PPL berstatus Draft.
     - Nomor PPL dibuat otomatis dengan format sederhana (`[Unit]/PPL/[MM]/[YYYY]/[No-Urut]`) dan terkunci.
     - Sistem menampilkan total anggaran, realisasi, dan sisa anggaran dari RKA.
     - Alur approval/verifikasi PPL oleh Tim Keuangan atau Direktur.
@@ -177,7 +182,8 @@ Modul ini merupakan integrasi dari 6 sub-modul yang saling terhubung.
     - PPL dapat dibuat langsung dari data payroll final.
     - Nomor PPL tidak dapat diubah oleh user.
     - Status PPL (Draft, Diajukan, Diverifikasi, Disetujui, Dibayar, Selesai) tercatat.
-    - PPL yang sudah disetujui otomatis memicu pembuatan jurnal transaksi.
+    - PPL yang sudah disetujui otomatis memicu pembuatan jurnal transaksi melalui kontrak integrasi Jurnal Besar.
+    - Integrasi wajib idempotent dan kegagalan pencatatan jurnal membatalkan perubahan status pembayaran.
 
 ---
 

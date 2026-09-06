@@ -1,3 +1,4 @@
+import base64
 from unittest.mock import patch
 
 from odoo import Command
@@ -11,31 +12,31 @@ class TestPPLWorkflow(TransactionCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.unit = cls.env["sifnext.unit"].create({
-            "name": "Unit UAT PPL",
-            "code": "uat",
+            "name": "Unit Automated Test PPL",
+            "code": "AUTOTEST",
             "company_id": cls.env.company.id,
         })
         cls.user = new_test_user(
             cls.env,
-            login="ppl_user",
+            login="test_ppl_user",
             groups="base.group_user",
             company_id=cls.env.company.id,
         )
         cls.other_user = new_test_user(
             cls.env,
-            login="ppl_other",
+            login="test_ppl_other",
             groups="base.group_user",
             company_id=cls.env.company.id,
         )
         cls.finance = new_test_user(
             cls.env,
-            login="ppl_finance",
+            login="test_ppl_finance",
             groups="sifnext_ppl.group_ppl_finance",
             company_id=cls.env.company.id,
         )
         cls.director = new_test_user(
             cls.env,
-            login="ppl_director",
+            login="test_ppl_director",
             groups="sifnext_ppl.group_ppl_approver",
             company_id=cls.env.company.id,
         )
@@ -45,6 +46,17 @@ class TestPPLWorkflow(TransactionCase):
             "code": "PPLTEST",
             "account_type": "expense",
             "company_ids": [Command.set(cls.env.company.ids)],
+        })
+        cls.journal_account_parent = cls.env["sif.coa"].create({
+            "name": "Beban Test PPL",
+            "code": "PPL-JOURNAL-PARENT",
+            "account_type": "expense",
+        })
+        cls.journal_account = cls.env["sif.coa"].create({
+            "name": "Biaya Operasional Test PPL",
+            "code": "PPL-JOURNAL-LINE",
+            "account_type": "expense",
+            "parent_id": cls.journal_account_parent.id,
         })
 
     def _create_ppl(self):
@@ -68,10 +80,10 @@ class TestPPLWorkflow(TransactionCase):
 
         self.assertIsInstance(ppl.id, int)
         self.assertGreater(ppl.id, 0)
-        self.assertRegex(ppl.name, r"^UAT/PPL/09/2026/\d{5}$")
+        self.assertRegex(ppl.name, r"^AUTOTEST/PPL/09/2026/\d{5}$")
         self.assertNotEqual(ppl.name, "NOMOR-DARI-KLIEN")
         with self.assertRaises(UserError):
-            ppl.with_user(self.user).write({"name": "UAT/PPL/09/2026/99999"})
+            ppl.with_user(self.user).write({"name": "AUTOTEST/PPL/09/2026/99999"})
 
     def test_copy_gets_a_new_number_and_keeps_unit(self):
         ppl = self._create_ppl()
@@ -79,14 +91,34 @@ class TestPPLWorkflow(TransactionCase):
 
         self.assertEqual(duplicate.unit_id, self.unit)
         self.assertNotEqual(duplicate.name, ppl.name)
-        self.assertRegex(duplicate.name, r"^UAT/PPL/\d{2}/\d{4}/\d{5}$")
+        self.assertRegex(duplicate.name, r"^AUTOTEST/PPL/\d{2}/\d{4}/\d{5}$")
+
+    def test_uat_accounts_are_provisioned_with_expected_roles(self):
+        employee = self.env.ref("sifnext_ppl.user_ppl_uat_employee")
+        finance = self.env.ref("sifnext_ppl.user_ppl_uat_finance")
+        director = self.env.ref("sifnext_ppl.user_ppl_uat_director")
+        uat_unit = self.env.ref("sifnext_ppl.unit_uat_ppl")
+
+        self.assertEqual(employee.login, "ppl_user")
+        self.assertEqual(finance.login, "ppl_finance")
+        self.assertEqual(director.login, "ppl_director")
+        self.assertEqual(employee.unit_id, uat_unit)
+        self.assertEqual(finance.unit_id, uat_unit)
+        self.assertEqual(director.unit_id, uat_unit)
+        self.assertTrue(employee.has_group("base.group_user"))
+        self.assertFalse(employee.has_group("sifnext_ppl.group_ppl_finance"))
+        self.assertFalse(employee.has_group("sifnext_ppl.group_ppl_approver"))
+        self.assertTrue(finance.has_group("sifnext_ppl.group_ppl_finance"))
+        self.assertFalse(finance.has_group("sifnext_ppl.group_ppl_approver"))
+        self.assertTrue(director.has_group("sifnext_ppl.group_ppl_approver"))
+        self.assertFalse(director.has_group("sifnext_ppl.group_ppl_finance"))
 
     def test_unit_code_is_normalized_and_unique_per_company(self):
-        self.assertEqual(self.unit.code, "UAT")
+        self.assertEqual(self.unit.code, "AUTOTEST")
         with self.assertRaises(Exception), self.cr.savepoint():
             self.env["sifnext.unit"].create({
-                "name": "Duplikat UAT",
-                "code": " uat ",
+                "name": "Duplikat Automated Test",
+                "code": " autotest ",
                 "company_id": self.env.company.id,
             })
 
@@ -124,14 +156,38 @@ class TestPPLWorkflow(TransactionCase):
         self.assertEqual(ppl.state, "submitted")
 
         with self.assertRaises(AccessError):
-            ppl.line_ids.with_user(self.user).write({"account_id": self.account.id})
+            ppl.line_ids.with_user(self.user).write({"journal_account_id": self.journal_account.id})
         with self.assertRaises(ValidationError):
             ppl.with_user(self.finance).action_verify()
 
-        ppl.line_ids.with_user(self.finance).write({"account_id": self.account.id})
+        ppl.line_ids.with_user(self.finance).write({"journal_account_id": self.journal_account.id})
         ppl.with_user(self.finance).action_verify()
         self.assertEqual(ppl.state, "verified")
         self.assertEqual(ppl.verified_by, self.finance)
+
+    def test_finance_can_select_master_coa_and_payload_exposes_it(self):
+        ppl = self._create_ppl()
+        ppl.with_user(self.user).action_submit()
+
+        with self.assertRaises(AccessError):
+            ppl.line_ids.with_user(self.user).write({
+                "journal_account_id": self.journal_account.id,
+            })
+
+        ppl.line_ids.with_user(self.finance).write({
+            "journal_account_id": self.journal_account.id,
+        })
+        payload = ppl._prepare_integration_payload()
+
+        self.assertEqual(ppl.line_ids.journal_account_id, self.journal_account)
+        self.assertEqual(
+            payload["ppl"]["lines"][0]["account"],
+            {
+                "id": self.journal_account.id,
+                "code": self.journal_account.code,
+                "name": self.journal_account.name,
+            },
+        )
 
     def test_finance_submission_skips_own_verification(self):
         ppl = self.env["sifnext.ppl"].with_user(self.finance).create({
@@ -141,7 +197,7 @@ class TestPPLWorkflow(TransactionCase):
                 "description": "Biaya operasional",
                 "quantity": 1,
                 "unit_price": 75_000,
-                "account_id": self.account.id,
+                "journal_account_id": self.journal_account.id,
             })],
         })
         ppl.with_user(self.finance).action_submit()
@@ -164,6 +220,62 @@ class TestPPLWorkflow(TransactionCase):
         with self.assertRaises(ValidationError):
             ppl.with_user(self.finance).action_submit()
         self.assertEqual(ppl.state, "draft")
+
+    def test_item_supports_multiple_attachments_and_locks_them_after_submit(self):
+        ppl = self._create_ppl()
+        line = ppl.line_ids
+        attachments = self.env["ir.attachment"].with_user(self.user).create([
+            {
+                "name": "invoice.pdf",
+                "datas": base64.b64encode(b"invoice"),
+                "mimetype": "application/pdf",
+                "res_model": "sifnext.ppl.line",
+                "res_id": line.id,
+            },
+            {
+                "name": "receipt.jpg",
+                "datas": base64.b64encode(b"receipt"),
+                "mimetype": "image/jpeg",
+                "res_model": "sifnext.ppl.line",
+                "res_id": line.id,
+            },
+        ])
+        line.with_user(self.user).write({"attachment_ids": [Command.set(attachments.ids)]})
+
+        self.assertEqual(line.attachment_count, 2)
+        self.assertEqual(set(line.attachment_ids.mapped("name")), {"invoice.pdf", "receipt.jpg"})
+        ppl.with_user(self.user).action_submit()
+
+        with self.assertRaises(UserError):
+            line.with_user(self.user).write({"attachment_ids": [Command.clear()]})
+        with self.assertRaises(UserError):
+            attachments[0].with_user(self.user).write({"name": "changed.pdf"})
+        with self.assertRaises(UserError):
+            attachments[0].with_user(self.user).unlink()
+        with self.assertRaises(UserError):
+            self.env["ir.attachment"].with_user(self.user).create({
+                "name": "late.pdf",
+                "datas": base64.b64encode(b"late"),
+                "res_model": "sifnext.ppl.line",
+                "res_id": line.id,
+            })
+
+    def test_copy_does_not_reuse_item_attachments(self):
+        ppl = self._create_ppl()
+        attachment = self.env["ir.attachment"].with_user(self.user).create({
+            "name": "private-proof.pdf",
+            "datas": base64.b64encode(b"proof"),
+            "res_model": "sifnext.ppl.line",
+            "res_id": ppl.line_ids.id,
+        })
+        ppl.line_ids.with_user(self.user).write({
+            "attachment_ids": [Command.link(attachment.id)],
+        })
+
+        duplicate = ppl.with_user(self.user).copy()
+
+        self.assertFalse(duplicate.line_ids.attachment_ids)
+        self.assertEqual(ppl.line_ids.attachment_ids, attachment)
 
     def test_submitted_request_content_is_locked(self):
         ppl = self._create_ppl()
@@ -201,10 +313,10 @@ class TestPPLWorkflow(TransactionCase):
             "title": ppl.title,
             "description": ppl.description,
             "source_type": ppl.source_type,
-            "line_ids": [Command.update(ppl.line_ids.id, {"account_id": self.account.id})],
+            "line_ids": [Command.update(ppl.line_ids.id, {"journal_account_id": self.journal_account.id})],
         })
 
-        self.assertEqual(ppl.line_ids.account_id, self.account)
+        self.assertEqual(ppl.line_ids.journal_account_id, self.journal_account)
         ppl.with_user(self.finance).action_verify()
         self.assertEqual(ppl.state, "verified")
 
@@ -239,7 +351,7 @@ class TestPPLWorkflow(TransactionCase):
     def test_approval_payment_and_done_without_account_move(self):
         ppl = self._create_ppl()
         ppl.with_user(self.user).action_submit()
-        ppl.line_ids.with_user(self.finance).write({"account_id": self.account.id})
+        ppl.line_ids.with_user(self.finance).write({"journal_account_id": self.journal_account.id})
         ppl.with_user(self.finance).action_verify()
 
         with self.assertRaises(AccessError):
@@ -278,7 +390,7 @@ class TestPPLWorkflow(TransactionCase):
     def _prepare_approved_ppl(self):
         ppl = self._create_ppl()
         ppl.with_user(self.user).action_submit()
-        ppl.line_ids.with_user(self.finance).write({"account_id": self.account.id})
+        ppl.line_ids.with_user(self.finance).write({"journal_account_id": self.journal_account.id})
         ppl.with_user(self.finance).action_verify()
         ppl.with_user(self.director).action_approve()
         ppl.with_user(self.finance).write({
@@ -316,7 +428,8 @@ class TestPPLWorkflow(TransactionCase):
         self.assertEqual(payload["ppl"]["state"], "paid")
         self.assertEqual(payload["ppl"]["total_amount"], 100_000)
         self.assertEqual(payload["ppl"]["payment"]["reference"], "TRX-PPL-CONTRACT")
-        self.assertEqual(payload["ppl"]["lines"][0]["account"]["code"], self.account.code)
+        self.assertEqual(payload["ppl"]["lines"][0]["account"]["code"], self.journal_account.code)
+        self.assertNotIn("attachments", payload["ppl"]["lines"][0])
         with self.assertRaises(UserError):
             ppl.with_user(self.finance).action_pay()
         self.assertEqual(len(calls), 2)
@@ -339,7 +452,7 @@ class TestPPLWorkflow(TransactionCase):
     def test_budget_check_uses_versioned_payload(self):
         ppl = self._create_ppl()
         ppl.with_user(self.user).action_submit()
-        ppl.line_ids.with_user(self.finance).write({"account_id": self.account.id})
+        ppl.line_ids.with_user(self.finance).write({"journal_account_id": self.journal_account.id})
         payloads = []
 
         def validate_budget(record, payload):
@@ -352,7 +465,7 @@ class TestPPLWorkflow(TransactionCase):
         self.assertEqual(len(payloads), 1)
         self.assertEqual(payloads[0]["schema_version"], 1)
         self.assertEqual(payloads[0]["ppl_id"], ppl.id)
-        self.assertEqual(payloads[0]["lines"][0]["account_id"], self.account.id)
+        self.assertNotIn("account_id", payloads[0]["lines"][0])
         self.assertEqual(payloads[0]["lines"][0]["amount"], 100_000)
 
     def test_payment_data_is_restricted(self):

@@ -1,5 +1,11 @@
 # PPL Implementation Plan
 
+
+**PROJECT PATH**
+- D:\projects\odoo\custom_addons\sifnext_ppl
+
+- Dilarang push selama tidak ada instruksi dari tim pengembangan
+
 ## 1. Informasi Dokumen
 
 | Atribut | Nilai |
@@ -21,6 +27,7 @@ Membangun fitur PPL yang dapat:
 - menerima pengajuan yang dibuat Tim Keuangan;
 - membuat PPL langsung dari payroll final sebagai use case prioritas;
 - mendukung beberapa detail/item dalam satu PPL;
+- mendukung beberapa lampiran opsional pada setiap item PPL;
 - memungkinkan Finance mengklasifikasikan detail PPL ke COA dan RKA;
 - memvalidasi ketersediaan anggaran setelah klasifikasi Finance;
 - menjalankan verifikasi dan persetujuan;
@@ -37,6 +44,7 @@ PPL berhenti pada pencatatan pembayaran administratif dan penyelesaian proses. A
 - Input PPL manual oleh pegawai dan Tim Keuangan.
 - Pembuatan PPL dari payroll final.
 - Multiple item/detail dalam satu PPL.
+- Multiple lampiran opsional per item, hanya dapat diubah saat Draft.
 - Nomor PPL otomatis, unik, dan terkunci.
 - Referensi unit, pemohon, vendor/penerima, RKA, COA, dan payroll.
 - Pegawai mengajukan kebutuhan dan nominal tanpa memilih COA/RKA.
@@ -261,6 +269,7 @@ Model awal: `sifnext.ppl.line`.
 | `tax_amount` | Monetary | Nilai pajak |
 | `subtotal` | Monetary | Nilai akhir detail |
 | `currency_id` | Many2one | Mata uang |
+| `attachment_ids` | Many2many `ir.attachment` | Beberapa bukti pendukung khusus untuk item tersebut; opsional dan tidak disalin ketika PPL diduplikasi |
 
 Constraint minimum:
 
@@ -274,7 +283,8 @@ Constraint minimum:
 - Header, detail, RKA, account, payroll, dan currency harus konsisten terhadap company.
 - RKA harus sesuai COA, unit, periode, company, dan status aktif/disetujui.
 - Total header dihitung server-side dan tidak dapat diubah langsung.
-- Setelah Submit, field kebutuhan pemohon terkunci, tetapi field klasifikasi Finance tetap dapat diedit sampai Verify.
+- Setelah Submit, field kebutuhan pemohon dan seluruh lampiran item terkunci, tetapi field klasifikasi Finance tetap dapat diedit sampai Verify.
+- Penguncian lampiran berlaku pada perubahan relasi, isi/metadata file, upload baru, dan penghapusan melalui ORM/RPC; bukan hanya pada UI.
 - Seluruh detail dikunci setelah Verify; koreksi dilakukan melalui pengembalian ke Draft.
 - Total per RKA tidak boleh melampaui anggaran tersedia saat Verify/Approve/Payment.
 - Satu payroll batch hanya boleh memiliki satu PPL aktif.
@@ -406,6 +416,8 @@ Payload `schema_version: 1` hanya memuat tipe data primitif dan mencakup:
 - total pembayaran, metode, tanggal, referensi, petugas, dan timestamp;
 - detail COA, quantity, unit price, serta nominal setiap baris; dan
 - sumber payroll/batch setelah integrasi Payroll tersedia.
+
+Payload versi 1 tidak mengirim isi maupun metadata lampiran item. File tetap dapat diakses melalui relasi PPL sesuai ACL Odoo; penambahan metadata/URL file ke kontrak memerlukan versi kontrak baru dan persetujuan Diva/squad Jurnal Besar.
 
 Modul Jurnal Besar bertanggung jawab atas pemetaan debit/kredit, jurnal balance, pembuatan/posting jurnal, retry idempotent, reversal, penguncian periode, dan tampilan buku besar. Implementasi downstream wajib menggunakan `idempotency_key` sebagai unique event key. Exception dari salah satu hook membatalkan transaksi perubahan ke `paid`; retry tidak boleh menghasilkan jurnal atau realisasi ganda. PPL tidak menyimpan `move_id` dan tidak menyediakan konfigurasi journal/accounting.
 
@@ -633,14 +645,16 @@ custom_addons/odooapps/sifnext_ppl/
 - [x] Implementasikan computed total dan constraints.
 - [x] Buat sequence PPL dan proteksi immutable.
 - [x] Buat basic list, form, dan search views.
-- [ ] Implementasikan workflow dan return wizard.
+- [x] Implementasikan workflow dan return wizard.
 - [x] Implementasikan pembatasan COA/RKA untuk Pegawai dan klasifikasi oleh Finance.
 - [x] Implementasikan domain/mapping COA ke RKA berdasarkan unit, periode, dan company.
 - [x] Implementasikan validasi dan hook integrasi RKA.
 - [x] Buat pencatatan pembayaran administratif kas/bank.
+- [x] Tambahkan multiple lampiran per item dan penguncian setelah Draft.
 - [x] Implementasikan hook/data sumber untuk modul Jurnal Besar.
+- [ ] Implementasikan adapter konkret pada addon Jurnal Besar setelah model dan mapping debit/kredit dari Diva tersedia.
 - [ ] Implementasikan integrasi payroll.
-- [ ] Tambahkan audit trail dan notification.
+- [x] Tambahkan audit trail dan notification.
 - [x] Tambahkan ACL dan record rules final.
 - [ ] Implementasikan API setelah workflow stabil.
 - [ ] Implementasikan import Excel/pengalihan anggaran jika masuk scope.
@@ -678,6 +692,8 @@ custom_addons/odooapps/sifnext_ppl/
 - [ ] Satu payroll tidak menghasilkan PPL ganda.
 - [ ] Total/detail payroll sesuai mapping COA dan RKA.
 - [x] Payment tidak membuat `account.move` di addon PPL.
+- [x] Lampiran multi-file dapat ditambah per item saat Draft dan tidak ikut tersalin ke duplikat PPL.
+- [x] Lampiran tidak dapat ditambah, diubah, dilepas, atau dihapus setelah Submit.
 - [x] Hook Jurnal Besar menerima payload lengkap dan idempotency key.
 - [x] Kegagalan hook me-roll back perubahan status `paid`.
 - [x] ACL, record rules, unit, dan multi-company berjalan.
@@ -749,7 +765,7 @@ Import Excel dan pengalihan anggaran jika disetujui.
 
 - [x] PPL dapat dibuat manual oleh aktor yang berwenang.
 - [ ] PPL dapat dibuat langsung dari payroll final.
-- [x] Multiple detail item, RKA, dan COA berfungsi.
+- [x] Multiple detail item, lampiran per item, RKA, dan COA berfungsi.
 - [x] Pegawai dapat Submit kebutuhan tanpa memilih COA/RKA.
 - [x] Finance dapat mengklasifikasikan seluruh detail sebelum Verify.
 - [x] Verify diblokir jika klasifikasi atau anggaran belum valid.
@@ -820,5 +836,8 @@ Implementasi dapat dimulai setelah keputusan minimum berikut dikunci:
 | 2026-09-05 | Finance pembuat PPL dapat memilih COA sejak Draft; RKA dicari dari mapping | Tim/Stakeholder Finance | Confirmed dari diskusi |
 | 2026-09-05 | Pengecekan anggaran dimulai saat Finance memilih COA dan sistem menentukan RKA | Tim/Stakeholder Finance | Confirmed dari diskusi |
 | 2026-09-05 | Revisi/penolakan wajib memiliki alasan | Tim/Stakeholder Finance | Confirmed; status terminal `rejected` masih Open |
+| 2026-09-06 | Setiap item PPL mendukung beberapa lampiran opsional; file terkunci setelah Draft dan tidak disalin saat duplikasi | Tim PPL, asumsi implementasi dari hasil rapat | Perlu konfirmasi bila lampiran wajib atau hanya satu file |
+| 2026-09-06 | PPL dihubungkan ke Jurnal Besar melalui event `ppl.paid` schema v1; adapter konkret menunggu model dan mapping debit/kredit Diva | Tim PPL / Diva | Kontrak producer tersedia; acceptance downstream masih Open |
+| 2026-09-06 | Lampiran item tidak masuk payload Jurnal Besar schema v1 | Tim PPL, asumsi keamanan/minimal data | Perlu kontrak versi baru bila Diva membutuhkan file/metadata |
 
 Setiap keputusan baru harus ditambahkan ke Decision Log agar perubahan scope dan kontrak dapat dilacak.

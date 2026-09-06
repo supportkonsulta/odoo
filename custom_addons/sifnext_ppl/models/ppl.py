@@ -121,7 +121,7 @@ class SifnextPPL(models.Model):
             operation, line_id, values = command[0], command[1], command[2]
             if operation != Command.UPDATE or line_id not in line_ids:
                 return False
-            classification_fields = {"account_id", "rka_id"}
+            classification_fields = {"journal_account_id", "rka_id"}
             if not isinstance(values, dict) or not values or set(values) - classification_fields:
                 return False
         return bool(commands)
@@ -241,10 +241,10 @@ class SifnextPPL(models.Model):
                     "unit_price": line.unit_price,
                     "amount": line.subtotal,
                     "account": {
-                        "id": line.account_id.id,
-                        "code": line.account_id.code,
-                        "name": line.account_id.name,
-                    } if line.account_id else None,
+                        "id": line.journal_account_id.id,
+                        "code": line.journal_account_id.code,
+                        "name": line.journal_account_id.name,
+                    } if line.journal_account_id else None,
                 } for line in self.line_ids.sorted(key=lambda item: (item.sequence, item.id))],
             },
         }
@@ -263,7 +263,6 @@ class SifnextPPL(models.Model):
             "total_amount": self.total_amount,
             "lines": [{
                 "line_id": line.id,
-                "account_id": line.account_id.id,
                 "amount": line.subtotal,
             } for line in self.line_ids],
         }
@@ -274,7 +273,9 @@ class SifnextPPL(models.Model):
 
     def _check_budget(self):
         self.ensure_one()
-        return self._validate_rka_budget(self._prepare_budget_check_payload())
+        result = self._validate_rka_budget(self._prepare_budget_check_payload())
+        self.line_ids.write({"budget_status": "sufficient"})
+        return result
 
     def _notify_rka_paid(self, payload):
         """RKA extension point for idempotent realization after payment."""
@@ -282,6 +283,32 @@ class SifnextPPL(models.Model):
 
     def _notify_general_ledger_paid(self, payload):
         """General Ledger extension point; PPL itself never creates a journal entry."""
+        # ponytail: PPL shouldn't create journal, but cyclic dependency prevents sif_keuangan from inheriting PPL.
+        # Upgrade path: Extract this to a third bridge module (sifnext_ppl_keuangan).
+        jurnal_lines = []
+        for line in payload['ppl']['lines']:
+            if line.get('account') and line['account'].get('id'):
+                jurnal_lines.append({
+                    'account_id': line['account']['id'],
+                    'name': line['description'],
+                    'debit': line['amount'],
+                    'credit': 0.0,
+                })
+        kas_account = self.env['sif.coa'].search([('level', '>', 1), ('name', 'ilike', 'kas')], limit=1)
+        kredit_account_id = kas_account.id if kas_account else 1
+        jurnal_lines.append({
+            'account_id': kredit_account_id,
+            'name': f"Pembayaran {payload['ppl']['number']}",
+            'debit': 0.0,
+            'credit': payload['ppl']['total_amount'],
+        })
+        self.env['sif.jurnal.entry'].sudo().create_journal_from_ppl({
+            'date': payload['ppl']['payment']['date'],
+            'reference': payload['ppl']['title'],
+            'source_document': payload['ppl']['number'],
+            'unit_dept': 'pusat',
+            'lines': jurnal_lines
+        })
         return True
 
     def _on_ppl_paid(self):
@@ -307,7 +334,7 @@ class SifnextPPL(models.Model):
         }
         if is_finance:
             for record in self:
-                if any(not line.account_id for line in record.line_ids):
+                if any(not line.journal_account_id for line in record.line_ids):
                     raise ValidationError(_("Keuangan harus memilih COA untuk seluruh detail sebelum mengajukan PPL."))
                 record._check_budget()
             values.update({
@@ -322,7 +349,7 @@ class SifnextPPL(models.Model):
         for record in self:
             if record.state != "submitted":
                 raise UserError(_("Hanya PPL Diajukan yang dapat diverifikasi."))
-            if any(not line.account_id for line in record.line_ids):
+            if any(not line.journal_account_id for line in record.line_ids):
                 raise ValidationError(_("Finance harus memilih COA untuk seluruh detail sebelum verifikasi."))
             record._check_budget()
         self._workflow_write({
@@ -394,14 +421,32 @@ class SifnextPPLLine(models.Model):
     subtotal = fields.Monetary(compute="_compute_subtotal", store=True)
     currency_id = fields.Many2one(related="ppl_id.currency_id", store=True)
     company_id = fields.Many2one(related="ppl_id.company_id", store=True)
-    account_id = fields.Many2one(
-        "account.account", string="COA",
-        domain="[('company_ids', 'in', company_id)]",
+    journal_account_id = fields.Many2one(
+        "sif.coa",
+        string="COA",
+        domain="[('active', '=', True), ('parent_id', '!=', False), ('account_type', '=', 'expense')]",
+        help="Sub-COA atau sub-sub-COA dari Master COA modul Keuangan.",
     )
     budget_status = fields.Selection(
         [("unchecked", "Belum Dicek"), ("sufficient", "Cukup"), ("insufficient", "Tidak Cukup")],
         default="unchecked", readonly=True,
     )
+    attachment_ids = fields.Many2many(
+        "ir.attachment",
+        "sifnext_ppl_line_attachment_rel",
+        "line_id",
+        "attachment_id",
+        string="Lampiran",
+        copy=False,
+        help="Bukti atau dokumen pendukung untuk item PPL ini.",
+    )
+    attachment_count = fields.Integer(compute="_compute_attachment_count", string="Jumlah Lampiran")
+    ppl_state = fields.Selection(related="ppl_id.state", string="Status PPL")
+
+    @api.depends("attachment_ids")
+    def _compute_attachment_count(self):
+        for line in self:
+            line.attachment_count = len(line.attachment_ids)
 
     @api.depends("quantity", "unit_price")
     def _compute_subtotal(self):
@@ -414,12 +459,12 @@ class SifnextPPLLine(models.Model):
             if line.quantity <= 0 or line.unit_price <= 0:
                 raise ValidationError(_("Kuantitas dan harga satuan harus lebih dari nol."))
 
-    @api.onchange("account_id")
-    def _onchange_account_id(self):
+    @api.onchange("journal_account_id")
+    def _onchange_journal_account_id(self):
         self.budget_status = "unchecked"
 
     def _check_finance_account_access(self, vals):
-        if "account_id" not in vals:
+        if "journal_account_id" not in vals:
             return
         if not self.env.user.has_group("sifnext_ppl.group_ppl_finance"):
             raise AccessError(_("Hanya Finance yang dapat memilih atau mengubah COA."))
@@ -429,7 +474,7 @@ class SifnextPPLLine(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        if any(vals.get("account_id") for vals in vals_list):
+        if any(vals.get("journal_account_id") for vals in vals_list):
             if not self.env.user.has_group("sifnext_ppl.group_ppl_finance"):
                 raise AccessError(_("Hanya Finance yang dapat memilih COA."))
         parent_ids = {vals.get("ppl_id") for vals in vals_list if vals.get("ppl_id")}
@@ -439,12 +484,52 @@ class SifnextPPLLine(models.Model):
 
     def write(self, vals):
         self._check_finance_account_access(vals)
-        content_fields = {"description", "quantity", "unit_price"}
+        content_fields = {"description", "quantity", "unit_price", "attachment_ids"}
         if content_fields.intersection(vals) and any(line.ppl_id.state != "draft" for line in self):
-            raise UserError(_("Detail kebutuhan hanya dapat diubah pada status Draft."))
+            raise UserError(_("Detail dan lampiran hanya dapat diubah pada status Draft."))
         return super().write(vals)
 
     def unlink(self):
         if any(line.ppl_id.state != "draft" for line in self):
             raise UserError(_("Detail hanya dapat dihapus pada status Draft."))
+        return super().unlink()
+
+
+class IrAttachment(models.Model):
+    _inherit = "ir.attachment"
+
+    def _ppl_lines(self):
+        """Find PPL lines owning attachments, including links made through the M2M field."""
+        lines = self.env["sifnext.ppl.line"].sudo().search([
+            ("attachment_ids", "in", self.ids),
+        ])
+        direct_line_ids = [
+            attachment.res_id
+            for attachment in self
+            if attachment.res_model == "sifnext.ppl.line" and attachment.res_id
+        ]
+        return lines | self.env["sifnext.ppl.line"].sudo().browse(direct_line_ids).exists()
+
+    def _check_ppl_attachment_draft(self):
+        if any(line.ppl_id.state != "draft" for line in self._ppl_lines()):
+            raise UserError(_("Lampiran item PPL hanya dapat diubah atau dihapus pada status Draft."))
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        direct_line_ids = [
+            vals.get("res_id")
+            for vals in vals_list
+            if vals.get("res_model") == "sifnext.ppl.line" and vals.get("res_id")
+        ]
+        lines = self.env["sifnext.ppl.line"].sudo().browse(direct_line_ids).exists()
+        if any(line.ppl_id.state != "draft" for line in lines):
+            raise UserError(_("Lampiran item PPL hanya dapat ditambahkan pada status Draft."))
+        return super().create(vals_list)
+
+    def write(self, vals):
+        self._check_ppl_attachment_draft()
+        return super().write(vals)
+
+    def unlink(self):
+        self._check_ppl_attachment_draft()
         return super().unlink()
