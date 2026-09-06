@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Rule Category Form -->
+    <record id="view_custom_payroll_rule_category_form" model="ir.ui.view">
+        <field name="name">custom.payroll.rule.category.form</field>
+        <field name="model">custom.payroll.rule.category</field>
+        <field name="arch" type="xml">
+            <form string="Rule Category">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="code"/>
+                        <field name="parent_id"/>
+                        <field name="sequence"/>
+                        <field name="company_id" groups="base.group_multi_company"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Rule Category List -->
+    <record id="view_custom_payroll_rule_category_list" model="ir.ui.view">
+        <field name="name">custom.payroll.rule.category.list</field>
+        <field name="model">custom.payroll.rule.category</field>
+        <field name="arch" type="xml">
+            <list string="Rule Categories">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="parent_id"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Rule Form -->
+    <record id="view_custom_payroll_rule_form" model="ir.ui.view">
+        <field name="name">custom.payroll.rule.form</field>
+        <field name="model">custom.payroll.rule</field>
+        <field name="arch" type="xml">
+            <form string="Salary Rule">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Rule Name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Information">
+                            <field name="code"/>
+                            <field name="category_id"/>
+                            <field name="sequence"/>
+                            <field name="appears_on_payslip"/>
+                            <field name="active"/>
+                        </group>
+                        <group string="Settings">
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Condition" name="condition">
+                            <field name="condition" widget="ace" options="{'mode': 'python'}"
+                                   placeholder="Python expression returning True/False. e.g.: payslip.payroll_batch_id.periode_bulan == '12'"/>
+                            <div class="text-muted mt8">
+                                <p><strong>Available variables:</strong> employee, contract, payslip, categories, result</p>
+                            </div>
+                        </page>
+                        <page string="Computation" name="computation">
+                            <field name="amount_python" widget="ace" options="{'mode': 'python'}"
+                                   placeholder="Python code that sets 'result' variable. e.g.: result = categories.BASIC * 0.05"/>
+                            <div class="text-muted mt8">
+                                <p><strong>Examples:</strong></p>
+                                <ul>
+                                    <li><code>result = categories.BASIC * 0.05</code> (5% of basic)</li>
+                                    <li><code>result = contract.wage * 0.5</code> (50% of wage)</li>
+                                    <li><code>result = 500000 if employee.children &gt; 2 else 0</code></li>
+                                </ul>
+                            </div>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Rule List -->
+    <record id="view_custom_payroll_rule_list" model="ir.ui.view">
+        <field name="name">custom.payroll.rule.list</field>
+        <field name="model">custom.payroll.rule</field>
+        <field name="arch" type="xml">
+            <list string="Salary Rules">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="category_id"/>
+                <field name="appears_on_payslip"/>
+                <field name="active"/>
+                <field name="company_id" groups="base.group_multi_company" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Rule Search -->
+    <record id="view_custom_payroll_rule_search" model="ir.ui.view">
+        <field name="name">custom.payroll.rule.search</field>
+        <field name="model">custom.payroll.rule</field>
+        <field name="arch" type="xml">
+            <search string="Salary Rules">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="category_id"/>
+                <filter name="filter_active" string="Active" domain="[('active', '=', True)]"/>
+                <filter name="filter_inactive" string="Inactive" domain="[('active', '=', False)]"/>
+                <group>
+                    <filter name="group_category" string="Category" context="{'group_by': 'category_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Actions -->
+    <record id="action_custom_payroll_rule" model="ir.actions.act_window">
+        <field name="name">Salary Rules</field>
+        <field name="res_model">custom.payroll.rule</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_custom_payroll_rule_search"/>
+        <field name="context">{'search_default_filter_active': 1}</field>
+    </record>
+
+    <record id="action_custom_payroll_rule_category" model="ir.actions.act_window">
+        <field name="name">Rule Categories</field>
+        <field name="res_model">custom.payroll.rule.category</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>
