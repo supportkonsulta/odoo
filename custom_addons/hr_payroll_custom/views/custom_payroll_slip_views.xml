@@ -190,4 +190,13 @@
             </p>
         </field>
     </record>
+
+    <record id="action_custom_payroll_my_slip" model="ir.actions.act_window">
+        <field name="name">My Payslips</field>
+        <field name="res_model">custom.payroll.slip</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('employee_id.user_id', '=', uid)]</field>
+        <field name="search_view_id" ref="view_custom_payroll_slip_search"/>
+        <field name="context">{'create': False}</field>
+    </record>
 </odoo>

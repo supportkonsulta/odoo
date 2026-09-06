@@ -1,5 +1,5 @@
 from odoo import _, api, fields, models
-from odoo.exceptions import UserError
+from odoo.exceptions import AccessError, UserError
 from datetime import date, datetime
 import calendar
 
@@ -99,6 +99,14 @@ class CustomPayrollSlip(models.Model):
     email_error = fields.Text(string='Email Error', readonly=True, copy=False)
     currency_id = fields.Many2one('res.currency', string='Currency', default=lambda self: self.env.company.currency_id)
     company_id = fields.Many2one('res.company', string='Company', default=lambda self: self.env.company, required=True)
+
+    def _check_payroll_officer(self):
+        if not self.env.user.has_group('hr_payroll_custom.group_payroll_user'):
+            raise AccessError(_('Only Payroll Officers or Administrators can manage payslips.'))
+
+    def _check_payroll_manager(self):
+        if not self.env.user.has_group('hr_payroll_custom.group_payroll_manager'):
+            raise AccessError(_('Only Payroll Administrators can perform this action.'))
 
     attendance_overtime_hours = fields.Float(
         string='Overtime Hours (from Attendance)',
@@ -307,10 +315,12 @@ class CustomPayrollSlip(models.Model):
                 'nominal': self.overtime_amount,
                 'description': 'Auto Overtime',
             })
-        self.action_recompute_rules()
+        self.with_context(payroll_internal_recompute=True).action_recompute_rules()
 
     def action_recompute_rules(self):
         self.ensure_one()
+        if not self.env.context.get('payroll_internal_recompute'):
+            self._check_payroll_manager()
         Detail = self.env['custom.payroll.slip.detail']
         self.detail_ids.filtered(lambda d: d.component_type == 'rule').unlink()
         engine = self.env['custom.payroll.rule.engine']
@@ -326,16 +336,19 @@ class CustomPayrollSlip(models.Model):
             })
 
     def action_confirm(self):
+        self._check_payroll_officer()
         for rec in self:
             if rec.status == 'draft':
                 rec.status = 'confirmed'
 
     def action_paid(self):
+        self._check_payroll_officer()
         for rec in self:
             if rec.status == 'confirmed':
                 rec.status = 'paid'
 
     def action_cancel(self):
+        self._check_payroll_officer()
         for rec in self:
             if rec.status in ('draft', 'confirmed'):
                 rec.status = 'cancelled'
@@ -383,6 +396,7 @@ class CustomPayrollSlip(models.Model):
         return 'sent'
 
     def action_send_email(self):
+        self._check_payroll_officer()
         results = {
             'sent': 0,
             'skipped': 0,
@@ -411,6 +425,7 @@ class CustomPayrollSlip(models.Model):
         }
 
     def action_resend_email(self):
+        self._check_payroll_officer()
         results = {'sent': 0, 'skipped': 0, 'not_paid': 0, 'failed': 0}
         for slip in self:
             result = slip._send_email(resend=True)
@@ -431,6 +446,7 @@ class CustomPayrollSlip(models.Model):
         }
 
     def action_draft(self):
+        self._check_payroll_officer()
         for rec in self:
             if rec.status == 'cancelled':
                 rec.status = 'draft'

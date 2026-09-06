@@ -1,10 +1,12 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_custom_payroll_slip_employee,custom.payroll.slip.employee,model_custom_payroll_slip,group_payroll_employee,1,0,0,0
 access_custom_payroll_batch_user,custom.payroll.batch.user,model_custom_payroll_batch,group_payroll_user,1,1,1,1
 access_custom_payroll_batch_manager,custom.payroll.batch.manager,model_custom_payroll_batch,group_payroll_manager,1,1,1,1
 access_custom_payroll_slip_user,custom.payroll.slip.user,model_custom_payroll_slip,group_payroll_user,1,1,1,1
 access_custom_payroll_slip_manager,custom.payroll.slip.manager,model_custom_payroll_slip,group_payroll_manager,1,1,1,1
 access_custom_payroll_slip_detail_user,custom.payroll.slip.detail.user,model_custom_payroll_slip_detail,group_payroll_user,1,1,1,1
 access_custom_payroll_slip_detail_manager,custom.payroll.slip.detail.manager,model_custom_payroll_slip_detail,group_payroll_manager,1,1,1,1
+access_custom_payroll_slip_detail_employee,custom.payroll.slip.detail.employee,model_custom_payroll_slip_detail,group_payroll_employee,1,0,0,0
 access_custom_payroll_tunjangan_user,custom.payroll.tunjangan.user,model_custom_payroll_tunjangan,group_payroll_user,1,0,0,0
 access_custom_payroll_tunjangan_manager,custom.payroll.tunjangan.manager,model_custom_payroll_tunjangan,group_payroll_manager,1,1,1,1
 access_custom_payroll_bpjs_user,custom.payroll.bpjs.user,model_custom_payroll_bpjs,group_payroll_user,1,0,0,0

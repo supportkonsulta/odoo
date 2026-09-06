@@ -5,7 +5,7 @@
         <field name="name">Payroll</field>
         <field name="sequence">96</field>
         <field name="web_icon" eval="False"/>
-        <field name="group_ids" eval="[(4, ref('hr_payroll_custom.group_payroll_user'))]"/>
+        <field name="group_ids" eval="[(4, ref('hr_payroll_custom.group_payroll_employee'))]"/>
     </record>
 
     <!-- Payroll Sub Menu -->
@@ -14,6 +14,13 @@
               parent="menu_payroll_root"
               sequence="10"
               groups="hr_payroll_custom.group_payroll_user"/>
+
+    <menuitem id="menu_payroll_my_slips"
+              name="My Payslips"
+              parent="menu_payroll_root"
+              action="action_custom_payroll_my_slip"
+              sequence="5"
+              groups="hr_payroll_custom.group_payroll_employee"/>
 
     <menuitem id="menu_payroll_batch"
               name="Batches"

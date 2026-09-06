@@ -1,5 +1,5 @@
 from odoo import _, api, fields, models
-from odoo.exceptions import UserError
+from odoo.exceptions import AccessError, UserError
 
 
 class CustomPayrollBatch(models.Model):
@@ -64,6 +64,14 @@ class CustomPayrollBatch(models.Model):
         help='Reason provided when the last submission was rejected.',
     )
 
+    def _check_payroll_officer(self):
+        if not self.env.user.has_group('hr_payroll_custom.group_payroll_user'):
+            raise AccessError(_('Only Payroll Officers or Administrators can manage payroll batches.'))
+
+    def _check_payroll_manager(self):
+        if not self.env.user.has_group('hr_payroll_custom.group_payroll_manager'):
+            raise AccessError(_('Only Payroll Administrators can perform this action.'))
+
     @api.depends('periode_bulan', 'periode_tahun')
     def _compute_name(self):
         bulan_name = dict(self._fields['periode_bulan'].selection)
@@ -78,6 +86,7 @@ class CustomPayrollBatch(models.Model):
             rec.slip_count = len(rec.slip_ids)
 
     def action_submit_for_approval(self):
+        self._check_payroll_officer()
         for rec in self:
             if rec.status == 'draft':
                 rec.status = 'submitted'
@@ -85,6 +94,7 @@ class CustomPayrollBatch(models.Model):
                 rec.rejection_reason = False
 
     def action_approve(self):
+        self._check_payroll_manager()
         for rec in self:
             if rec.status == 'submitted':
                 rec.status = 'approved'
@@ -93,6 +103,7 @@ class CustomPayrollBatch(models.Model):
                 rec.rejection_reason = False
 
     def action_reject(self, reason):
+        self._check_payroll_manager()
         for rec in self:
             if rec.status == 'submitted':
                 rec.status = 'draft'
@@ -101,6 +112,7 @@ class CustomPayrollBatch(models.Model):
                 rec.approval_date = False
 
     def action_open_reject_wizard(self):
+        self._check_payroll_manager()
         self.ensure_one()
         return {
             'type': 'ir.actions.act_window',
@@ -114,6 +126,7 @@ class CustomPayrollBatch(models.Model):
         }
 
     def action_done(self):
+        self._check_payroll_manager()
         for rec in self:
             if rec.status != 'approved':
                 continue
@@ -126,16 +139,19 @@ class CustomPayrollBatch(models.Model):
             rec.status = 'done'
 
     def action_cancel(self):
+        self._check_payroll_officer()
         for rec in self:
             if rec.status in ('draft', 'submitted', 'approved'):
                 rec.status = 'cancelled'
 
     def action_draft(self):
+        self._check_payroll_officer()
         for rec in self:
             if rec.status == 'cancelled':
                 rec.status = 'draft'
 
     def action_generate_payslips(self):
+        self._check_payroll_officer()
         self.ensure_one()
         if self.status != 'draft':
             raise UserError(_("Payslips can only be generated while batch is in 'Draft' status."))
