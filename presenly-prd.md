@@ -25,7 +25,7 @@ Prinsip pembacaan dokumen:
 Dokumen historis sebelum migrasi tidak lagi menjadi sumber spesifikasi aktif. Penjelasan teknis rinci tetap tersedia di:
 
 - `custom_addons/presenly/README.md`
-- `custom_addons/presenly/docs/MOBILE_API.md`
+- `custom_addons/presenly/docs/MOBILE_API_FULL.md`
 - `custom_addons/presenly/docs/WORKING_HOURS_LOCATION_INTEGRATION.md`
 - `custom_addons/presenly/docs/MIGRATION_TO_HR_ATTENDANCE.md`
 
@@ -498,7 +498,7 @@ Dashboard, kiosk, attendance list/form, dan reporting dasar tetap memakai fitur 
 
 ## 13. Mobile API
 
-> Referensi approval (list antrean atasan, approve/reject, pengajuan Time Off & Permission): [`MOBILE_APPROVAL_API.md`](custom_addons/presenly/docs/MOBILE_APPROVAL_API.md)
+> Referensi API mobile lengkap (attendance, WFA, Time Off, Permission, Overtime, approval): [`MOBILE_API_FULL.md`](custom_addons/presenly/docs/MOBILE_API_FULL.md)
 > Roadmap penyempurnaan API approval: [`PLAN_APPROVAL_API.md`](custom_addons/presenly/docs/PLAN_APPROVAL_API.md)
 
 ### 13.1 Endpoint aktif

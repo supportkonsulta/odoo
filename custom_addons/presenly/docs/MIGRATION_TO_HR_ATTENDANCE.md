@@ -401,7 +401,7 @@ Dokumentasi target:
 Update dokumen:
 
 ```text
-docs/MOBILE_API.md
+docs/MOBILE_API_FULL.md (kanonik API mobile)
 README.md
 ```
 

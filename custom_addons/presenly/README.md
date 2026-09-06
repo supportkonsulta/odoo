@@ -130,7 +130,7 @@ Kontrak mobile aktif difokuskan pada autentikasi dan presensi. Presenly mengguna
 4. Kirim GPS dan selfie melalui endpoint check-in/check-out.
 5. Logout melalui `POST /web/session/destroy`.
 
-Dokumentasi khusus login, session, status, check-in, check-out, GPS/geofence, selfie, validasi, contoh `curl`, dan error handling tersedia di [`docs/MOBILE_API.md`](docs/MOBILE_API.md). Pemeriksaan login/session/status dapat dijalankan dengan:
+Dokumentasi lengkap API mobile (login, session, format JSON-RPC, error handling, attendance, WFA, Time Off, Permission, Overtime, approval) tersedia dalam satu file kanonik: [`docs/MOBILE_API_FULL.md`](docs/MOBILE_API_FULL.md). Pemeriksaan login/session/status dapat dijalankan dengan:
 
 ```bash
 BASE_URL=http://127.0.0.1:8069 \
