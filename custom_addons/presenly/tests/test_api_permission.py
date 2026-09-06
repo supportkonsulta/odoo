@@ -1,3 +1,4 @@
+from odoo import Command
 from odoo.tests import HttpCase, new_test_user, tagged
 from odoo.tests.common import JsonRpcException
 
@@ -33,11 +34,33 @@ class TestPresenlyPermissionApi(HttpCase):
             'company_id': cls.env.company.id,
             'address_id': cls.location_address.id,
         })
+        cls.location_b = cls.env['hr.work.location'].create({
+            'name': 'Permission API Office B',
+            'company_id': cls.env.company.id,
+            'address_id': cls.location_address.id,
+        })
+        cls.working_hours = cls.env['resource.calendar'].create({
+            'name': 'Permission API Working Hours',
+            'company_id': cls.env.company.id,
+            'tz': 'UTC',
+            'attendance_ids': [
+                Command.create({
+                    'name': f'Day {idx}',
+                    'dayofweek': str(idx),
+                    'day_period': 'morning',
+                    'hour_from': 8.0,
+                    'hour_to': 17.0,
+                })
+                for idx in range(7)
+            ],
+        })
         cls.employee = cls.env['hr.employee'].create({
             'name': 'Permission API Employee',
             'user_id': cls.user.id,
             'company_id': cls.env.company.id,
             'work_location_id': cls.location.id,
+            'resource_calendar_id': cls.working_hours.id,
+            'tz': 'UTC',
         })
         cls.approver_employee = cls.env['hr.employee'].create({
             'name': 'Permission API Approver Employee',
@@ -49,7 +72,7 @@ class TestPresenlyPermissionApi(HttpCase):
             'name': 'Permission API Errand',
             'code': 'PERM-API-ERRAND',
             'company_id': cls.env.company.id,
-            'request_mode': 'full_day',
+            'request_mode': 'both',
             'requires_attachment': False,
             'paid_status': 'paid',
         })
@@ -172,3 +195,89 @@ class TestPresenlyPermissionApi(HttpCase):
             self.assertTrue(item['can_approve'])
             self.assertTrue(item['can_reject'])
         self.assertEqual(batch['data']['unreadable_ids'], [])
+
+    def test_permission_api_auto_location_unique(self):
+        """No work_location_id: unique location for the period -> auto-filled."""
+        self.authenticate(self.login, self.password)
+        created = self.make_jsonrpc_request(
+            '/api/presenly/v1/permissions', {
+                'permission_type_id': self.permission_type.id,
+                'request_mode': 'full_day',
+                'date_from': '2030-07-01',
+                'date_to': '2030-07-01',
+                'reason': 'Auto location unique',
+            },
+        )
+        self.assertTrue(created['success'])
+        self.assertEqual(created['data']['work_location_id'], self.location.id)
+
+    def test_permission_api_auto_location_hours_overlap(self):
+        """K2b: mode hours auto-resolves the location overlapping the hours."""
+        self.env['presenly.work.location.schedule'].sudo().create([
+            {
+                'employee_id': self.employee.id,
+                'work_location_id': self.location.id,
+                'schedule_type': 'date',
+                'schedule_date': '2030-07-10',
+                'hour_from': 8.0,
+                'hour_to': 12.0,
+            },
+            {
+                'employee_id': self.employee.id,
+                'work_location_id': self.location_b.id,
+                'schedule_type': 'date',
+                'schedule_date': '2030-07-10',
+                'hour_from': 13.0,
+                'hour_to': 17.0,
+            },
+        ])
+        self.authenticate(self.login, self.password)
+        created = self.make_jsonrpc_request(
+            '/api/presenly/v1/permissions', {
+                'permission_type_id': self.permission_type.id,
+                'request_mode': 'hours',
+                'date_from': '2030-07-10',
+                'date_to': '2030-07-10',
+                'hour_from': 14.0,
+                'hour_to': 16.0,
+                'reason': 'Afternoon errand',
+            },
+        )
+        self.assertTrue(created['success'])
+        self.assertEqual(created['data']['work_location_id'], self.location_b.id)
+        self.assertEqual(created['data']['request_mode'], 'hours')
+
+    def test_permission_api_location_options_hours(self):
+        """location-options for mode hours returns the overlapping location."""
+        self.env['presenly.work.location.schedule'].sudo().create([
+            {
+                'employee_id': self.employee.id,
+                'work_location_id': self.location.id,
+                'schedule_type': 'date',
+                'schedule_date': '2030-07-20',
+                'hour_from': 8.0,
+                'hour_to': 12.0,
+            },
+            {
+                'employee_id': self.employee.id,
+                'work_location_id': self.location_b.id,
+                'schedule_type': 'date',
+                'schedule_date': '2030-07-20',
+                'hour_from': 13.0,
+                'hour_to': 17.0,
+            },
+        ])
+        self.authenticate(self.login, self.password)
+        result = self.make_jsonrpc_request(
+            '/api/presenly/v1/permissions/location-options',
+            {
+                'date_from': '2030-07-20',
+                'date_to': '2030-07-20',
+                'request_mode': 'hours',
+                'hour_from': 9.0,
+                'hour_to': 10.0,
+            },
+        )
+        self.assertTrue(result['success'])
+        self.assertTrue(result['data']['unique'])
+        self.assertEqual(result['data']['location_id'], self.location.id)

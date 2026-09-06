@@ -46,6 +46,8 @@ Referensi API Time Off / Cuti beserta approval leveling ada di [`MOBILE_TIMEOFF_
 
 Referensi approval (list antrean atasan, approve/reject, pengajuan Time Off & Permission) ada di [`MOBILE_APPROVAL_API.md`](MOBILE_APPROVAL_API.md). Kebijakan dan roadmap penyempurnaan API approval ada di [`PLAN_APPROVAL_API.md`](PLAN_APPROVAL_API.md).
 
+Referensi API Overtime / Lembur (durasi server-side, jam 24H, approval, lokasi otomatis) ada di [`MOBILE_OVERTIME_API.md`](MOBILE_OVERTIME_API.md).
+
 Pengertian & rencana otomatisasi Work Location (attendance & pengajuan) ada di [`PLAN_AUTO_WORK_LOCATION.md`](PLAN_AUTO_WORK_LOCATION.md).
 
 ## 3. Format JSON-RPC

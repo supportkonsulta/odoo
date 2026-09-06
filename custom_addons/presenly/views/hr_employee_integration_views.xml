@@ -101,4 +101,15 @@
             </xpath>
         </field>
     </record>
+
+    <record id="view_hr_employee_overtime_hidden_presenly" model="ir.ui.view">
+        <field name="name">hr.employee.attendance.overtime.hidden.presenly</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr_attendance.view_employee_form_inherit_hr_attendance"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='ruleset_id']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+        </field>
+    </record>
 </odoo>

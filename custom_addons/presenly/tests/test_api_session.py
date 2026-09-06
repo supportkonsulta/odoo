@@ -63,6 +63,12 @@ class TestPresenlyApiSession(HttpCase):
             result['data']['available_work_locations'][0]['id'],
             self.location.id,
         )
+        self.assertIn('recommended_work_location_id', result['data'])
+        self.assertIn('auto_selection_supported', result['data'])
+        self.assertIn('ambiguous', result['data'])
+        self.assertEqual(result['data']['recommended_work_location_id'], self.location.id)
+        self.assertTrue(result['data']['auto_selection_supported'])
+        self.assertFalse(result['data']['ambiguous'])
         self.assertNotIn('approved_leave', result['data'])
         self.assertNotIn('approved_permission', result['data'])
         self.assertFalse(result['error'])

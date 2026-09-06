@@ -22,6 +22,11 @@ class PresenlyApprovalRule(models.Model):
     leave_type_id = fields.Many2one(
         'hr.leave.type', string='Time Off Type', index=True,
     )
+    is_overtime_route = fields.Boolean(
+        string='Overtime Route', default=False,
+        help='When set, this step approves Presenly Overtime requests for the '
+             'company/work location scope (no request type required).',
+    )
     sequence = fields.Integer(default=10, string='Order')
     approver_type = fields.Selection([
         ('user', 'Specific User'),
@@ -52,11 +57,14 @@ class PresenlyApprovalRule(models.Model):
         'leave_type_id', 'leave_type_id.name', 'work_location_id',
         'work_location_id.name', 'approver_type', 'approver_user_id',
         'approver_user_id.name', 'approver_group_id', 'approver_group_id.name',
+        'is_overtime_route',
     )
     def _compute_route_display(self):
         approver_labels = dict(self._fields['approver_type'].selection)
         for rule in self:
-            if rule.permission_type_id:
+            if rule.is_overtime_route:
+                rule.request_type_display = 'Overtime'
+            elif rule.permission_type_id:
                 rule.request_type_display = (
                     f'Permission: {rule.permission_type_id.display_name}'
                 )
@@ -85,13 +93,17 @@ class PresenlyApprovalRule(models.Model):
         'name', 'company_id', 'work_location_id',
         'permission_type_id', 'permission_type_id.is_complete', 'leave_type_id',
         'approver_type', 'approver_user_id', 'approver_group_id',
+        'is_overtime_route',
     )
     def _compute_is_complete(self):
         for rule in self:
-            target_is_valid = bool(
-                (rule.permission_type_id and rule.permission_type_id.is_complete)
-                or rule.leave_type_id
-            )
+            if rule.is_overtime_route:
+                target_is_valid = True
+            else:
+                target_is_valid = bool(
+                    (rule.permission_type_id and rule.permission_type_id.is_complete)
+                    or rule.leave_type_id
+                )
             approver_is_valid = rule.approver_type not in ('user', 'group')
             if rule.approver_type == 'user':
                 approver_is_valid = bool(rule.approver_user_id)
@@ -101,7 +113,10 @@ class PresenlyApprovalRule(models.Model):
                 rule.name
                 and rule.company_id
                 and target_is_valid
-                and bool(rule.permission_type_id) != bool(rule.leave_type_id)
+                and (
+                    rule.is_overtime_route
+                    or bool(rule.permission_type_id) != bool(rule.leave_type_id)
+                )
                 and (
                     not rule.work_location_id
                     or rule.work_location_id.company_id == rule.company_id
@@ -111,10 +126,15 @@ class PresenlyApprovalRule(models.Model):
 
     @api.constrains(
         'company_id', 'work_location_id', 'permission_type_id',
-        'leave_type_id', 'sequence', 'active',
+        'leave_type_id', 'is_overtime_route', 'sequence', 'active',
     )
     def _check_unique_level_scope(self):
         for rule in self.filtered('active'):
+            if rule.is_overtime_route and (rule.permission_type_id or rule.leave_type_id):
+                raise ValidationError(
+                    'An overtime approval step must not target a Permission Type '
+                    'or a Time Off Type.'
+                )
             if rule.permission_type_id and rule.leave_type_id:
                 raise ValidationError(
                     'An approval step must target either a Permission Type or '
@@ -129,6 +149,7 @@ class PresenlyApprovalRule(models.Model):
                 ('work_location_id', '=', rule.work_location_id.id or False),
                 ('permission_type_id', '=', rule.permission_type_id.id or False),
                 ('leave_type_id', '=', rule.leave_type_id.id or False),
+                ('is_overtime_route', '=', rule.is_overtime_route),
                 ('sequence', '=', rule.sequence),
             ]
             if self.search_count(domain):
@@ -154,6 +175,12 @@ class PresenlyApprovalRule(models.Model):
             domain += [
                 ('permission_type_id', '=', False),
                 ('leave_type_id', '=', request.holiday_status_id.id),
+            ]
+        elif request_kind == 'overtime':
+            domain += [
+                ('permission_type_id', '=', False),
+                ('leave_type_id', '=', False),
+                ('is_overtime_route', '=', True),
             ]
         else:
             domain += [
@@ -214,9 +241,12 @@ class PresenlyApprovalRule(models.Model):
             request_label = getattr(
                 request, 'permission_type_id', False
             ) or getattr(request, 'holiday_status_id', False)
+            fallback_label = 'this request type'
+            if request._name == 'presenly.overtime.request':
+                fallback_label = 'Overtime'
             raise UserError(
                 'No complete Presenly Approval Route is configured for '
-                f'{request_label.display_name or "this request type"} at '
+                f'{request_label.display_name if request_label else fallback_label} at '
                 f'{request.company_id.display_name}.'
             )
         for level, rule in enumerate(self, start=1):
@@ -251,6 +281,7 @@ class PresenlyApprovalRequest(models.Model):
     target_model = fields.Selection([
         ('presenly.permission', 'Permission / Dispensation'),
         ('hr.leave', 'Time Off'),
+        ('presenly.overtime.request', 'Overtime / Lembur'),
     ], required=True, index=True, readonly=True)
     target_res_id = fields.Integer(required=True, index=True, readonly=True)
     target_display_name = fields.Char(
@@ -547,6 +578,7 @@ class PresenlyApprovalLog(models.Model):
     request_model = fields.Selection([
         ('presenly.permission', 'Permission'),
         ('hr.leave', 'Time Off'),
+        ('presenly.overtime.request', 'Overtime / Lembur'),
     ], required=True, index=True)
     request_res_id = fields.Integer(required=True, index=True)
     level = fields.Integer(required=True)

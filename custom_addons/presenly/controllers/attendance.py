@@ -249,6 +249,17 @@ class PresenlyAttendanceController(http.Controller):
             )
         else:
             attendance_message = 'Employee is ready to check in.'
+
+        # Auto-selection guidance for the mobile client.
+        unique_locations = locations.filtered('presenly_is_geofence_ready')
+        recommended_id = False
+        ambiguous = False
+        if unique_locations:
+            if len(unique_locations) == 1:
+                recommended_id = unique_locations.id or False
+            else:
+                ambiguous = True
+
         return self._response(True, {
             'server_time': fields.Datetime.now(),
             'employee_id': employee.id,
@@ -266,6 +277,9 @@ class PresenlyAttendanceController(http.Controller):
             'schedule_id': attendance.presenly_schedule_id.id or False,
             'attendance_mode': attendance.presenly_attendance_mode or False,
             'available_work_locations': available_locations,
+            'recommended_work_location_id': recommended_id,
+            'auto_selection_supported': bool(ready_locations),
+            'ambiguous': ambiguous,
             'can_select_mode': True,
             'wfa_available': wfa_available,
         })

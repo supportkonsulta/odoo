@@ -11,6 +11,27 @@
                 <attribute name="delete">0</attribute>
                 <attribute name="duplicate">false</attribute>
             </xpath>
+
+            <!-- Native overtime (Extra Hours) is managed by Presenly Overtime
+                 requests: hide all native affordances in the form. -->
+            <xpath expr="//header/field[@name='overtime_status']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='overtime_hours']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//label[@for='validated_overtime_hours']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='validated_overtime_hours']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//button[@name='action_approve_overtime']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//button[@name='action_refuse_overtime']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
             <xpath expr="//sheet/group[1]" position="before">
                 <div class="oe_button_box" name="button_box">
                     <button name="action_open_presenly_evidence" type="object"
@@ -147,6 +168,21 @@
                 <attribute name="delete">0</attribute>
                 <attribute name="duplicate">false</attribute>
             </xpath>
+            <xpath expr="//header/button[@name='action_approve_overtime']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//header/button[@name='action_refuse_overtime']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <field name="overtime_hours" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </field>
+            <field name="validated_overtime_hours" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </field>
+            <field name="overtime_status" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </field>
             <field name="employee_id" position="after">
                 <field name="presenly_company_id" optional="hide" groups="base.group_multi_company"/>
                 <field name="presenly_attendance_mode" optional="show"/>
@@ -171,6 +207,24 @@
                 <attribute name="delete">0</attribute>
                 <attribute name="duplicate">false</attribute>
             </xpath>
+            <xpath expr="//header/button[@name='action_approve_overtime']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//header/button[@name='action_refuse_overtime']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//button[@name='action_approve_overtime']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//button[@name='action_refuse_overtime']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <field name="overtime_hours" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </field>
+            <field name="validated_overtime_hours" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </field>
         </field>
     </record>
 
@@ -201,6 +255,19 @@
                 <filter name="groupby_presenly_source" string="Presenly Source"
                         context="{'group_by': 'presenly_source'}"/>
             </filter>
+        </field>
+    </record>
+
+    <!-- Native Extra Hours settings are managed by Presenly Overtime requests.
+         Hide the whole block from company settings. -->
+    <record id="res_config_settings_overtime_hidden_presenly" model="ir.ui.view">
+        <field name="name">res.config.settings.overtime.hidden.presenly</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="hr_attendance.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//block[@name='overtime_settings']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
         </field>
     </record>
 </odoo>

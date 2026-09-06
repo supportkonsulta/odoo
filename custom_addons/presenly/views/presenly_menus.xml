@@ -119,8 +119,9 @@
               parent="hr_attendance.menu_hr_attendance_configuration"
               action="action_presenly_permission_type" sequence="50"
               groups="presenly.group_presenly_manager"/>
-    <menuitem id="menu_presenly_approval_rules" name="Approval Routes"
-              parent="hr_attendance.menu_hr_attendance_configuration"
-              action="action_presenly_approval_rule" sequence="60"
-              groups="presenly.group_presenly_manager"/>
+    <!-- Disable the native Overtime Rulesets configuration menu; overtime is
+         managed by Presenly Overtime requests and Presenly Approval Routes. -->
+    <record id="hr_attendance.menu_hr_attendance_overtime_rulesets" model="ir.ui.menu">
+        <field name="active" eval="False"/>
+    </record>
 </odoo>

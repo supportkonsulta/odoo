@@ -16,13 +16,49 @@ class PresenlyPermissionController(http.Controller):
         return params
 
     def _work_location(self, employee, payload):
+        """Validate an explicit Work Location against the request period.
+
+        Fallback: when ``work_location_id`` is missing, auto-resolve ONE
+        location for the whole period:
+        - full_day: K2 (first slot per day);
+        - hours: K2b (slot overlapping the requested hours, fallback first);
+        - unique -> use it;
+        - ambiguous (multi-location period) -> raise with per-date detail (K1);
+        - no location -> raise.
+        """
+        date_from = payload.get('date_from')
+        date_to = payload.get('date_to', date_from)
         location_id = payload.get('work_location_id') or payload.get('unit_id')
+        if location_id in (None, ''):
+            hour_from = payload.get('hour_from')
+            hour_to = payload.get('hour_to')
+            kwargs = {}
+            if hour_from not in (None, ''):
+                kwargs['hour_from'] = hour_from
+                kwargs['hour_to'] = hour_to if hour_to not in (None, '') else hour_from
+            location, by_date, ambiguous, error = employee._presenly_resolve_period_location(
+                date_from, date_to, **kwargs,
+            )
+            if error:
+                raise ValidationError(error)
+            if ambiguous:
+                details = ', '.join(
+                    f'{day} -> {entry["name"] or "no location"}'
+                    for day, entry in by_date.items()
+                )
+                raise ValidationError(
+                    'The requested period covers more than one Work Location'
+                    f' ({details}). Pick one explicitly.'
+                )
+            if not location:
+                raise ValidationError(
+                    'No Work Location is configured for the requested period.'
+                )
+            return location
         try:
             location = request.env['hr.work.location'].browse(int(location_id)).exists()
         except (TypeError, ValueError) as error:
-            raise ValidationError('work_location_id is required and must be numeric.') from error
-        date_from = payload.get('date_from')
-        date_to = payload.get('date_to', date_from)
+            raise ValidationError('work_location_id must be numeric when provided.') from error
         scheduled_locations = employee._presenly_work_locations_for_period(
             date_from, date_to,
         ) if date_from else request.env['hr.work.location']
@@ -51,6 +87,7 @@ class PresenlyPermissionController(http.Controller):
             'work_location_id': location_id,
             'permission_type_id': permission.permission_type_id.id,
             'permission_type': permission.permission_type_id.name,
+            'request_mode': permission.request_mode,
             'date_from': permission.date_from,
             'date_to': permission.date_to,
             'hour_from': permission.hour_from,
@@ -274,6 +311,56 @@ class PresenlyPermissionController(http.Controller):
                     'can_cancel': permission.presenly_can_cancel_api,
                 } for permission in records],
                 'unreadable_ids': [item for item in ids if item not in records.ids],
+            },
+            'error': None,
+        }
+
+    @http.route(
+        '/api/presenly/v1/permissions/location-options',
+        type='jsonrpc', auth='user', methods=['POST'], readonly=True,
+    )
+    def location_options(self, **params):
+        """Preview the auto-resolved Work Location for a Permission period.
+
+        Body: ``params: { "date_from", "date_to", "request_mode?",
+        "hour_from"?, "hour_to"? }``. Returns the unique recommended location
+        when the whole period maps to one location; otherwise marks
+        ``unique=false`` and returns the per-date breakdown so the mobile can
+        either pick explicitly or adjust the dates.
+        """
+        employee = self._employee()
+        payload = self._payload(params)
+        date_from = payload.get('date_from')
+        date_to = payload.get('date_to', date_from)
+        if not date_from:
+            raise ValidationError('date_from is required.')
+        mode = payload.get('request_mode', 'full_day')
+        kwargs = {}
+        if mode == 'hours':
+            hour_from = payload.get('hour_from')
+            hour_to = payload.get('hour_to')
+            if hour_from not in (None, ''):
+                kwargs['hour_from'] = hour_from
+                kwargs['hour_to'] = hour_to if hour_to not in (None, '') else hour_from
+        location, by_date, ambiguous, error = employee._presenly_resolve_period_location(
+            date_from, date_to, **kwargs,
+        )
+        if error:
+            raise ValidationError(error)
+        locations = sorted(
+            {entry['id']: entry['name'] for entry in by_date.values()
+             if entry['id']}.items(),
+        )
+        return {
+            'success': True,
+            'data': {
+                'unique': not ambiguous and bool(location),
+                'location_id': location.id or False,
+                'locations': [
+                    {'id': item_id, 'name': name}
+                    for item_id, name in locations
+                ],
+                'by_date': by_date,
             },
             'error': None,
         }

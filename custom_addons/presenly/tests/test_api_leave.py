@@ -1,3 +1,4 @@
+from odoo import Command
 from odoo.tests import HttpCase, new_test_user, tagged
 from odoo.tests.common import JsonRpcException
 
@@ -33,11 +34,33 @@ class TestPresenlyLeaveApi(HttpCase):
             'company_id': cls.env.company.id,
             'address_id': cls.location_address.id,
         })
+        cls.location_b = cls.env['hr.work.location'].create({
+            'name': 'Leave API Office B',
+            'company_id': cls.env.company.id,
+            'address_id': cls.location_address.id,
+        })
+        cls.working_hours = cls.env['resource.calendar'].create({
+            'name': 'Leave API Working Hours',
+            'company_id': cls.env.company.id,
+            'tz': 'UTC',
+            'attendance_ids': [
+                Command.create({
+                    'name': f'Day {idx}',
+                    'dayofweek': str(idx),
+                    'day_period': 'morning',
+                    'hour_from': 8.0,
+                    'hour_to': 17.0,
+                })
+                for idx in range(7)
+            ],
+        })
         cls.employee = cls.env['hr.employee'].create({
             'name': 'Leave API Employee',
             'user_id': cls.user.id,
             'company_id': cls.env.company.id,
             'work_location_id': cls.location.id,
+            'resource_calendar_id': cls.working_hours.id,
+            'tz': 'UTC',
         })
         cls.approver_employee = cls.env['hr.employee'].create({
             'name': 'Leave API Approver Employee',
@@ -213,3 +236,94 @@ class TestPresenlyLeaveApi(HttpCase):
             self.assertTrue(item['can_approve'])
             self.assertTrue(item['can_reject'])
         self.assertEqual(batch['data']['unreadable_ids'], [])
+
+    def test_leave_api_auto_location_unique(self):
+        """No work_location_id: unique location for the period -> auto-filled."""
+        self.authenticate(self.login, self.password)
+        created = self.make_jsonrpc_request(
+            '/api/presenly/v1/leaves', {
+                'leave_type_id': self.leave_type.id,
+                'date_from': '2030-05-01',
+                'date_to': '2030-05-01',
+                'reason': 'Auto location unique',
+            },
+        )
+        self.assertTrue(created['success'])
+        self.assertEqual(created['data']['work_location_id'], self.location.id)
+
+    def test_leave_api_location_options(self):
+        """location-options returns unique/by_date for a single-location period."""
+        self.authenticate(self.login, self.password)
+        result = self.make_jsonrpc_request(
+            '/api/presenly/v1/leaves/location-options',
+            {'date_from': '2030-05-10', 'date_to': '2030-05-10'},
+        )
+        self.assertTrue(result['success'])
+        self.assertTrue(result['data']['unique'])
+        self.assertEqual(result['data']['location_id'], self.location.id)
+        self.assertEqual(
+            result['data']['by_date']['2030-05-10']['id'],
+            self.location.id,
+        )
+
+    def test_leave_api_location_options_ambiguous_two_dates(self):
+        """Two days, different locations -> unique=false + per-date map."""
+        self.env['presenly.work.location.schedule'].sudo().create([
+            {
+                'employee_id': self.employee.id,
+                'work_location_id': self.location.id,
+                'schedule_type': 'date',
+                'schedule_date': '2030-06-10',
+                'hour_from': 8.0,
+                'hour_to': 12.0,
+            },
+            {
+                'employee_id': self.employee.id,
+                'work_location_id': self.location_b.id,
+                'schedule_type': 'date',
+                'schedule_date': '2030-06-11',
+                'hour_from': 8.0,
+                'hour_to': 12.0,
+            },
+        ])
+        self.authenticate(self.login, self.password)
+        result = self.make_jsonrpc_request(
+            '/api/presenly/v1/leaves/location-options',
+            {'date_from': '2030-06-10', 'date_to': '2030-06-11'},
+        )
+        self.assertTrue(result['success'])
+        self.assertFalse(result['data']['unique'])
+        self.assertFalse(result['data']['location_id'])
+        self.assertEqual(result['data']['by_date']['2030-06-10']['id'], self.location.id)
+        self.assertEqual(result['data']['by_date']['2030-06-11']['id'], self.location_b.id)
+
+    def test_leave_api_create_rejects_multi_location_period(self):
+        """Two days with different locations -> create without location rejected (K1)."""
+        self.env['presenly.work.location.schedule'].sudo().create([
+            {
+                'employee_id': self.employee.id,
+                'work_location_id': self.location.id,
+                'schedule_type': 'date',
+                'schedule_date': '2030-06-20',
+                'hour_from': 8.0,
+                'hour_to': 12.0,
+            },
+            {
+                'employee_id': self.employee.id,
+                'work_location_id': self.location_b.id,
+                'schedule_type': 'date',
+                'schedule_date': '2030-06-21',
+                'hour_from': 8.0,
+                'hour_to': 12.0,
+            },
+        ])
+        self.authenticate(self.login, self.password)
+        with self.assertRaises(JsonRpcException):
+            self.make_jsonrpc_request(
+                '/api/presenly/v1/leaves', {
+                    'leave_type_id': self.leave_type.id,
+                    'date_from': '2030-06-20',
+                    'date_to': '2030-06-21',
+                    'reason': 'Multi location',
+                },
+            )

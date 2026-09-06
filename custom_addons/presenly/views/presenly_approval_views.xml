@@ -40,14 +40,20 @@
                     <group>
                         <group string="1. Request Type">
                             <field name="company_id" required="1"/>
+                            <field name="is_overtime_route" string="Overtime Route"
+                                   help="Mark this step as the Overtime / Lembur approval route for the company/location scope."/>
                             <field name="permission_type_id" string="Permission Type"
                                    domain="[('is_complete', '=', True), ('active', '=', True), ('company_id', '=', company_id)]"
                                    options="{'no_create': True}"
-                                   invisible="leave_type_id"/>
+                                   invisible="leave_type_id or is_overtime_route"/>
                             <field name="leave_type_id" string="Time Off Type"
                                    domain="[('active', '=', True), ('company_id', 'in', [False, company_id])]"
                                    options="{'no_create': True}"
-                                   invisible="permission_type_id"/>
+                                   invisible="permission_type_id or is_overtime_route"/>
+                            <div class="alert alert-info" role="alert" colspan="2"
+                                 invisible="not is_overtime_route">
+                                This step approves Presenly Overtime requests.
+                            </div>
                             <field name="request_type_display" readonly="1"/>
                             <field name="sequence" string="Order"
                                    help="Approval runs from the smallest Order to the largest. Suggested values: 10, 20, 30."/>
@@ -103,6 +109,8 @@
                 <field name="work_location_id"/>
                 <field name="permission_type_id"/>
                 <field name="leave_type_id"/>
+                <field name="is_overtime_route"/>
+                <filter name="overtime" string="Overtime Route" domain="[('is_overtime_route', '=', True)]"/>
                 <filter name="complete" string="Complete" domain="[('is_complete', '=', True)]"/>
                 <filter name="incomplete" string="Incomplete" domain="[('is_complete', '=', False)]"/>
                 <filter name="active" string="Active" domain="[('active', '=', True)]"/>

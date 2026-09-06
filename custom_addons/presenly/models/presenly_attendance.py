@@ -181,6 +181,29 @@ class HrAttendance(models.Model):
         """
         return super().create(values)
 
+    def _update_overtime(self, attendance_domain=None):
+        """Disable the native automatic overtime generation.
+
+        Overtime / lembur is managed by Presenly requests
+        (``presenly.overtime.request``) with explicit datetime ranges and meal
+        allowance; the native engine that derives ``hr.attendance.overtime.line``
+        from check-in/out must not run, so the only source of overtime is the
+        Presenly request flow. Existing native lines are left untouched.
+        """
+        return True
+
+    def action_approve_overtime(self):
+        raise ValidationError(_(
+            'Native Extra Hours approval is disabled. Overtime is managed by '
+            'Presenly Overtime requests.'
+        ))
+
+    def action_refuse_overtime(self):
+        raise ValidationError(_(
+            'Native Extra Hours refusal is disabled. Overtime is managed by '
+            'Presenly Overtime requests.'
+        ))
+
     def write(self, values):
         protected_fields = {
             'employee_id', 'check_in', 'check_out',
