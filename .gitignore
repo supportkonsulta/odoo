@@ -40,6 +40,8 @@ jsconfig.json
 tsconfig.json
 package-lock.json
 package.json
+!presenly-api-tester/package-lock.json
+!presenly-api-tester/package.json
 .husky
 
 # various virtualenv
