@@ -56,3 +56,11 @@ package.json
 
 # venv
 odoo-venv
+venv
+
+#backup files
+backups
+
+#log files
+*.log
+odoo.err
