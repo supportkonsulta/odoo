@@ -654,4 +654,40 @@
         sequence="20"
     />
 
+    <!-- View khusus RKA untuk Detail Realisasi -->
+    <record id="view_sif_rka_jurnal_line_list" model="ir.ui.view">
+        <field name="name">sif.rka.jurnal.line.list</field>
+        <field name="model">sif.jurnal.line</field>
+        <field name="arch" type="xml">
+            <list string="Detail Realisasi RKA">
+                <field name="date" string="Tanggal"/>
+                <field name="account_id" string="Akun / COA"/>
+                <field name="keperluan_rka" string="Keperluan"/>
+                <field name="debit" string="Debit"/>
+                <field name="credit" string="Kredit"/>
+                <field name="balance" string="Saldo"/>
+                <field name="state" string="Status"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_sif_rka_jurnal_line_form" model="ir.ui.view">
+        <field name="name">sif.rka.jurnal.line.form</field>
+        <field name="model">sif.jurnal.line</field>
+        <field name="arch" type="xml">
+            <form string="Detail Realisasi RKA">
+                <sheet>
+                    <group>
+                        <field name="date"/>
+                        <field name="account_id"/>
+                        <field name="keperluan_rka"/>
+                        <field name="debit"/>
+                        <field name="credit"/>
+                        <field name="balance"/>
+                        <field name="state"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
 </odoo>

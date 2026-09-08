@@ -1183,6 +1183,32 @@ class SifJurnalLine(models.Model):
 
     keperluan_rka = fields.Char(
         string='Keperluan',
-        related='entry_id.reference',
+        related='entry_id.ref',
         readonly=True
-    )   
+    )
+
+class SifJurnalEntry(models.Model):
+    _inherit = 'sif.jurnal.entry'
+
+    reference = fields.Char(
+        string='Reference',
+        related='ref',
+        readonly=True
+    )
+
+    source_document = fields.Char(
+        string='Source Document'
+    )
+
+    unit_dept = fields.Selection(
+        [
+            ('tpa', 'TPA'),
+            ('sd', 'SD'),
+            ('smp', 'SMP'),
+            ('sma', 'SMA'),
+            ('univ', 'Universitas'),
+            ('pusat', 'Yayasan / Kantor Pusat'),
+        ],
+        string='Unit / Department',
+        default='pusat',
+    )
