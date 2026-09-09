@@ -3,7 +3,7 @@
 
     <!-- ROOT -->
     <menuitem id="menu_sifnext_root"
-              name="SIFNEXT"
+              name="Operasional"
               sequence="10"
               web_icon="sifnext_operational,static/description/icon.png"/>
 
