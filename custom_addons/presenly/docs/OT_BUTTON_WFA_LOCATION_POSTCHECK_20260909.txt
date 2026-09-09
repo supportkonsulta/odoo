@@ -1,0 +1,94 @@
+PRESENLY OVERTIME BUTTON FIX + WFA LOCATION STORAGE FIX — POST-CHECK
+Date: 2026-09-09
+Database: odoo
+Module: presenly 19.0.16.4.0
+
+REQUEST
+1. Cek tombol approval pada semua halaman approval lain — pastikan konsisten
+   (sejajar header, tidak terbungkus card).
+2. Fix bug: mode WFA (Work From Anywhere) tidak menyimpan data lokasi.
+
+AUDIT BUTTON APPROVAL PAGE (hasil)
+- Time Off (hr.leave): SUDAH BENAR sejak 19.0.16.3.0 — tombol di <header>
+  sejajar statusbar (presenly_approval_state), alert & journey di sheet.
+- Permission / Dispensation: SUDAH BENAR — tombol (Submit/Approve/Reject/
+  Cancel/Delete) di <header> form.
+- Overtime / Lembur: SALAH — tombol berada di dalam <div> (o_presenly_
+  overtime_actions) di dalam <sheet>, tidak sejajar statusbar. DIPERBAIKI.
+- Approval Journey (My Approvals): SUDAH BENAR — Review Request di <header>,
+  statusbar di header.
+- Approval Routes (list/form): SUDAH BENAR — Add Next Level di header form
+  + tombol baris di list.
+
+CHANGES
+1. views/presenly_overtime_views.xml
+   - Pindahkan 5 tombol (Submit for Approval / Approve Current Level /
+     Reject / Cancel Request / Delete) dari div di dalam <sheet> ke
+     <header> form — sejajar dengan statusbar state.
+   - Hapus wrapper div o_presenly_overtime_actions.
+   - Alerts (draft/submitted/rejection) tetap di dalam sheet.
+2. controllers/attendance.py — WFA location context (bug fix)
+   - Kebiasaan lama: cabang 'wfa' selalu memakai location = empty recordset
+     dan schedule = empty, sehingga walaupun payload mengirim work_location_id
+     / GPS, data lokasi TIDAK pernah disimpan (presenly_work_location_id
+     attendance = False, event.work_location_id = False).
+   - Fix: helper _wfa_location_context(employee, payload, lat, lon):
+     1) work_location_id / unit_id eksplisit dari payload;
+     2) GPS cocok dgn geofence lokasi aktif (presenly_is_geofence_ready);
+     3) fallback = work location utama employee.
+     Sifat WFA tetap informatif: geofence tidak di-enforce
+     (geofence_valid=False), tapi konteks lokasi tersimpan di attendance +
+     event check-in/check-out (termasuk distance bila GPS ada).
+   - check_in WFA: simpan presenly_work_location_id / schedule / distance /
+     in_latitude / in_longitude dari hasil resolver.
+   - check_out WFA: prefer snapshot check-in; bila kosong gunakan resolver;
+     simpan distance & work_location_id pada event.
+   - Event check-in/check-out: work_location_id diisi dari location bila ada
+     (tidak lagi hanya mode == 'location').
+3. tests/test_api_session.py
+   - Test existing WFA tanpa GPS: kini mengecek work_location_id = primary
+     fallback (bukan False) — perilaku baru disengaja.
+   - Test baru test_wfa_with_location_data_is_stored: payload WFA + location
+     + GPS -> attendance & kedua event menyimpan lokasi/latitude/longitude.
+   - Test baru test_wfa_without_location_uses_primary_fallback: WFA tanpa GPS
+     -> konteks lokasi = primary employee, geofence_valid tetap False.
+4. Version bump 19.0.16.3.0 -> 19.0.16.4.0.
+
+VERIFICATION (database utama odoo)
+- ir_module_module presenly latest_version: 19.0.16.4.0.
+- View presenly.overtime.request.form (id 1315) arch terverifikasi:
+  actions in header OK; approve in header OK; statusbar in header OK;
+  o_presenly_overtime_actions absent OK.
+- Boot server: http://127.0.0.1:8069/web/login HTTP 200.
+- Public kiosk URL -> HTTP 404.
+
+DATA PRESERVATION
+- Tidak ada data bisnis diubah oleh upgrade kode ini. WFA storage hanya
+  berlaku untuk sesi WFA BARU (post-upgrade).
+
+TESTING (clone DB, instance 8071 — server utama tidak pernah dimatikan)
+- Isolated clone: odoo_presenly_otwfa_test_20260909.
+- Dump sumber: backups/presenly-migration/odoo-before-ot-button-wfa-fix-20260909_180322.dump.
+- Final result: 0 failed, 0 error(s) of 110 tests.
+  - Termasuk 2 test WFA lokasi baru + seluruh suite API/web/security.
+- Clone database & clone filestore dihapus setelah validasi.
+
+STATIC VALIDATION
+- Python compilation (odoo-venv): passed.
+- XML parsing (lxml odoo-venv): 24 files passed.
+- git diff --check: passed.
+
+BACKUP
+- backups/presenly-migration/odoo-before-ot-button-wfa-fix-20260909_180322.dump
+  (created before the code change; retained).
+
+ROLLOUT
+- Before: presenly 19.0.16.3.0.
+- After: presenly 19.0.16.4.0.
+- Upgrade via: ./odoo-venv/bin/python ./odoo-bin -c odoo.conf -d odoo -u presenly --stop-after-init
+- Upgrade log: Modules loaded, Registry loaded, Initiating shutdown — tanpa
+  ERROR pada module presenly.
+- Server utama aktif kembali: HTTP 200.
+
+NO COMMIT
+- No Git commit was created.

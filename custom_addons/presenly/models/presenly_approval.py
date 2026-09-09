@@ -27,7 +27,18 @@ class PresenlyApprovalRule(models.Model):
         help='When set, this step approves Presenly Overtime requests for the '
              'company/work location scope (no request type required).',
     )
-    sequence = fields.Integer(default=10, string='Order')
+    request_group = fields.Selection([
+        ('overtime', 'Overtime'),
+        ('permission', 'Permission'),
+        ('leave', 'Time Off'),
+        ('unassigned', 'Unassigned'),
+    ], compute='_compute_request_group', store=True, index=True,
+        string='Request Group')
+    route_scope_label = fields.Char(
+        string='Request Type Scope', compute='_compute_route_scope_label',
+        store=True, index=True,
+    )
+    sequence = fields.Integer(string='Order', index=True, copy=False, help="Order is assigned automatically at creation (next free step, +10). Reorder steps by dragging them in the list.")
     approver_type = fields.Selection([
         ('user', 'Specific User'),
         ('employee_manager', 'Employee Manager'),
@@ -88,6 +99,42 @@ class PresenlyApprovalRule(models.Model):
                 rule.approver_display = approver_labels.get(
                     rule.approver_type, 'Select an approver source'
                 )
+
+    @api.depends(
+        'is_overtime_route', 'permission_type_id', 'leave_type_id',
+    )
+    def _compute_request_group(self):
+        for rule in self:
+            if rule.is_overtime_route:
+                rule.request_group = 'overtime'
+            elif rule.permission_type_id:
+                rule.request_group = 'permission'
+            elif rule.leave_type_id:
+                rule.request_group = 'leave'
+            else:
+                rule.request_group = 'unassigned'
+
+    @api.depends(
+        'is_overtime_route', 'permission_type_id', 'permission_type_id.name',
+        'leave_type_id', 'leave_type_id.name',
+    )
+    def _compute_route_scope_label(self):
+        """Single grouping label that unifies the three possible request type
+        fields (Overtime / Permission / Time Off) into one searchable key, so
+        a nested list can group all Approval Route steps by request type."""
+        for rule in self:
+            if rule.is_overtime_route:
+                rule.route_scope_label = 'Overtime'
+            elif rule.permission_type_id:
+                rule.route_scope_label = (
+                    f'Permission: {rule.permission_type_id.display_name}'
+                )
+            elif rule.leave_type_id:
+                rule.route_scope_label = (
+                    f'Time Off: {rule.leave_type_id.display_name}'
+                )
+            else:
+                rule.route_scope_label = 'Unassigned'
 
     @api.depends(
         'name', 'company_id', 'work_location_id',
@@ -227,11 +274,15 @@ class PresenlyApprovalRule(models.Model):
             )
             users = location.sudo().presenly_manager_id if location else users
         elif self.approver_type == 'hr':
+            # 'HR Officer' resolves to the Presenly HR Officer group so the
+            # behaviour matches the label shown in the form. The native Time
+            # Off Responsible group is NOT used (it silently included other
+            # users such as leave managers).
             users = self.env.ref(
-                'hr_holidays.group_hr_holidays_responsible'
-            ).sudo().users
+                'presenly.group_presenly_hr'
+            ).sudo().all_user_ids
         elif self.approver_type == 'group':
-            users = self.approver_group_id.sudo().users
+            users = self.approver_group_id.sudo().all_user_ids
         return users.filtered(
             lambda user: user.active and request.company_id in user.company_ids
         )
@@ -257,19 +308,147 @@ class PresenlyApprovalRule(models.Model):
                     'approver in the request company. Complete the Approval Route '
                     'before submitting.'
                 )
-            missing_role = approvers.filtered(
-                lambda user: not user.has_group(
-                    'presenly.group_presenly_approver'
-                )
-            )
-            if missing_role:
-                raise UserError(
-                    f'Approval step {level} ({rule.display_name}) assigns '
-                    f'{", ".join(missing_role.mapped("name"))}, but they do not '
-                    'have the Presenly Approver role. Grant the role before '
-                    'submitting requests.'
-                )
         return True
+
+    # ------------------------------------------------------------------
+    # Automatic approval Order assignment
+    # ------------------------------------------------------------------
+    def _scope_domain_from_values(self, values):
+        """Return the uniqueness scope for an approval step being created.
+
+        The scope matches ``_check_unique_level_scope`` and ``_get_rules``:
+        company + request type (permission / leave / overtime) + work location.
+        Values may still be missing defaults at create time, so every field is
+        read with a safe fallback.
+        """
+        return [
+            ('active', '=', True),
+            ('company_id', '=', values.get('company_id') or False),
+            ('work_location_id', '=', values.get('work_location_id') or False),
+            ('permission_type_id', '=', values.get('permission_type_id') or False),
+            ('leave_type_id', '=', values.get('leave_type_id') or False),
+            ('is_overtime_route', '=', bool(values.get('is_overtime_route'))),
+        ]
+
+    def _current_max_sequence(self, values):
+        """Highest Order already used in the same scope (0 when none)."""
+        domain = self._scope_domain_from_values(values)
+        top = self.sudo().search(
+            domain, order='sequence desc', limit=1,
+        )
+        return top.sequence or 0
+
+    @api.model
+    def _next_sequence(self, values):
+        """Next automatic Order for a new rule in the same scope.
+
+        Steps start at 10 and increase by 10 so later steps can be inserted
+        between existing ones (10, 20, 30, ...).
+        """
+        return self._current_max_sequence(values) + 10
+
+    @api.model
+    def _default_sequence(self):
+        """Expose the next automatic Order as a form default (preview)."""
+        values = {
+            'company_id': self.env.context.get('default_company_id'),
+            'work_location_id': self.env.context.get(
+                'default_work_location_id'
+            ),
+            'permission_type_id': self.env.context.get(
+                'default_permission_type_id'
+            ),
+            'leave_type_id': self.env.context.get('default_leave_type_id'),
+            'is_overtime_route': self.env.context.get(
+                'default_is_overtime_route'
+            ),
+        }
+        return self._next_sequence(values)
+
+    @api.model
+    def default_get(self, fields_list):
+        defaults = super().default_get(fields_list)
+        if 'sequence' in fields_list and 'sequence' not in defaults:
+            defaults['sequence'] = self._default_sequence()
+        return defaults
+
+    @api.model_create_multi
+    def create(self, values_list):
+        # Assign the next free Order (+10) to every new rule that does not
+        # carry an explicit Order. Explicit values (tests, API, drag-reorder)
+        # are always respected. A small in-batch counter lets users create
+        # several steps at once and still get 10, 20, 30, ...
+        by_scope = defaultdict(int)
+        for values in values_list:
+            key = (
+                values.get('company_id'),
+                values.get('work_location_id'),
+                values.get('permission_type_id'),
+                values.get('leave_type_id'),
+                bool(values.get('is_overtime_route')),
+            )
+            if 'sequence' not in values:
+                # Batch counter (by_scope) covers the records created inside
+                # this very call; _current_max_sequence covers existing rows.
+                base = max(by_scope[key], self._current_max_sequence(values))
+                values['sequence'] = base + 10
+                by_scope[key] = values['sequence']
+            elif key in by_scope:
+                # Second explicit step in the same batch: keep caller order.
+                values['sequence'] = max(
+                    by_scope[key] + 10, values['sequence'],
+                )
+        return super().create(values_list)
+
+    @api.model
+    def _presenly_archive_empty_rules(self):
+        """Idempotent cleanup: archive rule records with an empty Step Name.
+
+        A nameless step can never resolve into an approval journey (the
+        resolver requires ``is_complete`` which in turn requires a name) and
+        only clutters the Approval Routes screens as a "none" row. Rules with
+        a name are left untouched even when incomplete, because an admin may
+        still be repairing them."""
+        empty = self.with_context(active_test=False).search([
+            ('active', '=', True),
+            ('name', 'in', [False, '']),
+        ])
+        if empty:
+            empty.write({'active': False})
+        return True
+
+    def action_add_next_level(self):
+        """Open a create form for the next level of the SAME scope.
+
+        Every dimension of the current step (company, work location, request
+        type) is passed as a form default, so the admin only picks the
+        approver. The automatic Order preview (max+10 per scope) places the
+        new step right below this one.
+        """
+        self.ensure_one()
+        action = self.env['ir.actions.actions']._for_xml_id(
+            'presenly.action_presenly_approval_rule'
+        )
+        action['name'] = f'Add Next Level — {self.name or self.display_name}'
+        action['view_mode'] = 'form'
+        action['views'] = [(
+            self.env.ref('presenly.view_presenly_approval_rule_form').id,
+            'form',
+        )]
+        action['target'] = 'new'
+        action['context'] = {
+            'default_company_id': self.company_id.id,
+            'default_work_location_id': self.work_location_id.id or False,
+            'default_leave_type_id': self.leave_type_id.id or False,
+            'default_permission_type_id': self.permission_type_id.id or False,
+            'default_is_overtime_route': bool(self.is_overtime_route),
+            'default_approver_type': 'employee_manager',
+            'default_name': (
+                f'{self.name} — Next Level' if self.name else False
+            ),
+            'active_test': True,
+        }
+        return action
 
 
 class PresenlyApprovalRequest(models.Model):
@@ -639,6 +818,22 @@ class PresenlyPermissionApproval(models.Model):
     def _presenly_rules(self):
         return self.env['presenly.approval.rule']._get_rules(self, 'permission')
 
+    def _presenly_current_rule(self):
+        """The rule (approval step) currently pending for this permission.
+
+        Falls back to the first pending journey step's source rule; when the
+        journey is not resolvable, returns an empty recordset."""
+        self.ensure_one()
+        approval = self.presenly_approval_request_id
+        if approval and approval.current_step_id:
+            return approval.current_step_id.source_rule_id
+        if approval:
+            pending = approval.step_ids.filtered(
+                lambda step: step.state == 'pending'
+            )[:1]
+            return pending.source_rule_id
+        return self.env['presenly.approval.rule']
+
     def _presenly_pending_approver_users(self):
         self.ensure_one()
         if self.presenly_approval_request_id:
@@ -870,14 +1065,19 @@ class HrLeaveTypePresenly(models.Model):
     def action_open_presenly_approval_routes(self):
         self.ensure_one()
         action = self.env['ir.actions.actions']._for_xml_id(
-            'presenly.action_presenly_approval_rule'
+            'presenly.action_presenly_approval_rule_leave'
         )
         action['name'] = f'Approval Route — {self.display_name}'
-        action['domain'] = [('leave_type_id', '=', self.id)]
+        action['domain'] = [
+            ('leave_type_id', '=', self.id),
+            ('request_group', '=', 'leave'),
+        ]
         action['context'] = {
             'default_company_id': self.company_id.id or self.env.company.id,
             'default_leave_type_id': self.id,
             'default_permission_type_id': False,
+            'search_default_leave': 1,
+            'active_test': True,
         }
         return action
 

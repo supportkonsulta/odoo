@@ -46,14 +46,19 @@ class PresenlyPermissionType(models.Model):
     def action_open_approval_routes(self):
         self.ensure_one()
         action = self.env['ir.actions.actions']._for_xml_id(
-            'presenly.action_presenly_approval_rule'
+            'presenly.action_presenly_approval_rule_permission'
         )
         action['name'] = f'Approval Route — {self.display_name}'
-        action['domain'] = [('permission_type_id', '=', self.id)]
+        action['domain'] = [
+            ('permission_type_id', '=', self.id),
+            ('request_group', '=', 'permission'),
+        ]
         action['context'] = {
             'default_company_id': self.company_id.id,
             'default_permission_type_id': self.id,
             'default_leave_type_id': False,
+            'search_default_permission': 1,
+            'active_test': True,
         }
         return action
 

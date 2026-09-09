@@ -82,20 +82,20 @@
 
     <menuitem id="menu_presenly_approvals" name="Approvals"
               parent="hr_attendance.menu_hr_attendance_root" sequence="7"
-              groups="presenly.group_presenly_approver" active="False"/>
+              groups="base.group_user" active="True"/>
     <menuitem id="menu_presenly_my_approvals" name="My Approvals"
               parent="menu_presenly_approvals"
               action="action_server_presenly_my_approvals" sequence="10"
-              groups="presenly.group_presenly_approver" active="False"/>
+              groups="base.group_user" active="True"/>
     <!-- Compatibility XML IDs retained but hidden after unifying the queue. -->
     <menuitem id="menu_presenly_permission_approvals" name="Permission Approvals"
               parent="menu_presenly_approvals"
               action="action_server_presenly_permission_approvals" sequence="20"
-              groups="presenly.group_presenly_approver" active="False"/>
+              groups="base.group_user" active="False"/>
     <menuitem id="menu_presenly_leave_approvals" name="Time Off Approvals"
               parent="menu_presenly_approvals"
               action="action_server_presenly_leave_approvals" sequence="30"
-              groups="presenly.group_presenly_approver" active="False"/>
+              groups="base.group_user" active="False"/>
 
     <menuitem id="menu_presenly_attendance_events" name="Attendance Evidence"
               parent="hr_attendance.menu_hr_attendance_reporting"
@@ -129,6 +129,49 @@
               parent="hr_attendance.menu_hr_attendance_configuration"
               action="action_presenly_permission_type" sequence="50"
               groups="presenly.group_presenly_manager"/>
+    <!-- Setup checklist and bulk generation entry points. -->
+    <menuitem id="menu_presenly_setup_guide" name="Presenly Setup"
+              parent="hr_attendance.menu_hr_attendance_configuration"
+              action="action_presenly_setup_guide" sequence="5"
+              groups="presenly.group_presenly_manager"/>
+    <menuitem id="menu_presenly_approval_route_generate"
+              name="Generate Approval Routes"
+              parent="hr_attendance.menu_hr_attendance_configuration"
+              action="action_presenly_approval_route_generate" sequence="55"
+              groups="presenly.group_presenly_manager"/>
+    <!-- Global Approval Routes overview for cross-type review and maintenance.
+         The recommended configuration entry point remains the connected Ready
+         Steps / Ready Overrides smart buttons on Permission Types, Time Off
+         Types, and Work Locations. This menu was removed by the overtime
+         rollout (adda8ed8b) and is restored here. -->
+    <menuitem id="menu_presenly_approval_rules" name="Approval Routes"
+              parent="hr_attendance.menu_hr_attendance_configuration"
+              action="action_presenly_approval_rule" sequence="60"
+              groups="presenly.group_presenly_manager"/>
+    <!-- Per-module Approval Routes menus: only add/edit routes for the
+         matching request type. These use the editable flat list. -->
+    <menuitem id="menu_presenly_approval_rules_leave"
+              name="Time Off Approval Routes"
+              parent="hr_attendance.menu_hr_attendance_configuration"
+              action="action_presenly_approval_rule_leave" sequence="61"
+              groups="presenly.group_presenly_manager"/>
+    <menuitem id="menu_presenly_approval_rules_permission"
+              name="Permission Approval Routes"
+              parent="hr_attendance.menu_hr_attendance_configuration"
+              action="action_presenly_approval_rule_permission" sequence="62"
+              groups="presenly.group_presenly_manager"/>
+    <menuitem id="menu_presenly_approval_rules_overtime"
+              name="Overtime Approval Routes"
+              parent="hr_attendance.menu_hr_attendance_configuration"
+              action="action_presenly_approval_rule_overtime" sequence="63"
+              groups="presenly.group_presenly_manager"/>
+    <!-- Native Attendance Settings keep company data that Presenly already
+         owns and constrains (kiosk mode, backend/systray attendance, auto
+         check-out, absence management, device tracking, PIN, barcode). Hide
+         the menu without changing any res.company configuration value. -->
+    <record id="hr_attendance.menu_hr_attendance_settings" model="ir.ui.menu">
+        <field name="active" eval="False"/>
+    </record>
     <!-- Disable the native Overtime Rulesets configuration menu; overtime is
          managed by Presenly Overtime requests and Presenly Approval Routes. -->
     <record id="hr_attendance.menu_hr_attendance_overtime_rulesets" model="ir.ui.menu">

@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_presenly_setup_guide_form" model="ir.ui.view">
+        <field name="name">presenly.setup.guide.form</field>
+        <field name="model">presenly.setup.guide</field>
+        <field name="arch" type="xml">
+            <form string="Presenly Setup Guide">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>Presenly Setup Guide</h1>
+                        <p class="text-muted">
+                            Follow the numbered steps to prepare attendance, permissions,
+                            time off, and overtime. Each step links to the matching
+                            configuration screen.
+                        </p>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="company_id"/>
+                            <field name="step_total" invisible="1"/>
+                        </group>
+                        <group string="Overall Progress">
+                            <field name="step_done" string="Steps Completed"/>
+                            <field name="progress" widget="progressbar"
+                                   options="{'current_value': 'progress', 'max_value': 100, 'editable': false}"/>
+                        </group>
+                    </group>
+
+                    <div class="alert alert-success" role="alert" invisible="not all_ready">
+                        <i class="fa fa-check-circle me-1" title="All ready" aria-label="All ready"/>
+                        <strong>All steps are ready.</strong> Employees can submit
+                        Permission, Time Off, and Overtime requests.
+                    </div>
+
+                    <separator string="Checklist"/>
+
+                    <group>
+                        <group string="1. Company &amp; Work Locations">
+                            <span class="fa fa-check text-success" title="Done" invisible="not location_total"/>
+                            <span class="fa fa-circle text-muted" title="Pending" invisible="location_total"/>
+                            <field name="location_total" widget="statinfo" string="Work Locations"/>
+                            <div class="text-muted">Create the legal Company and at least one
+                                Work Location with a Work Address.</div>
+                            <button name="action_open_companies" type="object"
+                                    string="Open Companies" class="btn-link"/>
+                            <button name="action_open_locations" type="object"
+                                    string="Open Work Locations" class="btn-link"/>
+                        </group>
+                        <group string="2. Geofence Readiness">
+                            <span class="fa fa-check text-success" title="Done" invisible="not location_ready"/>
+                            <span class="fa fa-times text-danger" title="Pending" invisible="location_ready"/>
+                            <field name="location_ready" widget="statinfo" string="Geofence Ready"/>
+                            <div class="text-muted">Set lat/long on the Work Address, radius,
+                                accuracy limit, and selfie policy per location.</div>
+                            <button name="action_open_locations" type="object"
+                                    string="Fix Work Locations" class="btn-link"/>
+                        </group>
+                        <group string="3. Schedules &amp; Fallback">
+                            <span class="fa fa-check text-success" title="Done"
+                                  invisible="not schedule_count and not employee_with_location"/>
+                            <span class="fa fa-circle text-muted" title="Pending"
+                                  invisible="schedule_count or employee_with_location"/>
+                            <field name="schedule_count" widget="statinfo" string="Location Schedules"/>
+                            <field name="employee_with_location" widget="statinfo"
+                                   string="Employees with Location"/>
+                            <div class="text-muted">Assign a daily Work Location fallback or
+                                hourly location slots.</div>
+                            <button name="action_open_schedules" type="object"
+                                    string="Open Schedules" class="btn-link"/>
+                        </group>
+                        <group string="4. Employees">
+                            <span class="fa fa-check text-success" title="Done" invisible="not employee_with_location"/>
+                            <span class="fa fa-circle text-muted" title="Pending" invisible="employee_with_location"/>
+                            <field name="employee_with_location" widget="statinfo"
+                                   string="Employees Mapped"/>
+                            <field name="employee_total" widget="statinfo" string="Total Employees"/>
+                            <div class="text-muted">Every employee needs a primary Work Location.</div>
+                            <button name="action_open_employees" type="object"
+                                    string="Open Employees" class="btn-link"/>
+                        </group>
+                        <group string="5. Permission Types">
+                            <span class="fa fa-check text-success" title="Done" invisible="not permission_type_ready"/>
+                            <span class="fa fa-circle text-muted" title="Pending" invisible="permission_type_ready"/>
+                            <field name="permission_type_ready" widget="statinfo"
+                                   string="Ready Permission Types"/>
+                            <field name="permission_type_total" widget="statinfo"
+                                   string="Total Permission Types"/>
+                            <div class="text-muted">Permission Types need Name, Code, Duration,
+                                and Paid Status complete.</div>
+                            <button name="action_open_permission_types" type="object"
+                                    string="Open Permission Types" class="btn-link"/>
+                        </group>
+                        <group string="6. Time Off Routes">
+                            <span class="fa fa-check text-success" title="Done" invisible="not leave_setup_complete"/>
+                            <span class="fa fa-circle text-muted" title="Pending" invisible="leave_setup_complete"/>
+                            <field name="leave_type_with_route" widget="statinfo"
+                                   string="Leave Types with Route"/>
+                            <field name="leave_type_total" widget="statinfo"
+                                   string="Active Leave Types"/>
+                            <div class="text-muted">Generate Approval Routes for all active
+                                Time Off Types.</div>
+                            <button name="action_open_leave_types" type="object"
+                                    string="Open Time Off Types" class="btn-link"/>
+                            <button name="action_open_approval_routes" type="object"
+                                    string="Review Approval Routes" class="btn-link"/>
+                        </group>
+                        <group string="7. Overtime Route">
+                            <span class="fa fa-check text-success" title="Done" invisible="not overtime_route_ready"/>
+                            <span class="fa fa-times text-danger" title="Pending" invisible="overtime_route_ready"/>
+                            <field name="overtime_route_ready" string="Overtime Route Ready"/>
+                            <div class="text-muted">A complete overtime Approval Route
+                                is mandatory to submit Overtime requests.</div>
+                            <button name="action_open_approval_routes" type="object"
+                                    string="Review Approval Routes" class="btn-link"/>
+                        </group>
+                        <group string="8. Time Off Route Coverage">
+                            <span class="fa fa-check text-success" title="Done" invisible="not all_types_routed"/>
+                            <span class="fa fa-circle text-muted" title="Pending" invisible="all_types_routed"/>
+                            <field name="leave_type_with_route" widget="statinfo"
+                                   string="Leave Types with Route"/>
+                            <field name="leave_type_total" widget="statinfo"
+                                   string="Active Leave Types"/>
+                            <div class="text-muted">Approval rights come from the
+                                Approval Routes themselves. Generate routes for every
+                                active Time Off Type.</div>
+                            <button name="action_generate_approval_routes" type="object"
+                                    string="Generate Approval Routes" class="btn-link"/>
+                        </group>
+                    </group>
+
+                    <separator string="Approval Route Coverage"/>
+                    <group>
+                        <group string="Approval Steps">
+                            <field name="rule_total" widget="statinfo" string="Total Steps"/>
+                            <field name="rule_complete" widget="statinfo" string="Complete Steps"/>
+                        </group>
+                        <group string="Permission Coverage">
+                            <field name="permission_setup_complete" string="Permission Routes Complete"/>
+                        </group>
+                        <group string="Time Off Coverage">
+                            <field name="leave_setup_complete" string="Time Off Routes Complete"/>
+                        </group>
+                    </group>
+
+                    <div class="oe_button_box">
+                        <button name="action_generate_approval_routes" type="object"
+                                class="btn btn-primary" icon="fa-magic"
+                                string="Generate Approval Routes for Missing Types"/>
+                    </div>
+                </sheet>
+                <footer>
+                    <button string="Close" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_presenly_setup_guide" model="ir.actions.act_window">
+        <field name="name">Presenly Setup</field>
+        <field name="res_model">presenly.setup.guide</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+        <field name="context">{'create': False, 'edit': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Presenly Setup Checklist</p>
+            <p>Follow the 8 steps to configure attendance, locations, permissions, time off, and overtime.</p>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,94 @@
+PRESENLY WIZARD SCOPE UX FIX (STRICT FILTER + NEWID + ORDER PREVIEW) — POST-CHECK
+Date: 2026-09-09
+Database: odoo
+Module: presenly 19.0.15.3.0
+
+REPORTS (admin, saat memakai Generate Approval Routes)
+1. Pilih Time Off types (mis. Sick Off) -> tidak muncul data generate-nya.
+2. Apply To = Time Off -> filter malah menampilkan data Permission.
+3. Scope yang sudah di-generate batch sebelumnya (13 leave + 3 permission +
+   1 overtime sudah punya route) tidak terlihat jelas bahwa tipenya sudah
+   punya route.
+
+ROOT CAUSES
+A. Strict-selection tidak ada: saat apply_to='all' dan user pick leave types,
+   permission types yang tidak dipilih dianggap "semua" -> preview menampilkan
+   3 permission, terkesan "filter menampilkan data permission" padahal yang
+   dipilih hanya leave.
+B. apply_to='leave' tetap menampilkan overtime? sudah benar (hanya leave) —
+   namun baris leave yang sudah punya route (mis. Sick Time Off id 2 -> rule
+   59 dari batch generate 2026-09-09) tampil sebagai "Already Routed" dan
+   to_create_count=0 sehingga tombol Generate hilang; UX tidak menjelaskan.
+C. Preview saat onchange browser memakai record NewId (belum disimpan) pada
+   domain _scope_has_route -> "Domains don't support NewId" -> status baris
+   salah (to_create walau sudah routed / sebaliknya).
+D. Preview Order memakai start_sequence/sequence_step global (10, 20, ...)
+   padahal generate sesungguhnya memakai auto-assign per scope (max+10):
+   preview bisa menampilkan Order yang berbeda dari hasil create.
+
+CHANGES
+1. wizard/presenly_approval_route_generate.py
+   - _target_candidates(): strict semantics —
+     * memilih types di salah satu modul (dalam mode 'all') juga mengosongkan
+       modul lain (tidak lagi "semua").
+     * picked_leave/picked_permission memakai _origin agar NewId dari onchange
+       browser di-resolve ke id asli (domain tidak error).
+     * apply_to='leave' hanya leave; 'permission' hanya permission; 'overtime'
+       hanya overtime.
+   - _prepare_lines(): Order preview sekarang dihitung per scope via
+     Rule._current_max_sequence + 10 (konsisten dengan auto-assign model),
+     bukan start_sequence/sequence_step global.
+   - Hapus field start_sequence/sequence_step (+ constrains, + onchange deps,
+     + view Ordering hanya menyisakan skip_existing) karena tidak lagi dipakai.
+   - action_generate tetap memakai _generate_values() (server-side, fresh)
+     dan menyerahkan Order ke model (max+10 per scope).
+2. wizard/presenly_approval_route_generate_views.xml
+   - Grup "Ordering" hanya berisi skip_existing.
+   - Alert warning baru ketika semua baris skipped (to_create=0):
+     menjelaskan bahwa semua tipe sudah punya route dan menyarankan uncheck
+     "Skip existing" atau memilih tipe lain.
+3. tests/test_wizard_scope_ux.py (baru, 5 test, memakai Form() = browser-like
+   onchange flow)
+   - test_pick_leave_types_in_all_mode_only_shows_them
+   - test_apply_to_leave_never_shows_permission_lines
+   - test_uncheck_skip_existing_offers_second_step_for_routed_type
+   - test_apply_to_permission_shows_selected_permissions_only
+   - test_all_mode_with_permission_selection_strict_leave_empty
+4. tests/__init__.py: daftarkan test_wizard_scope_ux.
+5. README.md tidak berubah (deskripsi wizard sudah generik).
+6. Version bump 19.0.15.2.0 -> 19.0.15.3.0.
+
+VERIFICATION (database utama odoo)
+- ir_module_module presenly: 19.0.15.3.0.
+- Field start_sequence/sequence_step pada wizard terhapus (0 kolom).
+- Data produksi TIDAK berubah: rules 34 (17 aktif), journeys 8/102,
+  attendance 5/42, evidence 58/1837, leave 7/139, overtime 3/11.
+- Boot server: http://127.0.0.1:8069/web/login HTTP 200.
+- Public kiosk URL -> HTTP 404.
+
+TESTING (clone DB, instance 8071 — server utama tidak pernah dimatikan)
+- Isolated clone: odoo_presenly_wizardux_test_20260909.
+- Dump sumber: backups/presenly-migration/odoo-before-wizard-ux-fix-20260909_112406.dump.
+- Final result: 0 failed, 0 error(s) of 97 tests.
+  - 5 test baru wizard scope UX lulus; suite penuh hijau.
+- Clone database & clone filestore dihapus setelah validasi.
+
+STATIC VALIDATION
+- Python compilation (odoo-venv): passed.
+- XML parsing (lxml odoo-venv): 24 files passed.
+- git diff --check: passed.
+
+BACKUP
+- backups/presenly-migration/odoo-before-wizard-ux-fix-20260909_112406.dump
+  (created before the code change; retained).
+
+ROLLOUT
+- Before: presenly 19.0.15.2.0.
+- After: presenly 19.0.15.3.0.
+- Upgrade via: ./odoo-venv/bin/python ./odoo-bin -c odoo.conf -d odoo -u presenly --stop-after-init
+- Upgrade log: Modules loaded, Registry loaded, Initiating shutdown — tidak
+  ada ERROR pada module presenly.
+- Server utama aktif kembali: HTTP 200.
+
+NO COMMIT
+- No Git commit was created.

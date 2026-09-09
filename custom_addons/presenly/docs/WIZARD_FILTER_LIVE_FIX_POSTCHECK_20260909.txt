@@ -1,0 +1,75 @@
+PRESENLY WIZARD FILTER LIVE-FIX — ROLLOUT POST-CHECK
+Date: 2026-09-09
+Database: odoo
+Module: presenly 19.0.15.2.0
+
+REPORT (screenshot 2026-09-09 10:57 + laporan admin)
+- Saat memilih types pada wizard Generate Approval Routes, preview tidak
+  memfilter secara langsung — semua leave types tetap tampil.
+
+ROOT CAUSE
+- wizard/presenly_approval_route_generate.py._target_candidates():
+  filter leave_type_ids / permission_type_ids hanya diterapkan bila
+  apply_to == 'leave' / 'permission'.
+
+    if self.apply_to == 'leave' and self.leave_type_ids:      # BUG
+        leave_types = leave_types & self.leave_type_ids
+
+  Ketika apply_to = 'all', field types tetap tampil di form tetapi pilihan
+  user DIABAIKAN; preview menampilkan SEMUA leave type aktif (73 baris),
+  persis seperti yang dilaporkan ("gagal memfilter secara langsung").
+
+CHANGE
+- Filter diterapkan KAPAN PUN user memilih types, apapun apply_to:
+
+    if self.leave_type_ids:
+        leave_types = leave_types & self.leave_type_ids
+
+  (sama untuk permission_type_ids). Kosong = semua type module; terpilih =
+  hanya type yang dipilih. Preview (_prepare_lines) dan generate
+  (_generate_values) sama-sama memakai _target_candidates, jadi keduanya
+  kini konsisten ter-filter.
+- Views: teks alert wizard menyebut preview ter-refresh saat scope/types
+  berubah.
+- tests/test_setup_generate.py: test baru
+  test_all_mode_filters_to_selected_types — dalam mode 'all' dengan 2 leave +
+  1 permission dipilih, preview hanya berisi 4 baris (2 leave + 1 permission +
+  overtime), TIDAK memuat leave types lain (mis. Paid Time Off / Sick Time Off).
+- Version bump 19.0.15.1.0 -> 19.0.15.2.0.
+
+VERIFICATION (database utama odoo)
+- ir_module_module presenly latest_version: 19.0.15.2.0.
+- Data produksi yang sudah dibuat admin sebelumnya TIDAK diubah oleh upgrade
+  (34 rule; 17 aktif; 41/42 tetap archived; journeys 8/102; attendance 5/42;
+  evidence 58/1837; leave 7/139; overtime 3/11).
+- Boot server: http://127.0.0.1:8069/web/login HTTP 200.
+- Public kiosk URL -> HTTP 404.
+
+TESTING (tanpa mematikan server utama — clone DB di instance 8071)
+- Isolated clone: odoo_presenly_wizardfilter_test_20260909.
+- Dump sumber: backups/presenly-migration/odoo-before-wizard-filter-fix-20260909_110340.dump
+  (berisi state produksi saat backup: 34 rule, 17 aktif).
+- Final result: 0 failed, 0 error(s) of 92 tests.
+  - Termasuk test_api_overtime yang sebelumnya pre-existing error kini hijau
+    (perbaikan all_user_ids ikut menyelesaikannya).
+- Clone database & clone filestore dihapus setelah validasi.
+
+STATIC VALIDATION
+- Python compilation (odoo-venv): passed.
+- XML parsing (lxml odoo-venv): 24 files passed.
+- git diff --check: passed.
+
+BACKUP
+- backups/presenly-migration/odoo-before-wizard-filter-fix-20260909_110340.dump
+  (created before the code change; retained).
+
+ROLLOUT
+- Before: presenly 19.0.15.1.0.
+- After: presenly 19.0.15.2.0.
+- Upgrade via: ./odoo-venv/bin/python ./odoo-bin -c odoo.conf -d odoo -u presenly --stop-after-init
+- Upgrade log: Modules loaded, Registry loaded, Initiating shutdown — tanpa
+  ERROR pada module presenly.
+- Server utama aktif kembali: HTTP 200.
+
+NO COMMIT
+- No Git commit was created.

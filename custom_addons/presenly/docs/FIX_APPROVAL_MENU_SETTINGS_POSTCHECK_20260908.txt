@@ -1,0 +1,113 @@
+PRESENLY APPROVAL ROUTES MENU RESTORATION + NATIVE ATTENDANCE SETTINGS DISABLE — POST-CHECK
+Date: 2026-09-08
+Database: odoo
+Module: presenly 19.0.14.1.0
+
+REQUEST
+1. Approval Routes menu tidak tampil di UI.
+2. Remove/disable fitur absensi bawaan native Odoo setelah install Presenly
+   (kiosk, dan menu setting modul attendance) — sebagian sudah pernah di-disable,
+   yang tersisa adalah menu Settings native + block konfigurasi kiosk/backend.
+
+ROOT CAUSES CONFIRMED
+A. Approval Routes menu hilang
+   - Commit adda8ed8b ("feat(overtime): add overtime request model and API
+     integration") menghapus menuitem menu_presenly_approval_rules dari
+     views/presenly_menus.xml ketika mengganti-nya dengan record yang
+     men-disable hr_attendance.menu_hr_attendance_overtime_rulesets.
+   - Action ir.actions.act_window action_presenly_approval_rule + model
+     presenly.approval.rule + views list/form/search tetap ada, tetapi TIDAK
+     ada menuitem yang menunjuk ke action tersebut.
+   - Akibatnya "Approval Routes" hanya bisa diakses via smart button Ready
+     Steps / Ready Overrides, bukan lewat menu global Configuration.
+B. Menu Settings attendance native masih aktif
+   - hr_attendance.menu_hr_attendance_settings (id 159) masih active=t di
+     bawah Configuration (group_hr_attendance_manager) dan menampilkan
+     pengaturan native: Kiosk Mode, Attendances from Backend (systray),
+     Auto Check-Out, Absence Management, Device & Location Tracking,
+     barcode/PIN/URL kiosk.
+   - Block kiosk_mode_setting_container dan "Kiosk Settings" di
+     res.config.settings belum di-hide (yang sudah di-hide hanya
+     overtime_settings).
+
+CHANGES
+1. views/presenly_menus.xml:
+   - Menambahkan kembali:
+     <menuitem id="menu_presenly_approval_rules" name="Approval Routes"
+               parent="hr_attendance.menu_hr_attendance_configuration"
+               action="action_presenly_approval_rule" sequence="60"
+               groups="presenly.group_presenly_manager"/>
+   - Menambahkan:
+     <record id="hr_attendance.menu_hr_attendance_settings" model="ir.ui.menu">
+         <field name="active" eval="False"/>
+     </record>
+   - Kiosk Mode / Onboarding / Management / Overtime Rulesets tetap disabled
+     (sudah dari versi sebelumnya; tidak diubah).
+2. views/hr_attendance_integration_views.xml:
+   - Menambahkan inherit view res_config_settings_kiosk_hidden_presenly di
+     atas res.config.settings yang menyembunyikan:
+     - //block[@name='kiosk_mode_setting_container'] (Modes)
+     - //block[.//field[@name='attendance_kiosk_url']] ("Kiosk Settings")
+   - Block overtime_settings tetap di-hide (res_config_settings_overtime_hidden_presenly).
+3. tests/test_menu_settings.py (baru) + registrasi di tests/__init__.py:
+   - test_approval_routes_menu_restored_and_manager_only
+   - test_approval_routes_menu_visible_for_manager_not_for_hr
+   - test_native_attendance_settings_menu_disabled
+   - test_native_kiosk_menus_disabled
+   - test_res_config_kiosk_and_overtime_blocks_hidden
+4. Version bump 19.0.14.0.0 -> 19.0.14.1.0.
+
+VERIFICATION (database utama odoo, setelah upgrade)
+- ir_module_module presenly latest_version: 19.0.14.1.0.
+- menu_presenly_approval_rules: active = t (id menu 395).
+- hr_attendance.menu_hr_attendance_settings: active = f (id 159).
+- hr_attendance.menu_action_open_form (Kiosk Mode): active = f (id 150).
+- hr_attendance.menu_hr_attendance_onboarding, menu_hr_attendance_view_attendances_management,
+  menu_hr_attendance_overtime_rulesets: active = f.
+- Boot server: http://127.0.0.1:8069/web/login HTTP 200.
+- Public kiosk URL (arbitrary token) -> HTTP 404 (controller override tetap aktif).
+
+DATA PRESERVATION
+Business fingerprint sebelum dan sesudah upgrade identik:
+- Attendance: 5; ID sum 42.
+- Evidence: 58; ID sum 1837.
+- Approval routes: 4; ID sum 50.
+- Approval journeys: 8; ID sum 102.
+- Permission requests: 0.
+- Time Off requests: 7; ID sum 139.
+- Overtime requests: 3; ID sum 11.
+- Tidak ada res.company configuration attendance yang diubah oleh rollout ini.
+
+TESTING
+- Isolated clone: odoo_presenly_fix_menu_test_20260908.
+- Dump sumber: backups/presenly-migration/odoo-before-fix-approval-menu-settings-20260908_182405.dump.
+- Filestore clone dibuat dari filestore odoo utama.
+- Final result: 0 failed, 1 error of 67 tests.
+  - Error yang tersisa adalah pre-existing setUpClass
+    TestPresenlyOvertimeApi pada test_api_overtime.py:78
+    (ValidationError: Only one approval step may use the same Order for the
+    same company, location, and request type) — TIDAK terkait perubahan ini;
+    model presenly.approval.rule tidak disentuh.
+- Semua 5 test baru test_menu_settings lulus.
+- Clone database dan clone filestore dihapus setelah validasi (lihat di bawah).
+
+STATIC VALIDATION
+- Python compilation (odoo-venv): passed.
+- XML parsing (lxml odoo-venv): 22 files passed.
+- git diff --check: passed.
+
+BACKUP
+- backups/presenly-migration/odoo-before-fix-approval-menu-settings-20260908_182405.dump
+  (created before any change; retained).
+
+ROLLOUT
+- Before: presenly 19.0.14.0.0.
+- After: presenly 19.0.14.1.0.
+- Upgrade via: ./odoo-venv/bin/python ./odoo-bin -c odoo.conf -d odoo -u presenly --stop-after-init
+- Upgrade log mengandung MODULE presenly & presenly_payroll loaded, Registry
+  loaded, Initiating shutdown — tanpa ERROR/CRITICAL/traceback (selain
+  warning modular "unknown parameter 'tracking'" yang sudah ada).
+- Server utama aktif kembali: PID 61750, HTTP 200.
+
+NO COMMIT
+- No Git commit was created.

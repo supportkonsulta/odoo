@@ -224,7 +224,11 @@ class TestPresenlyApiSession(HttpCase):
         self.assertTrue(checked_in['success'])
         self.assertEqual(checked_in['data']['state'], 'checked_in')
         self.assertEqual(checked_in['data']['attendance_mode'], 'wfa')
-        self.assertFalse(checked_in['data']['work_location_id'])
+        # Location context is now stored even for WFA (primary fallback),
+        # but WFA remains geofence-free.
+        self.assertEqual(
+            checked_in['data']['work_location_id'], self.location.id,
+        )
         self.assertFalse(checked_in['data']['validation']['geofence_valid'])
         self.assertTrue(checked_in['data']['validation']['selfie_received'])
         attendance_id = checked_in['data']['attendance_id']
@@ -240,15 +244,88 @@ class TestPresenlyApiSession(HttpCase):
         )
         self.assertTrue(checked_out['success'])
         self.assertEqual(checked_out['data']['attendance_mode'], 'wfa')
-        self.assertFalse(checked_out['data']['work_location_id'])
+        self.assertEqual(
+            checked_out['data']['work_location_id'], self.location.id,
+        )
         self.assertFalse(checked_out['data']['validation']['geofence_valid'])
         self.assertTrue(checked_out['data']['validation']['selfie_received'])
 
         attendance = self.env['hr.attendance'].sudo().browse(attendance_id)
         attendance.invalidate_recordset()
         self.assertEqual(attendance.presenly_attendance_mode, 'wfa')
-        self.assertFalse(attendance.presenly_work_location_id)
+        self.assertEqual(
+            attendance.presenly_work_location_id.id, self.location.id,
+        )
         self.assertTrue(attendance.check_out)
+
+
+    def test_wfa_with_location_data_is_stored(self):
+        """WFA stays geofence-free but keeps location context when the client
+        sends a work_location_id or GPS data."""
+        self.authenticate(self.login, self.password)
+        payload = {
+            'attendance_mode': 'wfa',
+            'work_location_id': self.location.id,
+            'latitude': -6.200000,
+            'longitude': 106.816666,
+            'accuracy': 8.5,
+            'selfie': self.selfie,
+            'device_id': 'wfa-loc-device-001',
+        }
+        checked_in = self.make_jsonrpc_request(
+            '/api/presenly/v1/attendance/check-in', payload,
+        )
+        self.assertTrue(checked_in['success'])
+        self.assertEqual(checked_in['data']['attendance_mode'], 'wfa')
+        self.assertEqual(
+            checked_in['data']['work_location_id'], self.location.id,
+        )
+        self.assertFalse(checked_in['data']['validation']['geofence_valid'])
+        attendance_id = checked_in['data']['attendance_id']
+
+        attendance = self.env['hr.attendance'].sudo().browse(attendance_id)
+        attendance.invalidate_recordset()
+        self.assertEqual(attendance.presenly_attendance_mode, 'wfa')
+        self.assertEqual(
+            attendance.presenly_work_location_id.id, self.location.id,
+        )
+        self.assertAlmostEqual(attendance.in_latitude, -6.2, places=1)
+        self.assertAlmostEqual(attendance.in_longitude, 106.816666, places=1)
+        event = attendance.presenly_event_ids.filtered(
+            lambda e: e.event_type == 'check_in'
+        )
+        self.assertEqual(event.work_location_id.id, self.location.id)
+        self.assertAlmostEqual(event.latitude, -6.2, places=1)
+
+        checked_out = self.make_jsonrpc_request(
+            '/api/presenly/v1/attendance/check-out', payload,
+        )
+        self.assertTrue(checked_out['success'])
+        out_event = attendance.presenly_event_ids.filtered(
+            lambda e: e.event_type == 'check_out'
+        )
+        self.assertEqual(out_event.work_location_id.id, self.location.id)
+
+    def test_wfa_without_location_uses_primary_fallback(self):
+        """WFA without GPS keeps the employee primary location as context."""
+        self.authenticate(self.login, self.password)
+        payload = {
+            'attendance_mode': 'wfa',
+            'selfie': self.selfie,
+            'device_id': 'wfa-fallback-device-001',
+        }
+        checked_in = self.make_jsonrpc_request(
+            '/api/presenly/v1/attendance/check-in', payload,
+        )
+        self.assertTrue(checked_in['success'])
+        attendance_id = checked_in['data']['attendance_id']
+        attendance = self.env['hr.attendance'].sudo().browse(attendance_id)
+        attendance.invalidate_recordset()
+        self.assertEqual(
+            attendance.presenly_work_location_id.id, self.location.id,
+        )
+        # WFA remains geofence-free semantically.
+        self.assertFalse(checked_in['data']['validation']['geofence_valid'])
 
     def test_wfa_requires_selfie(self):
         self.authenticate(self.login, self.password)

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="presenly.MapViewer">
+        <div class="presenly-map-viewer">
+            <div class="presenly-map-toolbar">
+                <label class="presenly-map-toggle">
+                    <input type="checkbox" t-model="showRadius.value"/>
+                    <span>Tampilkan radius geofence</span>
+                </label>
+                <span class="presenly-map-legend">
+                    <span class="presenly-legend-dot presenly-legend-office"></span> Kantor
+                    <span class="presenly-legend-dot presenly-legend-in"></span> Check-In
+                    <span class="presenly-legend-dot presenly-legend-out"></span> Check-Out
+                </span>
+            </div>
+            <div class="presenly-map-canvas" t-ref="map"></div>
+        </div>
+    </t>
+</templates>

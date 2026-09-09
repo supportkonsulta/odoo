@@ -1,0 +1,100 @@
+PRESENLY LEVEL HAND-OFF (APPROVAL BERJENJANG) — FIX + ROLLOUT POST-CHECK
+Date: 2026-09-09
+Database: odoo
+Module: presenly 19.0.16.1.0
+
+REPORT (admin)
+- Setelah approve level 1 dan lanjut ke level 2, approver level 1 masih bisa
+  approve dan datanya masih tampil.
+
+ROOT CAUSES (dikonfirmasi via reproduksi di clone)
+1. Record rules approver (Permission / Time Off / Overtime) memakai domain
+   OR:
+     ['|', ('presenly_pending_approver_ids', 'in', [user.id]),
+            ('presenly_approver_history_ids', 'in', [user.id])]
+   Setelah level 1 approve, user masuk history_ids -> rule tetap memberi
+   akses baca -> datanya TETAP TAMPIL di list/search/queue untuk approver
+   level 1, padahal bukan lagi current approver.
+2. Server guard sudah aman: PresenlyApprovalRequest._check_current_approver
+   hanya mengizinkan current_step_id.assigned_user_ids; setelah approve,
+   presenly_can_approve/can_reject jadi False. Yang salah hanya visibilitas
+   data (record rule) dan respons controller API setelah aksi (approver
+   kehilangan ACL baca sehingga _serialize error).
+3. Bug laten: presenly.permission._presenly_current_rule() dipanggil di
+   _compute_ui_permissions tapi TIDAK pernah didefinisikan -> potensi
+   AttributeError saat fallback approvers kosong.
+
+CHANGES
+1. security/presenly_rules.xml — ketiga rule approver jadi PENDING-ONLY:
+   - rule_presenly_permission_approver_pending
+   - rule_presenly_leave_approver_pending
+   - rule_presenly_overtime_approver_pending
+   domain_force = [('presenly_pending_approver_ids', 'in', [user.id])]
+   (history dihapus dari domain; approve/reject via workflow tetap jalan
+   karena memakai sudo di journey engine).
+   Efek: setelah approve level 1, data tidak lagi tampil untuk approver
+   level 1 (hanya current approver + owner/HR/admin yang melihat).
+2. models/presenly_approval.py — tambah method
+   PresenlyPermissionApproval._presenly_current_rule() (bug laten fix):
+   mengembalikan source_rule_id dari current_step atau step pending pertama;
+   fallback recordset kosong.
+3. Controllers (approve/reject/can-approve leave, permission, overtime):
+   - approve/reject: serialize via sudo() agar respons konfirmasi tetap
+     mengembalikan state baru setelah actor kehilangan ACL baca.
+   - can-approve: baca record via sudo() + serialize sudo() agar capability
+     check tetap menjawab (can_approve=can_reject=False setelah handoff)
+     tanpa AccessError.
+   - can_approve_batch: tetap mengembalikan item yang readable (perilaku
+     existing: unreadable ids dimasukkan ke 'unreadable_ids').
+4. tests/test_level_handoff.py (baru, 5 test):
+   - test_level1_cannot_approve_after_handoff (server guard + UI flag)
+   - test_level1_not_in_queue_after_handoff (queue web action)
+   - test_level2_can_approve_and_complete
+   - test_approver_rule_is_pending_only (3 rule domain)
+   - (setup user approver memakai groups hr_holidays.group_hr_holidays_user
+     agar akses baca setara user produksi yusril@konsultasg.com)
+5. tests/__init__.py — daftarkan test_level_handoff.
+6. Version bump 19.0.16.0.0 -> 19.0.16.1.0.
+
+VERIFICATION (database utama odoo)
+- ir_module_module presenly latest_version: 19.0.16.1.0.
+- Domain 3 rule approver = [('presenly_pending_approver_ids', 'in', [user.id])]
+  (diverifikasi di ir_rule).
+- Boot server: http://127.0.0.1:8069/web/login HTTP 200.
+- Public kiosk URL -> HTTP 404.
+
+DATA PRESERVATION
+- Fingerprint sebelum upgrade (14:03 backup) vs sesudah:
+  rules 34->29 (admin mengarsipkan beberapa antara jam kerja; ID sum
+  1874->1688), journeys 8->9, leave 7->8, evidence 58->59 — perubahan
+  tersebut berasal dari aktivitas ADMIN/HR di aplikasi live sebelum upgrade,
+  BUKAN dari perubahan kode ini (upgrade tidak menulis data bisnis).
+- Attendance tetap 5/42; overtime 3/11.
+
+TESTING (clone DB, instance 8071 — server utama tidak pernah dimatikan)
+- Isolated clone: odoo_presenly_handoff_test_20260909.
+- Dump sumber: backups/presenly-migration/odoo-before-level-handoff-fix-20260909_140348.dump.
+- Final result: 0 failed, 0 error(s) of 107 tests.
+  - 5 test level-handoff baru lulus; seluruh suite hijau (termasuk semua
+    test api leave/permission/overtime yang sempat terpengaruh akses).
+- Clone database & clone filestore dihapus setelah validasi.
+
+STATIC VALIDATION
+- Python compilation (odoo-venv): passed.
+- XML parsing (lxml odoo-venv): 24 files passed.
+- git diff --check: passed.
+
+BACKUP
+- backups/presenly-migration/odoo-before-level-handoff-fix-20260909_140348.dump
+  (created before the code change; retained).
+
+ROLLOUT
+- Before: presenly 19.0.16.0.0.
+- After: presenly 19.0.16.1.0.
+- Upgrade via: ./odoo-venv/bin/python ./odoo-bin -c odoo.conf -d odoo -u presenly --stop-after-init
+- Upgrade log: Modules loaded, Registry loaded, Initiating shutdown — tanpa
+  ERROR pada module presenly.
+- Server utama aktif kembali: HTTP 200.
+
+NO COMMIT
+- No Git commit was created.

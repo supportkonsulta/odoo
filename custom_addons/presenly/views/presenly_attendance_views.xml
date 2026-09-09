@@ -69,6 +69,8 @@
                             <field name="longitude"/>
                         </group>
                     </group>
+                    <field name="presenly_map_data" widget="presenly_map_viewer"
+                           readonly="1" nolabel="1" colspan="2" create="0" edit="0"/>
                     <separator string="Selfie Evidence"/>
                     <group>
                         <field name="selfie_attachment_id"

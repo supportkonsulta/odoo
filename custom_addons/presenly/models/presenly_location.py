@@ -43,6 +43,40 @@ class HrWorkLocation(models.Model):
         compute='_compute_presenly_approval_override_count', compute_sudo=True,
         string='Ready Overrides',
     )
+    presenly_map_data = fields.Char(
+        string='Map Data (JSON)', compute='_compute_presenly_map_data',
+    )
+
+    @api.depends(
+        'active', 'name', 'latitude', 'longitude', 'presenly_radius_meters',
+        'presenly_gps_accuracy_limit_meters',
+    )
+    def _compute_presenly_map_data(self):
+        import json
+        for location in self:
+            markers = []
+            if (
+                location.active
+                and (location.latitude or location.longitude)
+                and -90 <= location.latitude <= 90
+                and -180 <= location.longitude <= 180
+            ):
+                markers.append({
+                    'kind': 'office',
+                    'label': location.display_name or location.name or 'Work Location',
+                    'lat': float(location.latitude),
+                    'lon': float(location.longitude),
+                    'radius': location.presenly_radius_meters,
+                    'accuracy_limit_m': location.presenly_gps_accuracy_limit_meters,
+                    'geofence_ready': location.presenly_is_geofence_ready,
+                })
+            location.presenly_map_data = json.dumps({
+                'markers': markers,
+                'radius_m': (
+                    location.presenly_radius_meters
+                    if markers and location.presenly_radius_meters > 0 else None
+                ),
+            })
 
     def _compute_presenly_approval_override_count(self):
         counts = dict(self.env['presenly.approval.rule']._read_group(
@@ -67,6 +101,7 @@ class HrWorkLocation(models.Model):
         action['context'] = {
             'default_company_id': self.company_id.id,
             'default_work_location_id': self.id,
+            'active_test': True,
         }
         return action
 
