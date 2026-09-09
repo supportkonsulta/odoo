@@ -1026,7 +1026,6 @@ class SifRkaBudgetMonth(models.Model):
     realisasi = fields.Monetary(
         string='Realisasi',
         compute='_compute_realisasi',
-        store=True,
         currency_field='currency_id'
     )
 
@@ -1416,19 +1415,15 @@ class SifRkaDashboardView(models.TransientModel):
         return self.action_open_monthly_diagram()
 
     def action_refresh_realisasi(self):
-        """Recompute dan simpan ulang realisasi untuk semua data bulan tahun ini."""
+        """Refresh data realisasi — data sudah live (tidak stored)."""
         self.ensure_one()
         tahun = self.tahun or str(fields.Date.today().year)
-        monthly_records = self.env['sif.rka.budget.month'].search(
-            [('tahun', '=', tahun)]
-        )
-        monthly_records._compute_realisasi()
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
                 'title': 'Berhasil',
-                'message': f'Data realisasi tahun {tahun} berhasil diperbarui.',
+                'message': f'Data realisasi tahun {tahun} sudah live dan otomatis terbarui.',
                 'type': 'success',
                 'sticky': False,
             },
