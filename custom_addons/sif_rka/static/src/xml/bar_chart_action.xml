@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="sif_rka.BarChartAction">
+        <div class="o_action_manager_view">
+            <div class="o_view_controller" style="background: #f0f2f5; min-height: 100vh; padding: 16px;">
+
+                <div class="sif_rka_chart_main" style="
+                    max-width: 1200px;
+                    margin: 0 auto;
+                    background: #fff;
+                    border-radius: 12px;
+                    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+                    overflow: hidden;
+                ">
+                    <!-- ====== HEADER / TOOLBAR ====== -->
+                    <div class="sif_rka_chart_header" style="
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        padding: 14px 20px;
+                        background: linear-gradient(135deg, #4b5563, #6b7280);
+                        color: #fff;
+                        flex-wrap: wrap;
+                    ">
+                        <h3 style="margin: 0; font-size: 18px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                            <i class="fa fa-bar-chart" style="font-size: 20px;"></i>
+                            Diagram Anggaran vs Realisasi
+                        </h3>
+
+                        <div style="margin-left: auto; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                            <div style="display: flex; align-items: center; gap: 4px;">
+                                <select class="form-control form-control-sm"
+                                    t-on-change="onFilterTahun"
+                                    style="width: 90px; font-size: 12px; padding: 2px 6px; color: #333; background: #fff; border: 1px solid #ccc; border-radius: 4px;">
+                                    <option t-att-selected="state.tahun === '2024'" value="2024">2024</option>
+                                    <option t-att-selected="state.tahun === '2025'" value="2025">2025</option>
+                                    <option t-att-selected="state.tahun === '2026'" value="2026">2026</option>
+                                    <option t-att-selected="state.tahun === '2027'" value="2027">2027</option>
+                                    <option t-att-selected="state.tahun === '2028'" value="2028">2028</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ====== FILTER COA ====== -->
+                    <div style="
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                        padding: 12px 20px;
+                        background: #f8f9fa;
+                        border-bottom: 1px solid #e9ecef;
+                        flex-wrap: wrap;
+                    ">
+                        <span style="font-weight: 600; font-size: 13px; color: #495057;">
+                            <i class="fa fa-filter"></i> Filter COA:
+                        </span>
+                        <select class="form-control form-control-sm"
+                            t-on-change="onFilterCoa"
+                            style="width: 320px; font-size: 13px; display: inline-block; border-color: #ced4da;">
+                            <t t-foreach="state.coaOptions" t-as="coa" t-key="coa.id">
+                                <option t-att-value="coa.id" t-att-selected="state.selectedCoa === coa.id">
+                                    <t t-esc="coa.display_name"/>
+                                </option>
+                            </t>
+                        </select>
+
+                        <div style="margin-left: auto; display: flex; gap: 16px; font-size: 12px;">
+                            <span style="display: flex; align-items: center; gap: 4px;">
+                                <span style="display: inline-block; width: 14px; height: 14px; background: rgba(41, 98, 255, 0.85); border-radius: 3px;"></span>
+                                Anggaran
+                            </span>
+                            <span style="display: flex; align-items: center; gap: 4px;">
+                                <span style="display: inline-block; width: 14px; height: 14px; background: rgba(255, 159, 0, 0.85); border-radius: 3px;"></span>
+                                Realisasi
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- ====== CHART BODY ====== -->
+                    <div style="padding: 20px; position: relative;">
+
+                        <div t-if="state.isLoading" class="text-center" style="padding: 80px 0;">
+                            <i class="fa fa-spinner fa-spin fa-4x text-primary"></i>
+                            <p style="margin-top: 16px; font-size: 14px; color: #666;">
+                                <t t-esc="'Memuat data diagram...'"/>
+                            </p>
+                        </div>
+
+                        <div t-if="state.error and !state.isLoading" class="alert alert-danger text-center" style="margin: 40px; border-radius: 8px;">
+                            <i class="fa fa-exclamation-triangle fa-2x"></i>
+                            <p style="margin-top: 10px; font-size: 14px;">
+                                Gagal memuat data. Periksa koneksi database.
+                            </p>
+                            <button class="btn btn-sm btn-danger" t-on-click="_loadChartData">
+                                <i class="fa fa-refresh"></i> Coba Lagi
+                            </button>
+                        </div>
+
+                        <div t-if="!state.isLoading and !state.error and state.labels.length === 0" class="text-center" style="padding: 80px 0;">
+                            <i class="fa fa-bar-chart fa-4x text-muted"></i>
+                            <p style="margin-top: 16px; font-size: 14px; color: #666;">
+                                Tidak ada data untuk tahun <t t-esc="state.tahun"/>.
+                            </p>
+                        </div>
+
+                        <div t-if="!state.isLoading and !state.error and state.labels.length > 0" style="width: 100%; height: 450px; position: relative;">
+                            <canvas t-ref="chartCanvas" style="width: 100% !important; height: 100% !important;"></canvas>
+                        </div>
+                    </div>
+
+                    <div style="
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        padding: 10px 20px;
+                        background: #f8f9fa;
+                        border-top: 1px solid #e9ecef;
+                        font-size: 11px;
+                        color: #888;
+                    ">
+                        <span>
+                            <i class="fa fa-info-circle"></i>
+                            Klik batang untuk melihat detail bulanan
+                        </span>
+                        <span>
+                            <i class="fa fa-hand-pointer-o"></i>
+                            Hover untuk melihat nominal
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>
