@@ -67,6 +67,7 @@ class HrWorkLocation(models.Model):
         action['context'] = {
             'default_company_id': self.company_id.id,
             'default_work_location_id': self.id,
+            'active_test': True,
         }
         return action
 

@@ -1,6 +1,6 @@
 {
     'name': 'Presenly Attendance Tools',
-    'version': '19.0.14.0.0',
+    'version': '19.0.16.4.0',
     'category': 'Human Resources/Attendances',
     'summary': 'Attendance geofence, evidence, permissions and multilevel approvals',
     'description': """
@@ -19,8 +19,10 @@ and multilevel approvals.
         'wizard/presenly_permission_reject_views.xml',
         'wizard/presenly_schedule_generate_views.xml',
         'wizard/presenly_overtime_reject_views.xml',
+        'wizard/presenly_approval_route_generate_views.xml',
         'data/presenly_data.xml',
         'data/presenly_migration.xml',
+        'views/presenly_setup_guide_views.xml',
         'views/presenly_location_views.xml',
         'views/presenly_schedule_views.xml',
         'views/presenly_permission_views.xml',

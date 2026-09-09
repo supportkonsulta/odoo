@@ -19,7 +19,7 @@ class TestPresenlyLeaveApproval(TransactionCase):
             'login': 'presenly_leave_manager',
             'email': 'presenly.manager@example.com',
             'group_ids': [(4, cls.env.ref(
-                'presenly.group_presenly_approver'
+                'presenly.group_presenly_employee'
             ).id)],
         })
         cls.location_address = cls.env['res.partner'].create({
@@ -114,7 +114,10 @@ class TestPresenlyLeaveApproval(TransactionCase):
     def test_approval_route_navigation_and_connected_ui(self):
         self.assertEqual(self.leave_type.presenly_approval_route_count, 2)
         leave_action = self.leave_type.action_open_presenly_approval_routes()
-        self.assertEqual(leave_action['domain'], [('leave_type_id', '=', self.leave_type.id)])
+        self.assertEqual(leave_action['domain'], [
+            ('leave_type_id', '=', self.leave_type.id),
+            ('request_group', '=', 'leave'),
+        ])
         self.assertEqual(
             leave_action['context']['default_leave_type_id'], self.leave_type.id,
         )

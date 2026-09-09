@@ -6,26 +6,24 @@
         <field name="arch" type="xml">
             <form string="Overtime / Lembur">
                 <header>
+                    <button name="action_submit" type="object" string="Submit for Approval"
+                            class="oe_highlight" invisible="not can_submit"/>
+                    <button name="action_presenly_approve" type="object" string="Approve Current Level"
+                            class="oe_highlight" invisible="not can_approve"/>
+                    <button name="action_presenly_open_reject_wizard" type="object" string="Reject"
+                            class="btn-secondary" invisible="not can_reject"/>
+                    <button name="action_cancel" type="object" string="Cancel Request"
+                            invisible="not can_cancel"
+                            confirm="Cancel this overtime request and its pending approval journey?"/>
+                    <button name="action_delete_with_confirm" type="object" string="Delete"
+                            confirm="Delete this overtime request and its approval journey?
+This action cannot be undone."
+                            groups="presenly.group_presenly_hr,presenly.group_presenly_manager"
+                            invisible="not id"/>
                     <field name="state" widget="statusbar"
                            statusbar_visible="draft,submitted,approved,rejected,cancelled"/>
                 </header>
-                <sheet>
-                    <div class="d-flex flex-wrap gap-2 mb-3 o_presenly_overtime_actions">
-                        <button name="action_submit" type="object" string="Submit for Approval"
-                                class="oe_highlight" invisible="not can_submit"/>
-                        <button name="action_presenly_approve" type="object" string="Approve Current Level"
-                                class="oe_highlight" invisible="not can_approve"/>
-                        <button name="action_presenly_open_reject_wizard" type="object" string="Reject"
-                                class="btn-secondary" invisible="not can_reject"/>
-                        <button name="action_cancel" type="object" string="Cancel Request"
-                                invisible="not can_cancel"
-                                confirm="Cancel this overtime request and its pending approval journey?"/>
-                        <button name="action_delete_with_confirm" type="object" string="Delete"
-                                confirm="Delete this overtime request and its approval journey?\nThis action cannot be undone."
-                                groups="presenly.group_presenly_hr,presenly.group_presenly_manager"
-                                invisible="not id"/>
-                    </div>
-                    <div class="alert alert-info d-flex align-items-center my-2" role="alert"
+                <sheet><div class="alert alert-info d-flex align-items-center my-2" role="alert"
                          invisible="state != 'draft'">
                         <i class="fa fa-clock-o me-2"/>
                         Overtime duration is computed server-side. Only one request per employee per day is allowed and attendance evidence is required.
@@ -173,7 +171,7 @@
         <field name="view_mode">list,form</field>
         <field name="search_view_id" ref="view_presenly_overtime_search"/>
         <field name="context">{'search_default_to_approve': 1}</field>
-        <field name="group_ids" eval="[(4, ref('presenly.group_presenly_approver'))]"/>
+        <field name="group_ids" eval="[(4, ref('base.group_user'))]"/>
     </record>
 
     <record id="action_presenly_overtime_reporting" model="ir.actions.act_window">
@@ -193,7 +191,7 @@
     <menuitem id="menu_presenly_overtime_approvals" name="Overtime Approvals"
               parent="hr_attendance.menu_hr_attendance_root"
               action="action_presenly_overtime_approvals" sequence="8"
-              groups="presenly.group_presenly_approver" active="True"/>
+              groups="base.group_user" active="True"/>
     <menuitem id="menu_presenly_overtime_reporting" name="Overtime / Lembur"
               parent="hr_attendance.menu_hr_attendance_reporting"
               action="action_presenly_overtime_reporting" sequence="50"

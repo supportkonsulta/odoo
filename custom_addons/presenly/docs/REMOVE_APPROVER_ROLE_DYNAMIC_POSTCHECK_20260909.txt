@@ -1,0 +1,98 @@
+PRESENLY REMOVE FUNCTIONAL "APPROVER" ROLE — DYNAMIC ROUTE-BASED APPROVAL — POST-CHECK
+Date: 2026-09-09
+Database: odoo
+Module: presenly 19.0.16.2.0
+
+REQUEST
+- Role "Approver" (presenly.group_presenly_approver) yang selama ini menjadi
+  syarat kelayakan approval terbukti ambigu (label "HR Officer" di form
+  resolve ke group Time Off Responsible; yusril tanpa peran HR ikut ter-assign
+  & bisa approve di step 2).
+- User meminta role Approver dihapus dan approval diganti sepenuhnya oleh
+  dynamic check dari Approval Routes + menu approval yang otomatis
+  menyesuaikan.
+
+CHANGES
+1. models/presenly_approval.py
+   - _validate_flow(): HAPUS pengecekan missing role
+     ('presenly.group_presenly_approver'). Submit tidak lagi menolak user
+     yang di-assign oleh rule hanya karena tidak punya role Approver.
+   - _approvers_for('hr'): 'HR Officer' kini resolve ke
+     presenly.group_presenly_hr (label konsisten, member hrd@...), BUKAN
+     hr_holidays.group_hr_holidays_responsible (yang berisi yusril).
+2. security/presenly_rules.xml — 6 rule approver jadi DYNAMIC (base.group_user):
+   - rule_presenly_permission_approver_pending
+   - rule_presenly_leave_approver_pending
+   - rule_presenly_overtime_approver_pending
+   - rule_presenly_approval_request_approver
+   - rule_presenly_approval_step_approver
+   - rule_presenly_approval_log_approver_own
+   groups = base.group_user (+ legacy Approver di DB lama tetap ada tapi
+   tidak lagi menjadi gerbang karena base.group_user mencakup semua user).
+   Domain tetap pending-only (history dihapus) — hasil fix levelling
+   sebelumnya dipertahankan.
+3. security/ir.model.access.csv — ACL request/step/log "approver" pindah ke
+   base.group_user (read-only) agar user yang di-assign bisa baca journey.
+4. views/presenly_menus.xml — menu Approvals & My Approvals:
+   active=False -> True, groups=base.group_user (menu approval tampil untuk
+   semua user; isinya difilter dinamis -> kosong bila tidak ada tugas).
+5. views/presenly_overtime_views.xml — action & menu Overtime Approvals:
+   groups=base.group_user.
+6. views/presenly_approval_views.xml — server action My Approvals:
+   group_ids=base.group_user.
+7. models/presenly_setup_guide.py + views/presenly_setup_guide_views.xml:
+   - Step 8 "Approver Role" diganti "Time Off Route Coverage"
+     (field all_types_routed = semua leave type punya route; hapus
+     approver_role_count).
+   - proress steps menghitung 8 langkah setup nyata.
+8. tests/test_level_handoff.py:
+   - Setup approver level1/level2 TANPA presenly.group_presenly_approver
+     dan TANPA hr_holidays group -> membuktikan approval murni dari route.
+   - test_approver_rule_is_pending_only_and_global: 3 rule domain
+     pending-only + groups memuat base.group_user.
+   - test_approvers_without_role_can_approve (baru): user tanpa role dapat
+     approve penuh 2 level.
+9. tests/__init__.py + version bump 19.0.16.1.0 -> 19.0.16.2.0.
+
+VERIFICATION (database utama odoo)
+- ir_module_module presenly latest_version: 19.0.16.2.0.
+- ir_rule "Presenly approver: ..." (6 rule): groups = {legacy Approver,
+  Role / User}; global=f; domain pending-only (history tidak lagi dipakai).
+- Menu: menu_presenly_approvals(194), menu_presenly_my_approvals(195),
+  menu_presenly_overtime_approvals(284) active=t dengan groups
+  Role / User + Approver.
+- Field presenly_setup_guide.approver_role_count terhapus dari ir_model_fields
+  (deleted 11163, terkonfirmasi di log upgrade).
+- Boot server: http://127.0.0.1:8069/web/login HTTP 200.
+- Public kiosk URL -> HTTP 404.
+
+DATA PRESERVATION
+- Attendance 5/42; journeys & leave sesuai aktivitas live admin (tidak
+  diubah upgrade). Tidak ada data bisnis yang ditulis oleh upgrade ini.
+
+TESTING (clone DB, instance 8071 — server utama tidak pernah dimatikan)
+- Isolated clone: odoo_presenly_norole_test_20260909.
+- Dump sumber: backups/presenly-migration/odoo-before-remove-approver-role-20260909_154737.dump.
+- Final result: 0 failed, 0 error(s) of 108 tests.
+  - Termasuk test handoff tanpa role, seluruh suite API/web/security hijau.
+- Clone database & clone filestore dihapus setelah validasi.
+
+STATIC VALIDATION
+- Python compilation (odoo-venv): passed.
+- XML parsing (lxml odoo-venv): 24 files passed.
+- git diff --check: passed.
+
+BACKUP
+- backups/presenly-migration/odoo-before-remove-approver-role-20260909_154737.dump
+  (created before the code change; retained).
+
+ROLLOUT
+- Before: presenly 19.0.16.1.0.
+- After: presenly 19.0.16.2.0.
+- Upgrade via: ./odoo-venv/bin/python ./odoo-bin -c odoo.conf -d odoo -u presenly --stop-after-init
+- Upgrade log: Modules loaded, Registry loaded, Initiating shutdown — tanpa
+  ERROR pada module presenly (hanya deletion field approver_role_count).
+- Server utama aktif kembali: HTTP 200.
+
+NO COMMIT
+- No Git commit was created.

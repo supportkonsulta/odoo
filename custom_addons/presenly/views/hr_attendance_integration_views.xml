@@ -289,4 +289,22 @@
             </xpath>
         </field>
     </record>
+
+    <!-- Native Attendance modes and Kiosk settings are owned by Presenly:
+         mobile app drives check-in/out and the native Kiosk/backend/systray
+         channels are disabled. Hide the whole Modes and Kiosk blocks from the
+         company Attendance settings screen without changing company data. -->
+    <record id="res_config_settings_kiosk_hidden_presenly" model="ir.ui.view">
+        <field name="name">res.config.settings.kiosk.hidden.presenly</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="hr_attendance.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//block[@name='kiosk_mode_setting_container']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//block[.//field[@name='attendance_kiosk_url']]" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+        </field>
+    </record>
 </odoo>

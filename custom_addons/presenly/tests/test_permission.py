@@ -15,7 +15,7 @@ class TestPresenlyPermission(TransactionCase):
             'name': 'Permission Manager',
             'login': 'permission_manager',
             'group_ids': [(4, cls.env.ref(
-                'presenly.group_presenly_approver'
+                'presenly.group_presenly_employee'
             ).id)],
         })
         address = cls.env['res.partner'].create({
@@ -72,7 +72,10 @@ class TestPresenlyPermission(TransactionCase):
         action = self.permission_type.action_open_approval_routes()
         self.assertEqual(
             action['domain'],
-            [('permission_type_id', '=', self.permission_type.id)],
+            [
+                ('permission_type_id', '=', self.permission_type.id),
+                ('request_group', '=', 'permission'),
+            ],
         )
         self.assertEqual(
             action['context']['default_permission_type_id'],

@@ -6,3 +6,9 @@ from . import test_api_session
 from . import test_api_leave
 from . import test_api_permission
 from . import test_api_overtime
+from . import test_menu_settings
+from . import test_approval_auto_order
+from . import test_setup_generate
+from . import test_wizard_scope_ux
+from . import test_approval_nested_levels
+from . import test_level_handoff

@@ -101,8 +101,21 @@ mail
 4. Set Work Location utama pada Employee sebagai fallback.
 5. Gunakan lokasi per hari native jika hanya ada satu lokasi per hari.
 6. Buat **Work Location Schedules** jika satu hari memiliki beberapa lokasi atau membutuhkan batas jam.
-7. Buka setiap Permission Type dan Time Off Type, lalu susun Approval Steps melalui smart button. Gunakan menu Approval Routes hanya untuk overview lintas jenis request.
-8. Pastikan setiap user yang terpilih sebagai approver mempunyai role **Presenly Approver** dan Allowed Company yang sesuai.
+7. Buka setiap Permission Type dan Time Off Type, lalu susun Approval Steps melalui smart button. Order tiap langkah diisi otomatis (10, 20, 30, ...); urutkan ulang dengan drag pada list Approval Routes. Gunakan menu Approval Routes hanya untuk overview lintas jenis request.
+8. Atau gunakan **Generate Approval Routes** (Configuration) untuk membuat route semua Time Off Type, Permission Type, dan Overtime sekaligus secara otomatis (approver default Employee Manager, route company-default, idempotent).
+9. Pastikan setiap user yang terpilih sebagai approver mempunyai role **Presenly Approver** dan Allowed Company yang sesuai.
+
+## Setup Guide
+
+Menu **Attendances > Configuration > Presenly Setup** menampilkan checklist 8 langkah dengan status kesiapan (Company & Locations, Geofence, Schedules, Employees, Permission Types, Time Off Routes, Overtime Route, Approver Role) dan tombol pintasan ke layar konfigurasi terkait. Progress bar menunjukkan seberapa siap modul untuk dipakai.
+
+## Approval Routes — Nested Level View
+
+List **Approval Routes** dikelompokkan berhirarki **Company → Request Group (Overtime/Permission/Time Off) → Request Type → Work Location**, dan di dalam tiap kelompok baris diurutkan per **Order (level)** 10, 20, 30. Setiap baris (dan header form) memiliki tombol **Add Next Level** yang membuka form step baru dengan **scope otomatis terisi sama** (company, work location, dan request type yang sama) serta Order preview `max+10` — jadi menambah level berikutnya cukup memilih approver.
+
+## Generate Approval Routes
+
+Menu **Attendances > Configuration > Generate Approval Routes** membuat satu route step per Time Off Type aktif, Permission Type aktif, dan Overtime (10, 20, 30, ...) pada scope company-default. Dengan opsi *Skip existing* (default) modul tidak membuat duplikat pada request type yang sudah punya route; disable opsi itu untuk menambah step kedua (+10) di scope yang sama. List **Approval Routes** dikelompokkan berhirarki Company > Request Group (Overtime/Permission/Time Off) > Work Location.
 
 ## Single-path Approval Journey
 

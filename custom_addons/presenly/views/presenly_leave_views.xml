@@ -7,6 +7,8 @@
         <field name="inherit_id" ref="hr_holidays.hr_leave_view_form"/>
         <field name="priority">90</field>
         <field name="arch" type="xml">
+
+            <!-- Hide every native approval affordance. -->
             <xpath expr="//header/button[@name='action_approve']" position="attributes">
                 <attribute name="invisible">1</attribute>
             </xpath>
@@ -25,11 +27,31 @@
             <xpath expr="(//header/field[@name='state'])[2]" position="attributes">
                 <attribute name="invisible">1</attribute>
             </xpath>
+
+            <!-- Presenly actions live in the header, aligned with the status
+                 section (statusbar), NOT inside the content card. -->
             <xpath expr="//header" position="inside">
+                <field name="presenly_can_submit" invisible="1"/>
+                <field name="presenly_can_approve" invisible="1"/>
+                <field name="presenly_can_reject" invisible="1"/>
+                <field name="presenly_can_cancel" invisible="1"/>
+                <field name="presenly_can_edit" invisible="1"/>
+                <field name="presenly_approval_engine" invisible="1"/>
+                <field name="presenly_approval_request_id" invisible="1"/>
+                <button name="action_presenly_submit" type="object" string="Submit for Approval"
+                        class="oe_highlight" invisible="not presenly_can_submit"/>
+                <button name="action_presenly_approve" type="object" string="Approve Current Level"
+                        class="oe_highlight" invisible="not presenly_can_approve"/>
+                <button name="action_presenly_open_reject_wizard" type="object" string="Reject"
+                        class="btn-secondary" invisible="not presenly_can_reject"/>
+                <button name="action_presenly_cancel" type="object" string="Cancel Request"
+                        invisible="not presenly_can_cancel"
+                        confirm="Cancel this request and its pending approval journey?"/>
                 <field name="presenly_approval_state" widget="statusbar"
                        statusbar_visible="not_started,pending,approved,rejected,cancelled"/>
             </xpath>
 
+            <!-- Read-only transaction fields until editable. -->
             <xpath expr="//field[@name='holiday_status_id']" position="attributes">
                 <attribute name="readonly">not presenly_can_edit</attribute>
             </xpath>
@@ -61,25 +83,8 @@
                 <attribute name="readonly">not presenly_can_edit</attribute>
             </xpath>
 
+            <!-- Status alerts above the content card. -->
             <xpath expr="//div[hasclass('o_hr_leave_content')]" position="before">
-                <field name="presenly_can_submit" invisible="1"/>
-                <field name="presenly_can_approve" invisible="1"/>
-                <field name="presenly_can_reject" invisible="1"/>
-                <field name="presenly_can_cancel" invisible="1"/>
-                <field name="presenly_can_edit" invisible="1"/>
-                <field name="presenly_approval_engine" invisible="1"/>
-                <field name="presenly_approval_request_id" invisible="1"/>
-                <div class="d-flex flex-wrap gap-2 mb-3 o_presenly_leave_actions">
-                    <button name="action_presenly_submit" type="object" string="Submit for Approval"
-                            class="oe_highlight" invisible="not presenly_can_submit"/>
-                    <button name="action_presenly_approve" type="object" string="Approve Current Level"
-                            class="oe_highlight" invisible="not presenly_can_approve"/>
-                    <button name="action_presenly_open_reject_wizard" type="object" string="Reject"
-                            class="btn-secondary" invisible="not presenly_can_reject"/>
-                    <button name="action_presenly_cancel" type="object" string="Cancel Request"
-                            invisible="not presenly_can_cancel"
-                            confirm="Cancel this request and its pending approval journey?"/>
-                </div>
                 <div class="alert alert-info d-flex align-items-center my-2" role="alert"
                      invisible="presenly_approval_state != 'not_started'">
                     <i class="fa fa-route me-2" title="Approval Journey"/>
@@ -102,6 +107,7 @@
                 </div>
             </xpath>
 
+            <!-- Approval Journey table under the content card. -->
             <xpath expr="//div[hasclass('o_hr_leave_content')]" position="after">
                 <group string="Approval Journey" class="mt-3" invisible="not presenly_approval_request_id">
                     <field name="presenly_approval_step_ids" nolabel="1" readonly="1" colspan="2">

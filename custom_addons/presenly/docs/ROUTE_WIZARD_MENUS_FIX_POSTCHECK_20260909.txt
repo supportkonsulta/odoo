@@ -1,0 +1,127 @@
+PRESENLY GENERATE WIZARD FIX + PER-MODULE ROUTE MENUS + NONE CLEANUP — ROLLOUT POST-CHECK
+Date: 2026-09-09
+Database: odoo
+Module: presenly 19.0.15.1.0
+
+REPORTS (dari admin saat memakai Generate Approval Routes)
+1. Error null request_kind pada presenly_approval_route_generate_wizard_line.
+2. Memilih types tidak otomatis refetch; hanya generate types yang dipilih.
+3. Halaman Approval Routes: tombol tambah company muncul (grup list create).
+4. Approval Routes menampilkan baris "none" (rule kosong 41/42).
+5. Minta menu Approval Routes per modul (Attendance / Time Off / Permission /
+   Overtime) yang langsung menambah route khusus modul tersebut.
+
+ROOT CAUSES
+A. error request_kind null
+   - Field line wizard (request_kind / request_name / request_id / sequence /
+     status) didefinisikan readonly=True. Web client Odoo me-drop nilai field
+     readonly pada command (0,0,...) saat menyimpan wizard; hanya field dengan
+     default (status) yang ikut tersimpan -> INSERT menjalankan request_kind
+     NULL dan gagal.
+B. refetch saat pilih types
+   - _prepare_lines dipanggil onchange dan mengisi preview, tetapi action_generate
+     memakai data line yang dikirim klien (rafwan). Karena field readonly, data
+     bisa hilang -> perlu hitung ulang di server dari field pilihan.
+C. tombol tambah company
+   - List global Approval Routes memakai default_group_by dan create aktif ->
+     setiap grup company menampilkan tombol "New".
+D. baris "none"
+   - presenly.approval.rule id 41/42 tidak punya nama, incomplete, aktif ->
+     ditampilkan sebagai "(none)".
+E. menu per modul
+   - Tidak ada action creatable khusus Time Off / Permission / Overtime.
+
+CHANGES
+1. wizard/presenly_approval_route_generate.py
+   - Hapus readonly pada field line wizard (request_kind/name/id/sequence/status)
+     agar klien bisa mengirim nilainya; tetap ditampilkan readonly di view.
+   - action_generate kini memakai _generate_values(): hitung ulang dari field
+     pilihan (company, apply_to, leave/permission type ids, skip_existing) di
+     server, TIDAK trust data line dari klien. Auto Order (+10) tetap diemban
+     model presenly.approval.rule.
+   - _prepare_lines tetap dipakai onchange untuk preview.
+2. views/presenly_approval_views.xml
+   - List global (view_presenly_approval_rule_list): create/edit/delete/duplicate
+     = 0 (read-only overview), default_group_by request_group,work_location_id
+     (tanpa company supaya tidak muncul tombol New per company).
+   - List editable flat (view_presenly_approval_rule_list_editable) create aktif,
+     dipakai action per modul & smart button.
+   - Action per modul: action_presenly_approval_rule_leave/permission/overtime
+     (domain request_group + search_default filter).
+   - Action global tetap (action_presenly_approval_rule).
+3. models (smart button & pintasan dialihkan ke action per modul)
+   - presenly.permission.action_open_approval_routes -> action permission
+     (domain request_group=permission).
+   - HrLeaveTypePresenly.action_open_presenly_approval_routes -> action leave
+     (domain request_group=leave).
+   - presenly.location.action_open_presenly_approval_overrides -> action global
+     (tetap; + active_test True).
+   - presenly.setup_guide: tambah action_open_approval_routes_leave/permission/
+     overtime.
+4. views/presenly_menus.xml
+   - Menu per modul di Configuration: "Time Off Approval Routes"
+     (menu_presenly_approval_rules_leave), "Permission Approval Routes"
+     (menu_presenly_approval_rules_permission), "Overtime Approval Routes"
+     (menu_presenly_approval_rules_overtime), sequence 61-63, group manager.
+5. models/presenly_approval.py
+   - _presenly_archive_empty_rules(): archive (active=False) semua rule dengan
+     Step Name kosong/None, idempotent (dipanggil dari presenly_migration.xml).
+     Rule dengan nama tetap dibiarkan walau incomplete (masih bisa diperbaiki).
+6. data/presenly_migration.xml: panggil _presenly_archive_empty_rules.
+7. tests
+   - test_approval.py & test_permission.py: update assertion domain action
+     (request_group kini disertakan).
+   - Test generate wizard existing tetap lulus (0 failed).
+8. Version bump 19.0.15.0.0 -> 19.0.15.1.0.
+
+VERIFICATION (database utama odoo)
+- ir_module_module presenly: 19.0.15.1.0.
+- presenly.approval.rule: 5 total (ID sum 92); aktif = 3; rule 41/42 aktif=f
+  (nameless none tidak tampil lagi).
+- Menu: menu_presenly_approval_rules_leave (398), _permission (399),
+  _overtime (400) active=t.
+- Action: action_presenly_approval_rule_leave(552)/permission(553)/overtime(554).
+- View: view_presenly_approval_rule_list (794) & view_presenly_approval_rule_list_editable (1771).
+- Boot server: http://127.0.0.1:8069/web/login HTTP 200.
+- Public kiosk URL -> HTTP 404.
+
+DATA PRESERVATION
+Business fingerprint identik sebelum/sesudah upgrade (kecuali arsip rule kosong
+41/42 yang memang junk):
+- Approval routes: 5; ID sum 92 (41/42 aktif=f; ID sum tidak berubah).
+- Journeys: 8; ID sum 102.
+- Attendance: 5; ID sum 42.
+- Evidence: 58; ID sum 1837.
+- Time Off: 7; ID sum 139.
+- Overtime: 3; ID sum 11.
+- Journeys & request berjalan tidak terpengaruh (snapshot di presenly.approval.step).
+
+TESTING
+- Isolated clone: odoo_presenly_routefix_test_20260909.
+- Dump sumber: backups/presenly-migration/odoo-before-route-menu-fix-20260909_103302.dump.
+- Final result: 0 failed, 1 error of 81 tests.
+  - Error tersisa = pre-existing setUpClass TestPresenlyOvertimeApi
+    (test_api_overtime.py:78) — tidak terkait perubahan ini.
+- Test approval auto-order, setup guide, generate wizard, menu, kiosk, security
+  semua lulus.
+- Clone database dan clone filestore dihapus setelah validasi.
+
+STATIC VALIDATION
+- Python compilation (odoo-venv): passed.
+- XML parsing (lxml odoo-venv): 24 files passed.
+- git diff --check: passed.
+
+BACKUP
+- backups/presenly-migration/odoo-before-route-menu-fix-20260909_103302.dump
+  (created before any change; retained).
+
+ROLLOUT
+- Before: presenly 19.0.15.0.0.
+- After: presenly 19.0.15.1.0.
+- Upgrade via: ./odoo-venv/bin/python ./odoo-bin -c odoo.conf -d odoo -u presenly --stop-after-init
+- Upgrade log: Modules loaded, Registry loaded, Initiating shutdown — tanpa
+  ERROR pada module presenly.
+- Server utama aktif kembali: HTTP 200.
+
+NO COMMIT
+- No Git commit was created.
