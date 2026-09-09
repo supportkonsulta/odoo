@@ -86,6 +86,9 @@
                                options="{'no_open': True}"/>
                     </group>
                 </group>
+                <separator string="Location Map"/>
+                <field name="presenly_map_data" widget="presenly_map_viewer"
+                       readonly="1" nolabel="1" colspan="2" create="0" edit="0"/>
                 <separator string="Check-In Evidence"/>
             </xpath>
             <xpath expr="//separator[@name='check_out_separator']" position="attributes">

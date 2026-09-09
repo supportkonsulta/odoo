@@ -89,6 +89,89 @@ class HrAttendance(models.Model):
     presenly_evidence_count = fields.Integer(
         compute='_compute_presenly_evidence_count', string='Evidence Count',
     )
+    presenly_map_data = fields.Char(
+        string='Map Data (JSON)', compute='_compute_presenly_map_data',
+    )
+
+    def _presenly_map_marker(self, kind, label, latitude, longitude, **extra):
+        """One map marker dict, skipping empty or zero coordinates.
+
+        Odoo stores False floats as 0.0, so a missing GPS value arrives as
+        (0.0, 0.0) — which is not a real location and must be skipped."""
+        if latitude in (None, '', 0.0, 0) or longitude in (None, '', 0.0, 0):
+            return None
+        try:
+            lat = float(latitude)
+            lon = float(longitude)
+        except (TypeError, ValueError):
+            return None
+        if not -90 <= lat <= 90 or not -180 <= lon <= 180:
+            return None
+        marker = {
+            'kind': kind,
+            'label': label,
+            'lat': lat,
+            'lon': lon,
+        }
+        marker.update(extra)
+        return marker
+
+    def _presenly_location_markers(self, location):
+        """Office marker + radius circle from a Work Location (fresh sudo read)."""
+        if not location:
+            return [], None
+        location = location.sudo()
+        marker = self._presenly_map_marker(
+            'office',
+            location.display_name or 'Work Location',
+            location.latitude,
+            location.longitude,
+            radius=location.presenly_radius_meters,
+            geofence_ready=location.presenly_is_geofence_ready,
+        )
+        radius = (
+            location.presenly_radius_meters
+            if marker and location.presenly_radius_meters > 0 else None
+        )
+        return ([marker] if marker else []), radius
+
+    @api.depends(
+        'in_latitude', 'in_longitude', 'out_latitude', 'out_longitude',
+        'presenly_work_location_id', 'presenly_work_location_id.latitude',
+        'presenly_work_location_id.longitude',
+        'presenly_work_location_id.presenly_radius_meters',
+        'presenly_check_in_distance', 'presenly_check_out_distance',
+        'presenly_attendance_mode',
+    )
+    def _compute_presenly_map_data(self):
+        import json
+        for attendance in self:
+            markers = []
+            markers.append(self._presenly_map_marker(
+                'check_in',
+                'Check-In',
+                attendance.in_latitude,
+                attendance.in_longitude,
+                distance_m=attendance.presenly_check_in_distance,
+                mode=attendance.presenly_attendance_mode,
+            ))
+            markers.append(self._presenly_map_marker(
+                'check_out',
+                'Check-Out',
+                attendance.out_latitude,
+                attendance.out_longitude,
+                distance_m=attendance.presenly_check_out_distance,
+                mode=attendance.presenly_attendance_mode,
+            ))
+            office_markers, radius = self._presenly_location_markers(
+                attendance.presenly_work_location_id
+            )
+            markers += office_markers
+            attendance.presenly_map_data = json.dumps({
+                'markers': [m for m in markers if m],
+                'radius_m': radius,
+            })
+
 
     @api.depends(
         'check_in', 'check_out', 'worked_hours', 'out_mode',
@@ -428,6 +511,56 @@ class PresenlyAttendanceEvent(models.Model):
     ], required=True, tracking=True)
     validation_message = fields.Char(tracking=True)
     device_id_hash = fields.Char(index=True, readonly=True)
+    presenly_map_data = fields.Char(
+        string='Map Data (JSON)', compute='_compute_presenly_map_data',
+    )
+
+    @api.depends(
+        'latitude', 'longitude', 'work_location_id',
+        'work_location_id.latitude', 'work_location_id.longitude',
+        'work_location_id.presenly_radius_meters',
+        'distance_from_location', 'event_type', 'attendance_mode',
+    )
+    def _compute_presenly_map_data(self):
+        import json
+        attendance = self.env['hr.attendance']
+        for event in self:
+            location = event.work_location_id.sudo() if event.work_location_id else False
+            markers = []
+            if event.latitude or event.longitude:
+                try:
+                    lat = float(event.latitude)
+                    lon = float(event.longitude)
+                except (TypeError, ValueError):
+                    lat = lon = False
+                if lat is not False and -90 <= lat <= 90 and -180 <= lon <= 180:
+                    markers.append({
+                        'kind': 'check_in' if event.event_type == 'check_in' else 'check_out',
+                        'label': 'Check-In' if event.event_type == 'check_in' else 'Check-Out',
+                        'lat': lat,
+                        'lon': lon,
+                        'distance_m': event.distance_from_location,
+                        'mode': event.attendance_mode,
+                        'accuracy': event.accuracy or 0.0,
+                    })
+            radius = None
+            if location:
+                office = {
+                    'kind': 'office',
+                    'label': location.display_name or 'Work Location',
+                    'lat': float(location.latitude or 0.0),
+                    'lon': float(location.longitude or 0.0),
+                    'radius': location.presenly_radius_meters,
+                    'geofence_ready': location.presenly_is_geofence_ready,
+                }
+                if -90 <= office['lat'] <= 90 and -180 <= office['lon'] <= 180:
+                    markers.append(office)
+                if location.presenly_radius_meters > 0:
+                    radius = location.presenly_radius_meters
+            event.presenly_map_data = json.dumps({
+                'markers': markers,
+                'radius_m': radius,
+            })
 
     def write(self, values):
         auditable_fields = {

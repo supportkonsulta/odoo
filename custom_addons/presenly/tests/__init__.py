@@ -11,4 +11,5 @@ from . import test_approval_auto_order
 from . import test_setup_generate
 from . import test_wizard_scope_ux
 from . import test_approval_nested_levels
+from . import test_map_data
 from . import test_level_handoff
