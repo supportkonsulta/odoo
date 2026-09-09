@@ -900,7 +900,7 @@
 
     <menuitem
         id="menu_sif_rka_root"
-        name="SIF RKA"
+        name="RKA"
         action="action_sif_rka_open_integrated_dashboard"
         sequence="10"
     />
