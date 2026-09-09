@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <!-- ============================================== -->
+    <!-- CLIENT ACTION: Diagram Batang Chart.js          -->
+    <!-- ============================================== -->
     <record id="action_sif_rka_diagram_bulanan" model="ir.actions.client">
         <field name="name">Diagram Anggaran vs Realisasi</field>
         <field name="tag">sif_rka.bar_chart_action</field>
@@ -9,6 +12,9 @@
         <field name="binding_view_types">list,form</field>
     </record>
 
+    <!-- ============================================== -->
+    <!-- MENU: Diagram Batang di Navbar                 -->
+    <!-- ============================================== -->
     <menuitem
         id="menu_sif_rka_diagram"
         name="Diagram Anggaran"

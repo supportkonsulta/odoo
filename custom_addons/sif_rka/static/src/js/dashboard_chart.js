@@ -5,7 +5,7 @@ import { useService } from "@web/core/utils/hooks";
 import { loadBundle } from "@web/core/assets";
 
 /**
- * SIF RKA Bar Chart - Client Action
+ * RKA Bar Chart - Client Action
  *
  * Menampilkan diagram batang interaktif dengan:
  * - Dua batang per bulan: Orange (Realisasi) & Biru (Anggaran)
@@ -114,9 +114,9 @@ class SifRkaBarChartAction extends Component {
 
         try {
             const tahun = this.state.tahun;
-            let domain = [["tahun", "=", tahun]];
+            let domain = [["rka_id.tahun", "=", tahun]];
             if (this.state.selectedCoa) {
-                domain.push(["account_id", "=", parseInt(this.state.selectedCoa)]);
+                domain.push(["rka_id.account_id", "=", parseInt(this.state.selectedCoa)]);
             }
 
             const monthNames = [
@@ -297,8 +297,37 @@ class SifRkaBarChartAction extends Component {
                         },
                     },
                 },
-                // Klik pada batang dinonaktifkan — hover/tooltip tetap berfungsi
-                onClick: null,
+                // Hanya hover/tooltip — tidak ada klik navigasi
+                onClick: undefined,
+            },
+        });
+    }
+
+    async _openMonthlyDetail(month) {
+        const monthNames = [
+            "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+            "Juli", "Agustus", "September", "Oktober", "November", "Desember",
+        ];
+        const monthIdx = parseInt(month) - 1;
+        const monthName = monthNames[monthIdx] || month;
+
+        let domain = [
+            ["rka_id.tahun", "=", this.state.tahun],
+            ["month", "=", month],
+        ];
+        if (this.state.selectedCoa) {
+            domain.push(["rka_id.account_id", "=", parseInt(this.state.selectedCoa)]);
+        }
+
+        this.action.doAction({
+            type: "ir.actions.act_window",
+            name: `Detail Anggaran - ${monthName} ${this.state.tahun}`,
+            res_model: "sif.rka.budget.month",
+            view_mode: "list,form",
+            domain: domain,
+            target: "new",
+            context: {
+                search_default_group_account: 1,
             },
         });
     }

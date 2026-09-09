@@ -83,7 +83,7 @@
         <field name="arch" type="xml">
             <list
                 string="Anggaran Bulanan"
-                default_order="periode asc"
+                default_order="month asc"
             >
                 <field name="month" string="Bulan"/>
                 <field
@@ -153,30 +153,28 @@
                 <field name="month" type="row" string="Bulan"/>
                 <field name="budget_amount" type="measure" string="Anggaran / Pendapatan"/>
                 <field name="realisasi" type="measure" string="Realisasi / Pengeluaran"/>
-                <field name="account_id" type="col" string="COA / Akun"/>
+                <field name="rka_id" type="col" string="COA / Akun"/>
             </graph>
         </field>
     </record>
 
-    <!-- Search view khusus untuk Diagram Bulanan (dengan filter COA) -->
+    <!-- Search view khusus untuk Diagram Bulanan (dengan filter COA melalui rka_id) -->
     <record id="view_sif_rka_diagram_bulanan_search" model="ir.ui.view">
         <field name="name">sif.rka.diagram.bulanan.search</field>
         <field name="model">sif.rka.budget.month</field>
         <field name="arch" type="xml">
             <search string="Filter Diagram Bulanan">
-                <field name="account_id" string="Filter per COA / Akun" filter_domain="[('account_id', '=', self)]"/>
-                <field name="parent_account_id" string="COA Induk"/>
-                <field name="tahun" string="Tahun"/>
+                <field name="rka_id" string="Filter per COA / Akun"/>
+                <field name="month" string="Bulan"/>
 
                 <separator/>
 
-                <filter name="tahun_2026" string="Tahun 2026" domain="[('tahun', '=', '2026')]"/>
-                <filter name="tahun_2025" string="Tahun 2025" domain="[('tahun', '=', '2025')]"/>
+                <filter name="tahun_2026" string="Tahun 2026" domain="[('rka_id.tahun', '=', '2026')]"/>
+                <filter name="tahun_2025" string="Tahun 2025" domain="[('rka_id.tahun', '=', '2025')]"/>
 
                 <group>
-                    <filter name="group_account" string="Per COA / Akun" context="{'group_by': 'account_id'}"/>
+                    <filter name="group_rka" string="Per RKA" context="{'group_by': 'rka_id'}"/>
                     <filter name="group_month" string="Per Bulan" context="{'group_by': 'month'}"/>
-                    <filter name="group_parent_account" string="Per COA Induk" context="{'group_by': 'parent_account_id'}"/>
                 </group>
             </search>
         </field>
@@ -190,7 +188,7 @@
         <field name="arch" type="xml">
             <list string="Data Anggaran per Bulan" default_order="month asc">
                 <field name="name" string="Bulan"/>
-                <field name="account_id" string="COA / Akun"/>
+                <field name="rka_id" string="RKA / COA"/>
                 <field name="budget_amount" string="Anggaran (Rp)"/>
                 <field name="realisasi" string="Realisasi / Pengeluaran (Rp)"/>
                 <field name="sisa_anggaran" string="Sisa (Rp)"/>
@@ -208,8 +206,7 @@
         <field name="model">sif.rka.budget.month</field>
         <field name="arch" type="xml">
             <pivot string="Dashboard RKA">
-                <field name="account_id" type="row"/>
-                <field name="tahun" type="col"/>
+                <field name="rka_id" type="row"/>
                 <field name="month" type="col"/>
                 <field name="budget_amount" type="measure"/>
                 <field name="realisasi" type="measure"/>
@@ -224,33 +221,26 @@
         <field name="arch" type="xml">
             <search string="Filter RKA">
                 <field
-                    name="account_id"
-                    string="Akun / COA"
-                />
-                <field
-                    name="tahun"
-                    string="Tahun"
+                    name="rka_id"
+                    string="RKA"
                 />
                 <field
                     name="month"
                     string="Bulan"
                 />
-                <field
-                    name="parent_account_id"
-                    string="COA Induk"
-                />
+
 
                 <separator/>
 
                 <filter
                     name="tahun_2026"
                     string="2026"
-                    domain="[('tahun', '=', '2026')]"
+                    domain="[('rka_id.tahun', '=', '2026')]"
                 />
                 <filter
                     name="tahun_2025"
                     string="2025"
-                    domain="[('tahun', '=', '2025')]"
+                    domain="[('rka_id.tahun', '=', '2025')]"
                 />
 
                 <separator/>
@@ -318,25 +308,16 @@
 
                 <group>
                     <filter
-                        name="group_tahun"
-                        string="Tahun"
-                        context="{'group_by': 'tahun'}"
-                    />
-                    <filter
-                        name="group_account"
-                        string="Akun / COA"
-                        context="{'group_by': 'account_id'}"
+                        name="group_rka"
+                        string="Per RKA"
+                        context="{'group_by': 'rka_id'}"
                     />
                     <filter
                         name="group_month"
                         string="Bulan"
                         context="{'group_by': 'month'}"
                     />
-                    <filter
-                        name="group_parent_account"
-                        string="COA Induk"
-                        context="{'group_by': 'parent_account_id'}"
-                    />
+
                 </group>
             </search>
         </field>
@@ -354,10 +335,7 @@
                                 name="account_id"
                                 readonly="1"
                             />
-                            <field
-                                name="parent_account_id"
-                                readonly="1"
-                            />
+
                             <field
                                 name="tahun"
                                 readonly="1"

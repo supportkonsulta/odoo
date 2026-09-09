@@ -472,9 +472,10 @@ class RkaBudget(models.Model):
                 ),
             ])
 
-            record.realisasi = sum(
-                lines.mapped('balance')
-            )
+            record.realisasi = abs(sum(
+                (line.debit or 0.0) - (line.credit or 0.0)
+                for line in lines
+            ))
 
     @api.depends(
         'nilai',
@@ -651,7 +652,7 @@ class RkaBudget(models.Model):
 
             current_realization[account_id] = (
                 current_realization.get(account_id, 0.0)
-                + line.balance
+                + (line.debit or 0.0) - (line.credit or 0.0)
             )
 
         previous_realization = {}
@@ -661,7 +662,7 @@ class RkaBudget(models.Model):
 
             previous_realization[account_id] = (
                 previous_realization.get(account_id, 0.0)
-                + line.balance
+                + (line.debit or 0.0) - (line.credit or 0.0)
             )
 
         rows = []
@@ -804,10 +805,10 @@ class RkaBudget(models.Model):
                 f'untuk tahun {report_data["tahun"]}.'
             )
 
-        report_record = self[:1]
+        record = self[:1]
 
-        if not report_record:
-            report_record = self.env[
+        if not record:
+            record = self.env[
                 'sif.rka.budget'
             ].search([
                 (
@@ -817,17 +818,19 @@ class RkaBudget(models.Model):
                 )
             ], limit=1)
 
-        if not report_record:
+        if not record:
             raise ValidationError(
                 f'Tidak terdapat RKA untuk tahun '
                 f'{report_data["tahun"]}.'
             )
 
-        return self.env.ref(
-            'sif_rka.action_report_beban_usaha'
-        ).report_action(
-            report_record
-        )
+        # Redirect ke custom controller yang render HTML langsung
+        # tanpa wkhtmltopdf. Bisa dicetak via Ctrl+P -> Save as PDF.
+        return {
+            'type': 'ir.actions.act_url',
+            'url': f'/sif_rka/print_beban_usaha/{record.id}',
+            'target': 'new',
+        }
 
     def action_edit_record(self):
         self.ensure_one()
@@ -861,7 +864,7 @@ class RkaBudget(models.Model):
                 (self.env.ref('sif_rka.view_sif_rka_dashboard_month_list').id, 'list'),
             ],
             'search_view_id': self.env.ref('sif_rka.view_sif_rka_dashboard_month_search').id,
-            'domain': [('tahun', '=', tahun)],
+            'domain': [('rka_id.tahun', '=', tahun)],
             'target': 'current',
         }
 
@@ -876,7 +879,7 @@ class RkaBudget(models.Model):
             'view_mode': 'graph,list',
             'domain': [
                 ('rka_id', '=', self.id),
-                ('tahun', '=', tahun),
+                ('rka_id.tahun', '=', tahun),
             ],
             'views': [
                 (self.env.ref('sif_rka.view_sif_rka_month_graph_coa').id, 'graph'),
@@ -894,9 +897,9 @@ class RkaBudget(models.Model):
         self.ensure_one()
         tahun = str(self.tahun or fields.Date.today().year)
         coa = self.account_id
-        domain = [('tahun', '=', tahun)]
+        domain = [('rka_id.tahun', '=', tahun)]
         if coa:
-            domain.append(('account_id', '=', coa.id))
+            domain.append(('rka_id.account_id', '=', coa.id))
         return {
             'type': 'ir.actions.act_window',
             'name': f'Detail Bulanan - {coa.display_name} - {tahun}',
@@ -930,7 +933,7 @@ class RkaBudget(models.Model):
     def action_open_integrated_dashboard(self):
         tahun = str(fields.Date.today().year)
         monthly = self.env['sif.rka.budget.month'].search(
-            [('tahun', '=', tahun)]
+            [('rka_id.tahun', '=', tahun)]
         )
         all_rka = self.search([('tahun', '=', tahun)])
         sorted_rka = all_rka.sorted(
@@ -957,7 +960,7 @@ class RkaBudget(models.Model):
 class SifRkaBudgetMonth(models.Model):
     _name = 'sif.rka.budget.month'
     _description = 'Anggaran RKA Bulanan'
-    _order = 'tahun desc, month asc, id asc'
+    _order = 'month asc, id asc'
 
     rka_id = fields.Many2one(
         'sif.rka.budget',
@@ -969,32 +972,28 @@ class SifRkaBudgetMonth(models.Model):
     account_id = fields.Many2one(
         related='rka_id.account_id',
         string='Account / COA',
-        store=True,
+        store=False,
         readonly=True,
-        index=True
     )
 
     parent_account_id = fields.Many2one(
         related='account_id.parent_id',
         string='COA Induk',
-        store=True,
+        store=False,
         readonly=True,
-        index=True
     )
 
     tahun = fields.Selection(
         related='rka_id.tahun',
         string='Tahun',
-        store=True,
+        store=False,
         readonly=True,
-        index=True
     )
 
     periode = fields.Integer(
         string='Periode',
         compute='_compute_periode',
-        store=True,
-        index=True
+        store=False,
     )
 
     month = fields.Selection(
@@ -1019,7 +1018,7 @@ class SifRkaBudgetMonth(models.Model):
 
     currency_id = fields.Many2one(
         related='rka_id.currency_id',
-        store=True,
+        store=False,
         readonly=True
     )
 
@@ -1179,9 +1178,10 @@ class SifRkaBudgetMonth(models.Model):
                 ),
             ])
 
-            record.realisasi = sum(
-                lines.mapped('balance')
-            )
+            record.realisasi = abs(sum(
+                (line.debit or 0.0) - (line.credit or 0.0)
+                for line in lines
+            ))
 
     @api.depends(
         'budget_amount',
@@ -1428,4 +1428,3 @@ class SifRkaDashboardView(models.TransientModel):
                 'sticky': False,
             },
         }
-
