@@ -26,7 +26,7 @@ class SifRkaDashboardView(models.TransientModel):
         all_rka = self.env['sif.rka.budget'].search([('tahun', '=', tahun)])
         sorted_rka = all_rka.sorted(key=lambda r: r.realisasi, reverse=True)
         top3 = sorted_rka[:3]
-        monthly = self.env['sif.rka.budget.month'].search([('tahun', '=', tahun)])
+        monthly = self.env['sif.rka.budget.month'].search([('rka_id.tahun', '=', tahun)])
         self.write({
             'monthly_ids': [(6, 0, monthly.ids)],
             'top3_ids': [(6, 0, top3.ids)],

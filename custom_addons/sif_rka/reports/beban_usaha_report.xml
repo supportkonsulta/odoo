@@ -4,7 +4,7 @@
     <record id="action_report_beban_usaha" model="ir.actions.report">
         <field name="name">Laporan Beban Usaha</field>
         <field name="model">sif.rka.budget</field>
-        <field name="report_type">qweb-pdf</field>
+        <field name="report_type">qweb-html</field>
         <field name="report_name">sif_rka.beban_usaha_report</field>
         <field name="report_file">sif_rka.beban_usaha_report</field>
         <field name="binding_model_id" ref="model_sif_rka_budget"/>

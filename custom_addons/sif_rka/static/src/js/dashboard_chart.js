@@ -5,7 +5,7 @@ import { useService } from "@web/core/utils/hooks";
 import { loadBundle } from "@web/core/assets";
 
 /**
- * SIF RKA Bar Chart - Client Action
+ * RKA Bar Chart - Client Action
  *
  * Menampilkan diagram batang interaktif dengan:
  * - Dua batang per bulan: Orange (Realisasi) & Biru (Anggaran)
@@ -114,9 +114,9 @@ class SifRkaBarChartAction extends Component {
 
         try {
             const tahun = this.state.tahun;
-            let domain = [["tahun", "=", tahun]];
+            let domain = [["rka_id.tahun", "=", tahun]];
             if (this.state.selectedCoa) {
-                domain.push(["account_id", "=", parseInt(this.state.selectedCoa)]);
+                domain.push(["rka_id.account_id", "=", parseInt(this.state.selectedCoa)]);
             }
 
             const monthNames = [
@@ -297,13 +297,8 @@ class SifRkaBarChartAction extends Component {
                         },
                     },
                 },
-                onClick(event, elements) {
-                    if (elements && elements.length > 0) {
-                        const idx = elements[0].index;
-                        const month = String(idx + 1).padStart(2, "0");
-                        self._openMonthlyDetail(month);
-                    }
-                },
+                // Hanya hover/tooltip — tidak ada klik navigasi
+                onClick: undefined,
             },
         });
     }
@@ -317,11 +312,11 @@ class SifRkaBarChartAction extends Component {
         const monthName = monthNames[monthIdx] || month;
 
         let domain = [
-            ["tahun", "=", this.state.tahun],
+            ["rka_id.tahun", "=", this.state.tahun],
             ["month", "=", month],
         ];
         if (this.state.selectedCoa) {
-            domain.push(["account_id", "=", parseInt(this.state.selectedCoa)]);
+            domain.push(["rka_id.account_id", "=", parseInt(this.state.selectedCoa)]);
         }
 
         this.action.doAction({
