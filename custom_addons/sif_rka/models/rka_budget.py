@@ -320,12 +320,6 @@ class RkaBudget(models.Model):
             else:
                 nilai_tahunan = record.nilai
 
-            if total_bulanan > nilai_tahunan:
-                raise ValidationError(
-                    'Anggaran tahunan tidak boleh lebih kecil '
-                    'dari total anggaran bulanan.'
-                )
-
             parent_rka = record._get_parent_rka()
 
             if parent_rka:
@@ -395,6 +389,24 @@ class RkaBudget(models.Model):
             ('account_id', '=', parent_coa.id),
             ('tahun', '=', self.tahun),
         ], limit=1)
+
+    @api.onchange('monthly_budget_ids', 'nilai')
+    def _onchange_check_budget_exceeds(self):
+        for record in self:
+            total_bulanan = sum(line.budget_amount for line in record.monthly_budget_ids)
+            if record.currency_id:
+                total_bulanan = record.currency_id.round(total_bulanan)
+                nilai_tahunan = record.currency_id.round(record.nilai)
+            else:
+                nilai_tahunan = record.nilai
+                
+            if total_bulanan > nilai_tahunan:
+                return {
+                    'warning': {
+                        'title': 'Peringatan Anggaran',
+                        'message': 'Total anggaran bulanan melebihi anggaran tahunan yang ditetapkan!'
+                    }
+                }
 
     @api.depends(
         'monthly_budget_ids.budget_amount',
@@ -837,6 +849,110 @@ class RkaBudget(models.Model):
             'type': 'ir.actions.act_window_close'
         }
 
+    def action_view_diagram_bulanan(self):
+        tahun = str(fields.Date.today().year)
+        return {
+            'type': 'ir.actions.act_window',
+            'name': f'Diagram Bulanan {tahun}',
+            'res_model': 'sif.rka.budget.month',
+            'view_mode': 'graph,list',
+            'views': [
+                (self.env.ref('sif_rka.view_sif_rka_dashboard_month_graph').id, 'graph'),
+                (self.env.ref('sif_rka.view_sif_rka_dashboard_month_list').id, 'list'),
+            ],
+            'search_view_id': self.env.ref('sif_rka.view_sif_rka_dashboard_month_search').id,
+            'domain': [('tahun', '=', tahun)],
+            'target': 'current',
+        }
+
+    def action_open_monthly_diagram_by_coa(self):
+        """Buka diagram bulanan yang difilter berdasarkan COA."""
+        self.ensure_one()
+        tahun = str(self.tahun or fields.Date.today().year)
+        return {
+            'type': 'ir.actions.act_window',
+            'name': f'Diagram Anggaran vs Realisasi - {self.account_id.display_name} {tahun}',
+            'res_model': 'sif.rka.budget.month',
+            'view_mode': 'graph,list',
+            'domain': [
+                ('rka_id', '=', self.id),
+                ('tahun', '=', tahun),
+            ],
+            'views': [
+                (self.env.ref('sif_rka.view_sif_rka_month_graph_coa').id, 'graph'),
+                (self.env.ref('sif_rka.view_sif_rka_dashboard_month_list').id, 'list'),
+            ],
+            'search_view_id': self.env.ref('sif_rka.view_sif_rka_diagram_bulanan_search').id,
+            'target': 'new',
+        }
+
+    def action_view_monthly_detail(self):
+        """
+        Menampilkan detail bulanan per COA.
+        Dipanggil saat user mengklik tombol 'Detail Bulanan' pada baris RKA.
+        """
+        self.ensure_one()
+        tahun = str(self.tahun or fields.Date.today().year)
+        coa = self.account_id
+        domain = [('tahun', '=', tahun)]
+        if coa:
+            domain.append(('account_id', '=', coa.id))
+        return {
+            'type': 'ir.actions.act_window',
+            'name': f'Detail Bulanan - {coa.display_name} - {tahun}',
+            'res_model': 'sif.rka.budget.month',
+            'view_mode': 'list,form',
+            'domain': domain,
+            'target': 'new',
+            'context': {
+                'search_default_group_account': 1,
+                'default_tahun': tahun,
+            },
+        }
+
+    def action_view_top_3_pengeluaran(self):
+        tahun = str(fields.Date.today().year)
+        all_rka = self.search([('tahun', '=', tahun)])
+        sorted_rka = all_rka.sorted(
+            key=lambda r: r.realisasi, reverse=True
+        )
+        top3 = sorted_rka[:3]
+        return {
+            'type': 'ir.actions.act_window',
+            'name': f'Top 3 Pengeluaran {tahun}',
+            'res_model': 'sif.rka.budget',
+            'view_mode': 'list,form',
+            'domain': [('id', 'in', top3.ids)],
+            'target': 'current',
+        }
+
+    @api.model
+    def action_open_integrated_dashboard(self):
+        tahun = str(fields.Date.today().year)
+        monthly = self.env['sif.rka.budget.month'].search(
+            [('tahun', '=', tahun)]
+        )
+        all_rka = self.search([('tahun', '=', tahun)])
+        sorted_rka = all_rka.sorted(
+            key=lambda r: r.realisasi, reverse=True
+        )
+        top3 = sorted_rka[:3]
+        dashboard = self.env['sif.rka.dashboard.view'].create({
+            'tahun': tahun,
+            'display_mode': 'tahunan',
+            'monthly_ids': [(6, 0, monthly.ids)],
+            'top3_ids': [(6, 0, top3.ids)],
+            'rka_ids': [(6, 0, all_rka.ids)],
+        })
+        return {
+            'type': 'ir.actions.act_window',
+            'name': f'Dashboard RKA {tahun}',
+            'res_model': 'sif.rka.dashboard.view',
+            'view_mode': 'form',
+            'res_id': dashboard.id,
+            'target': 'current',
+        }
+
 
 class SifRkaBudgetMonth(models.Model):
     _name = 'sif.rka.budget.month'
@@ -910,6 +1026,7 @@ class SifRkaBudgetMonth(models.Model):
     realisasi = fields.Monetary(
         string='Realisasi',
         compute='_compute_realisasi',
+        store=True,
         currency_field='currency_id'
     )
 
@@ -980,12 +1097,6 @@ class SifRkaBudgetMonth(models.Model):
             else:
                 nilai_tahunan = record.rka_id.nilai
                 budget_bulanan = record.budget_amount
-
-            if total_bulanan > nilai_tahunan:
-                raise ValidationError(
-                    'Total anggaran bulanan tidak boleh '
-                    'melebihi anggaran tahunan.'
-                )
 
             parent_rka = record.rka_id._get_parent_rka()
 
@@ -1212,3 +1323,114 @@ class SifJurnalEntry(models.Model):
         string='Unit / Department',
         default='pusat',
     )
+
+
+class SifRkaDashboardView(models.TransientModel):
+    _name = 'sif.rka.dashboard.view'
+    _description = 'Dashboard RKA Terintegrasi'
+
+    name = fields.Char(
+        string='Nama',
+        compute='_compute_name',
+        store=False
+    )
+
+    tahun = fields.Char(
+        string='Tahun',
+        default=lambda self: str(fields.Date.today().year)
+    )
+
+    monthly_ids = fields.Many2many(
+        'sif.rka.budget.month',
+        'sif_rka_dash_monthly_rel',
+        'dashboard_id',
+        'monthly_id',
+        string='Data Bulanan'
+    )
+
+    top3_ids = fields.Many2many(
+        'sif.rka.budget',
+        'sif_rka_dash_top3_rel',
+        'dashboard_id',
+        'rka_id',
+        string='Top 3 Pengeluaran'
+    )
+
+    rka_ids = fields.Many2many(
+        'sif.rka.budget',
+        'sif_rka_dash_rka_rel',
+        'dashboard_id',
+        'rka_id',
+        string='RKA Tahunan'
+    )
+
+    currency_id = fields.Many2one(
+        'res.currency',
+        default=lambda self: self.env.company.currency_id
+    )
+
+    @api.depends('tahun')
+    def _compute_name(self):
+        for rec in self:
+            rec.name = f"Dashboard RKA — Tahun {rec.tahun}" if rec.tahun else "Dashboard RKA"
+
+    @api.depends('rka_ids')
+    def _compute_totals(self):
+        for rec in self:
+            rec.total_anggaran = sum(
+                r.nilai for r in rec.rka_ids
+            )
+            rec.total_realisasi = sum(
+                r.realisasi for r in rec.rka_ids
+            )
+
+    total_anggaran = fields.Monetary(
+        string='Total Anggaran',
+        currency_field='currency_id',
+        compute='_compute_totals'
+    )
+
+    total_realisasi = fields.Monetary(
+        string='Total Realisasi',
+        currency_field='currency_id',
+        compute='_compute_totals'
+    )
+
+    def action_open_monthly_diagram(self):
+        """Buka Chart.js diagram batang interaktif."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'sif_rka.bar_chart_action',
+            'name': '📊 Diagram Anggaran vs Realisasi',
+            'target': 'current',
+            'params': {
+                'tahun': self.tahun or str(fields.Date.today().year),
+            },
+        }
+
+    def action_open_monthly_diagram_by_coa(self):
+        """Buka Chart.js diagram batang interaktif (sama seperti action_open_monthly_diagram,
+           karena filtering COA sudah ada di dalam client action)."""
+        self.ensure_one()
+        return self.action_open_monthly_diagram()
+
+    def action_refresh_realisasi(self):
+        """Recompute dan simpan ulang realisasi untuk semua data bulan tahun ini."""
+        self.ensure_one()
+        tahun = self.tahun or str(fields.Date.today().year)
+        monthly_records = self.env['sif.rka.budget.month'].search(
+            [('tahun', '=', tahun)]
+        )
+        monthly_records._compute_realisasi()
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Berhasil',
+                'message': f'Data realisasi tahun {tahun} berhasil diperbarui.',
+                'type': 'success',
+                'sticky': False,
+            },
+        }
+

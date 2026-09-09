@@ -32,7 +32,16 @@
         'security/ir.model.access.csv',
         'views/rka_budget_views.xml',
         'reports/beban_usaha_report.xml',
+        'views/dashboard_menu.xml',
     ],
+
+    'assets': {
+        'web.assets_backend': [
+            'sif_rka/static/src/js/dashboard_chart.js',
+            'sif_rka/static/src/xml/bar_chart_action.xml',
+            'sif_rka/static/src/scss/dashboard_chart.scss',
+        ],
+    },
 
     'installable': True,
     'application': True,

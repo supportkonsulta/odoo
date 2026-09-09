@@ -1,0 +1,110 @@
+/* ==========================================================
+   SIF RKA Dashboard Chart - SCSS Styles
+   ========================================================== */
+
+/* --- Chart Utama (Bar Chart Action) --- */
+.sif_rka_chart_main {
+    .sif_rka_chart_header {
+        select.form-control-sm {
+            cursor: pointer;
+        }
+    }
+}
+
+/* --- Canvas responsiveness --- */
+canvas {
+    max-width: 100%;
+}
+
+/* --- Filter dropdown --- */
+.sif_rka_coa_filter {
+    max-width: 280px;
+    border-color: #ced4da;
+
+    &:focus {
+        border-color: #2962ff;
+        box-shadow: 0 0 0 0.2rem rgba(41, 98, 255, 0.15);
+    }
+}
+
+/* --- Dashboard Container --- */
+.sif_rka_chart_container {
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+    .sif_rka_chart_toolbar {
+        .sif_rka_coa_filter {
+            max-width: 280px;
+            border-color: #ced4da;
+
+            &:focus {
+                border-color: #2962ff;
+                box-shadow: 0 0 0 0.2rem rgba(41, 98, 255, 0.15);
+            }
+        }
+
+        .btn {
+            i {
+                margin-right: 4px;
+            }
+        }
+    }
+
+    .sif_rka_chart_body {
+        canvas {
+            animation: fadeInChart 0.5s ease-in-out;
+        }
+    }
+
+    .sif_rka_chart_legend {
+        span {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+    }
+}
+
+@keyframes fadeInChart {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+// Fix for print
+@media print {
+    .sif_rka_chart_container {
+        box-shadow: none;
+        border: 1px solid #ccc;
+
+        .sif_rka_chart_toolbar {
+            background: #eee;
+        }
+    }
+}
+
+/* --- Responsive fixes --- */
+@media (max-width: 768px) {
+    .sif_rka_chart_main {
+        .sif_rka_chart_header {
+            flex-direction: column;
+            align-items: flex-start !important;
+        }
+    }
+
+    .sif_rka_chart_container {
+        .sif_rka_chart_toolbar {
+            flex-direction: column;
+            align-items: flex-start !important;
+        }
+    }
+}
