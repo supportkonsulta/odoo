@@ -5,4 +5,7 @@
     <function model="hr.leave.type" name="_presenly_enable_single_approval_flow"/>
     <function model="presenly.permission" name="_presenly_backfill_pending_approvers"/>
     <function model="hr.leave" name="_presenly_backfill_pending_approvers"/>
+    <!-- Archive empty rule leftovers so the Approval Routes screens stop
+         showing nameless "none" rows. Idempotent: nothing matches later. -->
+    <function model="presenly.approval.rule" name="_presenly_archive_empty_rules"/>
 </odoo>

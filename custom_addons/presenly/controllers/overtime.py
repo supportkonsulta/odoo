@@ -190,7 +190,7 @@ class PresenlyOvertimeController(http.Controller):
         if not overtime:
             raise ValidationError('Overtime request not found.')
         overtime.action_presenly_approve()
-        return {'success': True, 'data': self._serialize(overtime), 'error': None}
+        return {'success': True, 'data': self._serialize(overtime.sudo()), 'error': None}
 
     @http.route(
         '/api/presenly/v1/overtime/requests/<int:overtime_id>/reject',
@@ -202,7 +202,7 @@ class PresenlyOvertimeController(http.Controller):
         if not overtime or not reason:
             raise ValidationError('Overtime request and rejection reason are required.')
         overtime.action_presenly_reject(reason)
-        return {'success': True, 'data': self._serialize(overtime), 'error': None}
+        return {'success': True, 'data': self._serialize(overtime.sudo()), 'error': None}
 
     @http.route(
         '/api/presenly/v1/overtime/requests/<int:overtime_id>/cancel',
@@ -220,16 +220,17 @@ class PresenlyOvertimeController(http.Controller):
         type='jsonrpc', auth='user', methods=['POST'], readonly=True,
     )
     def can_approve(self, overtime_id):
-        overtime = request.env['presenly.overtime.request'].browse(overtime_id).exists()
+        overtime = request.env['presenly.overtime.request'].sudo().browse(overtime_id).exists()
         if not overtime:
             raise ValidationError('Overtime request not found.')
+        serialized = self._serialize(overtime.sudo())
         return {
             'success': True,
             'data': {
                 'id': overtime.id,
                 'state': overtime.state,
-                'approval_progress': self._serialize(overtime)['approval_progress'],
-                'current_approvers': self._serialize(overtime)['current_approvers'],
+                'approval_progress': serialized['approval_progress'],
+                'current_approvers': serialized['current_approvers'],
                 'can_approve': overtime.presenly_can_approve_api,
                 'can_reject': overtime.presenly_can_reject_api,
                 'can_cancel': overtime.presenly_can_cancel_api,

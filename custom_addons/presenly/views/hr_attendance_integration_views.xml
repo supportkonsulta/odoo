@@ -86,6 +86,9 @@
                                options="{'no_open': True}"/>
                     </group>
                 </group>
+                <separator string="Location Map"/>
+                <field name="presenly_map_data" widget="presenly_map_viewer"
+                       readonly="1" nolabel="1" colspan="2" create="0" edit="0"/>
                 <separator string="Check-In Evidence"/>
             </xpath>
             <xpath expr="//separator[@name='check_out_separator']" position="attributes">
@@ -285,6 +288,24 @@
         <field name="inherit_id" ref="hr_attendance.res_config_settings_view_form"/>
         <field name="arch" type="xml">
             <xpath expr="//block[@name='overtime_settings']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Native Attendance modes and Kiosk settings are owned by Presenly:
+         mobile app drives check-in/out and the native Kiosk/backend/systray
+         channels are disabled. Hide the whole Modes and Kiosk blocks from the
+         company Attendance settings screen without changing company data. -->
+    <record id="res_config_settings_kiosk_hidden_presenly" model="ir.ui.view">
+        <field name="name">res.config.settings.kiosk.hidden.presenly</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="hr_attendance.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//block[@name='kiosk_mode_setting_container']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//block[.//field[@name='attendance_kiosk_url']]" position="attributes">
                 <attribute name="invisible">1</attribute>
             </xpath>
         </field>

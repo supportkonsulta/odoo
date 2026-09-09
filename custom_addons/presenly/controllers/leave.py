@@ -199,7 +199,10 @@ class PresenlyLeaveController(http.Controller):
         if not leave:
             raise ValidationError('Leave request not found.')
         leave.action_presenly_approve()
-        return {'success': True, 'data': self._serialize(leave), 'error': None}
+        # After the action the actor may lose record-rule read access (the
+        # requester moved to the next level); serialize with sudo so the
+        # confirmation payload still returns the new state.
+        return {'success': True, 'data': self._serialize(leave.sudo()), 'error': None}
 
     @http.route(
         '/api/presenly/v1/leaves/<int:leave_id>/reject',
@@ -213,7 +216,7 @@ class PresenlyLeaveController(http.Controller):
         if not leave:
             raise ValidationError('Leave request not found.')
         leave.action_presenly_reject(reason)
-        return {'success': True, 'data': self._serialize(leave), 'error': None}
+        return {'success': True, 'data': self._serialize(leave.sudo()), 'error': None}
 
     @http.route(
         '/api/presenly/v1/leaves/<int:leave_id>/can-approve',
@@ -227,16 +230,17 @@ class PresenlyLeaveController(http.Controller):
         approve/reject rights follow the active approval step, cancel follows
         ownership/manager rights.
         """
-        leave = request.env['hr.leave'].browse(leave_id).exists()
+        leave = request.env['hr.leave'].sudo().browse(leave_id).exists()
         if not leave:
             raise ValidationError('Leave request not found.')
+        serialized = self._serialize(leave.sudo())
         return {
             'success': True,
             'data': {
                 'id': leave.id,
                 'approval_state': leave.presenly_approval_state,
-                'approval_progress': self._serialize(leave)['approval_progress'],
-                'current_approvers': self._serialize(leave)['current_approvers'],
+                'approval_progress': serialized['approval_progress'],
+                'current_approvers': serialized['current_approvers'],
                 'can_approve': leave.presenly_can_approve_api,
                 'can_reject': leave.presenly_can_reject_api,
                 'can_cancel': leave.presenly_can_cancel_api,

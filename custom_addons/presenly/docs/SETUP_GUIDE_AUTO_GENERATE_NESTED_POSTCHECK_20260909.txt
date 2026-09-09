@@ -1,0 +1,114 @@
+PRESENLY SETUP GUIDE + AUTO-GENERATE APPROVAL ROUTES + NESTED VIEW — ROLLOUT POST-CHECK
+Date: 2026-09-09
+Database: odoo
+Module: presenly 19.0.15.0.0
+
+REQUEST
+1. Fix menu Settings attendance (sudah di-hide pada 19.0.14.1.0) PLUS sediakan
+   panduan step-by-step setup sampai request Time Off / Permission / Overtime
+   bisa disubmit.
+2. Approval Routes dapat di-generate sekaligus untuk semua modul, dan tampilan
+   list Approval Routes dibuat nested/berkelompok agar mudah menelusuri.
+
+CHANGES
+A. Setup Guide (panduan step-by-step)
+- models/presenly_setup_guide.py (baru): TransientModel checklist 8 langkah
+  per company dengan field komputasi: location_total/ready, schedule_count,
+  employee_with_location/total, permission_type_ready/total,
+  leave_type_with_route/total, overtime_route_ready, rule_total/complete,
+  approver_role_count, step_done/step_total/progress/all_ready, plus
+  shortcut actions (open companies/locations/schedules/employees/permission
+  types/leave types/approval routes/generate).
+- views/presenly_setup_guide_views.xml (baru): form checklist dengan progress
+  bar, ikon status per langkah (fa-check/fa-times/fa-circle), stat boxes,
+  dan tombol Generate Approval Routes.
+- Menu "Presenly Setup" (menu_presenly_setup_guide) di bawah Configuration,
+  sequence 5, group manager.
+B. Wizard Generate Approval Routes
+- wizard/presenly_approval_route_generate.py (baru): TransientModel +
+  Line model. Scopes: all / leave (pilih) / permission (pilih) / overtime.
+  Approver source default employee_manager (user/unit_manager/hr/group opsional),
+  work_location kosong = company-default, skip_existing default True (idempotent),
+  start_sequence 10 / step +10. Preview baris (to_create / skipped) via
+  _prepare_lines; action_generate membuat presenly.approval.rule baru tanpa
+  menyetel sequence (auto-assign +10 di model, sehingga tidak bentrok dengan
+  unique-scope constraint).
+- M2M relations diberi nama tabel pendek (presenly_gen_leave_type_rel,
+  presenly_gen_permission_type_rel) untuk menghindari limit 63 char pg.
+- wizard/presenly_approval_route_generate_views.xml (baru): form + preview list.
+- Menu "Generate Approval Routes" (menu_presenly_approval_route_generate)
+  Configuration sequence 55, group manager.
+C. Nested view Approval Routes
+- models/presenly_approval.py: field stored request_group
+  (overtime/permission/leave/unassigned) + _compute_request_group.
+- views/presenly_approval_views.xml: list default_group_by
+  company_id,request_group,work_location_id; badge berwarna per request_group;
+  filter permission/leave/unassigned; search field request_group + group_by.
+- Bug fix terkait: res.groups tidak punya field 'users' di Odoo 19
+  (hanya user_ids / all_user_ids) — _approvers_for kini memakai all_user_ids
+  untuk approver_type hr/group; setup guide memakai all_user_ids.
+D. Security
+- ir.model.access.csv: ACL baru untuk presenly.setup.guide dan
+  presenly.approval.route.generate.wizard (+line) pada group manager.
+E. README.md: dokumentasi Setup Guide, Generate Approval Routes, nested view.
+F. Version bump 19.0.14.2.0 -> 19.0.15.0.0.
+
+VERIFICATION (database utama odoo)
+- ir_module_module presenly latest_version: 19.0.15.0.0.
+- menu_presenly_setup_guide: id 396 active t.
+- menu_presenly_approval_route_generate: id 397 active t.
+- action_presenly_setup_guide & action_presenly_approval_route_generate ada.
+- Model presenly.setup.guide, presenly.approval.route.generate.wizard (+line)
+  terdaftar; field presenly.approval.rule.request_group ada.
+- Boot server: http://127.0.0.1:8069/web/login HTTP 200.
+- Public kiosk URL -> HTTP 404 (tidak terpengaruh).
+
+DATA PRESERVATION
+Business fingerprint sebelum dan sesudah upgrade identik:
+- Attendance: 5; ID sum 42.
+- Evidence: 58; ID sum 1837.
+- Approval routes: 5; ID sum 92 (sequence tidak berubah).
+- Approval journeys: 8; ID sum 102.
+- Permission requests: 0.
+- Time Off requests: 7; ID sum 139.
+- Overtime requests: 3; ID sum 11.
+- Upgrade tidak meng-create route baru di DB produksi; generate hanya
+  melalui wizard yang diuji pada clone.
+
+TESTING
+- Isolated clone: odoo_presenly_setup_generate_test_20260909.
+- Dump sumber: backups/presenly-migration/odoo-before-setup-guide-generate-20260909_084913.dump.
+- Filestore clone dibuat dari filestore odoo utama.
+- Final result: 0 failed, 1 error of 81 tests.
+  - Error tersisa = pre-existing setUpClass TestPresenlyOvertimeApi
+    (test_api_overtime.py:78) — tidak terkait perubahan ini.
+- Test baru lulus (7):
+  - TestPresenlySetupGuide.test_guide_computes_counts_for_company
+  - TestPresenlySetupGuide.test_guide_menu_and_action_manager_only
+  - TestPresenlySetupGuide.test_guide_shortcut_actions_resolve
+  - TestPresenlyApprovalRouteGenerate.test_generate_overtime_route
+  - TestPresenlyApprovalRouteGenerate.test_generate_leave_routes_sequence
+  - TestPresenlyApprovalRouteGenerate.test_skip_existing_false_creates_second_step
+  - TestPresenlyApprovalRouteGenerate.test_generate_wizard_menu_manager_only
+- Clone database dan clone filestore dihapus setelah validasi.
+
+STATIC VALIDATION
+- Python compilation (odoo-venv): passed.
+- XML parsing (lxml odoo-venv): 24 files passed.
+- git diff --check: passed.
+
+BACKUP
+- backups/presenly-migration/odoo-before-setup-guide-generate-20260909_084913.dump
+  (created before any change; retained).
+
+ROLLOUT
+- Before: presenly 19.0.14.2.0.
+- After: presenly 19.0.15.0.0.
+- Upgrade via: ./odoo-venv/bin/python ./odoo-bin -c odoo.conf -d odoo -u presenly --stop-after-init
+- Upgrade log: Modules loaded, Registry loaded, Initiating shutdown — tanpa
+  ERROR pada module presenly (hanya warnings accessibility ikon yang sudah
+  diperbaiki & warning modular tracking sifnext_ppl yang sudah ada).
+- Server utama aktif kembali: HTTP 200, PID 87585.
+
+NO COMMIT
+- No Git commit was created.

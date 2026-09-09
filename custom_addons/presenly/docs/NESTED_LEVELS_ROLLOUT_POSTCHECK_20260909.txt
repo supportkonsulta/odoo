@@ -1,0 +1,87 @@
+PRESENLY APPROVAL ROUTES NESTED LEVEL UI + ADD NEXT LEVEL — ROLLOUT POST-CHECK
+Date: 2026-09-09
+Database: odoo
+Module: presenly 19.0.16.0.0
+
+REQUEST
+1. Tampilan Approval Routes sesuai levelling (Order) dan nested (Company >
+   Request Group > Request Type > Work Location > baris per level 10/20/30).
+2. Saat add, bisa langsung menambahkan level di bawahnya dengan request type
+   yang sama (tanpa mengisi ulang type).
+
+CHANGES
+1. models/presenly_approval.py
+   - Field baru presenly.approval.rule.route_scope_label (Char, stored,
+     index=True) computed dari is_overtime_route / permission_type_id /
+     leave_type_id:
+     * 'Overtime'
+     * 'Permission: {name}'
+     * 'Time Off: {name}'
+     * 'Unassigned'
+     Fungsinya sebagai kunci grouping yang menyatukan 3 field relasi berbeda.
+   - Method baru PresenlyApprovalRule.action_add_next_level():
+     membuka form create (target='new', view_mode='form') dengan context
+     default yang mengisi SELURUH dimensi scope sama dengan step saat ini:
+     company_id, work_location_id, leave_type_id, permission_type_id,
+     is_overtime_route, approver_type='employee_manager',
+     name='{parent.name} — Next Level'. Order preview otomatis max+10 via
+     _default_sequence() sehingga step baru ditempatkan tepat di bawahnya.
+2. views/presenly_approval_views.xml
+   - view_presenly_approval_rule_list (global read-only):
+     default_group_by="company_id,request_group,route_scope_label,
+     work_location_id" + default_order="sequence, id"; sequence pakai
+     widget="badge"; kolom route_scope_label opsional; tambah button
+     action_add_next_level per baris.
+   - view_presenly_approval_rule_list_editable (per modul):
+     default_group_by="work_location_id" + default_order="sequence, id"
+     (drag handle tetap), tambah button action_add_next_level per baris.
+   - view_presenly_approval_rule_form: tambah <header> dengan button
+     "Add Next Level" (btn-primary, icon plus, group manager).
+3. README.md: dokumentasi nested level view + Add Next Level.
+4. tests/test_approval_nested_levels.py (baru, 6 test):
+   - test_route_scope_label_computed
+   - test_list_view_nested_grouping
+   - test_editable_list_groups_by_location_and_add_button
+   - test_form_has_add_next_level_button
+   - test_add_next_level_context_same_scope
+   - test_add_next_level_creates_next_order_via_form (Form() browser-like:
+     preview 20, simpan -> rule kedua sequence 20 name 'Level Two')
+5. tests/__init__.py: registrasi test_approval_nested_levels.
+6. Version bump 19.0.15.3.0 -> 19.0.16.0.0.
+
+VERIFICATION (database utama odoo)
+- ir_module_module presenly latest_version: 19.0.16.0.0.
+- Field ir_model_fields presenly.approval.rule.route_scope_label ada.
+- View arch terpasang (ir_ui_view id 794): default_group_by 4 tingkat,
+  default_order sequence,id, button action_add_next_level.
+- Data produksi TIDAK berubah: rules 34 (17 aktif; ID sum 1874), journeys
+  8/102, attendance 5/42, evidence 58/1837, leave 7/139, overtime 3/11.
+- Boot server: http://127.0.0.1:8069/web/login HTTP 200.
+- Public kiosk URL -> HTTP 404.
+
+TESTING (clone DB, instance 8071 — server utama tidak pernah dimatikan)
+- Isolated clone: odoo_presenly_nestedlevel_test_20260909.
+- Dump sumber: backups/presenly-migration/odoo-before-nested-levels-20260909_132033.dump.
+- Final result: 0 failed, 0 error(s) of 103 tests.
+  - 6 test nested levels baru lulus; seluruh suite hijau.
+- Clone database & clone filestore dihapus setelah validasi.
+
+STATIC VALIDATION
+- Python compilation (odoo-venv): passed.
+- XML parsing (lxml odoo-venv): 24 files passed.
+- git diff --check: passed.
+
+BACKUP
+- backups/presenly-migration/odoo-before-nested-levels-20260909_132033.dump
+  (created before the code change; retained).
+
+ROLLOUT
+- Before: presenly 19.0.15.3.0.
+- After: presenly 19.0.16.0.0.
+- Upgrade via: ./odoo-venv/bin/python ./odoo-bin -c odoo.conf -d odoo -u presenly --stop-after-init
+- Upgrade log: Modules loaded, Registry loaded, Initiating shutdown — tanpa
+  ERROR pada module presenly.
+- Server utama aktif kembali: HTTP 200.
+
+NO COMMIT
+- No Git commit was created.

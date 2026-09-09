@@ -21,7 +21,7 @@ class TestPresenlyPermissionApi(HttpCase):
             cls.env,
             login=cls.approver_login,
             password=cls.approver_password,
-            groups='base.group_user,presenly.group_presenly_approver',
+            groups='base.group_user,presenly.group_presenly_employee',
         )
         cls.location_address = cls.env['res.partner'].create({
             'name': 'Permission API Location Address',

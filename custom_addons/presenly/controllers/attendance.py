@@ -140,6 +140,48 @@ class PresenlyAttendanceController(http.Controller):
             return None, None, None
         return self._validate_coordinates(payload)
 
+    def _wfa_location_context(self, employee, payload, latitude, longitude):
+        """Resolve an informational Work Location context for WFA sessions.
+
+        WFA never enforces geofence, but when location data is available we
+        still store it so the attendance history keeps the context:
+        1. explicit ``work_location_id``/``unit_id`` from the payload;
+        2. the location whose geofence contains the sent GPS point;
+        3. fallback: the employee primary Work Location.
+        Returns ``(location, schedule)`` (schedule always empty for WFA)."""
+        location_model = request.env['hr.work.location'].sudo()
+        requested_id = payload.get('work_location_id')
+        if requested_id in (None, ''):
+            requested_id = payload.get('unit_id')
+        if requested_id not in (None, ''):
+            try:
+                location = location_model.browse(int(requested_id)).exists()
+            except (TypeError, ValueError) as error:
+                raise ValidationError(
+                    'work_location_id must be a numeric value.'
+                ) from error
+            if not location or not location.active \
+                    or location.company_id != employee.company_id:
+                raise ValidationError(
+                    'work_location_id is not valid for the employee company.'
+                )
+            return location, request.env['presenly.work.location.schedule'].sudo()
+        if latitude is not None and longitude is not None:
+            candidates = location_model.search([
+                ('active', '=', True),
+                ('company_id', '=', employee.company_id.id),
+                ('presenly_is_geofence_ready', '=', True),
+            ])
+            for location in candidates:
+                if location.is_coordinate_allowed(latitude, longitude, 1000.0):
+                    return location, request.env['presenly.work.location.schedule'].sudo()
+        fallback = employee.work_location_id
+        if fallback and fallback.active \
+                and fallback.company_id == employee.company_id:
+            return fallback.sudo(), request.env['presenly.work.location.schedule'].sudo()
+        return location_model, request.env['presenly.work.location.schedule'].sudo()
+
+
     def _selfie(self, payload, required=True):
         selfie = payload.get('selfie')
         if required and not selfie:
@@ -304,11 +346,19 @@ class PresenlyAttendanceController(http.Controller):
             if mode == 'wfa':
                 # Informational WFA: no geofence and no location requirement.
                 # A selfie is still mandatory for identity/evidence; GPS is
-                # optional. No approval is created for this temporary mode.
+                # optional. When the client sends location data we store it as
+                # context (explicit id, GPS-matched location, or primary
+                # fallback) so history keeps meaning.
                 selfie = self._selfie(payload, required=True)
                 latitude, longitude, accuracy = self._optional_coordinates(payload)
-                location = request.env['hr.work.location'].sudo()
-                schedule = request.env['presenly.work.location.schedule'].sudo()
+                location, schedule = self._wfa_location_context(
+                    employee, payload, latitude, longitude,
+                )
+                distance = False
+                if location and latitude is not None and longitude is not None:
+                    distance = location._haversine_distance_meters(
+                        location.latitude, location.longitude, latitude, longitude,
+                    )
                 attachment = event_model.create_selfie_attachment(
                     employee, selfie, 'check_in'
                 ) if selfie else request.env['ir.attachment']
@@ -317,6 +367,9 @@ class PresenlyAttendanceController(http.Controller):
                     'presenly_company_id': employee.company_id.id,
                     'presenly_source': 'mobile',
                     'presenly_attendance_mode': 'wfa',
+                    'presenly_work_location_id': location.id or False,
+                    'presenly_schedule_id': schedule.id or False,
+                    'presenly_check_in_distance': distance or False,
                     'presenly_selfie_in_attachment_id': attachment.id,
                     'in_mode': 'technical',
                     'in_latitude': latitude or False,
@@ -360,12 +413,14 @@ class PresenlyAttendanceController(http.Controller):
                 'distance_from_location': (
                     location._haversine_distance_meters(
                         location.latitude, location.longitude, latitude, longitude,
-                    ) if mode == 'location' else False
+                    ) if mode == 'location' or (
+                        mode == 'wfa' and location and latitude is not None
+                    ) else False
                 ),
                 'work_location_id': (
-                    location.id if mode == 'location' else False
+                    location.id if location else False
                 ),
-                'schedule_id': schedule.id if mode == 'location' and schedule else False,
+                'schedule_id': schedule.id if schedule else False,
                 'attendance_mode': mode,
                 'selfie_attachment_id': attachment.id,
                 'source': 'mobile',
@@ -426,8 +481,18 @@ class PresenlyAttendanceController(http.Controller):
             if mode == 'wfa':
                 # WFA checkout is informational: no geofence and no
                 # same-location constraint. A selfie is still mandatory;
-                # GPS remains optional.
+                # GPS remains optional. When the client sends location/
+                # GPS data we keep it as history context (explicit id,
+                # GPS match, or the check-in snapshot).
                 latitude, longitude, accuracy = self._optional_coordinates(payload)
+                wfa_location, wfa_schedule = self._wfa_location_context(
+                    employee, payload, latitude, longitude,
+                )
+                # Prefer the check-in snapshot; otherwise use payload/fallback.
+                if not location:
+                    location = wfa_location
+                if not location:
+                    schedule = request.env['presenly.work.location.schedule'].sudo()
                 selfie = self._selfie(payload, required=True)
                 attachment = event_model.create_selfie_attachment(
                     employee, selfie, 'check_out'
@@ -473,7 +538,10 @@ class PresenlyAttendanceController(http.Controller):
             device_id_hash = self._device_id_hash(payload)
             distance = location._haversine_distance_meters(
                 location.latitude, location.longitude, latitude, longitude,
-            ) if mode == 'location' else False
+            ) if (
+                mode == 'location'
+                or (mode == 'wfa' and location and latitude is not None)
+            ) else False
             attendance._presenly_mobile_checkout({
                 'check_out': fields.Datetime.now(),
                 'presenly_check_out_distance': distance,
@@ -491,9 +559,13 @@ class PresenlyAttendanceController(http.Controller):
                 'accuracy': accuracy or 0.0,
                 'distance_from_location': distance or False,
                 'work_location_id': (
-                    location.id if mode == 'location' else False
+                    location.id if location else False
                 ),
-                'schedule_id': attendance.presenly_schedule_id.id,
+                'schedule_id': (
+                    attendance.presenly_schedule_id.id
+                    if mode == 'location'
+                    else (wfa_schedule.id if mode == 'wfa' and wfa_schedule else False)
+                ),
                 'attendance_mode': mode,
                 'selfie_attachment_id': attachment.id,
                 'source': 'mobile',

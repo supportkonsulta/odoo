@@ -231,7 +231,9 @@ class PresenlyPermissionController(http.Controller):
         if not permission:
             raise ValidationError('Permission request not found.')
         permission.action_approve()
-        return {'success': True, 'data': self._serialize(permission), 'error': None}
+        # After hand-off the approver may lose record-rule access; serialize
+        # with sudo so the confirmation payload still returns the new state.
+        return {'success': True, 'data': self._serialize(permission.sudo()), 'error': None}
 
     @http.route(
         '/api/presenly/v1/permissions/<int:permission_id>/reject',
@@ -245,7 +247,7 @@ class PresenlyPermissionController(http.Controller):
                 'Permission request and rejection reason are required.'
             )
         permission.action_reject(reason)
-        return {'success': True, 'data': self._serialize(permission), 'error': None}
+        return {'success': True, 'data': self._serialize(permission.sudo()), 'error': None}
 
     @http.route(
         '/api/presenly/v1/permissions/<int:permission_id>/can-approve',
@@ -259,16 +261,17 @@ class PresenlyPermissionController(http.Controller):
         approve/reject rights follow the active approval step, cancel follows
         ownership/manager rights.
         """
-        permission = request.env['presenly.permission'].browse(permission_id).exists()
+        permission = request.env['presenly.permission'].sudo().browse(permission_id).exists()
         if not permission:
             raise ValidationError('Permission request not found.')
+        serialized = self._serialize(permission.sudo())
         return {
             'success': True,
             'data': {
                 'id': permission.id,
                 'state': permission.state,
-                'approval_progress': self._serialize(permission)['approval_progress'],
-                'current_approvers': self._serialize(permission)['current_approvers'],
+                'approval_progress': serialized['approval_progress'],
+                'current_approvers': serialized['current_approvers'],
                 'can_approve': permission.presenly_can_approve_api,
                 'can_reject': permission.presenly_can_reject_api,
                 'can_cancel': permission.presenly_can_cancel_api,

@@ -1,0 +1,97 @@
+PRESENLY LEAFLET MAP VIEWER (RADIUS + KANTOR + PEGAWAI) — ROLLOUT POST-CHECK
+Date: 2026-09-09
+Database: odoo
+Module: presenly 19.0.17.0.0
+
+REQUEST
+- Tampilkan koordinat absensi dalam bentuk maps dengan:
+  1. UI batas radius geofence (lingkaran presenly_radius_meters)
+  2. UI posisi kantor (marker Work Location)
+  3. UI posisi pegawai absen (marker check-in/out / evidence)
+
+SOLUSI
+- Leaflet.js 1.9.4 + OpenStreetMap tile (gratis, tanpa API key) — pola yang
+  sama dengan modul resmi Odoo `delivery` (loadJS/loadCSS dari unpkg CDN).
+
+CHANGES
+1. models/presenly_attendance.py (hr.attendance)
+   - Field compute `presenly_map_data` (Char JSON, non-stored):
+     markers check_in/check_out (lat/lon/distance/mode) + marker office
+     (lat/lon/radius/geofence_ready) + radius_m.
+   - Helper `_presenly_map_marker` (skip koordinat kosong/0.0/out-of-range —
+     Odoo menyimpan False float sbg 0.0) dan `_presenly_location_markers`.
+   - presenly.attendance.event: field compute `presenly_map_data` — marker
+     event + kantor + radius.
+2. models/presenly_location.py (hr.work.location)
+   - Field compute `presenly_map_data` — marker kantor + radius +
+     accuracy_limit_m + geofence_ready.
+3. static/src/fields/map_viewer/ (BARU)
+   - map_viewer.js: komponen OWL `PresenlyMapViewer` — load Leaflet CDN,
+     render OSM tile, marker icon div (office=green building, check_in=blue,
+     check_out=magenta), circle radius (toggle checkbox), polyline putus-putus
+     kantor->check_in, popup berisi mode/jarak/akurasi, fitBounds auto.
+   - map_viewer.xml: template toolbar (toggle radius + legenda) + canvas map.
+   - map_viewer.scss: styling pin marker, toolbar, legend.
+   - Registrasi fields registry: `presenly_map_viewer`.
+4. views
+   - hr_attendance_integration_views.xml: group Attendance Context + separator
+     "Location Map" + field presenly_map_data widget map (form attendance).
+   - presenly_attendance_views.xml: form evidence — widget map setelah group
+     Location Evidence.
+   - presenly_location_views.xml: form work location — widget map setelah
+     Presenly Mobile Attendance Policy (preview geofence live).
+5. __manifest__.py: assets web.assets_backend + version bump 19.0.16.4.0 ->
+   19.0.17.0.0.
+6. tests/test_map_data.py (baru, 4 test):
+   - test_attendance_map_data_contains_markers (office+check_in+check_out+radius)
+   - test_wfa_attendance_map_data_without_location (tanpa koordinat -> kosong,
+     tidak crash)
+   - test_location_map_data (marker kantor + radius + geofence_ready)
+   - test_event_map_data (marker event + kantor + radius + distance)
+
+VERIFICATION (database utama odoo)
+- ir_module_module presenly latest_version: 19.0.17.0.0.
+- ir_model_fields: presenly_map_data ada di hr.attendance,
+  presenly.attendance.event, hr.work.location (3 field).
+- ir_ui_view: widget `presenly_map_viewer` terpasang di 3 form:
+  view_hr_attendance_form_presenly (803), view_presenly_attendance_event_form
+  (801), view_hr_work_location_form_presenly (784).
+- Boot server: http://127.0.0.1:8069/web/login HTTP 200.
+- Public kiosk URL -> HTTP 404.
+
+DATA PRESERVATION
+- Tidak ada kolom/field stored baru yang mengubah data; presenly_map_data
+  adalah compute non-stored -> tidak ada kolom di tabel, tidak ada data
+  ditulis. Semua fingerprint bisnis tetap.
+
+TESTING (clone DB, instance 8071 — server utama tidak pernah dimatikan)
+- Isolated clone: odoo_presenly_mapview_test_20260909.
+- Dump sumber: backups/presenly-migration/odoo-before-map-viewer-20260909_182900.dump.
+- Final result: 0 failed, 0 error(s) of 114 tests.
+  - 4 test map data baru lulus; seluruh suite hijau (termasuk API/security/WFA).
+- Clone database & clone filestore dihapus setelah validasi.
+
+STATIC VALIDATION
+- Python compilation (odoo-venv): passed.
+- XML parsing (lxml odoo-venv): 25 files passed.
+- git diff --check: passed.
+
+BACKUP
+- backups/presenly-migration/odoo-before-map-viewer-20260909_182900.dump
+  (created before the code change; retained).
+
+ROLLOUT
+- Before: presenly 19.0.16.4.0.
+- After: presenly 19.0.17.0.0.
+- Upgrade via: ./odoo-venv/bin/python ./odoo-bin -c odoo.conf -d odoo -u presenly --stop-after-init
+- Upgrade log: Modules loaded, Registry loaded, Initiating shutdown — tanpa
+  ERROR pada module presenly.
+- Server utama aktif kembali: HTTP 200.
+
+CATATAN
+- Leaflet dimuat dari CDN unpkg (perlu koneksi internet saat browser membuka
+  form). Untuk instalasi offline, salin leaflet.js/css ke static/lib dan
+  ganti URL loadJS/loadCSS.
+
+NO COMMIT
+- No Git commit was created.

@@ -1,0 +1,103 @@
+PRESENLY AUTOMATIC APPROVAL ORDER — ROLLOUT POST-CHECK
+Date: 2026-09-08
+Database: odoo
+Module: presenly 19.0.14.2.0
+
+REQUEST
+- Order approval (sequence) pada Approval Routes dibuat otomatis.
+- Admin tidak perlu mengisi Order manual; step berikutnya otomatis mengambil
+  Order berikutnya (+10) dalam scope yang sama.
+
+APPROACH
+- Order tetap tersimpan di presenly.approval.rule.sequence dan merupakan satu
+  perintah urutan: step berjalan dari Order terkecil ke terbesar.
+- Order diberikan otomatis saat create: max(current) + 10, mulai dari 10.
+- Nilai eksplisit dari caller (test, API, resequence drag) selalu dihormati.
+- Constraint unik scope (_check_unique_level_scope) tidak berubah: dua step
+  tidak boleh memakai Order sama dalam company + work location + request type
+  yang sama. Dengan auto-assign, konflik tersebut praktis tidak terjadi lagi
+  untuk create baru via UI.
+
+CHANGES
+1. models/presenly_approval.py (class PresenlyApprovalRule):
+   - sequence = fields.Integer(string='Order', index=True, copy=False)
+     (default literal 10 dihapus; help menjelaskan auto-assign).
+   - _scope_domain_from_values(values): domain scope dari values create
+     (company + work location + permission/leave type + overtime).
+   - _current_max_sequence(values): Order tertinggi di scope (0 bila kosong).
+   - _next_sequence(values): max + 10.
+   - _default_sequence(): preview order otomatis dari context default_*.
+   - default_get(fields_list): preview sequence pada form create.
+   - create(values_list): auto-assign untuk record tanpa sequence eksplisit,
+     dengan counter batch per scope agar create massal menghasilkan
+     10, 20, 30, ... (menggabungkan DB max dan counter batch).
+2. views/presenly_approval_views.xml:
+   - Help field Order: "Order is assigned automatically (10, 20, 30, ...).
+     Reorder steps by dragging them in the Approval Routes list."
+   - Alert info form menjelaskan auto order + drag reorder.
+3. README.md: bagian setup Approval Steps menyebut Order otomatis (10, 20, 30)
+   dan drag untuk mengurutkan ulang.
+4. tests/test_approval_auto_order.py (baru) + registrasi di tests/__init__.py:
+   - test_two_steps_same_scope_get_10_and_20
+   - test_third_step_gets_30
+   - test_explicit_sequence_is_kept_and_next_is_after_it
+   - test_different_scopes_both_start_at_10
+   - test_batch_create_auto_sequence
+   - test_default_get_previews_next_sequence
+   - test_work_location_scope_is_isolated
+5. Version bump 19.0.14.1.0 -> 19.0.14.2.0.
+
+VERIFICATION (database utama odoo, setelah upgrade)
+- ir_module_module presenly latest_version: 19.0.14.2.0.
+- presenly.approval.rule: 5 records; ID sum 92 (identik baseline).
+  - Rule 1 (Direktur Konsulta), 3 (Time Off Sick), 5 (Overtime),
+    41, 42 — semua sequence tetap 10, tidak berubah oleh upgrade.
+- Boot server: http://127.0.0.1:8069/web/login HTTP 200.
+- Public kiosk URL (arbitrary token) -> HTTP 404 (tidak terpengaruh).
+
+DATA PRESERVATION
+Business fingerprint sebelum dan sesudah upgrade identik:
+- Attendance: 5; ID sum 42.
+- Evidence: 58; ID sum 1837.
+- Approval routes: 5; ID sum 92.
+- Approval journeys: 8; ID sum 102.
+- Permission requests: 0.
+- Time Off requests: 7; ID sum 139.
+- Overtime requests: 3; ID sum 11.
+- Upgrade tidak menulis ulang sequence rule yang ada; perubahan hanya berlaku
+  untuk create baru.
+
+TESTING
+- Isolated clone: odoo_presenly_auto_order_test_20260908.
+- Dump sumber: backups/presenly-migration/odoo-before-auto-approval-order-20260908_203535.dump.
+- Filestore clone dibuat dari filestore odoo utama.
+- Final result: 0 failed, 1 error of 74 tests.
+  - Error yang tersisa adalah pre-existing setUpClass
+    TestPresenlyOvertimeApi pada test_api_overtime.py:78
+    (ValidationError: Only one approval step may use the same Order for the
+    same company, location, and request type) — TIDAK terkait perubahan ini
+    dan sudah ada sejak sebelum auto-order.
+- Semua 7 test baru test_approval_auto_order lulus (10/20/30, eksplisit,
+  scope terpisah, batch, default_get preview, work location terpisah).
+- Clone database dan clone filestore dihapus setelah validasi.
+
+STATIC VALIDATION
+- Python compilation (odoo-venv): passed.
+- XML parsing (lxml odoo-venv): 22 files passed.
+- git diff --check: passed.
+
+BACKUP
+- backups/presenly-migration/odoo-before-auto-approval-order-20260908_203535.dump
+  (created before any change; retained).
+
+ROLLOUT
+- Before: presenly 19.0.14.1.0.
+- After: presenly 19.0.14.2.0.
+- Upgrade via: ./odoo-venv/bin/python ./odoo-bin -c odoo.conf -d odoo -u presenly --stop-after-init
+- Upgrade log: Modules loaded, Registry loaded, Initiating shutdown — tanpa
+  ERROR/CRITICAL/traceback (kecuali warning modular "unknown parameter
+  'tracking'" yang sudah ada).
+- Server utama aktif kembali: PID 70188, HTTP 200.
+
+NO COMMIT
+- No Git commit was created.

@@ -1,4 +1,5 @@
 from . import presenly_deletion_log
+from . import presenly_setup_guide
 from . import presenly_location
 from . import presenly_schedule
 from . import presenly_permission

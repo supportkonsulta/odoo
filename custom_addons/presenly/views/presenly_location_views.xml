@@ -46,6 +46,8 @@
                         <field name="presenly_require_selfie_check_out"/>
                     </group>
                 </group>
+                <field name="presenly_map_data" widget="presenly_map_viewer"
+                       readonly="1" nolabel="1" colspan="2" create="0" edit="0"/>
                 <div class="alert alert-warning" role="alert"
                      invisible="presenly_is_geofence_ready">
                     Geofence attendance is disabled until the work address has valid coordinates and positive radius and accuracy limits.

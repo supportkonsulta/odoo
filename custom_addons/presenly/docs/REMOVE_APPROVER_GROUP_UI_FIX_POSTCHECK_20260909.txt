@@ -1,0 +1,86 @@
+PRESENLY HAPUS TOTAL ROLE APPROVER + FIX UI BUTTON FORM TIME OFF — POST-CHECK
+Date: 2026-09-09
+Database: odoo
+Module: presenly 19.0.16.3.0
+
+REQUEST
+1. Role "Approver" (presenly.group_presenly_approver) yang sudah tidak
+   berfungsi sejak dynamic route-based approval (19.0.16.2.0) — hapus total.
+2. Fix UI button pada form Time Off (hr.leave) — tombol aksi Presenly berada
+   di dalam bungkus card, tidak sejajar dengan section status.
+
+CHANGES
+1. security/presenly_groups.xml
+   - Hapus SELURUH record group_presenly_approver (role Approver dihapus,
+     bukan sekadar dinonaktifkan).
+   - group_presenly_hr.implied_ids: ganti ref group_presenly_approver ->
+     group_presenly_employee (HR Officer tetap imply Employee, bukan Approver).
+   - group_presenly_manager tetap imply group_presenly_hr.
+2. views/presenly_leave_views.xml (fix UI)
+   - Tulis ulang arch. Tombol aksi Presenly (Submit for Approval /
+     Approve Current Level / Reject / Cancel Request) dipindah dari div
+     di dalam sheet (o_presenly_leave_actions) ke <header> form — SEJALAR
+     dengan status section (statusbar presenly_approval_state).
+   - Field pendukung (presenly_can_* , engine, request_id) dipindah ke header
+     dan invisible.
+   - Alert status (not_started / pending / rejection reason) tetap di atas
+     content card (readable), di dalam xpath "before" yang valid.
+   - Group "Approval Journey" tetap setelah content card.
+3. Update: xpath header statusbar & tombol digabung satu blok agar rapi.
+4. tests
+   - Hapus semua referensi env.ref('presenly.group_presenly_approver') dari
+     test_approval.py, test_permission.py, test_api_leave.py,
+     test_api_overtime.py, test_api_permission.py.
+   - Approver user di test memakai group akses dasar aplikasi
+     presenly.group_presenly_employee (bukan role Approver) — approval tetap
+     dinamis dari route.
+   - test_level_handoff tetap membuktikan user TANPA role khusus bisa approve.
+5. Version bump 19.0.16.2.0 -> 19.0.16.3.0.
+
+VERIFICATION (database utama odoo)
+- ir_module_module presenly latest_version: 19.0.16.3.0.
+- GROUP APPROVER TERHAPUS TOTAL dari DB:
+  - res_groups id 27 tidak ada (count 0).
+  - ir_model_data 'group_presenly_approver' tidak ada (count 0).
+  - relasi res_groups_users_rel (gid=27) = 0.
+  - log upgrade: "Deleting 27@res.groups (presenly.group_presenly_approver)".
+- View hr.leave.form.presenly.single.approval (id 807) aktif; arch terkonfirmasi:
+  - tombol aksi di dalam <header> (sejajar statusbar) ✅
+  - alert status di sheet ✅
+  - journey group after content ✅
+  - tidak ada div wrapper legacy o_presenly_leave_actions ✅
+- Menu Approvals / My Approvals tetap aktif (tampil utk semua user).
+- Boot server: http://127.0.0.1:8069/web/login HTTP 200.
+- Public kiosk URL -> HTTP 404.
+
+DATA PRESERVATION
+- Attendance tetap 5/42. Journeys & leave sesuai aktivitas live admin
+  (upgrade tidak menulis data bisnis; hanya menghapus group & relasinya).
+
+TESTING (clone DB, instance 8071 — server utama tidak pernah dimatikan selama run)
+- Isolated clone: odoo_presenly_nogroup_test_20260909.
+- Dump sumber: backups/presenly-migration/odoo-before-remove-approver-group-20260909_161840.dump.
+- Final result: 0 failed, 0 error(s) of 108 tests.
+  - Semua suite (web/API/security/handoff/nested/wizard) hijau.
+- Clone database & clone filestore dihapus setelah validasi.
+
+STATIC VALIDATION
+- Python compilation (odoo-venv): passed.
+- XML parsing (lxml odoo-venv): 24 files passed.
+- git diff --check: passed.
+
+BACKUP
+- backups/presenly-migration/odoo-before-remove-approver-group-20260909_161840.dump
+  (created before the code change; retained).
+
+ROLLOUT
+- Before: presenly 19.0.16.2.0.
+- After: presenly 19.0.16.3.0.
+- Upgrade via: ./odoo-venv/bin/python ./odoo-bin -c odoo.conf -d odoo -u presenly --stop-after-init
+- Upgrade log: Deleting 27@res.groups (group_presenly_approver), Modules
+  loaded, Registry loaded, Initiating shutdown — tanpa ERROR pada module
+  presenly.
+- Server utama aktif kembali: HTTP 200.
+
+NO COMMIT
+- No Git commit was created.
