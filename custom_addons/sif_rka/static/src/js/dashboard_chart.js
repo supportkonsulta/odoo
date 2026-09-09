@@ -297,42 +297,8 @@ class SifRkaBarChartAction extends Component {
                         },
                     },
                 },
-                onClick(event, elements) {
-                    if (elements && elements.length > 0) {
-                        const idx = elements[0].index;
-                        const month = String(idx + 1).padStart(2, "0");
-                        self._openMonthlyDetail(month);
-                    }
-                },
-            },
-        });
-    }
-
-    async _openMonthlyDetail(month) {
-        const monthNames = [
-            "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-            "Juli", "Agustus", "September", "Oktober", "November", "Desember",
-        ];
-        const monthIdx = parseInt(month) - 1;
-        const monthName = monthNames[monthIdx] || month;
-
-        let domain = [
-            ["tahun", "=", this.state.tahun],
-            ["month", "=", month],
-        ];
-        if (this.state.selectedCoa) {
-            domain.push(["account_id", "=", parseInt(this.state.selectedCoa)]);
-        }
-
-        this.action.doAction({
-            type: "ir.actions.act_window",
-            name: `Detail Anggaran - ${monthName} ${this.state.tahun}`,
-            res_model: "sif.rka.budget.month",
-            view_mode: "list,form",
-            domain: domain,
-            target: "new",
-            context: {
-                search_default_group_account: 1,
+                // Klik pada batang dinonaktifkan — hover/tooltip tetap berfungsi
+                onClick: null,
             },
         });
     }

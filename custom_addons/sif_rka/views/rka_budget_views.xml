@@ -830,7 +830,7 @@
                         </page>
                         <page string="Top 3 Pengeluaran" name="page_top3" invisible="display_mode != 'top3'">
                             <field name="top3_ids" nolabel="1">
-                                <list string="Top 3 RKA dengan Pengeluaran Tertinggi">
+                                <list string="Top 3 RKA dengan Pengeluaran Tertinggi" default_order="realisasi desc">
                                     <field
                                         name="account_id"
                                         string="COA / Akun"
