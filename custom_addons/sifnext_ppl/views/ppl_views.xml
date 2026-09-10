@@ -115,6 +115,8 @@
                         <page string="Detail Kebutuhan">
                             <group class="oe_right" groups="sifnext_ppl.group_ppl_finance" invisible="state not in ('draft', 'submitted')">
                                 <div class="o_row">
+                                    <button name="action_select_all_lines" type="object" string="Pilih Semua" class="btn-secondary" style="margin-right: 4px;"/>
+                                    <button name="action_deselect_all_lines" type="object" string="Batal Pilih" class="btn-secondary" style="margin-right: 8px;"/>
                                     <strong>Set COA Massal: </strong>
                                     <field name="mass_coa_id" placeholder="Pilih COA..."/>
                                     <button name="action_apply_mass_coa" type="object" string="Terapkan ke Baris Terpilih" class="btn-primary"/>
