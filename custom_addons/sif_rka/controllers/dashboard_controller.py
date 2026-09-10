@@ -115,29 +115,15 @@ class SifRkaDashboardController(http.Controller):
         methods=["GET"],
     )
     def print_beban_usaha(self, record_id=None):
-        """Render laporan beban usaha langsung sebagai HTML profesional.
+        """Render laporan beban usaha langsung sebagai HTML.
 
         Solusi ini bypass report system Odoo (qweb-pdf/qweb-html)
         yang membutuhkan wkhtmltopdf untuk PDF. Dengan controller ini:
 
-        - HTML langsung di-render dengan layout seperti surat resmi perusahaan
-        - Kop surat dengan nama, alamat, telepon, email, website perusahaan
-        - Tempat logo perusahaan (ambil dari data perusahaan Odoo)
+        - HTML langsung di-render dengan styling lengkap
         - Print CSS untuk Ctrl+P yang sempurna
         - Tidak perlu wkhtmltopdf sama sekali
         - Bisa disimpan sebagai PDF dari browser (Ctrl+P -> Save as PDF)
-
-        CARA MENAMBAHKAN LOGO / KOP SURAT:
-        ====================================
-        1. Buka menu Settings > Companies (atau Pengaturan > Perusahaan)
-        2. Pilih perusahaan kamu
-        3. Upload logo di field "Company Logo" atau "Logo"
-        4. Isi alamat, telepon, email, website di tab General Information
-        5. Simpan — logo dan alamat otomatis muncul di laporan ini!
-
-        Jika ingin logo tampil dengan benar di PDF dari browser:
-        - Pastikan logo terupload (format PNG/JPG, max 200x100 px ideal)
-        - Atau gunakan base64 inline (sudah di-handle oleh controller ini)
         """
         record = request.env["sif.rka.budget"].browse(record_id)
 
@@ -158,12 +144,9 @@ class SifRkaDashboardController(http.Controller):
             return f"{val:,.2f}"
 
         rows_html = ""
-        row_num = 0
         for row in report_data["rows"]:
-            row_num += 1
             rows_html += f"""
             <tr>
-                <td style="text-align: center;">{row_num}</td>
                 <td style="text-align: left;">{row['code']}</td>
                 <td>{row['name']}</td>
                 <td style="text-align: right;">{fmt(row['current_amount'])}</td>
@@ -172,8 +155,8 @@ class SifRkaDashboardController(http.Controller):
             """
 
         total_rows_html = f"""
-        <tr class="total-row">
-            <td colspan="3" style="text-align: left;">Total Beban Usaha</td>
+        <tr style="font-weight: bold; background-color: #f0f0f0;">
+            <td colspan="2" style="text-align: left;">Total Beban Usaha</td>
             <td style="text-align: right;">{fmt(report_data['total_current_realization'])}</td>
             <td style="text-align: right;">{fmt(report_data['total_previous_realization'])}</td>
         </tr>
@@ -181,468 +164,192 @@ class SifRkaDashboardController(http.Controller):
 
         company = request.env.company
 
-        # Informasi perusahaan
-        company_name = company.name or 'Perusahaan'
-        company_addr = ', '.join(filter(None, [
-            company.street or '',
-            company.street2 or '',
-            company.city or '',
-            company.state_id.name if company.state_id else '',
-            company.zip or '',
-        ])) if any([company.street, company.city]) else ''
-        company_phone = company.phone or ''
-        company_email = company.email or ''
-        company_website = company.website or ''
-        company_vat = company.vat or ''
-
-        # Logo: convert ke base64 inline untuk tampil di print
-        logo_html = ''
-        if company.logo:
-            import base64
-            logo_b64 = company.logo.decode('utf-8') if isinstance(company.logo, bytes) else company.logo
-            logo_html = f'''
-            <div class="logo-col">
-                <img src="data:image/png;base64,{logo_b64}"
-                     alt="Logo" class="company-logo" />
-            </div>
-            '''
-
-        # Tanggal sekarang
-        from odoo import fields as od_fields
-        now = od_fields.Datetime.now()
-        day_names = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu']
-        month_names = [
-            'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-            'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-        ]
-        tanggal_laporan = f"{company.city or 'Jakarta'}, {now.day} {month_names[now.month - 1]} {now.year}"
-
-        user_name = request.env.user.display_name or 'Admin'
-
         html = f"""<!DOCTYPE html>
 <html lang="id">
 <head>
 <meta charset="utf-8">
 <title>Laporan Beban Usaha - {report_data['tahun']}</title>
 <style>
-    /* ==========================================================
-               RESET & BASE
-            ========================================================== */
+    /* ===== RESET & BASE ===== */
     *, *::before, *::after {{
         margin: 0;
         padding: 0;
         box-sizing: border-box;
     }}
-
     body {{
-        font-family: 'Times New Roman', 'DejaVu Serif', Georgia, 'Palatino Linotype', serif;
+        font-family: 'DejaVu Sans', 'Segoe UI', Arial, sans-serif;
         font-size: 11pt;
-        color: #1a1a1a;
-        line-height: 1.6;
-        padding: 30px 35px;
-        background: white;
-    }}
-
-    /* ==========================================================
-               KOP SURAT (HEADER)
-            ========================================================== */
-    .kopsurat {{
-        display: flex;
-        align-items: center;
-        justify-content: flex-start;
-        gap: 20px;
-        padding-bottom: 15px;
-        border-bottom: 3px double #1a237e;
-        margin-bottom: 20px;
-    }}
-
-    .kopsurat .logo-col {{
-        flex: 0 0 90px;
-        text-align: center;
-    }}
-
-    .kopsurat .company-logo {{
-        max-width: 90px;
-        max-height: 90px;
-        object-fit: contain;
-    }}
-
-    .kopsurat .kop-text {{
-        flex: 1;
-    }}
-
-    .kopsurat .kop-text .company-name {{
-        font-size: 16pt;
-        font-weight: bold;
-        color: #1a237e;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        margin-bottom: 2px;
-    }}
-
-    .kopsurat .kop-text .company-tagline {{
-        font-size: 9pt;
-        color: #555;
-        font-style: italic;
-        margin-bottom: 4px;
-    }}
-
-    .kopsurat .kop-text .company-details {{
-        font-size: 8.5pt;
-        color: #444;
+        color: #222;
         line-height: 1.5;
+        padding: 20px;
     }}
 
-    .kopsurat .kop-text .company-details span {{
-        display: inline-block;
-        margin-right: 15px;
-    }}
-
-    .kopsurat .kop-text .company-details i {{
-        margin-right: 3px;
-    }}
-
-    /* ==========================================================
-               TITLE SECTION
-            ========================================================== */
-    .title-section {{
+    /* ===== HEADER ===== */
+    .header {{
         text-align: center;
-        margin: 5px 0 18px 0;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #1a237e;
     }}
-
-    .title-section h1 {{
-        font-size: 15pt;
-        font-weight: bold;
+    .header h1 {{
+        font-size: 18pt;
         color: #1a237e;
+        margin-bottom: 5px;
         text-transform: uppercase;
-        letter-spacing: 2px;
+        letter-spacing: 1px;
+    }}
+    .header p {{
+        font-size: 11pt;
+        color: #555;
+    }}
+    .header .company-name {{
+        font-size: 13pt;
+        font-weight: bold;
+        color: #333;
         margin-bottom: 3px;
     }}
 
-    .title-section .subtitle {{
-        font-size: 10pt;
-        color: #555;
-        font-style: italic;
-    }}
-
-    /* ==========================================================
-               INFO BLOCK (Nomor, Tanggal, dll)
-            ========================================================== */
-    .info-block {{
-        margin-bottom: 15px;
-        border: 1px solid #ddd;
-        padding: 10px 15px;
-        background: #fafafa;
-        border-radius: 3px;
-    }}
-
-    .info-block table.infotable {{
+    /* ===== TABLE ===== */
+    table {{
         width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+    }}
+    thead th {{
+        background-color: #1a237e;
+        color: white;
+        padding: 10px 8px;
+        text-align: center;
+        font-size: 10pt;
+        border: 1px solid #1a237e;
+    }}
+    thead th:first-child {{
+        text-align: left;
+    }}
+    tbody td {{
+        padding: 7px 8px;
+        border: 1px solid #ccc;
+        vertical-align: top;
+        font-size: 10pt;
+    }}
+    tbody tr:nth-child(even) {{
+        background-color: #f9f9f9;
+    }}
+    tbody tr:hover {{
+        background-color: #e8eaf6;
+    }}
+
+    /* ===== TITLE INFO ===== */
+    .info-section {{
+        margin-bottom: 15px;
+    }}
+    .info-section table.infotable {{
+        width: auto;
         border: none;
         margin: 0;
     }}
-
-    .info-block table.infotable td {{
+    .info-section table.infotable td {{
         border: none;
-        padding: 3px 12px 3px 0;
+        padding: 2px 10px 2px 0;
         font-size: 10pt;
-        vertical-align: top;
     }}
-
-    .info-block table.infotable td.label {{
+    .info-section table.infotable td.label {{
         font-weight: bold;
-        color: #333;
-        width: 120px;
-    }}
-
-    .info-block table.infotable td.colon {{
-        width: 10px;
-        padding: 3px 0;
-    }}
-
-    /* ==========================================================
-               TABLE PROFESIONAL
-            ========================================================== */
-    .data-table {{
-        width: 100%;
-        border-collapse: collapse;
-        margin: 5px 0 15px 0;
-        font-size: 9.5pt;
-    }}
-
-    .data-table thead th {{
-        background-color: #1a237e;
-        color: white;
-        padding: 8px 7px;
-        text-align: center;
-        font-weight: bold;
-        font-size: 9.5pt;
-        border: 1px solid #1a237e;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }}
-
-    .data-table thead th:first-child {{
-        width: 5%;
-    }}
-    .data-table thead th:nth-child(2) {{
-        width: 12%;
-    }}
-    .data-table thead th:nth-child(3) {{
-        width: 35%;
-        text-align: left;
-    }}
-    .data-table thead th:nth-child(4),
-    .data-table thead th:nth-child(5) {{
-        width: 24%;
-    }}
-
-    .data-table tbody td {{
-        padding: 6px 7px;
-        border: 1px solid #ccc;
-        vertical-align: middle;
-    }}
-
-    .data-table tbody tr:nth-child(even) {{
-        background-color: #f8f9ff;
-    }}
-
-    .data-table tbody tr:hover {{
-        background-color: #e8eaf6;
-    }}
-
-    .data-table .total-row td {{
-        font-weight: bold;
-        background-color: #e8eaf6;
-        border-top: 2px solid #1a237e;
-        border-bottom: 2px solid #1a237e;
-        font-size: 10pt;
-        padding: 8px 7px;
-    }}
-
-    .data-table .total-row td:first-child {{
-        text-align: left;
-    }}
-
-    /* ==========================================================
-               SIGNATURE BLOCK
-            ========================================================== */
-    .signature-section {{
-        margin-top: 35px;
-        display: flex;
-        justify-content: space-between;
-    }}
-
-    .signature-box {{
-        text-align: center;
-        width: 45%;
-    }}
-
-    .signature-box .sig-label {{
-        font-size: 9pt;
         color: #555;
-        margin-bottom: 50px;
+        width: 100px;
     }}
 
-    .signature-box .sig-name {{
-        font-weight: bold;
-        font-size: 10pt;
-        text-decoration: underline;
-        margin-top: 5px;
-    }}
-
-    .signature-box .sig-title {{
-        font-size: 9pt;
-        color: #555;
-    }}
-
-    /* ==========================================================
-               FOOTER
-            ========================================================== */
-    .footer {{
-        margin-top: 25px;
-        text-align: center;
-        font-size: 8pt;
-        color: #999;
-        border-top: 1px solid #ddd;
-        padding-top: 8px;
-    }}
-
-    .footer .page-info {{
-        font-style: italic;
-    }}
-
-    /* ==========================================================
-               PRINT STYLES (Ctrl+P)
-            ========================================================== */
+    /* ===== PRINT STYLES (Ctrl+P) ===== */
     @media print {{
         @page {{
             size: A4 landscape;
-            margin: 15mm 12mm 15mm 12mm;
+            margin: 15mm 10mm 15mm 10mm;
         }}
-
         body {{
             padding: 0;
             font-size: 10pt;
         }}
-
-        .kopsurat {{
-            border-bottom: 3px double #1a237e !important;
+        .header {{
+            margin-bottom: 15px;
+            padding-bottom: 10px;
         }}
-
-        .kopsurat .company-logo {{
-            max-width: 90px;
-            max-height: 90px;
+        .header h1 {{
+            font-size: 16pt;
         }}
-
-        .info-block {{
-            border: 1px solid #ddd;
-            background: #fafafa;
-        }}
-
-        .data-table thead th {{
+        thead th {{
             background-color: #1a237e !important;
             color: white !important;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
         }}
-
-        .data-table tbody tr:nth-child(even) {{
-            background-color: #f8f9ff !important;
+        tbody tr:nth-child(even) {{
+            background-color: #f9f9f9 !important;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
         }}
-
-        .data-table .total-row td {{
-            background-color: #e8eaf6 !important;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
+        tbody tr:hover {{
+            background-color: inherit;
         }}
-
-        .data-table {{
+        table {{
             page-break-inside: auto;
         }}
-
         tr {{
             page-break-inside: avoid;
             page-break-after: auto;
         }}
-
         thead {{
             display: table-header-group;
         }}
-
+        tfoot {{
+            display: table-footer-group;
+        }}
         .no-print {{
             display: none !important;
         }}
     }}
 
-    /* ==========================================================
-               UTILITY
-            ========================================================== */
-    .clearfix {{ clear: both; }}
-    .text-center {{ text-align: center; }}
-    .text-right {{ text-align: right; }}
-    .text-left {{ text-align: left; }}
-    .no-print {{
-        margin-top: 15px;
+    /* ===== FOOTER ===== */
+    .footer {{
+        margin-top: 30px;
         text-align: center;
-    }}
-    .no-print button {{
-        padding: 10px 30px;
-        background: #1a237e;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 11pt;
-        font-family: Arial, sans-serif;
-    }}
-    .no-print button:hover {{
-        background: #283593;
-    }}
-
-    @media screen {{
-        body {{
-            max-width: 1100px;
-            margin: 20px auto;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
-            border-radius: 4px;
-        }}
+        font-size: 9pt;
+        color: #999;
+        border-top: 1px solid #ddd;
+        padding-top: 10px;
     }}
 </style>
 </head>
 <body>
 
-<!-- ============ KOP SURAT ============ -->
-<div class="kopsurat">
-    {logo_html if logo_html else ''}
-    <div class="kop-text" style="{'margin-left: 0;' if not logo_html else ''}">
-        <div class="company-name">{company_name}</div>
-        <div class="company-tagline">Laporan Keuangan &bull; Beban Usaha</div>
-        <div class="company-details">
-            {'<span><i>&#128205;</i> ' + company_addr + '</span>' if company_addr else ''}
-            {'<span><i>&#128222;</i> ' + company_phone + '</span>' if company_phone else ''}
-            {'<span><i>&#9993;</i> ' + company_email + '</span>' if company_email else ''}
-            {'<span><i>&#127760;</i> ' + company_website + '</span>' if company_website else ''}
-            {'<span>NPWP: ' + company_vat + '</span>' if company_vat else ''}
-        </div>
-    </div>
-</div>
-
-<!-- ============ JUDUL LAPORAN ============ -->
-<div class="title-section">
+<!-- HEADER -->
+<div class="header">
+    <div class="company-name">{company.name or 'Perusahaan'}</div>
     <h1>Laporan Beban Usaha</h1>
-    <div class="subtitle">
-        Untuk Tahun yang Berakhir {report_data['tahun']} dan {report_data['tahun_sebelumnya']}
-    </div>
+    <p>Tahun <strong>{report_data['tahun']}</strong> vs <strong>{report_data['tahun_sebelumnya']}</strong></p>
 </div>
 
-<!-- ============ INFO BLOCK ============ -->
-<div class="info-block">
+<!-- INFO -->
+<div class="info-section">
     <table class="infotable">
         <tr>
-            <td class="label">Nomor</td>
-            <td class="colon">:</td>
-            <td><strong>001/LBU/{company_name.upper().replace(' ', '')}/{report_data['tahun']}</strong></td>
-        </tr>
-        <tr>
-            <td class="label">Tanggal</td>
-            <td class="colon">:</td>
-            <td><strong>{tanggal_laporan}</strong></td>
-        </tr>
-        <tr>
-            <td class="label">Tahun Buku</td>
-            <td class="colon">:</td>
+            <td class="label">Tahun:</td>
             <td><strong>{report_data['tahun']}</strong></td>
         </tr>
         <tr>
-            <td class="label">Tahun Lalu</td>
-            <td class="colon">:</td>
+            <td class="label">Tahun Lalu:</td>
             <td><strong>{report_data['tahun_sebelumnya']}</strong></td>
-        </tr>
-        <tr>
-            <td class="label">Penyusun</td>
-            <td class="colon">:</td>
-            <td><strong>{user_name}</strong></td>
-        </tr>
-        <tr>
-            <td class="label">Mata Uang</td>
-            <td class="colon">:</td>
-            <td><strong>Rupiah (IDR)</strong></td>
         </tr>
     </table>
 </div>
 
-<!-- ============ TABLE DATA ============ -->
-<table class="data-table">
+<!-- TABLE -->
+<table>
     <thead>
         <tr>
-            <th>No</th>
-            <th>Kode</th>
-            <th style="text-align: left;">Nama Akun</th>
-            <th>{report_data['tahun']}<br><span style="font-weight: normal; font-size: 8pt;">(Rp)</span></th>
-            <th>{report_data['tahun_sebelumnya']}<br><span style="font-weight: normal; font-size: 8pt;">(Rp)</span></th>
+            <th style="width: 12%;">Kode</th>
+            <th style="width: 38%;">Nama Akun</th>
+            <th style="width: 25%;">{report_data['tahun']}</th>
+            <th style="width: 25%;">{report_data['tahun_sebelumnya']}</th>
         </tr>
     </thead>
     <tbody>
@@ -651,39 +358,16 @@ class SifRkaDashboardController(http.Controller):
     </tbody>
 </table>
 
-<!-- ============ SIGNATURE ============ -->
-<div class="signature-section">
-    <div class="signature-box">
-        <div class="sig-label">Mengetahui,</div>
-        <div class="sig-label" style="margin-top: 10px; font-size: 8pt; color: #888;">Direktur Utama</div>
-        <div style="height: 50px;"></div>
-        <div class="sig-name">{company_name}</div>
-        <div class="sig-title">Direktur Utama</div>
-    </div>
-    <div class="signature-box">
-        <div class="sig-label">{tanggal_laporan}</div>
-        <div class="sig-label" style="margin-top: 10px; font-size: 8pt; color: #888;">Penyusun</div>
-        <div style="height: 50px;"></div>
-        <div class="sig-name">{user_name}</div>
-        <div class="sig-title">Penyusun Laporan</div>
-    </div>
-</div>
-
-<!-- ============ FOOTER ============ -->
+<!-- FOOTER -->
 <div class="footer">
-    <span class="page-info">
-        Laporan Beban Usaha {report_data['tahun']} &mdash; {company_name}
-        &mdash; Dicetak pada {tanggal_laporan}
-    </span>
-</div>
-
-<!-- ============ PRINT BUTTON ============ -->
-<div class="no-print">
-    <button onclick="window.print()">
-        Cetak / Simpan PDF (Ctrl+P)
-    </button>
-    <p style="margin-top: 5px; font-size: 9pt; color: #888;">
-        Gunakan Ctrl+P atau tombol di atas, lalu pilih "Save as PDF"
+    <p>Laporan ini digenerate otomatis oleh sistem pada {request.env.user.display_name} - {request.env.company.name}</p>
+    <p class="no-print" style="margin-top: 10px;">
+        <button onclick="window.print()"
+                style="padding: 8px 20px; background: #1a237e; color: white;
+                       border: none; border-radius: 4px; cursor: pointer;
+                       font-size: 11pt;">
+            Cetak / Simpan PDF (Ctrl+P)
+        </button>
     </p>
 </div>
 
