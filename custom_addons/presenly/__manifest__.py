@@ -1,6 +1,6 @@
 {
     'name': 'Presenly Attendance Tools',
-    'version': '19.0.17.0.0',
+    'version': '19.0.17.2.2',
     'category': 'Human Resources/Attendances',
     'summary': 'Attendance geofence, evidence, permissions and multilevel approvals',
     'description': """
@@ -44,6 +44,7 @@ and multilevel approvals.
             'presenly/static/src/fields/map_viewer/map_viewer.js',
             'presenly/static/src/fields/map_viewer/map_viewer.xml',
             'presenly/static/src/fields/map_viewer/map_viewer.scss',
+            'presenly/static/src/setup_guide/setup_guide.scss',
         ],
     },
     'test': [

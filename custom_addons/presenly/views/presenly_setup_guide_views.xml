@@ -4,152 +4,151 @@
         <field name="name">presenly.setup.guide.form</field>
         <field name="model">presenly.setup.guide</field>
         <field name="arch" type="xml">
-            <form string="Presenly Setup Guide">
+            <form string="Presenly Setup Guide" class="presenly_setup_guide_form">
                 <sheet>
+                    <!-- Header: clear title + company scope + progress. -->
                     <div class="oe_title">
                         <h1>Presenly Setup Guide</h1>
                         <p class="text-muted">
-                            Follow the numbered steps to prepare attendance, permissions,
-                            time off, and overtime. Each step links to the matching
-                            configuration screen.
+                            Selesaikan langkah-langkah berikut agar absensi, izin,
+                            cuti, dan lembur siap digunakan. Setiap langkah punya
+                            tombol pintasan ke layar konfigurasinya.
                         </p>
                     </div>
+
                     <group>
-                        <group>
-                            <field name="company_id"/>
-                            <field name="step_total" invisible="1"/>
+                        <group string="Lingkup Perusahaan">
+                            <field name="company_id" required="1"/>
                         </group>
-                        <group string="Overall Progress">
-                            <field name="step_done" string="Steps Completed"/>
+                        <group string="Kesiapan Keseluruhan">
+                            <field name="step_done" string="Langkah Selesai"/>
+                            <field name="step_total" invisible="1"/>
                             <field name="progress" widget="progressbar"
                                    options="{'current_value': 'progress', 'max_value': 100, 'editable': false}"/>
                         </group>
                     </group>
 
                     <div class="alert alert-success" role="alert" invisible="not all_ready">
-                        <i class="fa fa-check-circle me-1" title="All ready" aria-label="All ready"/>
-                        <strong>All steps are ready.</strong> Employees can submit
-                        Permission, Time Off, and Overtime requests.
+                        <i class="fa fa-check-circle me-1" title="Semua siap" aria-label="Semua siap"/>
+                        <strong>Semua langkah selesai.</strong> Karyawan sudah dapat
+                        mengajukan izin, cuti, dan lembur.
                     </div>
 
-                    <separator string="Checklist"/>
-
-                    <group>
-                        <group string="1. Company &amp; Work Locations">
-                            <span class="fa fa-check text-success" title="Done" invisible="not location_total"/>
-                            <span class="fa fa-circle text-muted" title="Pending" invisible="location_total"/>
-                            <field name="location_total" widget="statinfo" string="Work Locations"/>
-                            <div class="text-muted">Create the legal Company and at least one
-                                Work Location with a Work Address.</div>
-                            <button name="action_open_companies" type="object"
-                                    string="Open Companies" class="btn-link"/>
-                            <button name="action_open_locations" type="object"
-                                    string="Open Work Locations" class="btn-link"/>
-                        </group>
-                        <group string="2. Geofence Readiness">
-                            <span class="fa fa-check text-success" title="Done" invisible="not location_ready"/>
-                            <span class="fa fa-times text-danger" title="Pending" invisible="location_ready"/>
-                            <field name="location_ready" widget="statinfo" string="Geofence Ready"/>
-                            <div class="text-muted">Set lat/long on the Work Address, radius,
-                                accuracy limit, and selfie policy per location.</div>
-                            <button name="action_open_locations" type="object"
-                                    string="Fix Work Locations" class="btn-link"/>
-                        </group>
-                        <group string="3. Schedules &amp; Fallback">
-                            <span class="fa fa-check text-success" title="Done"
-                                  invisible="not schedule_count and not employee_with_location"/>
-                            <span class="fa fa-circle text-muted" title="Pending"
-                                  invisible="schedule_count or employee_with_location"/>
-                            <field name="schedule_count" widget="statinfo" string="Location Schedules"/>
-                            <field name="employee_with_location" widget="statinfo"
-                                   string="Employees with Location"/>
-                            <div class="text-muted">Assign a daily Work Location fallback or
-                                hourly location slots.</div>
-                            <button name="action_open_schedules" type="object"
-                                    string="Open Schedules" class="btn-link"/>
-                        </group>
-                        <group string="4. Employees">
-                            <span class="fa fa-check text-success" title="Done" invisible="not employee_with_location"/>
-                            <span class="fa fa-circle text-muted" title="Pending" invisible="employee_with_location"/>
-                            <field name="employee_with_location" widget="statinfo"
-                                   string="Employees Mapped"/>
-                            <field name="employee_total" widget="statinfo" string="Total Employees"/>
-                            <div class="text-muted">Every employee needs a primary Work Location.</div>
-                            <button name="action_open_employees" type="object"
-                                    string="Open Employees" class="btn-link"/>
-                        </group>
-                        <group string="5. Permission Types">
-                            <span class="fa fa-check text-success" title="Done" invisible="not permission_type_ready"/>
-                            <span class="fa fa-circle text-muted" title="Pending" invisible="permission_type_ready"/>
-                            <field name="permission_type_ready" widget="statinfo"
-                                   string="Ready Permission Types"/>
-                            <field name="permission_type_total" widget="statinfo"
-                                   string="Total Permission Types"/>
-                            <div class="text-muted">Permission Types need Name, Code, Duration,
-                                and Paid Status complete.</div>
-                            <button name="action_open_permission_types" type="object"
-                                    string="Open Permission Types" class="btn-link"/>
-                        </group>
-                        <group string="6. Time Off Routes">
-                            <span class="fa fa-check text-success" title="Done" invisible="not leave_setup_complete"/>
-                            <span class="fa fa-circle text-muted" title="Pending" invisible="leave_setup_complete"/>
-                            <field name="leave_type_with_route" widget="statinfo"
-                                   string="Leave Types with Route"/>
-                            <field name="leave_type_total" widget="statinfo"
-                                   string="Active Leave Types"/>
-                            <div class="text-muted">Generate Approval Routes for all active
-                                Time Off Types.</div>
-                            <button name="action_open_leave_types" type="object"
-                                    string="Open Time Off Types" class="btn-link"/>
-                            <button name="action_open_approval_routes" type="object"
-                                    string="Review Approval Routes" class="btn-link"/>
-                        </group>
-                        <group string="7. Overtime Route">
-                            <span class="fa fa-check text-success" title="Done" invisible="not overtime_route_ready"/>
-                            <span class="fa fa-times text-danger" title="Pending" invisible="overtime_route_ready"/>
-                            <field name="overtime_route_ready" string="Overtime Route Ready"/>
-                            <div class="text-muted">A complete overtime Approval Route
-                                is mandatory to submit Overtime requests.</div>
-                            <button name="action_open_approval_routes" type="object"
-                                    string="Review Approval Routes" class="btn-link"/>
-                        </group>
-                        <group string="8. Time Off Route Coverage">
-                            <span class="fa fa-check text-success" title="Done" invisible="not all_types_routed"/>
-                            <span class="fa fa-circle text-muted" title="Pending" invisible="all_types_routed"/>
-                            <field name="leave_type_with_route" widget="statinfo"
-                                   string="Leave Types with Route"/>
-                            <field name="leave_type_total" widget="statinfo"
-                                   string="Active Leave Types"/>
-                            <div class="text-muted">Approval rights come from the
-                                Approval Routes themselves. Generate routes for every
-                                active Time Off Type.</div>
-                            <button name="action_generate_approval_routes" type="object"
-                                    string="Generate Approval Routes" class="btn-link"/>
-                        </group>
-                    </group>
-
-                    <separator string="Approval Route Coverage"/>
-                    <group>
-                        <group string="Approval Steps">
-                            <field name="rule_total" widget="statinfo" string="Total Steps"/>
-                            <field name="rule_complete" widget="statinfo" string="Complete Steps"/>
-                        </group>
-                        <group string="Permission Coverage">
-                            <field name="permission_setup_complete" string="Permission Routes Complete"/>
-                        </group>
-                        <group string="Time Off Coverage">
-                            <field name="leave_setup_complete" string="Time Off Routes Complete"/>
-                        </group>
-                    </group>
-
-                    <div class="oe_button_box">
+                    <!-- One primary action: generate missing routes. -->
+                    <div class="d-flex align-items-center gap-2 mb-3">
                         <button name="action_generate_approval_routes" type="object"
                                 class="btn btn-primary" icon="fa-magic"
-                                string="Generate Approval Routes for Missing Types"/>
+                                string="Generate Approval Routes untuk Jenis yang Belum Ada"/>
                     </div>
+
+                    <separator string="Checklist Konfigurasi"/>
+
+                    <!-- Steps: 2-column layout, status icon + statinfo + link. -->
+                    <group>
+                        <!-- Kiri -->
+                        <group string="1. Perusahaan &amp; Lokasi Kerja">
+                            <span class="fa fa-check text-success" title="Selesai" invisible="not location_total"/>
+                            <span class="fa fa-circle text-muted" title="Belum" invisible="location_total"/>
+                            <field name="location_total" widget="statinfo" string="Lokasi Kerja"/>
+                            <div class="text-muted">Buat Company dan minimal satu
+                                Work Location dengan Work Address.</div>
+                            <button name="action_open_companies" type="object"
+                                    string="Buka Companies" class="btn-link"/>
+                            <button name="action_open_locations" type="object"
+                                    string="Buka Work Locations" class="btn-link"/>
+                        </group>
+                        <group string="2. Kesiapan Geofence">
+                            <span class="fa fa-check text-success" title="Selesai" invisible="not location_ready"/>
+                            <span class="fa fa-times text-danger" title="Belum" invisible="location_ready"/>
+                            <field name="location_ready" widget="statinfo" string="Siap Geofence"/>
+                            <div class="text-muted">Isi lat/long pada Work Address,
+                                radius, batas akurasi, dan kebijakan selfie.</div>
+                            <button name="action_open_locations" type="object"
+                                    string="Perbaiki Work Locations" class="btn-link"/>
+                        </group>
+                        <group string="3. Jadwal &amp; Lokasi Harian">
+                            <span class="fa fa-check text-success" title="Selesai"
+                                  invisible="not schedule_count and not employee_with_location"/>
+                            <span class="fa fa-circle text-muted" title="Belum"
+                                  invisible="schedule_count or employee_with_location"/>
+                            <field name="schedule_count" widget="statinfo" string="Jadwal Lokasi"/>
+                            <field name="employee_with_location" widget="statinfo"
+                                   string="Karyawan Berlokasi"/>
+                            <div class="text-muted">Tetapkan lokasi harian atau slot
+                                jam kerja per lokasi.</div>
+                            <button name="action_open_schedules" type="object"
+                                    string="Buka Schedules" class="btn-link"/>
+                        </group>
+                        <group string="4. Karyawan">
+                            <span class="fa fa-check text-success" title="Selesai" invisible="not employee_with_location"/>
+                            <span class="fa fa-circle text-muted" title="Belum" invisible="employee_with_location"/>
+                            <field name="employee_with_location" widget="statinfo"
+                                   string="Karyawan Berlokasi"/>
+                            <field name="employee_total" widget="statinfo" string="Total Karyawan"/>
+                            <div class="text-muted">Setiap karyawan butuh Work
+                                Location utama.</div>
+                            <button name="action_open_employees" type="object"
+                                    string="Buka Karyawan" class="btn-link"/>
+                        </group>
+
+                        <!-- Kanan -->
+                        <group string="5. Tipe Izin (Permission Types)">
+                            <span class="fa fa-check text-success" title="Selesai" invisible="not permission_type_ready"/>
+                            <span class="fa fa-circle text-muted" title="Belum" invisible="permission_type_ready"/>
+                            <field name="permission_type_ready" widget="statinfo"
+                                   string="Tipe Siap"/>
+                            <field name="permission_type_total" widget="statinfo"
+                                   string="Total Tipe"/>
+                            <div class="text-muted">Tipe izin butuh Name, Code,
+                                Durasi, dan Paid Status lengkap.</div>
+                            <button name="action_open_permission_types" type="object"
+                                    string="Buka Permission Types" class="btn-link"/>
+                        </group>
+                        <group string="6. Rute Cuti (Time Off Routes)">
+                            <span class="fa fa-check text-success" title="Selesai" invisible="not leave_setup_complete"/>
+                            <span class="fa fa-circle text-muted" title="Belum" invisible="leave_setup_complete"/>
+                            <field name="leave_type_with_route" widget="statinfo"
+                                   string="Tipe Cuti Ber-Rute"/>
+                            <field name="leave_type_total" widget="statinfo"
+                                   string="Tipe Cuti Aktif"/>
+                            <div class="text-muted">Generate rute approval untuk
+                                semua tipe cuti aktif.</div>
+                            <button name="action_open_leave_types" type="object"
+                                    string="Buka Time Off Types" class="btn-link"/>
+                            <button name="action_open_approval_routes_leave" type="object"
+                                    string="Review Rute Cuti" class="btn-link"/>
+                        </group>
+                        <group string="7. Rute Lembur (Overtime)">
+                            <span class="fa fa-check text-success" title="Selesai" invisible="not overtime_route_ready"/>
+                            <span class="fa fa-times text-danger" title="Belum" invisible="overtime_route_ready"/>
+                            <field name="overtime_route_ready" string="Rute Lembur Siap"/>
+                            <div class="text-muted">Rute approval lembur wajib ada
+                                agar request lembur bisa diajukan.</div>
+                            <button name="action_open_approval_routes_overtime" type="object"
+                                    string="Review Rute Lembur" class="btn-link"/>
+                        </group>
+                        <group string="8. Cakupan Rute Cuti">
+                            <span class="fa fa-check text-success" title="Selesai" invisible="not all_types_routed"/>
+                            <span class="fa fa-circle text-muted" title="Belum" invisible="all_types_routed"/>
+                            <field name="leave_type_with_route" widget="statinfo"
+                                   string="Tipe Ber-Rute"/>
+                            <field name="leave_type_total" widget="statinfo"
+                                   string="Tipe Aktif"/>
+                            <div class="text-muted">Hak approval datang dari
+                                Approval Routes. Semua tipe cuti harus punya rute.</div>
+                            <button name="action_generate_approval_routes" type="object"
+                                    string="Generate Rute" class="btn-link"/>
+                        </group>
+                        <group string="Coverage Approval">
+                            <field name="rule_total" widget="statinfo" string="Total Langkah"/>
+                            <field name="rule_complete" widget="statinfo" string="Langkah Lengkap"/>
+                            <field name="permission_setup_complete" string="Rute Izin Lengkap"/>
+                            <field name="leave_setup_complete" string="Rute Cuti Lengkap"/>
+                        </group>
+                    </group>
                 </sheet>
                 <footer>
-                    <button string="Close" special="cancel" class="btn-secondary"/>
+                    <button string="Tutup" special="cancel" class="btn-secondary"/>
                 </footer>
             </form>
         </field>

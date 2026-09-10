@@ -1,0 +1,84 @@
+PRESENLY SETTINGS APP CRASH FIX (OWL slots missing) — ROLLOUT POST-CHECK
+Date: 2026-09-10
+Database: odoo
+Module: presenly 19.0.17.1.0
+
+REPORT (production)
+- Membuka menu Settings setelah upgrade memunculkan error:
+  "Invalid props for component 'SettingsApp': 'slots' is missing
+  (should be a object)."
+
+ROOT CAUSE (dikonfirmasi dari source code Odoo 19)
+1. addons/web/static/src/views/view_compiler.js — node dengan invisible="1"
+   DI-DROP saat compile time (bukan runtime):
+     if (!params.compileInvisibleNodes && (invisible === "True" || invisible === "1")) {
+         return;
+     }
+2. Modul presenly menyembunyikan SEMUA block di <app name="hr_attendance">:
+   - //block[@name='overtime_settings'] (invisible=1)
+   - //block[@name='kiosk_mode_setting_container'] (invisible=1)
+   - //block[.//field[@name='attendance_kiosk_url']] (invisible=1)
+   -> <app> tanpa children.
+3. SettingsFormCompiler.compileApp() memindahkan children app ke elemen
+   SettingsApp; tanpa children, OWL tidak meng-generate prop slots.
+4. addons/web/static/src/webclient/settings_form_view/settings/settings_app.js:
+     static props = { string: String, imgurl: String, key: String,
+                      selectedTab: {type: String, optional: 1},
+                      slots: Object };   // Wajib, tidak optional
+   -> OWL validator crash: "slots is missing".
+
+FIX
+- views/hr_attendance_integration_views.xml: tambah record
+  res_config_settings_presenly_info — satu block SETIAP saat visible di dalam
+  app hr_attendance:
+    <block title="Managed by Presenly" name="presenly_managed_info">
+        <setting string="Attendance and Kiosk settings are managed by Presenly"
+                 help="Configure Work Locations, geofence, selfie policy,
+                       Permission Types and Approval Routes under
+                       Attendances > Configuration instead."/>
+    </block>
+  Diverifikasi dari source: SettingsBlock.props.slots optional; Setting.props
+  semua optional (web.Setting template pakai guard t-if) -> block info valid
+  dan selalu menghasilkan child -> SettingsApp.slots terisi -> halaman
+  Settings render.
+- UX bonus: admin melihat pesan penjelas alih-alih area kosong (App
+  Attendances tetap muncul di daftar Settings).
+- Version bump 19.0.17.0.0 -> 19.0.17.1.0.
+
+VERIFICATION (database utama odoo)
+- ir_module_module presenly latest_version: 19.0.17.1.0.
+- ir_ui_view res_config_settings_presenly_info (id 1772): arch berisi
+  presenly_managed_info = t.
+- Boot server: http://127.0.0.1:8069/web/login HTTP 200.
+- Public kiosk URL -> HTTP 404.
+- Log server bersih (tanpa ERROR/CRITICAL/Traceback).
+
+DATA PRESERVATION
+- Perubahan hanya view (ir.ui.view baru) + versi modul. Tidak ada data bisnis
+  ditulis. Fingerprint data produksi tidak berubah oleh upgrade.
+
+TESTING (clone DB, instance 8071 — server utama tidak pernah dimatikan)
+- Isolated clone: odoo_presenly_settings_test_20260910.
+- Dump sumber: backups/presenly-migration/odoo-before-settings-app-fix-20260910_054738.dump.
+- Final result: 0 failed, 0 error(s) of 114 tests.
+- Clone database & clone filestore dihapus setelah validasi.
+
+STATIC VALIDATION
+- Python compilation (odoo-venv): passed.
+- XML parsing (lxml odoo-venv): 25 files passed.
+- git diff --check: passed.
+
+BACKUP
+- backups/presenly-migration/odoo-before-settings-app-fix-20260910_054738.dump
+  (created before the code change; retained).
+
+ROLLOUT
+- Before: presenly 19.0.17.0.0.
+- After: presenly 19.0.17.1.0.
+- Upgrade via: ./odoo-venv/bin/python ./odoo-bin -c odoo.conf -d odoo -u presenly --stop-after-init
+- Upgrade log: Modules loaded, Registry loaded, Initiating shutdown — tanpa
+  ERROR pada module presenly.
+- Server utama aktif kembali: HTTP 200.
+
+NO COMMIT
+- No Git commit was created.

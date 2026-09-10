@@ -1,0 +1,70 @@
+PRESENLY WORK LOCATION SCHEDULE EMPLOYEE PICKER FIX — POST-CHECK
+Date: 2026-09-10
+Database: odoo
+Module: presenly 19.0.17.2.2
+
+REPORT (admin)
+- Pada halaman Work Location Schedules, field Employee tidak dapat diisi —
+  dropdown karyawan kosong saat hendak membuat schedule baru.
+
+ROOT CAUSE
+- models/presenly_schedule.py: field employee_id memakai check_company=True.
+- Odoo 19 menambahkan domain otomatis ke dropdown untuk field ber-
+  check_company (fields_relational._description_domain):
+      (company_id and company_id in [company_id] + [False] or company_id in [False])
+- Pada record BARU, company_id (related dari employee_id) masih kosong,
+  sehingga dropdown hanya menampilkan employee dgn company_id NULL.
+- Seluruh employee produksi memiliki company_id = PT KONSULTA SEMEN GRESIK
+  (0 employee company NULL) -> dropdown tampak kosong.
+
+CHANGES
+1. models/presenly_schedule.py
+   - employee_id: hapus check_company=True (dengan komentar menjelaskan
+     alasan + efek domain di Odoo 19).
+   - Guard konsistensi company tetap aktif di _check_schedule:
+     work_location_id.company_id == company_id (raise ValidationError bila
+     berbeda) -- keamanan tidak berkurang.
+2. tests/test_schedule_employee_picker.py (baru, 3 test):
+   - test_employee_field_no_longer_restricts_new_record: field check_company
+     False (akar masalah).
+   - test_new_schedule_can_pick_employee_and_location: Form browser-like
+     record baru bisa pilih employee + location + save.
+   - test_company_consistency_guard_still_enforced: employee company A +
+     location company B tetap ditolak ValidationError.
+3. Version bump 19.0.17.2.1 -> 19.0.17.2.2.
+
+VERIFICATION (database utama odoo)
+- ir_module_module presenly latest_version: 19.0.17.2.2.
+- Boot server: http://127.0.0.1:8069/web/login HTTP 200.
+- Public kiosk URL -> HTTP 404.
+- Log server bersih.
+
+DATA PRESERVATION
+- Hanya perubahan definisi field (check_company attribute) + test. Tidak ada
+  data bisnis ditulis; tabel schedule tidak diubah.
+
+TESTING (clone DB, instance 8071 — server utama tidak pernah dimatikan)
+- Isolated clone: odoo_presenly_schedulepicker_test_20260910.
+- Dump sumber: backups/presenly-migration/odoo-before-schedule-employee-fix-20260910_082016.dump.
+- Final result: 0 failed, 0 error(s) of 118 tests.
+- Clone database & clone filestore dihapus setelah validasi.
+
+STATIC VALIDATION
+- Python compilation (odoo-venv): passed.
+- XML parsing (lxml odoo-venv): 25 files passed.
+- git diff --check: passed.
+
+BACKUP
+- backups/presenly-migration/odoo-before-schedule-employee-fix-20260910_082016.dump
+  (created before the code change; retained).
+
+ROLLOUT
+- Before: presenly 19.0.17.2.1.
+- After: presenly 19.0.17.2.2.
+- Upgrade via: ./odoo-venv/bin/python ./odoo-bin -c odoo.conf -d odoo -u presenly --stop-after-init
+- Upgrade log: Modules loaded, Registry loaded, Initiating shutdown — tanpa
+  ERROR pada module presenly.
+- Server utama aktif kembali: HTTP 200.
+
+NO COMMIT
+- No Git commit was created.

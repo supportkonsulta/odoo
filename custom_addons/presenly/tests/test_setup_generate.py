@@ -202,14 +202,17 @@ class TestPresenlyApprovalRouteGenerate(TransactionCase):
         )
         wizard._prepare_lines()
         lines = wizard.line_ids
-        self.assertEqual(len(lines), 4)  # 2 leave + 1 permission + 1 overtime
+        self.assertEqual(len(lines), 3)  # 2 leave + 1 permission, NO overtime
         names = lines.mapped('request_name')
         self.assertIn('Gen Leave', names)
         self.assertIn('Gen Leave Unrelated', names)
         self.assertIn('Gen Permission', names)
-        self.assertIn('Overtime (all employees)', names)
+        self.assertNotIn(
+            'Overtime (all employees)', names,
+            'Overtime must not be generated when specific types are picked',
+        )
         self.assertEqual(
-            len(lines.filtered(lambda line: line.status == 'to_create')), 4,
+            len(lines.filtered(lambda line: line.status == 'to_create')), 3,
         )
         # No unrelated leave type leaked into the preview.
         self.assertNotIn('Paid Time Off', names)
@@ -234,3 +237,12 @@ class TestPresenlyApprovalRouteGenerate(TransactionCase):
             raise AssertionError('Employee should not read the wizard')
         except AccessError:
             pass
+    def test_setup_guide_display_name_is_human_readable(self):
+        """The transient setup guide must never show a technical
+        'presenly.setup.guide,NewId_...' breadcrumb/tab label."""
+        guide = self.env['presenly.setup.guide'].create({
+            'company_id': self.company.id,
+        })
+        self.assertEqual(guide.display_name, 'Presenly Setup Guide')
+        self.assertFalse('presenly.setup.guide' in str(guide.display_name))
+        self.assertFalse('NewId' in str(guide.display_name))

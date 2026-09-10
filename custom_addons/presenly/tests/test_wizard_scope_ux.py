@@ -65,10 +65,11 @@ class TestPresenlyWizardScopeUx(TransactionCase):
         form.apply_to = 'all'
         form.leave_type_ids.add(self.leave_new_1)
         form.leave_type_ids.add(self.leave_new_2)
-        # Strict mode: permission list stays empty -> no permission lines.
+        # Strict mode: picking types under 'all' limits the scope to the
+        # picked types only — no permission lines, and NO overtime row either.
         wizard = form.save()
         lines = wizard.line_ids
-        self.assertEqual(len(lines), 3)  # 2 leave + overtime
+        self.assertEqual(len(lines), 2)  # exactly the 2 picked leave types
         names = lines.mapped('request_name')
         self.assertIn('UX Leave One', names)
         self.assertIn('UX Leave Two', names)
@@ -77,16 +78,16 @@ class TestPresenlyWizardScopeUx(TransactionCase):
         )), 2)
         self.assertEqual(len(lines.filtered(
             lambda line: line.request_kind == 'overtime'
-        )), 1)
+        )), 0, 'Overtime must not be generated when types are picked')
+        self.assertEqual(len(lines.filtered(
+            lambda line: line.request_kind == 'permission'
+        )), 0, 'No permission lines in strict leave scope')
         self.assertTrue(all(
-            line.request_kind in ('leave', 'overtime') for line in lines
+            line.request_kind == 'leave' for line in lines
         ))
         self.assertEqual(
-            len(lines.filtered(lambda line: line.status == 'to_create')), 3,
+            len(lines.filtered(lambda line: line.status == 'to_create')), 2,
         )
-        self.assertFalse(any(
-            line.request_kind == 'permission' for line in lines
-        ))
 
     def test_apply_to_leave_never_shows_permission_lines(self):
         form = self._open_wizard()
@@ -139,11 +140,10 @@ class TestPresenlyWizardScopeUx(TransactionCase):
         form.permission_type_ids.add(self.permission_1)
         wizard = form.save()
         lines = wizard.line_ids
-        # Strict all: only the selected permission (+ overtime), no leave.
-        self.assertEqual(len(lines), 2)
+        # Strict all: only the selected permission — no leave, no overtime.
+        self.assertEqual(len(lines), 1)
         self.assertIn('UX Permission One', lines.mapped('request_name'))
-        self.assertIn('Overtime (all employees)', lines.mapped('request_name'))
+        self.assertNotIn('Overtime (all employees)', lines.mapped('request_name'))
         self.assertTrue(all(
-            line.request_kind in ('permission', 'overtime')
-            for line in lines
+            line.request_kind == 'permission' for line in lines
         ))

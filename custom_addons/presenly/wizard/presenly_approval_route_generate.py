@@ -144,7 +144,15 @@ class PresenlyApprovalRouteGenerateWizard(models.TransientModel):
             candidates.append(('leave', target))
         for target in permission_types:
             candidates.append(('permission', target))
-        if self.apply_to in ('all', 'overtime'):
+        # Overtime is only included when the scope is explicitly overtime, or
+        # when "all" is chosen WITHOUT any type selection. If the user picks
+        # specific Time Off / Permission types under "all", the strict scope
+        # must exclude overtime too (nothing is generated outside the pick).
+        include_overtime = (
+            self.apply_to == 'overtime'
+            or (self.apply_to == 'all' and not strict_all)
+        )
+        if include_overtime:
             candidates.append(('overtime', False))
         return candidates
 
