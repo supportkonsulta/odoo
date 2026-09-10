@@ -3,7 +3,7 @@ services:
     image: odoo:19.0
     ports:
       - "8099:8069"
-    command: odoo -d db_sifnext -u all --proxy-mode
+    command: odoo -d db_sifnext -i sif_rka,presenly,sifnext_operational,sif_keuangan,sifnext_ppl,sif_rka,hr_payroll_custom,sifnext_asset -u all --proxy-mode
     volumes:
       - odoo-web-data:/var/lib/odoo
       - ./custom_addons:/mnt/extra-addons
