@@ -528,6 +528,14 @@ class SifnextPPL(models.Model):
         self._workflow_write({"state": "draft", "return_reason": reason})
 
 
+    def action_select_all_lines(self):
+        self.ensure_one()
+        self.line_ids.write({'is_selected': True})
+
+    def action_deselect_all_lines(self):
+        self.ensure_one()
+        self.line_ids.write({'is_selected': False})
+
     def action_apply_mass_coa(self):
         for rec in self:
             selected_lines = rec.line_ids.filtered(lambda l: l.is_selected)
