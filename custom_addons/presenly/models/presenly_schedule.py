@@ -31,7 +31,13 @@ class PresenlyWorkLocationSchedule(models.Model):
     name = fields.Char(compute='_compute_name', store=True)
     employee_id = fields.Many2one(
         'hr.employee', required=True, ondelete='cascade', index=True,
-        check_company=True,
+        # NOTE: no check_company=True here. Odoo 19 adds an automatic domain
+        # ``company_id in [company_id] + [False]`` to the dropdown. On a NEW
+        # schedule record ``company_id`` (related from the employee) is still
+        # empty, so the employee picker would only show employees without a
+        # company (usually none) and the dropdown looks empty. Company
+        # consistency is enforced below in ``_check_employee_company`` once
+        # the employee is set.
     )
     company_id = fields.Many2one(
         'res.company', related='employee_id.company_id', store=True,

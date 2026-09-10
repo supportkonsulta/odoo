@@ -11,6 +11,13 @@ class PresenlySetupGuide(models.TransientModel):
 
     _name = 'presenly.setup.guide'
     _description = 'Presenly Setup Guide'
+    _rec_name = 'name'
+
+    # Human-readable title so the breadcrumb/tab shows "Presenly Setup Guide"
+    # instead of the raw technical name (e.g. presenly.setup.guide,NewId_...).
+    name = fields.Char(
+        default='Presenly Setup Guide', readonly=True, string='Title',
+    )
 
     # ------------------------------------------------------------------
     # Scope

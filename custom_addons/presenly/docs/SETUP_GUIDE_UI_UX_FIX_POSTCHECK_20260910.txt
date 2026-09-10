@@ -1,0 +1,87 @@
+PRESENLY SETUP GUIDE UI/UX + NAMING + GENERATE OVERTIME STRICT FIX — POST-CHECK
+Date: 2026-09-10
+Database: odoo
+Module: presenly 19.0.17.2.0
+
+REQUESTS
+1. Perbaiki UI/UX halaman Presenly Setup Guide.
+2. Perbaiki penamaan aneh pada breadcrumb/tab:
+   "presenly.setup.guide,NewId_0x1121dd280".
+3. Perbaiki buat Generate Approval Routes: ketika apply_to=All request types
+   dan Time Off types dipilih, Overtime masih ikut masuk list.
+
+CHANGES
+1. models/presenly_setup_guide.py
+   - Tambah `_rec_name = 'name'` + field `name` (Char, default
+     'Presenly Setup Guide', readonly).
+   - Breadcrumb/tab kini menampilkan "Presenly Setup Guide" — bukan string
+     teknis "presenly.setup.guide,NewId_...". (Transient record dibuat via
+     action; sebelumnya tanpa _rec_name Odoo menampilkan repr teknis.)
+2. views/presenly_setup_guide_views.xml
+   - UI/UX diperbaiki:
+     * Grup "Lingkup Perusahaan" (company_id required) + "Kesiapan
+       Keseluruhan" (step_done + progressbar).
+     * Tombol primary "Generate Approval Routes untuk Jenis yang Belum Ada"
+       di atas checklist.
+     * 8 langkah checklist dalam bahasa Indonesia, icon status
+       (check/circle/times) + statinfo + tombol tautan pintasan per langkah.
+     * Langkah 6 dan 8 dipisah jelas: 6 = Time Off Routes (review),
+       8 = Time Off Route Coverage (generate semua).
+     * Group "Coverage Approval" (rule_total, rule_complete,
+       permission_setup_complete, leave_setup_complete).
+     * Footer tombol "Tutup".
+3. wizard/presenly_approval_route_generate.py
+   - _target_candidates(): Overtime hanya disertakan ketika
+     apply_to == 'overtime' ATAU apply_to == 'all' TANPA pilihan types
+     (strict_all = False). Jika user memilih Time Off/Permission types
+     tertentu di bawah "All request types", Overtime TIDAK masuk list.
+4. tests
+   - test_wizard_scope_ux.py: diperbarui ke perilaku strict baru:
+     * pilih leave types di mode all -> hanya baris leave (2), tanpa
+       overtime & permission.
+     * pilih permission -> hanya 1 baris permission (tanpa overtime).
+   - test_setup_generate.py:
+     * test_all_mode_filters_to_selected_types: 2 leave + 1 permission = 3
+       baris (tanpa overtime).
+     * test_setup_guide_display_name_is_human_readable (baru): display_name
+       = 'Presenly Setup Guide', bukan 'presenly.setup.guide,NewId...'.
+5. Version bump 19.0.17.1.0 -> 19.0.17.2.0.
+
+VERIFICATION (database utama odoo)
+- ir_module_module presenly latest_version: 19.0.17.2.0.
+- ir_model_fields presenly.setup.guide.name ada (1).
+- View view_presenly_setup_guide_form memuat teks baru (Lingkup Perusahaan).
+- Boot server: http://127.0.0.1:8069/web/login HTTP 200.
+- Public kiosk URL -> HTTP 404.
+- Log server bersih (tanpa ERROR/CRITICAL/Traceback).
+
+DATA PRESERVATION
+- Hanya perubahan kode/view + field compute/default (name), tidak ada data
+  bisnis ditulis. Fingerprint data produksi tidak berubah oleh upgrade.
+
+TESTING (clone DB, instance 8071 — server utama tidak pernah dimatikan)
+- Isolated clone: odoo_presenly_guidefix_test_20260910.
+- Dump sumber: backups/presenly-migration/odoo-before-guide-wizard-fix-20260910_055933.dump.
+- Final result: 0 failed, 0 error(s) of 115 tests.
+  - Termasuk test display_name dan wizard scope strict (tanpa overtime).
+- Clone database & clone filestore dihapus setelah validasi.
+
+STATIC VALIDATION
+- Python compilation (odoo-venv): passed.
+- XML parsing (lxml odoo-venv): 25 files passed.
+- git diff --check: passed.
+
+BACKUP
+- backups/presenly-migration/odoo-before-guide-wizard-fix-20260910_055933.dump
+  (created before the code change; retained).
+
+ROLLOUT
+- Before: presenly 19.0.17.1.0.
+- After: presenly 19.0.17.2.0.
+- Upgrade via: ./odoo-venv/bin/python ./odoo-bin -c odoo.conf -d odoo -u presenly --stop-after-init
+- Upgrade log: Modules loaded, Registry loaded, Initiating shutdown — tanpa
+  ERROR pada module presenly.
+- Server utama aktif kembali: HTTP 200.
+
+NO COMMIT
+- No Git commit was created.

@@ -1,0 +1,26 @@
+.presenly_setup_guide_form {
+    // widget="statinfo" renders "<span class=o_stat_value>0</span><span
+    // class=o_stat_text>Label</span>". Outside a button box there is no
+    // spacing between the number and the label, so "0Lokasi Kerja" appears
+    // glued together. Keep the value bold/large and separate the label.
+    .o_stat_info {
+        display: flex;
+        flex-direction: row;
+        align-items: baseline;
+        gap: 0.35rem;
+        margin-bottom: 0.25rem;
+
+        .o_stat_value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .o_stat_text {
+            font-size: 0.875rem;
+            color: #6c757d;
+            white-space: normal;
+            overflow-wrap: anywhere;
+        }
+    }
+}

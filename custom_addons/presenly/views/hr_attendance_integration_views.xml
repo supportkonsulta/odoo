@@ -310,4 +310,25 @@
             </xpath>
         </field>
     </record>
+
+    <!-- Odoo 19 settings compiler drops every child with invisible="1" at
+         compile time. When ALL native blocks of <app name="hr_attendance">
+         are hidden the <app> has no children left, so the compiled OWL
+         SettingsApp receives no "slots" prop (required, non-optional) and
+         the Settings screen crashes. Keep one always-visible informative
+         block so the app still renders — and tell admins where the real
+         configuration lives. -->
+    <record id="res_config_settings_presenly_info" model="ir.ui.view">
+        <field name="name">res.config.settings.presenly.info</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="hr_attendance.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//app[@name='hr_attendance']" position="inside">
+                <block title="Managed by Presenly" name="presenly_managed_info">
+                    <setting string="Attendance and Kiosk settings are managed by Presenly"
+                             help="Configure Work Locations, geofence, selfie policy, Permission Types and Approval Routes under Attendances > Configuration instead."/>
+                </block>
+            </xpath>
+        </field>
+    </record>
 </odoo>
