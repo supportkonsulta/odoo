@@ -30,10 +30,15 @@ class SifnextOperationalApiController(http.Controller):
 
     def _require_ga(self):
         user = request.env.user
-        if not user.has_group("sifnext_operational.group_sifnext_operational_ga"):
+        has_ga = (
+            user.has_group("sifnext_operational.group_sifnext_operational_ga")
+            or user.has_group("sifnext_operational.group_sifnext_operational_manager")
+            or user.has_group("base.group_system")
+        )
+        if not has_ga:
             raise UserError("Akun ini tidak memiliki hak akses General Affair.")
-        if user.sifnext_active_role != "ga":
-            raise UserError("Silakan aktifkan role General Affair terlebih dahulu.")
+        if hasattr(user, "sifnext_active_role") and user.sifnext_active_role != "ga":
+            user.sudo().write({"sifnext_active_role": "ga"})
 
     def _serialize_room(self, room):
         return {
