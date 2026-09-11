@@ -65,3 +65,6 @@ backups
 #log files
 *.log
 odoo.err
+
+# Windows reserved name (nul device)
+/nul
