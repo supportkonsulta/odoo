@@ -295,8 +295,8 @@ class SifnextOperationalRoomBooking(models.Model):
                     "Akun ini tidak memiliki role General Affair."
                 )
 
-            # Pastikan role aktif adalah General Affair
-            if record.env.user.sifnext_active_role != "ga":
+            # Pastikan role aktif adalah General Affair (skip jika sudo/API)
+            if not record.env.su and record.env.user.sifnext_active_role != "ga":
                 raise ValidationError(
                     "Silakan aktifkan role General Affair terlebih dahulu."
                 )
@@ -334,8 +334,8 @@ class SifnextOperationalRoomBooking(models.Model):
                     "Akun ini tidak memiliki role General Affair."
                 )
 
-            # Pastikan role aktif adalah General Affair
-            if record.env.user.sifnext_active_role != "ga":
+            # Pastikan role aktif adalah General Affair (skip jika sudo/API)
+            if not record.env.su and record.env.user.sifnext_active_role != "ga":
                 raise ValidationError(
                     "Silakan aktifkan role General Affair terlebih dahulu."
                 )
