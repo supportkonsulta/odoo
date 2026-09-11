@@ -37,8 +37,6 @@ class SifnextOperationalApiController(http.Controller):
         )
         if not has_ga:
             raise UserError("Akun ini tidak memiliki hak akses General Affair.")
-        if hasattr(user, "sifnext_active_role") and user.sifnext_active_role != "ga":
-            user.sudo().write({"sifnext_active_role": "ga"})
 
     def _serialize_room(self, room):
         return {
@@ -191,8 +189,8 @@ class SifnextOperationalApiController(http.Controller):
         booking = request.env["sifnext.operational.room.booking"].browse(booking_id).exists()
         if not booking:
             raise UserError("Pengajuan ruangan tidak ditemukan.")
-        booking.action_approve()
-        booking.action_book()
+        booking.sudo().action_approve()
+        booking.sudo().action_book()
         return self._ok(self._serialize_booking(booking))
 
     @http.route(
@@ -208,8 +206,8 @@ class SifnextOperationalApiController(http.Controller):
         booking = request.env["sifnext.operational.room.booking"].browse(booking_id).exists()
         if not booking:
             raise UserError("Pengajuan ruangan tidak ditemukan.")
-        booking.write({"rejection_reason": reason})
-        booking.action_reject()
+        booking.sudo().write({"rejection_reason": reason})
+        booking.sudo().action_reject()
         return self._ok(self._serialize_booking(booking))
 
     # =========================================================
@@ -287,8 +285,8 @@ class SifnextOperationalApiController(http.Controller):
         booking = request.env["sifnext.operational.vehicle.booking"].browse(booking_id).exists()
         if not booking:
             raise UserError("Pengajuan kendaraan tidak ditemukan.")
-        booking.action_approve()
-        booking.action_book()
+        booking.sudo().action_approve()
+        booking.sudo().action_book()
         return self._ok(self._serialize_booking(booking))
 
     @http.route(
@@ -304,6 +302,6 @@ class SifnextOperationalApiController(http.Controller):
         booking = request.env["sifnext.operational.vehicle.booking"].browse(booking_id).exists()
         if not booking:
             raise UserError("Pengajuan kendaraan tidak ditemukan.")
-        booking.write({"rejection_reason": reason})
-        booking.action_reject()
+        booking.sudo().write({"rejection_reason": reason})
+        booking.sudo().action_reject()
         return self._ok(self._serialize_booking(booking))
