@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- List View -->
+    <record id="view_transaksi_transaction_list" model="ir.ui.view">
+        <field name="name">transaksi.transaction.list</field>
+        <field name="model">transaksi.transaction</field>
+        <field name="arch" type="xml">
+            <list string="Daftar Transaksi Transfer" sample="1">
+                <field name="name" decoration-bf="1"/>
+                <field name="date"/>
+                <field name="submission_time" optional="show"/>
+                <field name="user_id" widget="many2one_avatar_user"/>
+                <field name="unit_id"/>
+                <field name="transfer_type" widget="badge" decoration-primary="transfer_type == 'single'" decoration-info="transfer_type == 'multiple'"/>
+                <field name="total_rupiah" sum="Total Rupiah" decoration-bf="1"/>
+                <field name="currency_id" column_invisible="True"/>
+                <field name="state" widget="badge" 
+                       decoration-muted="state == 'draft'" 
+                       decoration-info="state == 'submitted'" 
+                       decoration-warning="state == 'verified'" 
+                       decoration-success="state == 'approved'" 
+                       decoration-danger="state == 'rejected'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Kanban View -->
+    <record id="view_transaksi_transaction_kanban" model="ir.ui.view">
+        <field name="name">transaksi.transaction.kanban</field>
+        <field name="model">transaksi.transaction</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile" sample="1">
+                <templates>
+                    <t t-name="card">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <field class="fw-bold fs-6" name="name"/>
+                            <field name="state" widget="badge" 
+                                   decoration-muted="state == 'draft'" 
+                                   decoration-info="state == 'submitted'" 
+                                   decoration-warning="state == 'verified'" 
+                                   decoration-success="state == 'approved'" 
+                                   decoration-danger="state == 'rejected'"/>
+                        </div>
+                        <div class="text-muted small mb-2">
+                            <span><field name="unit_id"/></span>
+                            <span class="ms-2">| <field name="date"/> <field name="submission_time"/></span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-2 border-top pt-2">
+                            <field name="transfer_type" widget="badge" decoration-primary="transfer_type == 'single'" decoration-info="transfer_type == 'multiple'"/>
+                            <field class="fw-bold text-primary" name="total_rupiah"/>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_transaksi_transaction_form" model="ir.ui.view">
+        <field name="name">transaksi.transaction.form</field>
+        <field name="model">transaksi.transaction</field>
+        <field name="arch" type="xml">
+            <form string="Transaksi Transfer Bank">
+                <header>
+                    <button name="action_submit" string="Ajukan" type="object" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_verify" string="Verifikasi Keuangan" type="object" class="btn-primary" invisible="state != 'submitted'" groups="transaksi.group_transaksi_finance"/>
+                    <button name="action_approve" string="Setujui Direktur" type="object" class="btn-success" invisible="state != 'verified'" groups="transaksi.group_transaksi_approver"/>
+                    <button name="action_open_reject_wizard" string="Tolak" type="object" class="btn-danger" invisible="state not in ('submitted', 'verified')" groups="transaksi.group_transaksi_finance,transaksi.group_transaksi_approver"/>
+                    <button name="action_reset_draft" string="Kembalikan ke Draf" type="object" class="btn-secondary" invisible="state not in ('rejected', 'failed')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,verified,approved"/>
+                </header>
+                <sheet>
+                    <div class="alert alert-danger" role="alert" invisible="state != 'rejected'">
+                        <strong>Alasan Penolakan: </strong>
+                        <field name="reject_reason" readonly="1"/>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name" string="Nomor Transaksi"/>
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Informasi Pengajuan">
+                            <field name="transfer_type" widget="radio" options="{'horizontal': true}" readonly="state != 'draft'"/>
+                            <field name="date" readonly="state != 'draft'"/>
+                            <field name="submission_time" placeholder="HH:MM (misal: 14:30)" readonly="state != 'draft'"/>
+                        </group>
+                        <group string="Identitas Pemohon">
+                            <field name="user_id"/>
+                            <field name="unit_id" readonly="state != 'draft'"/>
+                            <field name="company_id" invisible="1"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Rekening Penerima" name="destinations">
+                            <!-- Input Transfer Tunggal -->
+                            <div invisible="transfer_type != 'single'">
+                                <group string="Detail Rekening Penerima Tunggal">
+                                    <group>
+                                        <field name="single_bank_name" placeholder="Contoh: Bank Mandiri, BCA, BRI..." readonly="state != 'draft'" required="transfer_type == 'single'"/>
+                                        <field name="single_destination_account" placeholder="Nomor rekening penerima..." readonly="state != 'draft'" required="transfer_type == 'single'"/>
+                                        <field name="single_account_holder_name" placeholder="Nama pemilik rekening sesuai buku tabungan..." readonly="state != 'draft'"/>
+                                        <field name="single_country_id" readonly="state != 'draft'"/>
+                                    </group>
+                                    <group>
+                                        <field name="single_transfer_method" readonly="state != 'draft'" required="transfer_type == 'single'"/>
+                                        <field name="single_rupiah" readonly="state != 'draft'" required="transfer_type == 'single'"/>
+                                        <field name="single_notes" placeholder="Catatan opsional..." readonly="state != 'draft'"/>
+                                    </group>
+                                </group>
+                            </div>
+
+                            <!-- Input Transfer Massal -->
+                            <div invisible="transfer_type != 'multiple'">
+                                <field name="line_ids" readonly="state != 'draft'">
+                                    <list editable="bottom">
+                                        <field name="sequence" widget="handle"/>
+                                        <field name="bank_name" placeholder="Bank Penerima"/>
+                                        <field name="destination_account" placeholder="Nomor Rekening"/>
+                                        <field name="account_holder_name" placeholder="Nama Pemilik Rekening"/>
+                                        <field name="transfer_method"/>
+                                        <field name="rupiah" sum="Total Rupiah"/>
+                                        <field name="line_notes" placeholder="Catatan Baris"/>
+                                        <field name="currency_id" column_invisible="True"/>
+                                    </list>
+                                </field>
+                            </div>
+
+                            <group class="oe_subtotal_footer oe_right">
+                                <field name="total_rupiah" decoration-bf="1" class="oe_subtotal_footer_separator"/>
+                            </group>
+                        </page>
+
+                        <page string="Pengaturan Tambahan" name="additional_settings">
+                            <group>
+                                <group string="Ketentuan Biaya &amp; Referensi">
+                                    <field name="charge_to" readonly="state != 'draft'"/>
+                                    <field name="purpose" readonly="state != 'draft'"/>
+                                    <field name="ref_number" placeholder="Maksimal 19 karakter" readonly="state != 'draft'"/>
+                                </group>
+                                <group string="Notifikasi &amp; Jadwal Pelaksanaan">
+                                    <field name="remark" placeholder="Maksimal 200 karakter" readonly="state != 'draft'"/>
+                                    <field name="email_notification" placeholder="keuangan@perusahaan.com" readonly="state != 'draft'"/>
+                                    <field name="sms_notification" placeholder="081234567890" readonly="state != 'draft'"/>
+                                    <field name="execution_time" widget="radio" options="{'horizontal': true}" readonly="state != 'draft'"/>
+                                    <field name="scheduled_date" invisible="execution_time != 'scheduled'" required="execution_time == 'scheduled'" readonly="state != 'draft'"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Dokumen Lampiran" name="attachments">
+                            <group>
+                                <field name="attachment_ids" widget="many2many_binary" string="Unggah Dokumen Pendukung" readonly="state != 'draft'"/>
+                            </group>
+                        </page>
+
+                        <page string="Riwayat Persetujuan" name="audit_trail">
+                            <group>
+                                <group string="Pengajuan &amp; Verifikasi Keuangan">
+                                    <field name="submitted_at"/>
+                                    <field name="verified_by"/>
+                                    <field name="verified_at"/>
+                                </group>
+                                <group string="Persetujuan Direktur">
+                                    <field name="approved_by"/>
+                                    <field name="approved_at"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_transaksi_transaction_search" model="ir.ui.view">
+        <field name="name">transaksi.transaction.search</field>
+        <field name="model">transaksi.transaction</field>
+        <field name="arch" type="xml">
+            <search string="Cari Transaksi Transfer">
+                <field name="name" string="Nomor Transaksi"/>
+                <field name="ref_number" string="Nomor Referensi"/>
+                <field name="user_id"/>
+                <field name="unit_id"/>
+
+                <filter name="filter_draft" string="Draf" domain="[('state', '=', 'draft')]"/>
+                <filter name="filter_pending" string="Menunggu Persetujuan" domain="[('state', 'in', ('submitted', 'verified'))]"/>
+                <filter name="filter_submitted" string="Menunggu Verifikasi Keuangan" domain="[('state', '=', 'submitted')]"/>
+                <filter name="filter_verified" string="Menunggu Persetujuan Direktur" domain="[('state', '=', 'verified')]"/>
+                <filter name="filter_approved" string="Disetujui" domain="[('state', '=', 'approved')]"/>
+                <filter name="filter_rejected" string="Ditolak" domain="[('state', '=', 'rejected')]"/>
+
+                <separator/>
+                <filter name="filter_single" string="Transfer Tunggal" domain="[('transfer_type', '=', 'single')]"/>
+                <filter name="filter_multiple" string="Transfer Massal" domain="[('transfer_type', '=', 'multiple')]"/>
+
+                <group>
+                    <filter name="group_by_state" string="Status" context="{'group_by': 'state'}"/>
+                    <filter name="group_by_date" string="Bulan Pengajuan" context="{'group_by': 'date:month'}"/>
+                    <filter name="group_by_unit" string="Unit Kerja" context="{'group_by': 'unit_id'}"/>
+                    <filter name="group_by_type" string="Tipe Transfer" context="{'group_by': 'transfer_type'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action Window -->
+    <record id="action_transaksi_transaction" model="ir.actions.act_window">
+        <field name="name">Mutasi Antar Rekening</field>
+        <field name="res_model">transaksi.transaction</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="search_view_id" ref="view_transaksi_transaction_search"/>
+        <field name="context">{'search_default_filter_pending': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Buat pengajuan transaksi transfer baru
+            </p>
+            <p>
+                Kelola mutasi transfer antar rekening baik Transfer Tunggal maupun Transfer Massal dengan alur persetujuan bertingkat.
+            </p>
+        </field>
+    </record>
+</odoo>

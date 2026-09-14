@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="module_category_transaksi" model="ir.module.category">
+        <field name="name">Transaksi</field>
+        <field name="sequence">35</field>
+    </record>
+
+    <record id="privilege_transaksi" model="res.groups.privilege">
+        <field name="name">Mutasi Bank</field>
+        <field name="sequence">10</field>
+        <field name="category_id" ref="module_category_transaksi"/>
+    </record>
+
+    <record id="group_transaksi_user" model="res.groups">
+        <field name="name">Pengguna / Pemohon Transaksi</field>
+        <field name="sequence">10</field>
+        <field name="privilege_id" ref="privilege_transaksi"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <record id="group_transaksi_finance" model="res.groups">
+        <field name="name">Verifikator Keuangan</field>
+        <field name="sequence">20</field>
+        <field name="privilege_id" ref="privilege_transaksi"/>
+        <field name="implied_ids" eval="[(4, ref('group_transaksi_user')), (4, ref('sif_keuangan.group_sif_keuangan_user'))]"/>
+    </record>
+
+    <record id="group_transaksi_approver" model="res.groups">
+        <field name="name">Direktur / Approver Transaksi</field>
+        <field name="sequence">30</field>
+        <field name="privilege_id" ref="privilege_transaksi"/>
+        <field name="implied_ids" eval="[(4, ref('group_transaksi_user'))]"/>
+    </record>
+
+    <!-- Multi-Company Record Rules -->
+    <record id="rule_transaksi_transaction_company" model="ir.rule">
+        <field name="name">Transaksi Multi-Company</field>
+        <field name="model_id" ref="model_transaksi_transaction"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+
+    <record id="rule_transaksi_transaction_line_company" model="ir.rule">
+        <field name="name">Detail Transaksi Multi-Company</field>
+        <field name="model_id" ref="model_transaksi_transaction_line"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+
+    <!-- User Own Record Rule -->
+    <record id="rule_transaksi_transaction_user_own" model="ir.rule">
+        <field name="name">Transaksi Pemohon: Milik Sendiri</field>
+        <field name="model_id" ref="model_transaksi_transaction"/>
+        <field name="domain_force">[('user_id', '=', user.id)]</field>
+        <field name="groups" eval="[(4, ref('group_transaksi_user'))]"/>
+    </record>
+
+    <record id="rule_transaksi_transaction_finance_all" model="ir.rule">
+        <field name="name">Transaksi Keuangan &amp; Direktur: Seluruh Data</field>
+        <field name="model_id" ref="model_transaksi_transaction"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('group_transaksi_finance')), (4, ref('group_transaksi_approver'))]"/>
+    </record>
+
+    <record id="rule_transaksi_transaction_line_user_own" model="ir.rule">
+        <field name="name">Detail Transaksi Pemohon: Milik Sendiri</field>
+        <field name="model_id" ref="model_transaksi_transaction_line"/>
+        <field name="domain_force">[('transaction_id.user_id', '=', user.id)]</field>
+        <field name="groups" eval="[(4, ref('group_transaksi_user'))]"/>
+    </record>
+
+    <record id="rule_transaksi_transaction_line_finance_all" model="ir.rule">
+        <field name="name">Detail Transaksi Keuangan &amp; Direktur: Seluruh Data</field>
+        <field name="model_id" ref="model_transaksi_transaction_line"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('group_transaksi_finance')), (4, ref('group_transaksi_approver'))]"/>
+    </record>
+</odoo>

@@ -1,0 +1,86 @@
+# -*- coding: utf-8 -*-
+from odoo import api, fields, models, _
+from odoo.exceptions import ValidationError
+
+
+class TransaksiTransactionLine(models.Model):
+    _name = "transaksi.transaction.line"
+    _description = "Detail Rekening Penerima Transfer"
+    _order = "sequence, id asc"
+
+    transaction_id = fields.Many2one(
+        "transaksi.transaction",
+        string="Induk Transaksi",
+        ondelete="cascade",
+        index=True,
+        required=True,
+    )
+    company_id = fields.Many2one(
+        "res.company",
+        string="Perusahaan",
+        related="transaction_id.company_id",
+        store=True,
+        index=True,
+    )
+    sequence = fields.Integer(
+        string="No.",
+        default=1,
+    )
+    bank_name = fields.Char(
+        string="Bank Penerima",
+    )
+    destination_account = fields.Char(
+        string="Nomor Rekening Tujuan",
+        required=True,
+    )
+    account_holder_name = fields.Char(
+        string="Nama Pemilik Rekening",
+    )
+    country_id = fields.Many2one(
+        "res.country",
+        string="Negara",
+        default=lambda self: self.env["res.country"].search([("code", "=", "ID")], limit=1),
+    )
+    @api.model
+    def _default_currency_id(self):
+        idr = self.env.ref("base.IDR", raise_if_not_found=False)
+        if idr:
+            if not idr.active:
+                idr.sudo().write({"active": True})
+            return idr.id
+        return self.env.company.currency_id.id
+
+    currency_id = fields.Many2one(
+        "res.currency",
+        string="Mata Uang",
+        default=_default_currency_id,
+        required=True,
+    )
+    transfer_method = fields.Selection(
+        [
+            ("bi_fast", "BI-FAST"),
+            ("online", "Transfer Online"),
+            ("inhouse", "Antar Rekening Bank yang Sama (Inhouse)"),
+            ("rtgs", "RTGS"),
+            ("llg", "Kliring (SKNBI/LLG)"),
+        ],
+        string="Metode Transfer",
+        default="bi_fast",
+        required=True,
+    )
+    rupiah = fields.Monetary(
+        string="Rupiah",
+        currency_field="currency_id",
+        required=True,
+    )
+    line_notes = fields.Char(
+        string="Catatan Baris",
+    )
+
+    @api.constrains("rupiah", "transfer_method")
+    def _check_line_constraints(self):
+        for line in self:
+            if line.rupiah <= 0 and line.transaction_id.state != "draft":
+                raise ValidationError(_("Nominal rupiah transfer per baris harus lebih dari Rp 0."))
+            if line.transfer_method == "bi_fast" and line.rupiah > 0 and line.rupiah < 10000.0:
+                raise ValidationError(_("Nominal transfer minimal Rp 10.000,00 untuk metode BI-FAST."))
