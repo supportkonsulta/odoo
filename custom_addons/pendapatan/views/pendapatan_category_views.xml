@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_pendapatan_category_list" model="ir.ui.view">
+        <field name="name">pendapatan.category.list</field>
+        <field name="model">pendapatan.category</field>
+        <field name="arch" type="xml">
+            <list string="Kategori Pendapatan">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="periodicity"/>
+                <field name="coa_pendapatan_id"/>
+                <field name="coa_kas_id"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_pendapatan_category_form" model="ir.ui.view">
+        <field name="name">pendapatan.category.form</field>
+        <field name="model">pendapatan.category</field>
+        <field name="arch" type="xml">
+            <form string="Kategori Pendapatan">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" string="Nama Kategori"/>
+                        <h1>
+                            <field name="name" placeholder="Contoh: SPP Bulanan"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="code" placeholder="SPP"/>
+                            <field name="periodicity"/>
+                            <field name="active"/>
+                        </group>
+                        <group>
+                            <field name="coa_pendapatan_id"
+                                   options="{'no_create': True}"/>
+                            <field name="coa_kas_id"
+                                   options="{'no_create': True}"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="description" placeholder="Keterangan kategori..."/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_pendapatan_category_search" model="ir.ui.view">
+        <field name="name">pendapatan.category.search</field>
+        <field name="model">pendapatan.category</field>
+        <field name="arch" type="xml">
+            <search string="Cari Kategori Pendapatan">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="periodicity"/>
+                <separator/>
+                <filter string="Bulanan" name="filter_bulanan"
+                        domain="[('periodicity', '=', 'bulanan')]"/>
+                <filter string="Semester" name="filter_semester"
+                        domain="[('periodicity', '=', 'semester')]"/>
+                <filter string="Tahunan" name="filter_tahunan"
+                        domain="[('periodicity', '=', 'tahunan')]"/>
+                <filter string="Insidentil" name="filter_insidentil"
+                        domain="[('periodicity', '=', 'insidentil')]"/>
+                <separator/>
+                <filter string="Arsip" name="filter_archived"
+                        domain="[('active', '=', False)]"/>
+                <filter string="Periode" name="group_period"
+                        context="{'group_by': 'periodicity'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_pendapatan_category" model="ir.actions.act_window">
+        <field name="name">Kategori Pendapatan</field>
+        <field name="res_model">pendapatan.category</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_pendapatan_category_search"/>
+        <field name="context">{'default_active': True}</field>
+        <field name="help">Master data kategori pendapatan. Mendukung periode bulanan, semester, tahunan, dan insidentil.</field>
+    </record>
+</odoo>

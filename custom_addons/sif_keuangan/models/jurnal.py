@@ -35,6 +35,7 @@ class SifJurnalEntry(models.Model):
         ('ppl', 'PPL / Pengadaan'),
         ('asset_buy', 'Perolehan Aset'),
         ('asset_depr', 'Depresiasi Aset'),
+        ('pendapatan', 'Pendapatan'),
     ], string='Sumber Transaksi', default='manual', required=True)
 
     state = fields.Selection([

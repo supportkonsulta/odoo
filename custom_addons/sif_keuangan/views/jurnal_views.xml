@@ -102,7 +102,8 @@
                 <field name="ref" string="Referensi / Dokumen"/>
                 <field name="source_type" string="Sumber" widget="badge"
                        decoration-info="source_type == 'ppl'"
-                       decoration-warning="source_type in ('asset_buy', 'asset_depr')"/>
+                       decoration-warning="source_type in ('asset_buy', 'asset_depr')"
+                       decoration-success="source_type == 'pendapatan'"/>
                 <field name="total_debit" string="Total Debet" sum="Total Debet"/>
                 <field name="total_credit" string="Total Kredit" sum="Total Kredit"/>
                 <field name="state" widget="badge" 
@@ -179,6 +180,7 @@
                 <separator/>
                 <filter string="Dari PPL" name="filter_source_ppl" domain="[('source_type', '=', 'ppl')]"/>
                 <filter string="Dari Aset" name="filter_source_asset" domain="[('source_type', 'in', ('asset_buy', 'asset_depr'))]"/>
+                <filter string="Dari Pendapatan" name="filter_source_pendapatan" domain="[('source_type', '=', 'pendapatan')]"/>
                 <separator/>
                 <filter string="Per Unit Kerja" name="group_unit" context="{'group_by':'unit_name'}"/>
                 <filter string="Per Sumber Transaksi" name="group_source" context="{'group_by':'source_type'}"/>

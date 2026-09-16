@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ============================================================ -->
+    <!-- 1. TREE VIEW                                                 -->
+    <!-- ============================================================ -->
+    <record id="view_pendapatan_list" model="ir.ui.view">
+        <field name="name">pendapatan.pendapatan.list</field>
+        <field name="model">pendapatan.pendapatan</field>
+        <field name="arch" type="xml">
+            <list string="Daftar Pendapatan"
+                  decoration-info="state == 'draft'"
+                  decoration-warning="state == 'submitted'"
+                  decoration-success="state == 'approved'"
+                  decoration-muted="state == 'cancelled'">
+                <field name="name" string="Nomor"/>
+                <field name="tanggal" string="Tanggal"/>
+                <field name="category_id" string="Kategori"/>
+                <field name="period_label" string="Label Periode"/>
+                <field name="unit_name" string="Unit Kerja"/>
+                <field name="amount" string="Nominal" sum="Total Pendapatan"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-warning="state == 'submitted'"
+                       decoration-success="state in ('approved', 'posted')"
+                       decoration-danger="state == 'cancelled'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- 2. FORM VIEW                                                 -->
+    <!-- ============================================================ -->
+    <record id="view_pendapatan_form" model="ir.ui.view">
+        <field name="name">pendapatan.pendapatan.form</field>
+        <field name="model">pendapatan.pendapatan</field>
+        <field name="arch" type="xml">
+            <form string="Pendapatan">
+                <header>
+                    <button name="action_submit" string="Ajukan"
+                            type="object" class="oe_highlight"
+                            groups="pendapatan.group_pendapatan_user"
+                            invisible="state != 'draft'"/>
+                    <button name="action_approve" string="Setujui"
+                            type="object" class="oe_highlight"
+                            groups="pendapatan.group_pendapatan_manager"
+                            invisible="state != 'submitted'"/>
+                    <button name="action_reject" string="Tolak / Revisi"
+                            type="object"
+                            groups="pendapatan.group_pendapatan_manager"
+                            invisible="state != 'submitted'"/>
+                    <button name="action_post" string="Posting (Buat Jurnal)"
+                            type="object" class="oe_highlight"
+                            groups="pendapatan.group_pendapatan_manager"
+                            invisible="state != 'approved'"/>
+                    <button name="action_cancel" string="Batalkan"
+                            type="object"
+                            groups="pendapatan.group_pendapatan_manager"
+                            invisible="state in ('draft', 'cancelled', 'posted')"/>
+                    <button name="action_reset_to_draft" string="Reset ke Draft"
+                            type="object"
+                            groups="pendapatan.group_pendapatan_manager"
+                            invisible="state in ('draft', 'posted', 'cancelled')"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,submitted,approved,posted"/>
+                </header>
+                <sheet>
+                    <field name="currency_id" invisible="1"/>
+                    <field name="company_id" invisible="1"/>
+                    <div class="oe_title">
+                        <label for="name" string="Nomor Pendapatan"/>
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group col="2">
+                        <group string="Informasi Pendapatan">
+                            <field name="tanggal"/>
+                            <field name="category_id"
+                                   options="{'no_create': True, 'no_open': True}"/>
+                            <field name="period_label"
+                                   placeholder='Contoh: "Januari 2026" atau "Semester Genap 2025/2026"'/>
+                            <field name="amount" widget="monetary"
+                                   options="{'currency_field': 'currency_id', 'no_edit_currency': True}"/>
+                        </group>
+                        <group string="Detail">
+                            <field name="unit_name"
+                                   placeholder="Misal: Sekolah ABC, Universitas XYZ"/>
+                            <field name="source_partner_id"
+                                   options="{'no_create': True, 'no_open': True}"/>
+                            <field name="attachment" filename="name" widget="binary"/>
+                        </group>
+                    </group>
+                    <group string="Keterangan">
+                        <field name="description" nolabel="1"
+                               placeholder="Uraian detail pendapatan (opsional)..."/>
+                    </group>
+                    <notebook>
+                        <page string="Workflow / Approval"
+                              groups="pendapatan.group_pendapatan_manager">
+                            <group>
+                                <group>
+                                    <field name="submitted_by_id" readonly="1"/>
+                                    <field name="submitted_date" readonly="1"/>
+                                    <field name="approved_by_id" readonly="1"/>
+                                    <field name="approved_date" readonly="1"/>
+                                </group>
+                                <group>
+                                    <field name="posted_by_id" readonly="1"/>
+                                    <field name="posted_date" readonly="1"/>
+                                    <field name="cancel_reason"
+                                           placeholder="Wajib diisi jika ada pembatalan"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Jurnal Terkait"
+                              invisible="not journal_id">
+                            <group>
+                                <field name="journal_id"
+                                       options="{'no_create': True, 'no_open': True}"
+                                       readonly="1"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- 3. SEARCH VIEW                                              -->
+    <!-- ============================================================ -->
+    <record id="view_pendapatan_search" model="ir.ui.view">
+        <field name="name">pendapatan.pendapatan.search</field>
+        <field name="model">pendapatan.pendapatan</field>
+        <field name="arch" type="xml">
+            <search string="Pencarian Pendapatan">
+                <field name="name" string="Nomor"/>
+                <field name="period_label" string="Label Periode"/>
+                <field name="unit_name" string="Unit Kerja"/>
+                <field name="category_id" string="Kategori"/>
+                <field name="source_partner_id" string="Pemberi"/>
+                <separator/>
+                <filter string="Draft" name="filter_draft"
+                        domain="[('state', '=', 'draft')]"/>
+                <filter string="Diajukan" name="filter_submitted"
+                        domain="[('state', '=', 'submitted')]"/>
+                <filter string="Disetujui" name="filter_approved"
+                        domain="[('state', '=', 'approved')]"/>
+                <filter string="Terposting" name="filter_posted"
+                        domain="[('state', '=', 'posted')]"/>
+                <filter string="Dibatalkan" name="filter_cancelled"
+                        domain="[('state', '=', 'cancelled')]"/>
+                <separator/>
+                <filter string="Per Kategori" name="group_category"
+                        context="{'group_by': 'category_id'}"/>
+                <filter string="Per Unit Kerja" name="group_unit"
+                        context="{'group_by': 'unit_name'}"/>
+                <filter string="Per Tanggal (Bulan)" name="group_date_month"
+                        context="{'group_by': 'tanggal:month'}"/>
+                <filter string="Per Status" name="group_state"
+                        context="{'group_by': 'state'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- 4. ACTIONS                                                  -->
+    <!-- ============================================================ -->
+    <record id="action_pendapatan_all" model="ir.actions.act_window">
+        <field name="name">Semua Pendapatan</field>
+        <field name="res_model">pendapatan.pendapatan</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_pendapatan_search"/>
+    </record>
+
+    <record id="action_pendapatan_draft" model="ir.actions.act_window">
+        <field name="name">Pendapatan Draft</field>
+        <field name="res_model">pendapatan.pendapatan</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_pendapatan_search"/>
+        <field name="domain">[('state', 'in', ('draft', 'submitted'))]</field>
+    </record>
+
+    <record id="action_pendapatan_posted" model="ir.actions.act_window">
+        <field name="name">Pendapatan Terposting</field>
+        <field name="res_model">pendapatan.pendapatan</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_pendapatan_search"/>
+        <field name="domain">[('state', '=', 'posted')]</field>
+    </record>
+</odoo>
