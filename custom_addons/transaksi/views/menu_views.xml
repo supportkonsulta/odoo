@@ -23,6 +23,7 @@
     <menuitem id="menu_transaksi_approval"
               name="Antrean Persetujuan"
               parent="menu_transaksi_root"
+              groups="transaksi.group_transaksi_finance,transaksi.group_transaksi_director,transaksi.group_transaksi_manager,base.group_erp_manager,base.group_system"
               sequence="20"/>
 
     <!-- Actions for approval filters -->
@@ -46,13 +47,13 @@
               name="Verifikasi Keuangan"
               parent="menu_transaksi_approval"
               action="action_transaksi_transaction_to_verify"
-              groups="transaksi.group_transaksi_finance"
+              groups="transaksi.group_transaksi_finance,transaksi.group_transaksi_manager,base.group_erp_manager,base.group_system"
               sequence="10"/>
 
     <menuitem id="menu_transaksi_to_approve"
               name="Persetujuan Direktur"
               parent="menu_transaksi_approval"
               action="action_transaksi_transaction_to_approve"
-              groups="transaksi.group_transaksi_approver"
+              groups="transaksi.group_transaksi_director,transaksi.group_transaksi_manager,base.group_erp_manager,base.group_system"
               sequence="20"/>
 </odoo>

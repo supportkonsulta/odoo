@@ -279,6 +279,75 @@ class TransaksiTransaction(models.Model):
         copy=True,
     )
 
+    # --- Integrasi Dokumen Sumber PPL ---
+    ppl_id = fields.Many2one(
+        "sifnext.ppl",
+        string="Dokumen Sumber PPL",
+        readonly=True,
+        copy=False,
+        help="PPL sumber untuk transfer tunggal.",
+    )
+    ppl_ids = fields.Many2many(
+        "sifnext.ppl",
+        "transaksi_ppl_rel",
+        "transaction_id",
+        "ppl_id",
+        string="Daftar Dokumen PPL",
+        readonly=True,
+        copy=False,
+        help="Daftar PPL yang dibayarkan dalam transfer massal ini.",
+    )
+
+    # --- Ringkasan Rekening Penerima untuk List View ---
+    recipient_bank = fields.Char(
+        string="Bank Penerima",
+        compute="_compute_recipient_info",
+        store=True,
+    )
+    recipient_account = fields.Char(
+        string="Nomor Rekening",
+        compute="_compute_recipient_info",
+        store=True,
+    )
+    recipient_name = fields.Char(
+        string="Nama Pemilik Rekening",
+        compute="_compute_recipient_info",
+        store=True,
+    )
+
+    @api.depends(
+        "transfer_type",
+        "single_bank_name",
+        "single_destination_account",
+        "single_account_holder_name",
+        "line_ids.bank_name",
+        "line_ids.destination_account",
+        "line_ids.account_holder_name",
+    )
+    def _compute_recipient_info(self):
+        for rec in self:
+            if rec.transfer_type == "single":
+                rec.recipient_bank = rec.single_bank_name or ""
+                rec.recipient_account = rec.single_destination_account or ""
+                rec.recipient_name = rec.single_account_holder_name or ""
+            else:
+                lines = rec.line_ids
+                count = len(lines)
+                if count == 0:
+                    rec.recipient_bank = ""
+                    rec.recipient_account = ""
+                    rec.recipient_name = ""
+                elif count == 1:
+                    rec.recipient_bank = lines[0].bank_name or ""
+                    rec.recipient_account = lines[0].destination_account or ""
+                    rec.recipient_name = lines[0].account_holder_name or ""
+                else:
+                    banks = list(dict.fromkeys(filter(None, lines.mapped("bank_name"))))
+                    rec.recipient_bank = ", ".join(banks) if len(banks) <= 2 else f"{len(banks)} Bank ({count} Rekening)"
+                    rec.recipient_account = f"{count} Rekening"
+                    first_holder = lines[0].account_holder_name or lines[0].destination_account
+                    rec.recipient_name = f"{first_holder} (+{count - 1} lainnya)" if first_holder else f"{count} Penerima"
+
     @api.depends("source_account_id")
     def _compute_source_account_number(self):
         for rec in self:
@@ -344,6 +413,15 @@ class TransaksiTransaction(models.Model):
                         if line.destination_account.strip() == rec.source_account_number.strip():
                             raise ValidationError(_("Nomor rekening tujuan (%s) tidak boleh sama dengan rekening sumber untuk transfer Inhouse.") % line.destination_account)
 
+    @api.constrains("single_rupiah", "ppl_id")
+    def _check_single_ppl_amount(self):
+        for rec in self:
+            if rec.transfer_type == "single" and rec.ppl_id and rec.single_rupiah != rec.ppl_id.total_amount:
+                raise ValidationError(
+                    _("Nominal transfer untuk PPL %s (Rp %s) harus sama dengan total nominal dokumen PPL (Rp %s).")
+                    % (rec.ppl_id.name, f"{rec.single_rupiah:,.2f}", f"{rec.ppl_id.total_amount:,.2f}")
+                )
+
     def _sync_single_line(self):
         """Memastikan recordset line_ids sinkron dengan input transfer tunggal."""
         for rec in self:
@@ -357,6 +435,7 @@ class TransaksiTransaction(models.Model):
                     "transfer_method": rec.single_transfer_method or "bi_fast",
                     "rupiah": rec.single_rupiah or 0.0,
                     "line_notes": rec.single_notes or False,
+                    "ppl_id": rec.ppl_id.id if rec.ppl_id else False,
                 }
                 if rec.line_ids:
                     rec.line_ids[0].write(vals)
@@ -389,6 +468,9 @@ class TransaksiTransaction(models.Model):
         for rec in self:
             if rec.state not in ("draft", "rejected"):
                 raise UserError(_("Hanya transaksi berstatus Draf atau Ditolak yang dapat dihapus."))
+            target_ppls = rec.ppl_id | rec.ppl_ids | rec.line_ids.mapped("ppl_id")
+            for ppl in target_ppls:
+                ppl.sudo().write({"transaction_id": False})
         return super().unlink()
 
     # --- Aksi Alur Status (State Machine) ---
@@ -442,21 +524,71 @@ class TransaksiTransaction(models.Model):
 
     def action_approve(self):
         for rec in self:
-            if rec.state != "verified":
-                raise UserError(_("Hanya transaksi berstatus Diverifikasi Keuangan yang dapat disetujui."))
-            rec.write({
+            if rec.state not in ("submitted", "verified"):
+                raise UserError(_("Hanya transaksi berstatus Diajukan atau Diverifikasi Keuangan yang dapat disetujui."))
+            vals = {
                 "state": "approved",
                 "approved_by": self.env.user.id,
                 "approved_at": fields.Datetime.now(),
-            })
+            }
+            if rec.state == "submitted" and not rec.verified_by:
+                vals.update({
+                    "verified_by": self.env.user.id,
+                    "verified_at": fields.Datetime.now(),
+                })
+            rec.write(vals)
             rec._action_post_approval_journal()
             rec.message_post(body=_("Transaksi telah disetujui oleh Direktur (%s).") % self.env.user.name)
         return True
 
+    def action_approve_direct(self):
+        """Aksi khusus Super User untuk menyetujui langsung tanpa melalui verifikasi keuangan."""
+        for rec in self:
+            if rec.state != "submitted":
+                raise UserError(_("Persetujuan langsung hanya dapat dilakukan pada transaksi berstatus Diajukan."))
+            rec.write({
+                "state": "approved",
+                "verified_by": self.env.user.id,
+                "verified_at": fields.Datetime.now(),
+                "approved_by": self.env.user.id,
+                "approved_at": fields.Datetime.now(),
+            })
+            rec._action_post_approval_journal()
+            rec.message_post(body=_("Transaksi telah disetujui langsung oleh Super User (%s).") % self.env.user.name)
+        return True
+
     def _action_post_approval_journal(self):
-        """Hook pencatatan jurnal otomatis fase 2 (extensible)."""
-        # ponytail: Integrasi jurnal otomatis ditunda ke Fase 2.
-        pass
+        """Hook pencatatan jurnal otomatis dan auto-pay PPL."""
+        for rec in self:
+            target_ppls = rec.ppl_id | rec.ppl_ids | rec.line_ids.mapped("ppl_id")
+            for ppl in target_ppls.filtered(lambda p: p.state == "approved"):
+                vals = {
+                    "payment_reference": rec.name,
+                    "payment_date": rec.date or fields.Date.context_today(rec),
+                }
+                if not ppl.payment_method:
+                    vals["payment_method"] = "bank"
+                if not ppl.payment_source_account_id:
+                    if rec.source_account_id:
+                        vals["payment_source_account_id"] = rec.source_account_id.id
+                    else:
+                        bank_coa = self.env["sif.coa"].search([
+                            ("account_type", "=", "asset"),
+                            ("name", "ilike", "bank"),
+                            ("parent_id", "!=", False),
+                            ("active", "=", True)
+                        ], limit=1)
+                        if bank_coa:
+                            vals["payment_source_account_id"] = bank_coa.id
+                ppl.sudo().write(vals)
+                ppl.sudo().with_context(from_bank_transfer_approval=True).action_pay()
+                ppl.message_post(
+                    body=_(
+                        "Pembayaran telah direalisasikan secara otomatis melalui "
+                        "Transaksi Transfer Bank <a href='#' data-oe-model='transaksi.transaction' data-oe-id='%d'>%s</a>."
+                    )
+                    % (rec.id, rec.name)
+                )
 
     def action_reject(self, reason=None):
         for rec in self:
@@ -470,6 +602,16 @@ class TransaksiTransaction(models.Model):
             if reason:
                 body += _("<br/><strong>Alasan Penolakan:</strong> %s") % reason
             rec.message_post(body=body)
+
+            target_ppls = rec.ppl_id | rec.ppl_ids | rec.line_ids.mapped("ppl_id")
+            for ppl in target_ppls:
+                ppl_msg = _(
+                    "Pengajuan Transfer Bank <a href='#' data-oe-model='transaksi.transaction' data-oe-id='%d'>%s</a> ditolak oleh %s."
+                ) % (rec.id, rec.name, self.env.user.name)
+                if reason:
+                    ppl_msg += _("<br/><strong>Alasan Penolakan:</strong> %s") % reason
+                ppl.message_post(body=ppl_msg)
+                ppl.sudo().write({"transaction_id": False})
         return True
 
     def action_reset_draft(self):

@@ -12,6 +12,9 @@
                 <field name="user_id" widget="many2one_avatar_user"/>
                 <field name="unit_id"/>
                 <field name="transfer_type" widget="badge" decoration-primary="transfer_type == 'single'" decoration-info="transfer_type == 'multiple'"/>
+                <field name="recipient_bank" optional="show"/>
+                <field name="recipient_account" optional="show"/>
+                <field name="recipient_name" optional="show"/>
                 <field name="total_rupiah" sum="Total Rupiah" decoration-bf="1"/>
                 <field name="currency_id" column_invisible="True"/>
                 <field name="state" widget="badge" 
@@ -63,16 +66,37 @@
             <form string="Transaksi Transfer Bank">
                 <header>
                     <button name="action_submit" string="Ajukan" type="object" class="btn-primary" invisible="state != 'draft'"/>
-                    <button name="action_verify" string="Verifikasi Keuangan" type="object" class="btn-primary" invisible="state != 'submitted'" groups="transaksi.group_transaksi_finance"/>
-                    <button name="action_approve" string="Setujui Direktur" type="object" class="btn-success" invisible="state != 'verified'" groups="transaksi.group_transaksi_approver"/>
-                    <button name="action_open_reject_wizard" string="Tolak" type="object" class="btn-danger" invisible="state not in ('submitted', 'verified')" groups="transaksi.group_transaksi_finance,transaksi.group_transaksi_approver"/>
-                    <button name="action_reset_draft" string="Kembalikan ke Draf" type="object" class="btn-secondary" invisible="state not in ('rejected', 'failed')"/>
+                    <button name="action_verify" string="Verifikasi Keuangan" type="object" class="btn-primary" 
+                            invisible="state != 'submitted'" 
+                            groups="transaksi.group_transaksi_finance,transaksi.group_transaksi_manager,base.group_erp_manager,base.group_system"/>
+                    <button name="action_approve" string="Setujui Direktur" type="object" class="btn-success" 
+                            invisible="state != 'verified'" 
+                            groups="transaksi.group_transaksi_director,transaksi.group_transaksi_manager,base.group_erp_manager,base.group_system"/>
+                    <button name="action_approve_direct" string="Setujui Langsung (Super User)" type="object" class="btn-success" 
+                            invisible="state != 'submitted'" 
+                            groups="transaksi.group_transaksi_manager,base.group_erp_manager,base.group_system"
+                            confirm="Apakah Anda yakin ingin menyetujui transaksi ini secara langsung tanpa verifikasi keuangan?"/>
+                    <button name="action_open_reject_wizard" string="Tolak" type="object" class="btn-danger" 
+                            invisible="state not in ('submitted', 'verified')" 
+                            groups="transaksi.group_transaksi_finance,transaksi.group_transaksi_director,transaksi.group_transaksi_manager,base.group_erp_manager,base.group_system"/>
+                    <button name="action_reset_draft" string="Kembalikan ke Draf" type="object" class="btn-secondary" 
+                            invisible="state not in ('rejected', 'failed')"
+                            groups="transaksi.group_transaksi_user,transaksi.group_transaksi_manager,base.group_erp_manager,base.group_system"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,submitted,verified,approved"/>
                 </header>
                 <sheet>
                     <div class="alert alert-danger" role="alert" invisible="state != 'rejected'">
                         <strong>Alasan Penolakan: </strong>
                         <field name="reject_reason" readonly="1"/>
+                    </div>
+                    <div class="alert alert-info" role="alert" invisible="not ppl_id">
+                        <strong>Sumber Dokumen: </strong>
+                        <span>PPL </span>
+                        <field name="ppl_id" readonly="1" class="oe_inline"/>
+                    </div>
+                    <div class="alert alert-info" role="alert" invisible="not ppl_ids">
+                        <strong>Pembayaran Kolektif: </strong>
+                        <span>Terkait beberapa dokumen PPL (lihat tab Dokumen Sumber PPL).</span>
                     </div>
                     <div class="oe_title">
                         <label for="name" string="Nomor Transaksi"/>
@@ -124,6 +148,7 @@
                                         <field name="transfer_method"/>
                                         <field name="rupiah" sum="Total Rupiah"/>
                                         <field name="line_notes" placeholder="Catatan Baris"/>
+                                        <field name="ppl_id" optional="show" readonly="1" string="Sumber PPL"/>
                                         <field name="currency_id" column_invisible="True"/>
                                     </list>
                                 </field>
@@ -170,6 +195,23 @@
                                 </group>
                             </group>
                         </page>
+
+                        <page string="Dokumen Sumber PPL" name="source_ppls" invisible="not ppl_ids and not ppl_id">
+                            <group invisible="not ppl_id">
+                                <field name="ppl_id" readonly="1" string="Dokumen PPL Terkait"/>
+                            </group>
+                            <field name="ppl_ids" readonly="1" invisible="not ppl_ids">
+                                <list>
+                                    <field name="name" string="Nomor PPL"/>
+                                    <field name="title" string="Perihal"/>
+                                    <field name="partner_id" string="Penerima / Vendor"/>
+                                    <field name="payment_dest_bank" string="Bank Tujuan"/>
+                                    <field name="payment_dest_account_number" string="No. Rekening"/>
+                                    <field name="total_amount" string="Total"/>
+                                    <field name="state" string="Status"/>
+                                </list>
+                            </field>
+                        </page>
                     </notebook>
                 </sheet>
                 <chatter/>
@@ -185,6 +227,9 @@
             <search string="Cari Transaksi Transfer">
                 <field name="name" string="Nomor Transaksi"/>
                 <field name="ref_number" string="Nomor Referensi"/>
+                <field name="recipient_bank" string="Bank Penerima"/>
+                <field name="recipient_account" string="Nomor Rekening"/>
+                <field name="recipient_name" string="Nama Pemilik Rekening"/>
                 <field name="user_id"/>
                 <field name="unit_id"/>
 

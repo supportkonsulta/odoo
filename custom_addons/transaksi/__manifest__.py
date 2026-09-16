@@ -18,6 +18,7 @@
         "data/ir_sequence_data.xml",
         "wizard/transaction_reject_wizard_views.xml",
         "views/transaction_views.xml",
+        "views/ppl_views.xml",
         "views/menu_views.xml",
     ],
     "application": True,
