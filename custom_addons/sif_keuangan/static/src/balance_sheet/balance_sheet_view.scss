@@ -1,0 +1,8 @@
+/* Balance Sheet View Styling (Extensions) */
+
+.o_balance_sheet_app {
+    /* Inherits all universal report rules from reports_common.scss */
+    .o_bs_spacer {
+        background-color: transparent !important;
+    }
+}
