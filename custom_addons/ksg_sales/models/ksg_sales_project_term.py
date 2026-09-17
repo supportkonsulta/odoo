@@ -66,27 +66,15 @@ class KsgSalesProjectTerm(models.Model):
 
     state = fields.Selection(
         [
-            (
-                "belum_jatuh_tempo",
-                "Belum Jatuh Tempo",
-            ),
-            (
-                "jatuh_tempo",
-                "Jatuh Tempo",
-            ),
-            (
-                "sudah_ditagih",
-                "Sudah Ditagih",
-            ),
+            ("belum_jatuh_tempo", "Belum Jatuh Tempo"),
+            ("jatuh_tempo", "Jatuh Tempo"),
+            ("sudah_ditagih", "Sudah Ditagih"),
         ],
         string="Status",
         compute="_compute_state",
         store=True,
     )
 
-    # ==========================================================
-    # CREATE
-    # ==========================================================
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -117,23 +105,8 @@ class KsgSalesProjectTerm(models.Model):
 
         return records
 
-    # ==========================================================
-    # VALIDATION
-    # ==========================================================
-
     def _validate_term_rules(self):
-        """
-        Validasi aturan dasar Termin.
-
-        Validasi total 100% untuk Per Termin tidak dilakukan
-        di sini karena record dapat dibuat satu per satu.
-
-        Validasi total 100% dilakukan melalui
-        action_validate_terms().
-        """
-
         for term in self:
-
             if term.no_termin <= 0:
                 raise ValidationError(
                     "No. Termin harus lebih besar dari 0."
@@ -146,9 +119,7 @@ class KsgSalesProjectTerm(models.Model):
                 )
 
             if term.project_id:
-
                 if term.project_id.sistem_penagihan == "per_termin":
-
                     if (
                         term.syarat_progress is False
                         or term.syarat_progress is None
@@ -168,17 +139,9 @@ class KsgSalesProjectTerm(models.Model):
                         )
 
     def _validate_project_term_total(self):
-        """
-        Validasi total persentase Termin dalam satu proyek.
-
-        Khusus Per Termin:
-        total persentase harus tepat 100%.
-        """
-
         projects = self.mapped("project_id")
 
         for project in projects:
-
             if project.sistem_penagihan != "per_termin":
                 continue
 
@@ -190,9 +153,7 @@ class KsgSalesProjectTerm(models.Model):
                     "wajib memiliki minimal satu Termin."
                 )
 
-            total = sum(
-                terms.mapped("persentase")
-            )
+            total = sum(terms.mapped("persentase"))
 
             if abs(total - 100.0) > 0.0001:
                 raise ValidationError(
@@ -202,7 +163,6 @@ class KsgSalesProjectTerm(models.Model):
                 )
 
             for term in terms:
-
                 if (
                     term.syarat_progress is False
                     or term.syarat_progress is None
@@ -223,117 +183,65 @@ class KsgSalesProjectTerm(models.Model):
                         "antara 0% sampai 100%."
                     )
 
-    # ==========================================================
-    # PUBLIC VALIDATION ACTION
-    # ==========================================================
-
     def action_validate_terms(self):
-        """
-        Validasi seluruh Termin dalam proyek.
-        """
-
         projects = self.mapped("project_id")
 
         for project in projects:
-
             if not project.term_ids:
                 raise ValidationError(
                     "Proyek belum memiliki Termin Penagihan."
                 )
 
             project.term_ids._validate_term_rules()
-
             project.term_ids._validate_project_term_total()
 
         return True
 
-    # ==========================================================
-    # RECOMPUTE NOMINAL
-    # ==========================================================
+    def action_recompute_unbilled_nominal(self, contract_value=None):
+        for project in self.mapped("project_id"):
 
-    def action_recompute_unbilled_nominal(
-            self,
-            contract_value=None,
-        ):
-            """
-            Menghitung ulang nominal Termin yang belum ditagih.
+            current_contract_value = (
+                contract_value
+                if contract_value is not None
+                else project.nilai_kontrak_terkini
+            )
 
-            Termin yang sudah ditagih tidak diubah.
-            Sisa nilai kontrak dialokasikan ke termin yang
-            belum ditagih berdasarkan proporsi persentasenya.
-            """
+            billed_terms = project.term_ids.filtered(
+                lambda term: term.state == "sudah_ditagih"
+            )
 
-            for project in self.mapped("project_id"):
+            unbilled_terms = project.term_ids.filtered(
+                lambda term: term.state != "sudah_ditagih"
+            )
 
-                # Gunakan nilai kontrak dari Addendum jika diberikan.
-                current_contract_value = (
-                    contract_value
-                    if contract_value is not None
-                    else project.nilai_kontrak_terkini
-                )
+            if not unbilled_terms:
+                continue
 
-                # Termin yang sudah ditagih tetap menggunakan
-                # nominal sebelumnya.
-                billed_terms = project.term_ids.filtered(
-                    lambda term: term.state == "sudah_ditagih"
-                )
+            total_billed = sum(
+                billed_terms.mapped("nominal")
+            )
 
-                # Hanya termin yang belum ditagih yang dihitung ulang.
-                unbilled_terms = project.term_ids.filtered(
-                    lambda term: term.state != "sudah_ditagih"
-                )
+            remaining_value = (
+                current_contract_value - total_billed
+            )
 
-                if not unbilled_terms:
-                    continue
+            total_unbilled_percentage = sum(
+                unbilled_terms.mapped("persentase")
+            )
 
-                # Total nominal yang sudah ditagih.
-                total_billed = sum(
-                    billed_terms.mapped("nominal")
-                )
+            if total_unbilled_percentage <= 0:
+                continue
 
-                # Sisa nilai kontrak yang harus dialokasikan
-                # ke termin yang belum ditagih.
-                remaining_value = (
-                    current_contract_value - total_billed
-                )
+            for term in unbilled_terms:
+                term.nominal = (
+                    term.persentase
+                    / total_unbilled_percentage
+                ) * remaining_value
 
-                # Total persentase termin yang belum ditagih.
-                total_unbilled_percentage = sum(
-                    unbilled_terms.mapped("persentase")
-                )
-
-                if total_unbilled_percentage <= 0:
-                    continue
-
-                # Alokasikan sisa nilai kontrak berdasarkan
-                # proporsi persentase masing-masing termin.
-                for term in unbilled_terms:
-                    term.nominal = (
-                        term.persentase
-                        / total_unbilled_percentage
-                    ) * remaining_value
-
-            return True
-    # ==========================================================
-    # CREATE INVOICE
-    # ==========================================================
+        return True
 
     def action_create_invoice(self):
-        """
-        Membuat Customer Invoice Odoo dari Termin Penagihan.
-
-        Invoice dibuat dalam kondisi Draft.
-
-        Setelah invoice di-post oleh user,
-        state Termin otomatis berubah menjadi
-        Sudah Ditagih.
-        """
-
         for term in self:
-
-            # --------------------------------------------------
-            # VALIDASI DASAR
-            # --------------------------------------------------
 
             if term.invoice_id:
                 raise ValidationError(
@@ -351,10 +259,6 @@ class KsgSalesProjectTerm(models.Model):
                     "dibuatkan Invoice lagi."
                 )
 
-            # --------------------------------------------------
-            # VALIDASI KHUSUS PER TERMIN
-            # --------------------------------------------------
-
             if term.project_id.sistem_penagihan == "per_termin":
 
                 term.project_id.term_ids._validate_project_term_total()
@@ -369,18 +273,10 @@ class KsgSalesProjectTerm(models.Model):
                         "sebelum membuat Invoice."
                     )
 
-            # --------------------------------------------------
-            # VALIDASI NOMINAL
-            # --------------------------------------------------
-
             if term.nominal <= 0:
                 raise ValidationError(
                     "Nominal Termin harus lebih besar dari 0."
                 )
-
-            # --------------------------------------------------
-            # CUSTOMER
-            # --------------------------------------------------
 
             partner = term.project_id.klien
 
@@ -388,10 +284,6 @@ class KsgSalesProjectTerm(models.Model):
                 raise ValidationError(
                     "Klien / Perusahaan pada Proyek belum diisi."
                 )
-
-            # --------------------------------------------------
-            # VALIDASI RECEIVABLE CUSTOMER
-            # --------------------------------------------------
 
             receivable_account = (
                 partner.property_account_receivable_id
@@ -405,24 +297,13 @@ class KsgSalesProjectTerm(models.Model):
                     "tersebut terlebih dahulu."
                 )
 
-            # --------------------------------------------------
-            # CARI AKUN PENDAPATAN
-            # --------------------------------------------------
-
             income_account = self.env["account.account"].search(
                 [
-                    (
-                        "company_ids",
-                        "in",
-                        self.env.company.id,
-                    ),
+                    ("company_ids", "in", self.env.company.id),
                     (
                         "account_type",
                         "in",
-                        [
-                            "income",
-                            "income_other",
-                        ],
+                        ["income", "income_other"],
                     ),
                 ],
                 limit=1,
@@ -435,22 +316,10 @@ class KsgSalesProjectTerm(models.Model):
                     "terlebih dahulu."
                 )
 
-            # --------------------------------------------------
-            # CARI SALES JOURNAL
-            # --------------------------------------------------
-
             sales_journal = self.env["account.journal"].search(
                 [
-                    (
-                        "type",
-                        "=",
-                        "sale",
-                    ),
-                    (
-                        "company_id",
-                        "=",
-                        self.env.company.id,
-                    ),
+                    ("type", "=", "sale"),
+                    ("company_id", "=", self.env.company.id),
                 ],
                 limit=1,
             )
@@ -460,10 +329,6 @@ class KsgSalesProjectTerm(models.Model):
                     "Sales Journal belum tersedia untuk perusahaan "
                     f"'{self.env.company.display_name}'."
                 )
-
-            # --------------------------------------------------
-            # REFERENSI INVOICE
-            # --------------------------------------------------
 
             project_code = (
                 term.project_id.kode_proyek
@@ -475,19 +340,11 @@ class KsgSalesProjectTerm(models.Model):
                 f"Termin {term.no_termin}"
             )
 
-            # --------------------------------------------------
-            # DESKRIPSI INVOICE
-            # --------------------------------------------------
-
             invoice_line_name = (
                 f"{term.project_id.nama_pekerjaan} - "
                 f"Termin {term.no_termin}: "
                 f"{term.deskripsi or 'Penagihan Termin'}"
             )
-
-            # --------------------------------------------------
-            # CREATE ACCOUNT.MOVE
-            # --------------------------------------------------
 
             invoice_vals = {
                 "move_type": "out_invoice",
@@ -515,15 +372,7 @@ class KsgSalesProjectTerm(models.Model):
                 invoice_vals
             )
 
-            # --------------------------------------------------
-            # HUBUNGKAN INVOICE KE TERMIN
-            # --------------------------------------------------
-
             term.invoice_id = invoice.id
-
-            # --------------------------------------------------
-            # CHATTER
-            # --------------------------------------------------
 
             term.message_post(
                 body=(
@@ -535,15 +384,7 @@ class KsgSalesProjectTerm(models.Model):
 
         return True
 
-    # ==========================================================
-    # OPEN INVOICE
-    # ==========================================================
-
     def action_open_invoice(self):
-        """
-        Membuka Invoice yang terhubung dengan Termin.
-        """
-
         self.ensure_one()
 
         if not self.invoice_id:
@@ -560,9 +401,74 @@ class KsgSalesProjectTerm(models.Model):
             "target": "current",
         }
 
-    # ==========================================================
-    # COMPUTE STATE
-    # ==========================================================
+    def action_print_ksg_invoice(self):
+        self.ensure_one()
+
+        if not self.invoice_id:
+            raise ValidationError(
+                "Termin ini belum memiliki Invoice."
+            )
+
+        report = self.env.ref(
+            "ksg_sales.action_report_ksg_invoice",
+            raise_if_not_found=False,
+        )
+
+        if not report:
+            raise ValidationError(
+                "Template Invoice KSG belum tersedia."
+            )
+
+        return report.report_action(self.invoice_id)
+
+    def action_send_ksg_invoice(self):
+        self.ensure_one()
+
+        if not self.invoice_id:
+            raise ValidationError(
+                "Termin ini belum memiliki Invoice."
+            )
+
+        if self.invoice_id.state != "posted":
+            raise ValidationError(
+                "Invoice harus sudah diposting sebelum dikirim."
+            )
+
+        report = self.env.ref(
+            "ksg_sales.action_report_ksg_invoice",
+            raise_if_not_found=False,
+        )
+
+        if not report:
+            raise ValidationError(
+                "Template Invoice KSG belum tersedia."
+            )
+
+        wizard = self.env[
+            "account.move.send.wizard"
+        ].with_context(
+            active_model="account.move",
+            active_ids=self.invoice_id.ids,
+            default_move_id=self.invoice_id.id,
+        ).create(
+            {
+                "move_id": self.invoice_id.id,
+            }
+        )
+
+        wizard.pdf_report_id = report.id
+
+        return {
+            "type": "ir.actions.act_window",
+            "name": "Send KSG Invoice",
+            "res_model": "account.move.send.wizard",
+            "view_mode": "form",
+            "view_id": self.env.ref(
+                "account.account_move_send_wizard_form"
+            ).id,
+            "res_id": wizard.id,
+            "target": "new",
+        }
 
     @api.depends(
         "invoice_id",
@@ -570,7 +476,6 @@ class KsgSalesProjectTerm(models.Model):
         "tanggal_jatuh_tempo",
     )
     def _compute_state(self):
-
         today = fields.Date.context_today(self)
 
         for term in self:
@@ -590,13 +495,8 @@ class KsgSalesProjectTerm(models.Model):
             else:
                 term.state = "belum_jatuh_tempo"
 
-    # ==========================================================
-    # CONSTRAINT - NO TERMIN
-    # ==========================================================
-
     @api.constrains("no_termin")
     def _check_no_termin(self):
-
         for term in self:
 
             if term.no_termin <= 0:
@@ -604,13 +504,8 @@ class KsgSalesProjectTerm(models.Model):
                     "No. Termin harus lebih besar dari 0."
                 )
 
-    # ==========================================================
-    # CONSTRAINT - PERSENTASE
-    # ==========================================================
-
     @api.constrains("persentase")
     def _check_persentase(self):
-
         for term in self:
 
             if (
@@ -622,23 +517,11 @@ class KsgSalesProjectTerm(models.Model):
                     "dan maksimal 100%."
                 )
 
-    # ==========================================================
-    # CONSTRAINT - TOTAL MAKSIMAL
-    # ==========================================================
-
     @api.constrains(
         "project_id",
         "persentase",
     )
     def _check_total_persentase(self):
-        """
-        Untuk semua sistem penagihan, total Termin tidak boleh
-        melebihi 100%.
-
-        Khusus Per Termin, pengecekan tepat 100% dilakukan
-        melalui action_validate_terms().
-        """
-
         for term in self:
 
             if not term.project_id:
@@ -656,16 +539,11 @@ class KsgSalesProjectTerm(models.Model):
                     "satu proyek tidak boleh lebih dari 100%."
                 )
 
-    # ==========================================================
-    # CONSTRAINT - SYARAT PROGRESS
-    # ==========================================================
-
     @api.constrains(
         "syarat_progress",
         "project_id",
     )
     def _check_syarat_progress(self):
-
         for term in self:
 
             if not term.project_id:
@@ -681,7 +559,6 @@ class KsgSalesProjectTerm(models.Model):
                 term.syarat_progress is not False
                 and term.syarat_progress is not None
             ):
-
                 if (
                     term.syarat_progress < 0
                     or term.syarat_progress > 100
@@ -691,14 +568,8 @@ class KsgSalesProjectTerm(models.Model):
                         "antara 0% sampai 100%."
                     )
 
-    # ==========================================================
-    # WRITE
-    # ==========================================================
-
     def write(self, vals):
 
-        # Termin yang sudah ditagih tidak boleh mengubah
-        # persentasenya.
         if "persentase" in vals:
 
             for term in self:
@@ -711,13 +582,9 @@ class KsgSalesProjectTerm(models.Model):
 
         result = super().write(vals)
 
-        # Jika persentase berubah, nominal Termin yang belum
-        # ditagih harus dihitung ulang.
         if "persentase" in vals:
             self.action_recompute_unbilled_nominal()
 
-        # Jika data terkait Per Termin berubah,
-        # validasi aturan dasarnya.
         if (
             "persentase" in vals
             or "syarat_progress" in vals
@@ -726,10 +593,6 @@ class KsgSalesProjectTerm(models.Model):
             self._validate_term_rules()
 
         return result
-
-    # ==========================================================
-    # UNLINK
-    # ==========================================================
 
     def unlink(self):
 

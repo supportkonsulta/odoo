@@ -1,16 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
 <odoo>
 
+    <!-- ================================================== -->
+    <!-- PAPER FORMAT KSG INVOICE -->
+    <!-- ================================================== -->
+
+    <record id="paperformat_ksg_invoice" model="report.paperformat">
+
+        <field name="name">KSG Invoice A4</field>
+
+        <field name="format">A4</field>
+
+        <field name="orientation">Portrait</field>
+
+        <field name="margin_top">5</field>
+
+        <field name="margin_bottom">5</field>
+
+        <field name="margin_left">8</field>
+
+        <field name="margin_right">8</field>
+
+        <field name="header_line" eval="False"/>
+
+        <field name="header_spacing">0</field>
+
+        <field name="dpi">90</field>
+
+    </record>
+
+
+    <!-- ================================================== -->
+    <!-- REPORT ACTION -->
+    <!-- ================================================== -->
+
     <record id="action_report_ksg_invoice" model="ir.actions.report">
+
         <field name="name">KSG Invoice</field>
+
         <field name="model">account.move</field>
+
         <field name="report_type">qweb-pdf</field>
+
         <field name="report_name">ksg_sales.report_ksg_invoice</field>
+
         <field name="report_file">ksg_sales.report_ksg_invoice</field>
+
+        <field name="is_invoice_report">True</field>
+
+        <field name="paperformat_id"
+               ref="ksg_sales.paperformat_ksg_invoice"/>
+
         <field name="print_report_name">
             'Invoice - %s' % (object.name or 'Draft')
         </field>
-        <field name="binding_model_id" ref="account.model_account_move"/>
+
+        <field name="binding_model_id"
+               ref="account.model_account_move"/>
+
         <field name="binding_type">report</field>
+
     </record>
 
 </odoo>
