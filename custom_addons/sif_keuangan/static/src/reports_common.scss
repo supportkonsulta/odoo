@@ -1,0 +1,464 @@
+/* ==========================================================================
+   SIFNEXT Financial Reporting Design System
+   Universal Typography, Color Palette, Badges, and Layout Tokens
+   ========================================================================== */
+
+:root {
+    /* 1. Surfaces & Canvas */
+    --fn-surface-app: #f8fafc;
+    --fn-surface-card: #ffffff;
+    --fn-border-card: #cbd5e1;
+    --fn-border-subtle: #e2e8f0;
+    --fn-border-line: #f1f5f9;
+
+    /* 2. Slate Inks (WCAG AAA High Contrast) */
+    --fn-ink-primary: #0f172a;      /* 16:1 contrast against white */
+    --fn-ink-secondary: #1e293b;    /* 13:1 contrast */
+    --fn-ink-muted: #475569;        /* 7.5:1 contrast */
+    --fn-ink-header: #334155;       /* 9:1 contrast */
+
+    /* 3. Semantic Financial Colors */
+    --fn-val-negative: #b91c1c;     /* Crimson 700 - 8:1 contrast */
+    --fn-val-positive: #15803d;     /* Emerald 700 - 6.5:1 contrast */
+    --fn-link-blue: #1d4ed8;        /* Blue 700 */
+    --fn-link-blue-hover: #1e40af;  /* Blue 800 */
+
+    /* 4. Highlight Bands Backgrounds */
+    --fn-band-section: #f8fafc;
+    --fn-band-subtotal: #f1f5f9;
+    --fn-band-milestone: #e2e8f0;
+    --fn-band-grand: #0f172a;
+    --fn-band-grand-text: #ffffff;
+
+    /* 5. Typography Scales */
+    --fn-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Ubuntu, sans-serif;
+    --fn-font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+/* Base App Wrapper */
+.o_report_app {
+    background-color: var(--fn-surface-app) !important;
+    font-family: var(--fn-font-family);
+    color: var(--fn-ink-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* 1. Top Controls Bar */
+.o_report_topbar {
+    background: #ffffff !important;
+    border-bottom: 1px solid var(--fn-border-subtle) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+
+    .btn {
+        font-weight: 600;
+        font-size: 12px;
+        transition: all 0.15s ease-in-out;
+        border-radius: 6px;
+    }
+
+    .btn-report-pdf {
+        background-color: #881337 !important;
+        border-color: #701a31 !important;
+        color: #ffffff !important;
+        font-weight: 600 !important;
+
+        &:hover {
+            background-color: #701a31 !important;
+            color: #ffffff !important;
+        }
+    }
+
+    .btn-report-xlsx {
+        background-color: #1e293b !important;
+        border-color: #0f172a !important;
+        color: #ffffff !important;
+        font-weight: 600 !important;
+
+        &:hover {
+            background-color: #0f172a !important;
+            color: #ffffff !important;
+        }
+    }
+
+    .o_report_filter_pill {
+        display: inline-flex;
+        align-items: center;
+        background-color: #ffffff;
+        border: 1px solid var(--fn-border-card);
+        border-radius: 6px;
+        padding: 0.15rem 0.5rem;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+        transition: all 0.15s ease-in-out;
+
+        &:hover {
+            border-color: #94a3b8;
+        }
+
+        &:focus-within {
+            border-color: var(--fn-link-blue);
+            box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.15);
+        }
+
+        .o_filter_icon {
+            color: var(--fn-ink-muted);
+            font-size: 11.5px;
+            margin-right: 0.35rem;
+        }
+
+        .form-select {
+            border: none !important;
+            background-color: transparent !important;
+            box-shadow: none !important;
+            padding: 0.2rem 1.25rem 0.2rem 0.15rem !important;
+            font-size: 12px !important;
+            font-weight: 500 !important;
+            color: var(--fn-ink-secondary) !important;
+            cursor: pointer;
+            outline: none !important;
+        }
+    }
+
+    .form-control {
+        font-size: 12px;
+        border-color: var(--fn-border-card);
+        color: var(--fn-ink-secondary);
+        font-weight: 500;
+        border-radius: 6px;
+
+        &:focus {
+            border-color: var(--fn-link-blue);
+            box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.15);
+        }
+    }
+
+    .input-group-text {
+        background-color: #f8fafc;
+        border-color: var(--fn-border-card);
+        color: var(--fn-ink-muted);
+    }
+}
+
+/* 2. Sheet Card Container */
+.o_report_sheet_card {
+    background: var(--fn-surface-card);
+    border: 1px solid var(--fn-border-card);
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    overflow: hidden;
+}
+
+/* 3. Sheet Header */
+.o_report_sheet_header {
+    background: #ffffff;
+    border-bottom: 2px solid var(--fn-border-card);
+    padding: 1.5rem 1.75rem 1.25rem;
+
+    .o_sheet_title {
+        color: var(--fn-ink-primary);
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        line-height: 1.25;
+        margin-bottom: 0.25rem;
+    }
+
+    .o_sheet_subtitle {
+        color: var(--fn-ink-muted);
+        font-size: 12.5px;
+        font-weight: 500;
+        line-height: 1.4;
+
+        .o_meta_bullet {
+            color: #94a3b8;
+            margin: 0 0.35rem;
+        }
+
+        .o_meta_unit {
+            color: var(--fn-ink-primary);
+            font-weight: 600;
+        }
+
+        .o_meta_comp {
+            color: var(--fn-link-blue);
+            font-weight: 600;
+        }
+    }
+}
+
+/* 4. Table Typography & Row Hierarchy */
+.o_report_table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    margin-bottom: 0;
+    color: var(--fn-ink-primary);
+
+    /* TH Header */
+    thead th {
+        background-color: #f1f5f9;
+        color: var(--fn-ink-header);
+        font-size: 11.5px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 2px solid var(--fn-border-card);
+        padding: 0.65rem 1rem;
+        vertical-align: middle;
+    }
+
+    tbody tr {
+        transition: background-color 0.1s ease-in-out;
+        &:hover:not(.o_report_highlight_band):not(.o_report_grand_band):not(.o_report_section_row) {
+            background-color: #f8fafc;
+        }
+    }
+
+    /* Level 1: Major Section Header */
+    .o_report_section_row {
+        background-color: var(--fn-band-section);
+        border-top: 1.5px solid var(--fn-border-card);
+        border-bottom: 1px solid var(--fn-border-subtle);
+        cursor: pointer;
+        user-select: none;
+
+        td {
+            color: var(--fn-ink-primary);
+            font-weight: 700;
+            font-size: 14px;
+            padding: 0.65rem 1rem;
+            letter-spacing: -0.01em;
+        }
+
+        &:hover {
+            background-color: #f1f5f9;
+        }
+    }
+
+    /* Level 2: Subsection Header */
+    .o_report_subsec_row {
+        background-color: #fafafa;
+        border-top: 1px solid var(--fn-border-line);
+        border-bottom: 1px solid var(--fn-border-line);
+        cursor: pointer;
+        user-select: none;
+
+        td {
+            color: var(--fn-ink-secondary);
+            font-weight: 600;
+            font-size: 13px;
+            padding: 0.55rem 1rem;
+        }
+
+        &:hover {
+            background-color: #f1f5f9;
+        }
+    }
+
+    /* Level 3: Account & Transaction Line Row */
+    .o_report_line_row {
+        border-bottom: 1px solid var(--fn-border-line);
+
+        td {
+            color: var(--fn-ink-secondary);
+            font-size: 13px;
+            font-weight: 500;
+            padding: 0.55rem 1rem;
+            vertical-align: middle;
+        }
+    }
+
+    /* Level 4: Subtotal Band */
+    .o_report_subtotal_band {
+        background-color: var(--fn-band-subtotal);
+        border-top: 1px solid var(--fn-border-card);
+        border-bottom: 1px solid var(--fn-border-card);
+
+        td {
+            color: var(--fn-ink-primary);
+            font-weight: 700;
+            font-size: 13px;
+            padding: 0.65rem 1rem;
+        }
+    }
+
+    /* Level 5: Milestone Band (Gross Profit, Operating Income, Total Aktiva) */
+    .o_report_highlight_band, .o_report_major_band {
+        background-color: var(--fn-band-milestone) !important;
+        border-top: 2px solid var(--fn-border-card) !important;
+        border-bottom: 2px solid var(--fn-border-card) !important;
+
+        td {
+            color: var(--fn-ink-primary) !important;
+            font-weight: 800;
+            font-size: 14px;
+            padding: 0.75rem 1rem;
+            letter-spacing: -0.01em;
+        }
+    }
+
+    /* Level 6: Grand Final Total Band (Net Profit Left, Grand Total) */
+    .o_report_grand_band {
+        background-color: var(--fn-band-grand) !important;
+        border-top: 2px solid #000000 !important;
+
+        td {
+            color: var(--fn-band-grand-text) !important;
+            font-weight: 800;
+            font-size: 15px;
+            padding: 0.85rem 1rem;
+            letter-spacing: -0.01em;
+        }
+
+        .o_report_num {
+            color: #ffffff !important;
+        }
+    }
+}
+
+/* 5. Monospaced Tabular Financial Numbers */
+.o_report_num {
+    font-family: var(--fn-font-mono) !important;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+}
+
+/* 6. Semantic Color Classes for Values */
+.o_val_neg {
+    color: var(--fn-val-negative) !important;
+    font-weight: 700 !important;
+}
+
+.o_val_pos {
+    color: var(--fn-val-positive) !important;
+    font-weight: 700 !important;
+}
+
+.o_val_neu {
+    color: var(--fn-ink-primary) !important;
+}
+
+/* 7. Interactive Links & Typography */
+.o_acc_code {
+    font-family: var(--fn-font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--fn-ink-muted);
+    margin-right: 0.65rem;
+    display: inline-block;
+    min-width: 44px;
+}
+
+.o_acc_link {
+    color: var(--fn-link-blue);
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+
+    &:hover {
+        color: var(--fn-link-blue-hover);
+        text-decoration: underline;
+    }
+}
+
+.o_voucher_link {
+    color: var(--fn-link-blue);
+    font-family: var(--fn-font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+
+    &:hover {
+        color: var(--fn-link-blue-hover);
+        text-decoration: underline;
+    }
+}
+
+.o_tx_desc {
+    color: var(--fn-ink-secondary);
+    font-size: 12.5px;
+    font-weight: 450;
+    line-height: 1.35;
+}
+
+.o_tx_date {
+    color: var(--fn-ink-muted);
+    font-family: var(--fn-font-mono);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* 8. Badge Tokens */
+.o_badge_pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.6rem;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    border-radius: 9999px;
+    text-transform: lowercase;
+    letter-spacing: 0.02em;
+    vertical-align: middle;
+}
+
+.o_badge_debit {
+    background-color: #dbeafe !important;
+    color: #1e40af !important;
+    border: 1px solid #93c5fd !important;
+}
+
+.o_badge_credit {
+    background-color: #fae8ff !important;
+    color: #86198f !important;
+    border: 1px solid #f0abfc !important;
+}
+
+.o_badge_lines {
+    background-color: #f1f5f9 !important;
+    color: #334155 !important;
+    border: 1px solid #cbd5e1 !important;
+    font-family: var(--fn-font-mono);
+    font-size: 11px;
+}
+
+/* 9. Sticky Footer Bar */
+.o_report_sticky_footer {
+    background: #0f172a !important;
+    color: #ffffff !important;
+    border-top: 1px solid #334155;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+
+    .o_footer_label {
+        font-size: 10.5px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #94a3b8;
+        line-height: 1;
+        margin-bottom: 0.2rem;
+    }
+
+    .o_footer_val {
+        font-family: var(--fn-font-mono);
+        font-size: 13.5px;
+        font-weight: 700;
+        color: #ffffff;
+        letter-spacing: -0.01em;
+        line-height: 1.2;
+    }
+
+    .o_footer_badge {
+        background: #1e293b;
+        color: #e2e8f0;
+        border: 1px solid #334155;
+        font-size: 11.5px;
+        font-weight: 600;
+        padding: 0.35rem 0.75rem;
+        border-radius: 9999px;
+    }
+}
