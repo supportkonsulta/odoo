@@ -1,0 +1,10 @@
+/* General Ledger View Styling (Extensions) */
+
+.o_general_ledger_app {
+    /* Inherits all universal report rules from reports_common.scss */
+    .o_gl_acc_title {
+        color: #0f172a;
+        font-weight: 700;
+        font-size: 0.95rem;
+    }
+}

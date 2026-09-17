@@ -1,0 +1,755 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="sif_keuangan.BalanceSheetView" owl="1">
+        <div class="o_balance_sheet_app o_report_app d-flex flex-column h-100">
+
+            <!-- ================= TOP CONTROL BAR ================= -->
+            <div class="o_bs_topbar o_report_topbar px-4 py-2 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <!-- Left: Export & Actions -->
+                <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-sm btn-report-pdf d-flex align-items-center gap-1 shadow-sm"
+                            t-on-click="onExportPDF"
+                            t-att-disabled="state.loading">
+                        <i class="fa fa-file-pdf-o" />
+                        <span><t t-esc="t('btn.pdf')" /></span>
+                    </button>
+                    <button class="btn btn-sm btn-report-xlsx d-flex align-items-center gap-1 shadow-sm"
+                            t-on-click="onExportXLSX"
+                            t-att-disabled="state.loading">
+                        <i class="fa fa-file-excel-o" />
+                        <span><t t-esc="t('btn.xlsx')" /></span>
+                    </button>
+                    <div class="btn-group shadow-sm ms-1">
+                        <button class="btn btn-sm btn-light border d-flex align-items-center gap-1 fw-semibold px-2 py-1"
+                                t-on-click="unfoldAll"
+                                t-att-title="t('btn.expand_all')">
+                            <i class="fa fa-expand text-secondary" />
+                            <span class="d-none d-md-inline small"><t t-esc="t('btn.expand_all')" /></span>
+                        </button>
+                        <button class="btn btn-sm btn-light border d-flex align-items-center gap-1 fw-semibold px-2 py-1"
+                                t-on-click="foldAll"
+                                t-att-title="t('btn.collapse_all')">
+                            <i class="fa fa-compress text-secondary" />
+                            <span class="d-none d-md-inline small"><t t-esc="t('btn.collapse_all')" /></span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right: High-Precision Filters -->
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <!-- Search Account / Description -->
+                    <div class="input-group input-group-sm rounded shadow-sm border bg-white" style="width: 180px;">
+                        <span class="input-group-text bg-transparent border-0 pe-1 text-muted">
+                            <i class="fa fa-search" />
+                        </span>
+                        <input type="text"
+                               class="form-control border-0 ps-1 bg-transparent"
+                               t-att-placeholder="t('search.bs')"
+                               t-model="state.searchQuery" />
+                    </div>
+
+                    <!-- Unit Kerja Filter -->
+                    <t t-if="state.data and state.data.units_list and state.data.units_list.length > 0">
+                        <div class="o_report_filter_pill">
+                            <i class="fa fa-building-o o_filter_icon" />
+                            <select class="form-select form-select-sm border-0 bg-transparent shadow-none py-0"
+                                    style="width: auto; cursor: pointer;"
+                                    t-on-change="onUnitChange">
+                                <option value=""><t t-esc="t('filter.all_units')" /></option>
+                                <t t-foreach="state.data.units_list" t-as="u" t-key="u.id">
+                                    <option t-att-value="u.name" t-att-selected="state.selectedUnitName == u.name">
+                                        <t t-esc="u.name" />
+                                    </option>
+                                </t>
+                            </select>
+                        </div>
+                    </t>
+
+                    <!-- Date Presets -->
+                    <div class="o_report_filter_pill">
+                        <i class="fa fa-calendar o_filter_icon" />
+                        <select class="form-select form-select-sm border-0 bg-transparent shadow-none py-0"
+                                style="width: auto; cursor: pointer;"
+                                t-on-change="onDatePresetChange">
+                            <option value="this_year" t-att-selected="state.datePreset == 'this_year'"><t t-esc="t('preset.this_year')" /></option>
+                            <option value="this_month" t-att-selected="state.datePreset == 'this_month'"><t t-esc="t('preset.this_month')" /></option>
+                            <option value="this_quarter" t-att-selected="state.datePreset == 'this_quarter'"><t t-esc="t('preset.this_quarter')" /></option>
+                            <option value="last_month" t-att-selected="state.datePreset == 'last_month'"><t t-esc="t('preset.last_month')" /></option>
+                            <option value="last_year" t-att-selected="state.datePreset == 'last_year'"><t t-esc="t('preset.last_year')" /></option>
+                            <option value="custom" t-att-selected="state.datePreset == 'custom'"><t t-esc="t('preset.custom_date')" /></option>
+                        </select>
+                    </div>
+
+                    <!-- Custom Date Range -->
+                    <t t-if="state.datePreset == 'custom'">
+                        <div class="d-flex align-items-center gap-1 bg-white p-1 rounded border shadow-sm">
+                            <input type="date"
+                                   class="form-control form-control-sm border-0 py-0"
+                                   style="width: 130px;"
+                                   t-att-value="state.customDateFrom"
+                                   t-on-change="onCustomDateFromChange" />
+                            <span class="text-muted small">s/d</span>
+                            <input type="date"
+                                   class="form-control form-control-sm border-0 py-0"
+                                   style="width: 130px;"
+                                   t-att-value="state.customDateTo"
+                                   t-on-change="onCustomDateToChange" />
+                        </div>
+                    </t>
+
+                    <!-- Comparison Options -->
+                    <div class="o_report_filter_pill">
+                        <i class="fa fa-exchange o_filter_icon" />
+                        <select class="form-select form-select-sm border-0 bg-transparent shadow-none py-0"
+                                style="width: auto; cursor: pointer;"
+                                t-on-change="onComparisonModeChange">
+                            <option value="none" t-att-selected="state.comparisonMode == 'none'"><t t-esc="t('comp.none')" /></option>
+                            <option value="last_month" t-att-selected="state.comparisonMode == 'last_month'"><t t-esc="t('comp.last_month')" /></option>
+                            <option value="last_year" t-att-selected="state.comparisonMode == 'last_year'"><t t-esc="t('comp.last_year')" /></option>
+                            <option value="custom" t-att-selected="state.comparisonMode == 'custom'"><t t-esc="t('comp.custom')" /></option>
+                        </select>
+                    </div>
+
+                    <!-- Custom Comparison Date -->
+                    <t t-if="state.comparisonMode == 'custom'">
+                        <div class="d-flex align-items-center gap-1 bg-white p-1 rounded border shadow-sm">
+                            <input type="date"
+                                   class="form-control form-control-sm border-0 py-0"
+                                   style="width: 130px;"
+                                   t-att-value="state.customComparisonDate"
+                                   t-on-change="onCustomComparisonDateChange" />
+                        </div>
+                    </t>
+
+                    <!-- Target Move Filter -->
+                    <div class="o_report_filter_pill">
+                        <i class="fa fa-sliders o_filter_icon" />
+                        <select class="form-select form-select-sm border-0 bg-transparent shadow-none py-0"
+                                style="width: auto; cursor: pointer;"
+                                t-on-change="onTargetMoveChange">
+                            <option value="posted" t-att-selected="state.targetMove == 'posted'"><t t-esc="t('move.posted')" /></option>
+                            <option value="all" t-att-selected="state.targetMove == 'all'"><t t-esc="t('move.all')" /></option>
+                        </select>
+                    </div>
+
+                    <!-- Currency indicator -->
+                    <div class="badge rounded-pill bg-white text-secondary border px-2.5 py-1.5 fw-bold shadow-sm">
+                        <t t-esc="t('currency.in_rp')" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= MAIN TABLE CONTENT ================= -->
+            <div class="o_bs_table_container o_report_table_container flex-grow-1 overflow-auto p-3">
+                <t t-if="state.loading">
+                    <div class="d-flex flex-column justify-content-center align-items-center h-100 py-5">
+                        <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <h6 class="fw-bold text-dark mb-1"><t t-esc="t('bs.title')" />...</h6>
+                    </div>
+                </t>
+                <t t-elif="state.data">
+                    <div class="o_bs_sheet_card o_report_sheet_card mx-auto shadow-sm rounded-3 border bg-white">
+                        <!-- Sheet Header -->
+                        <div class="o_bs_sheet_header o_report_sheet_header px-4 py-3 border-bottom d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="o_sheet_title"><t t-esc="t('bs.title')" /></div>
+                                <div class="o_sheet_subtitle">
+                                    <t t-esc="state.data.company_name" />
+                                    <span class="mx-2 text-muted">•</span>
+                                    <t t-esc="t('bs.period_prefix')" />: <span class="o_meta_highlight"><t t-esc="state.data.date_from_display" /> s/d <t t-esc="state.data.date_to_display" /></span>
+                                    <t t-if="state.data.has_comparison">
+                                        <span class="mx-2 text-muted">•</span>
+                                        <t t-esc="t('bs.comp_prefix')" />: <span class="o_meta_comp"><t t-esc="state.data.comparison_date_display" /></span>
+                                    </t>
+                                    <t t-if="state.data.unit_name">
+                                        <span class="mx-2 text-muted">•</span>
+                                        Unit: <span class="badge bg-secondary text-white"><t t-esc="state.data.unit_name" /></span>
+                                    </t>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge rounded-pill bg-light text-dark border px-3 py-1.5 fw-bold shadow-sm">
+                                    <t t-esc="state.data.target_move == 'posted' ? t('status.posted_only') : t('status.all_entries')" />
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Universal Table -->
+                        <table class="table table-sm o_bs_table o_report_table mb-0 align-middle">
+                            <thead>
+                                <tr>
+                                    <th t-att-style="state.data.has_comparison ? 'width: 48%; min-width: 320px;' : 'width: 72%; min-width: 360px;'" class="ps-4"><t t-esc="t('th.line_item_account')" /></th>
+                                    <th t-att-style="state.data.has_comparison ? 'width: 18%;' : 'width: 28%;'" class="text-end">
+                                        <t t-esc="state.data.date_to_display" />
+                                    </th>
+                                    <t t-if="state.data.has_comparison">
+                                        <th style="width: 18%;" class="text-end">
+                                            <t t-esc="state.data.comparison_date_display" />
+                                        </th>
+                                        <th style="width: 16%;" class="text-end pe-4"><t t-esc="t('th.difference')" /></th>
+                                    </t>
+                                </tr>
+                            </thead>
+                            <tbody>
+
+                                <!-- ================= 1. AKTIVA (ASSETS) ================= -->
+                                <tr class="o_report_section_row"
+                                    t-on-click="() => this.toggleSection('assets')">
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i t-att-class="state.unfolded.assets ? 'fa fa-chevron-down text-primary' : 'fa fa-chevron-right text-secondary'"
+                                               style="width: 14px;" />
+                                            <span class="fw-bold text-dark"><t t-esc="state.data.assets.title || 'ASET (AKTIVA)'" /></span>
+                                        </div>
+                                    </td>
+                                    <td class="text-end o_report_num"
+                                        t-att-class="state.data.assets.is_negative ? 'o_val_neg' : 'o_val_neu'">
+                                        <t t-esc="state.data.assets.total_formatted" />
+                                    </td>
+                                    <t t-if="state.data.has_comparison">
+                                        <td class="text-end o_report_num">
+                                            <t t-esc="state.data.assets.comp_total_formatted" />
+                                        </td>
+                                        <td class="text-end pe-4 o_report_num"
+                                            t-att-class="state.data.assets.diff_is_negative ? 'o_val_neg' : 'o_val_pos'">
+                                            <t t-esc="state.data.assets.diff_total_formatted" />
+                                        </td>
+                                    </t>
+                                </tr>
+
+                                <t t-if="state.unfolded.assets">
+                                    <!-- 1.1 ASET LANCAR (CURRENT ASSETS) -->
+                                    <tr class="o_report_subsec_row"
+                                        t-on-click="() => this.toggleSection('current_assets')">
+                                        <td class="ps-4">
+                                            <div class="d-flex align-items-center gap-2 ms-3">
+                                                <i t-att-class="state.unfolded.current_assets ? 'fa fa-chevron-down text-primary' : 'fa fa-chevron-right text-secondary'"
+                                                   style="width: 14px;" />
+                                                <span class="fw-semibold text-dark"><t t-esc="state.data.assets.current_assets.title || 'Aset Lancar'" /></span>
+                                            </div>
+                                        </td>
+                                        <td class="text-end o_report_num"
+                                            t-att-class="state.data.assets.current_assets.is_negative ? 'o_val_neg' : 'o_val_neu'">
+                                            <t t-esc="state.data.assets.current_assets.total_formatted" />
+                                        </td>
+                                        <t t-if="state.data.has_comparison">
+                                            <td class="text-end o_report_num">
+                                                <t t-esc="state.data.assets.current_assets.comp_total_formatted" />
+                                            </td>
+                                            <td class="text-end pe-4 o_report_num"
+                                                t-att-class="state.data.assets.current_assets.diff_is_negative ? 'o_val_neg' : 'o_val_pos'">
+                                                <t t-esc="state.data.assets.current_assets.diff_total_formatted" />
+                                            </td>
+                                        </t>
+                                    </tr>
+
+                                    <t t-if="state.unfolded.current_assets">
+                                        <!-- Bank & Saldo Kas -->
+                                        <t t-if="state.data.assets.current_assets.bank_and_cash and state.data.assets.current_assets.bank_and_cash.lines and state.data.assets.current_assets.bank_and_cash.lines.length > 0">
+                                            <t t-foreach="state.data.assets.current_assets.bank_and_cash.lines" t-as="line" t-key="line.id">
+                                                <tr class="o_report_line_row">
+                                                    <td class="ps-4">
+                                                        <div class="ms-5">
+                                                            <span class="o_acc_code"><t t-esc="line.code" /></span>
+                                                            <a class="o_acc_link"
+                                                               t-on-click.stop="() => this.openGeneralLedger(line.code)"
+                                                               t-att-title="'Buka Buku Besar untuk ' + line.name">
+                                                                <t t-esc="line.name" />
+                                                            </a>
+                                                        </div>
+                                                    </td>
+                                                    <td class="text-end o_report_num"
+                                                        t-att-class="line.is_negative ? 'o_val_neg' : 'o_val_neu'">
+                                                        <t t-esc="line.amount_formatted" />
+                                                    </td>
+                                                    <t t-if="state.data.has_comparison">
+                                                        <td class="text-end o_report_num">
+                                                            <t t-esc="line.comp_amount_formatted" />
+                                                        </td>
+                                                        <td class="text-end pe-4 o_report_num"
+                                                            t-att-class="line.diff_is_negative ? 'o_val_neg' : 'o_val_pos'">
+                                                            <t t-esc="line.diff_amount_formatted" />
+                                                        </td>
+                                                    </t>
+                                                </tr>
+                                            </t>
+                                        </t>
+
+                                        <!-- Piutang Usaha -->
+                                        <t t-if="state.data.assets.current_assets.receivables and state.data.assets.current_assets.receivables.lines and state.data.assets.current_assets.receivables.lines.length > 0">
+                                            <t t-foreach="state.data.assets.current_assets.receivables.lines" t-as="line" t-key="line.id">
+                                                <tr class="o_report_line_row">
+                                                    <td class="ps-4">
+                                                        <div class="ms-5">
+                                                            <span class="o_acc_code"><t t-esc="line.code" /></span>
+                                                            <a class="o_acc_link"
+                                                               t-on-click.stop="() => this.openGeneralLedger(line.code)">
+                                                                <t t-esc="line.name" />
+                                                            </a>
+                                                        </div>
+                                                    </td>
+                                                    <td class="text-end o_report_num"
+                                                        t-att-class="line.is_negative ? 'o_val_neg' : 'o_val_neu'">
+                                                        <t t-esc="line.amount_formatted" />
+                                                    </td>
+                                                    <t t-if="state.data.has_comparison">
+                                                        <td class="text-end o_report_num">
+                                                            <t t-esc="line.comp_amount_formatted" />
+                                                        </td>
+                                                        <td class="text-end pe-4 o_report_num"
+                                                            t-att-class="line.diff_is_negative ? 'o_val_neg' : 'o_val_pos'">
+                                                            <t t-esc="line.diff_amount_formatted" />
+                                                        </td>
+                                                    </t>
+                                                </tr>
+                                            </t>
+                                        </t>
+
+                                        <!-- Biaya Dibayar Dimuka & Pajak -->
+                                        <t t-if="state.data.assets.current_assets.prepayments and state.data.assets.current_assets.prepayments.lines and state.data.assets.current_assets.prepayments.lines.length > 0">
+                                            <t t-foreach="state.data.assets.current_assets.prepayments.lines" t-as="line" t-key="line.id">
+                                                <tr class="o_report_line_row">
+                                                    <td class="ps-4">
+                                                        <div class="ms-5">
+                                                            <span class="o_acc_code"><t t-esc="line.code" /></span>
+                                                            <a class="o_acc_link"
+                                                               t-on-click.stop="() => this.openGeneralLedger(line.code)">
+                                                                <t t-esc="line.name" />
+                                                            </a>
+                                                        </div>
+                                                    </td>
+                                                    <td class="text-end o_report_num"
+                                                        t-att-class="line.is_negative ? 'o_val_neg' : 'o_val_neu'">
+                                                        <t t-esc="line.amount_formatted" />
+                                                    </td>
+                                                    <t t-if="state.data.has_comparison">
+                                                        <td class="text-end o_report_num">
+                                                            <t t-esc="line.comp_amount_formatted" />
+                                                        </td>
+                                                        <td class="text-end pe-4 o_report_num"
+                                                            t-att-class="line.diff_is_negative ? 'o_val_neg' : 'o_val_pos'">
+                                                            <t t-esc="line.diff_amount_formatted" />
+                                                        </td>
+                                                    </t>
+                                                </tr>
+                                            </t>
+                                        </t>
+
+                                        <!-- Aset Lancar Lainnya -->
+                                        <t t-if="state.data.assets.current_assets.other_current_assets and state.data.assets.current_assets.other_current_assets.lines and state.data.assets.current_assets.other_current_assets.lines.length > 0">
+                                            <t t-foreach="state.data.assets.current_assets.other_current_assets.lines" t-as="line" t-key="line.id">
+                                                <tr class="o_report_line_row">
+                                                    <td class="ps-4">
+                                                        <div class="ms-5">
+                                                            <span class="o_acc_code"><t t-esc="line.code" /></span>
+                                                            <a class="o_acc_link"
+                                                               t-on-click.stop="() => this.openGeneralLedger(line.code)">
+                                                                <t t-esc="line.name" />
+                                                            </a>
+                                                        </div>
+                                                    </td>
+                                                    <td class="text-end o_report_num"
+                                                        t-att-class="line.is_negative ? 'o_val_neg' : 'o_val_neu'">
+                                                        <t t-esc="line.amount_formatted" />
+                                                    </td>
+                                                    <t t-if="state.data.has_comparison">
+                                                        <td class="text-end o_report_num">
+                                                            <t t-esc="line.comp_amount_formatted" />
+                                                        </td>
+                                                        <td class="text-end pe-4 o_report_num"
+                                                            t-att-class="line.diff_is_negative ? 'o_val_neg' : 'o_val_pos'">
+                                                            <t t-esc="line.diff_amount_formatted" />
+                                                        </td>
+                                                    </t>
+                                                </tr>
+                                            </t>
+                                        </t>
+
+                                        <!-- Subtotal Aset Lancar -->
+                                        <tr class="o_report_subtotal_band">
+                                            <td class="ps-4">
+                                                <span class="ms-3">Total Aset Lancar</span>
+                                            </td>
+                                            <td class="text-end o_report_num"
+                                                t-att-class="state.data.assets.current_assets.is_negative ? 'o_val_neg' : 'o_val_neu'">
+                                                <t t-esc="state.data.assets.current_assets.total_formatted" />
+                                            </td>
+                                            <t t-if="state.data.has_comparison">
+                                                <td class="text-end o_report_num">
+                                                    <t t-esc="state.data.assets.current_assets.comp_total_formatted" />
+                                                </td>
+                                                <td class="text-end pe-4 o_report_num"
+                                                    t-att-class="state.data.assets.current_assets.diff_is_negative ? 'o_val_neg' : 'o_val_pos'">
+                                                    <t t-esc="state.data.assets.current_assets.diff_total_formatted" />
+                                                </td>
+                                            </t>
+                                        </tr>
+                                    </t>
+
+                                    <!-- 1.2 ASET TETAP & TIDAK LANCAR -->
+                                    <t t-if="state.data.assets.fixed_assets and state.data.assets.fixed_assets.lines and state.data.assets.fixed_assets.lines.length > 0">
+                                        <t t-foreach="state.data.assets.fixed_assets.lines" t-as="line" t-key="line.id">
+                                            <tr class="o_report_line_row">
+                                                <td class="ps-4">
+                                                    <div class="ms-3">
+                                                        <span class="o_acc_code"><t t-esc="line.code" /></span>
+                                                        <a class="o_acc_link"
+                                                           t-on-click.stop="() => this.openGeneralLedger(line.code)">
+                                                            <t t-esc="line.name" />
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                                <td class="text-end o_report_num"
+                                                    t-att-class="line.is_negative ? 'o_val_neg' : 'o_val_neu'">
+                                                    <t t-esc="line.amount_formatted" />
+                                                </td>
+                                                <t t-if="state.data.has_comparison">
+                                                    <td class="text-end o_report_num">
+                                                        <t t-esc="line.comp_amount_formatted" />
+                                                    </td>
+                                                    <td class="text-end pe-4 o_report_num"
+                                                        t-att-class="line.diff_is_negative ? 'o_val_neg' : 'o_val_pos'">
+                                                        <t t-esc="line.diff_amount_formatted" />
+                                                    </td>
+                                                </t>
+                                            </tr>
+                                        </t>
+                                    </t>
+
+                                    <t t-if="state.data.assets.non_current_assets and state.data.assets.non_current_assets.lines and state.data.assets.non_current_assets.lines.length > 0">
+                                        <t t-foreach="state.data.assets.non_current_assets.lines" t-as="line" t-key="line.id">
+                                            <tr class="o_report_line_row">
+                                                <td class="ps-4">
+                                                    <div class="ms-3">
+                                                        <span class="o_acc_code"><t t-esc="line.code" /></span>
+                                                        <a class="o_acc_link"
+                                                           t-on-click.stop="() => this.openGeneralLedger(line.code)">
+                                                            <t t-esc="line.name" />
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                                <td class="text-end o_report_num"
+                                                    t-att-class="line.is_negative ? 'o_val_neg' : 'o_val_neu'">
+                                                    <t t-esc="line.amount_formatted" />
+                                                </td>
+                                                <t t-if="state.data.has_comparison">
+                                                    <td class="text-end o_report_num">
+                                                        <t t-esc="line.comp_amount_formatted" />
+                                                    </td>
+                                                    <td class="text-end pe-4 o_report_num"
+                                                        t-att-class="line.diff_is_negative ? 'o_val_neg' : 'o_val_pos'">
+                                                        <t t-esc="line.diff_amount_formatted" />
+                                                    </td>
+                                                </t>
+                                            </tr>
+                                        </t>
+                                    </t>
+
+                                    <!-- TOTAL AKTIVA -->
+                                    <tr class="o_report_highlight_band o_report_major_band">
+                                        <td class="ps-4">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <i class="fa fa-university text-dark" />
+                                                <span class="text-uppercase tracking-wider">TOTAL ASET (AKTIVA)</span>
+                                            </div>
+                                        </td>
+                                        <td class="text-end o_report_num"
+                                            t-att-class="state.data.assets.is_negative ? 'o_val_neg' : 'o_val_neu'">
+                                            <t t-esc="state.data.assets.total_formatted" />
+                                        </td>
+                                        <t t-if="state.data.has_comparison">
+                                            <td class="text-end o_report_num">
+                                                <t t-esc="state.data.assets.comp_total_formatted" />
+                                            </td>
+                                            <td class="text-end pe-4 o_report_num"
+                                                t-att-class="state.data.assets.diff_is_negative ? 'o_val_neg' : 'o_val_pos'">
+                                                <t t-esc="state.data.assets.diff_total_formatted" />
+                                            </td>
+                                        </t>
+                                    </tr>
+                                </t>
+
+                                <!-- Spacer -->
+                                <tr><td colspan="4" style="height: 10px; background-color: #f8fafc; border: none;" /></tr>
+
+                                <!-- ================= 2. KEWAJIBAN & EKUITAS (PASIVA) ================= -->
+                                <tr class="o_report_section_row"
+                                    t-on-click="() => this.toggleSection('liabilities')">
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i t-att-class="state.unfolded.liabilities ? 'fa fa-chevron-down text-primary' : 'fa fa-chevron-right text-secondary'"
+                                               style="width: 14px;" />
+                                            <span class="fw-bold text-dark"><t t-esc="state.data.liabilities.title || 'KEWAJIBAN'" /></span>
+                                        </div>
+                                    </td>
+                                    <td class="text-end o_report_num"
+                                        t-att-class="state.data.liabilities.is_negative ? 'o_val_neg' : 'o_val_neu'">
+                                        <t t-esc="state.data.liabilities.total_formatted" />
+                                    </td>
+                                    <t t-if="state.data.has_comparison">
+                                        <td class="text-end o_report_num">
+                                            <t t-esc="state.data.liabilities.comp_total_formatted" />
+                                        </td>
+                                        <td class="text-end pe-4 o_report_num"
+                                            t-att-class="state.data.liabilities.diff_total &lt; 0 ? 'o_val_neg' : 'o_val_pos'">
+                                            <t t-esc="state.data.liabilities.diff_total_formatted" />
+                                        </td>
+                                    </t>
+                                </tr>
+
+                                <t t-if="state.unfolded.liabilities">
+                                    <!-- Hutang & Kewajiban Lines -->
+                                    <t t-if="state.data.liabilities.current_liabilities and state.data.liabilities.current_liabilities.payables and state.data.liabilities.current_liabilities.payables.lines and state.data.liabilities.current_liabilities.payables.lines.length > 0">
+                                        <t t-foreach="state.data.liabilities.current_liabilities.payables.lines" t-as="line" t-key="line.id">
+                                            <tr class="o_report_line_row">
+                                                <td class="ps-4">
+                                                    <div class="ms-4">
+                                                        <span class="o_acc_code"><t t-esc="line.code" /></span>
+                                                        <a class="o_acc_link"
+                                                           t-on-click.stop="() => this.openGeneralLedger(line.code)">
+                                                            <t t-esc="line.name" />
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                                <td class="text-end o_report_num"
+                                                    t-att-class="line.is_negative ? 'o_val_neg' : 'o_val_neu'">
+                                                    <t t-esc="line.amount_formatted" />
+                                                </td>
+                                                <t t-if="state.data.has_comparison">
+                                                    <td class="text-end o_report_num">
+                                                        <t t-esc="line.comp_amount_formatted" />
+                                                    </td>
+                                                    <td class="text-end pe-4 o_report_num"
+                                                        t-att-class="line.diff_is_negative ? 'o_val_neg' : 'o_val_pos'">
+                                                        <t t-esc="line.diff_amount_formatted" />
+                                                    </td>
+                                                </t>
+                                            </tr>
+                                        </t>
+                                    </t>
+
+                                    <!-- Total Kewajiban -->
+                                    <tr class="o_report_subtotal_band">
+                                        <td class="ps-4">
+                                            <span class="ms-3">Total Kewajiban</span>
+                                        </td>
+                                        <td class="text-end o_report_num"
+                                            t-att-class="state.data.liabilities.is_negative ? 'o_val_neg' : 'o_val_neu'">
+                                            <t t-esc="state.data.liabilities.total_formatted" />
+                                        </td>
+                                        <t t-if="state.data.has_comparison">
+                                            <td class="text-end o_report_num">
+                                                <t t-esc="state.data.liabilities.comp_total_formatted" />
+                                            </td>
+                                            <td class="text-end pe-4 o_report_num"
+                                                t-att-class="state.data.liabilities.diff_total &lt; 0 ? 'o_val_neg' : 'o_val_pos'">
+                                                <t t-esc="state.data.liabilities.diff_total_formatted" />
+                                            </td>
+                                        </t>
+                                    </tr>
+                                </t>
+
+                                <!-- 2.2 EKUITAS (EQUITY) -->
+                                <tr class="o_report_section_row"
+                                    t-on-click="() => this.toggleSection('equity')">
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i t-att-class="state.unfolded.equity ? 'fa fa-chevron-down text-primary' : 'fa fa-chevron-right text-secondary'"
+                                               style="width: 14px;" />
+                                            <span class="fw-bold text-dark"><t t-esc="state.data.equity.title || 'EKUITAS &amp; MODAL'" /></span>
+                                        </div>
+                                    </td>
+                                    <td class="text-end o_report_num"
+                                        t-att-class="state.data.equity.is_negative ? 'o_val_neg' : 'o_val_neu'">
+                                        <t t-esc="state.data.equity.total_formatted" />
+                                    </td>
+                                    <t t-if="state.data.has_comparison">
+                                        <td class="text-end o_report_num">
+                                            <t t-esc="state.data.equity.comp_total_formatted" />
+                                        </td>
+                                        <td class="text-end pe-4 o_report_num"
+                                            t-att-class="state.data.equity.diff_total &lt; 0 ? 'o_val_neg' : 'o_val_pos'">
+                                            <t t-esc="state.data.equity.diff_total_formatted" />
+                                        </td>
+                                    </t>
+                                </tr>
+
+                                <t t-if="state.unfolded.equity">
+                                    <!-- Ekuitas Langsung -->
+                                    <t t-if="state.data.equity.direct_equity and state.data.equity.direct_equity.lines and state.data.equity.direct_equity.lines.length > 0">
+                                        <t t-foreach="state.data.equity.direct_equity.lines" t-as="line" t-key="line.id">
+                                            <tr class="o_report_line_row">
+                                                <td class="ps-4">
+                                                    <div class="ms-4">
+                                                        <span class="o_acc_code"><t t-esc="line.code" /></span>
+                                                        <a class="o_acc_link"
+                                                           t-on-click.stop="() => this.openGeneralLedger(line.code)">
+                                                            <t t-esc="line.name" />
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                                <td class="text-end o_report_num"
+                                                    t-att-class="line.is_negative ? 'o_val_neg' : 'o_val_neu'">
+                                                    <t t-esc="line.amount_formatted" />
+                                                </td>
+                                                <t t-if="state.data.has_comparison">
+                                                    <td class="text-end o_report_num">
+                                                        <t t-esc="line.comp_amount_formatted" />
+                                                    </td>
+                                                    <td class="text-end pe-4 o_report_num"
+                                                        t-att-class="line.diff_is_negative ? 'o_val_neg' : 'o_val_pos'">
+                                                        <t t-esc="line.diff_amount_formatted" />
+                                                    </td>
+                                                </t>
+                                            </tr>
+                                        </t>
+                                    </t>
+
+                                    <!-- Laba Tahun Berjalan -->
+                                    <t t-if="state.data.equity.earnings and state.data.equity.earnings.current_year_earnings">
+                                        <tr class="o_report_line_row">
+                                            <td class="ps-4">
+                                                <div class="ms-4">
+                                                    <i class="fa fa-line-chart text-muted me-2" />
+                                                    <span class="fw-semibold text-dark"><t t-esc="state.data.equity.earnings.current_year_earnings.title || 'Laba (Rugi) Tahun Berjalan'" /></span>
+                                                </div>
+                                            </td>
+                                            <td class="text-end o_report_num"
+                                                t-att-class="state.data.equity.earnings.current_year_earnings.is_negative ? 'o_val_neg' : 'o_val_pos'">
+                                                <t t-esc="state.data.equity.earnings.current_year_earnings.total_formatted" />
+                                            </td>
+                                            <t t-if="state.data.has_comparison">
+                                                <td class="text-end o_report_num">
+                                                    <t t-esc="state.data.equity.earnings.current_year_earnings.comp_total_formatted" />
+                                                </td>
+                                                <td class="text-end pe-4 o_report_num"
+                                                    t-att-class="state.data.equity.earnings.current_year_earnings.diff &lt; 0 ? 'o_val_neg' : 'o_val_pos'">
+                                                    <t t-esc="state.data.equity.earnings.current_year_earnings.diff_formatted" />
+                                                </td>
+                                            </t>
+                                        </tr>
+                                    </t>
+
+                                    <!-- Laba Ditahan -->
+                                    <t t-if="state.data.equity.earnings and state.data.equity.earnings.previous_years_earnings">
+                                        <tr class="o_report_line_row">
+                                            <td class="ps-4">
+                                                <div class="ms-4">
+                                                    <i class="fa fa-archive text-muted me-2" />
+                                                    <span class="text-dark"><t t-esc="state.data.equity.earnings.previous_years_earnings.title || 'Laba Ditahan / Periode Sebelumnya'" /></span>
+                                                </div>
+                                            </td>
+                                            <td class="text-end o_report_num"
+                                                t-att-class="state.data.equity.earnings.previous_years_earnings.is_negative ? 'o_val_neg' : 'o_val_neu'">
+                                                <t t-esc="state.data.equity.earnings.previous_years_earnings.total_formatted" />
+                                            </td>
+                                            <t t-if="state.data.has_comparison">
+                                                <td class="text-end o_report_num">
+                                                    <t t-esc="state.data.equity.earnings.previous_years_earnings.comp_total_formatted" />
+                                                </td>
+                                                <td class="text-end pe-4 o_report_num"
+                                                    t-att-class="state.data.equity.earnings.previous_years_earnings.diff &lt; 0 ? 'o_val_neg' : 'o_val_pos'">
+                                                    <t t-esc="state.data.equity.earnings.previous_years_earnings.diff_formatted" />
+                                                </td>
+                                            </t>
+                                        </tr>
+                                    </t>
+
+                                    <!-- Total Ekuitas -->
+                                    <tr class="o_report_subtotal_band">
+                                        <td class="ps-4">
+                                            <span class="ms-3">Total Ekuitas</span>
+                                        </td>
+                                        <td class="text-end o_report_num"
+                                            t-att-class="state.data.equity.is_negative ? 'o_val_neg' : 'o_val_neu'">
+                                            <t t-esc="state.data.equity.total_formatted" />
+                                        </td>
+                                        <t t-if="state.data.has_comparison">
+                                            <td class="text-end o_report_num">
+                                                <t t-esc="state.data.equity.comp_total_formatted" />
+                                            </td>
+                                            <td class="text-end pe-4 o_report_num"
+                                                t-att-class="state.data.equity.diff_total &lt; 0 ? 'o_val_neg' : 'o_val_pos'">
+                                                <t t-esc="state.data.equity.diff_total_formatted" />
+                                            </td>
+                                        </t>
+                                    </tr>
+                                </t>
+
+                                <!-- ================= TOTAL PASIVA (KEWAJIBAN & EKUITAS) ================= -->
+                                <tr class="o_report_highlight_band o_report_major_band">
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="fa fa-balance-scale text-dark" />
+                                            <span class="text-uppercase tracking-wider"><t t-esc="t('bs.total_liab_eq')" /></span>
+                                        </div>
+                                    </td>
+                                    <td class="text-end o_report_num"
+                                        t-att-class="state.data.summary and state.data.summary.total_liabilities_and_equity &lt; 0 ? 'o_val_neg' : 'o_val_neu'">
+                                        <t t-esc="state.data.summary ? state.data.summary.total_liabilities_and_equity_formatted : 'Rp 0,00'" />
+                                    </td>
+                                    <t t-if="state.data.has_comparison">
+                                        <td class="text-end o_report_num">
+                                            <t t-esc="state.data.summary.comp_total_liabilities_and_equity_formatted" />
+                                        </td>
+                                        <td class="text-end pe-4 o_report_num"
+                                            t-att-class="state.data.summary.diff_liab_eq &lt; 0 ? 'o_val_neg' : 'o_val_pos'">
+                                            <t t-esc="state.data.summary.diff_liab_eq_formatted" />
+                                        </td>
+                                    </t>
+                                </tr>
+
+                            </tbody>
+                        </table>
+                    </div>
+                </t>
+            </div>
+
+            <!-- ================= GRAND SUMMARY FOOTER ================= -->
+            <div class="o_bs_footer o_report_sticky_footer d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-3">
+                    <t t-if="state.data and state.data.summary and state.data.summary.is_balanced">
+                        <span class="badge bg-success px-3 py-1.5 fw-bold">
+                            <i class="fa fa-check-circle me-1" /> <t t-esc="t('bs.balanced')" />
+                        </span>
+                    </t>
+                    <t t-else="">
+                        <span class="badge bg-danger px-3 py-1.5 fw-bold">
+                            <i class="fa fa-exclamation-triangle me-1" /> <t t-esc="t('bs.unbalanced')" />
+                        </span>
+                    </t>
+                    <span class="text-white-75 small fw-medium">
+                        <i class="fa fa-calculator me-1 opacity-75" />
+                        <t t-esc="t('bs.footer_system')" />
+                    </span>
+                </div>
+                <div class="d-flex align-items-center gap-4 text-end">
+                    <div>
+                        <div class="o_footer_label"><t t-esc="t('bs.footer_total_assets')" /></div>
+                        <div class="o_footer_val o_report_num">
+                            <t t-esc="state.data and state.data.assets ? state.data.assets.total_formatted : 'Rp 0,00'" />
+                        </div>
+                    </div>
+                    <div>
+                        <div class="o_footer_label"><t t-esc="t('bs.footer_total_liabilities_equity')" /></div>
+                        <div class="o_footer_val o_report_num">
+                            <t t-esc="state.data and state.data.summary ? state.data.summary.total_liabilities_and_equity_formatted : 'Rp 0,00'" />
+                        </div>
+                    </div>
+                    <div>
+                        <div class="o_footer_label"><t t-esc="t('bs.footer_diff')" /></div>
+                        <div class="o_footer_val o_report_num"
+                             t-att-class="state.data and state.data.summary and state.data.summary.difference != 0 ? 'text-warning' : 'text-white'">
+                            <t t-esc="state.data and state.data.summary ? state.data.summary.difference_formatted : 'Rp 0,00'" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </t>
+
+</templates>

@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Definisi Aksi Laporan PDF Profit and Loss -->
+    <record id="action_report_profit_loss" model="ir.actions.report">
+        <field name="name">Profit and Loss (Laporan Laba Rugi)</field>
+        <field name="model">sif.profit.loss.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">sif_keuangan.report_profit_loss_document</field>
+        <field name="report_file">sif_keuangan.report_profit_loss_document</field>
+        <field name="print_report_name">'Profit_and_Loss_' + (object.date_from.strftime('%Y%m%d') if object.date_from else 'All') + '_' + (object.date_to.strftime('%Y%m%d') if object.date_to else 'All')</field>
+    </record>
+
+    <!-- Template Laporan PDF Profit and Loss -->
+    <template id="report_profit_loss_document">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page" style="font-family: Arial, sans-serif; font-size: 11px; color: #333333;">
+                    
+                    <!-- Header Laporan -->
+                    <div style="border-bottom: 2px solid #714B67; padding-bottom: 8px; margin-bottom: 15px;">
+                        <div class="row">
+                            <div class="col-8">
+                                <h2 style="color: #714B67; margin: 0; font-weight: bold; font-size: 20px;">
+                                    Profit and Loss (Laba Rugi)
+                                </h2>
+                                <p style="margin: 3px 0 0 0; color: #555555; font-size: 12px;">
+                                    <strong>Perusahaan:</strong> <t t-esc="company.name"/>
+                                    <span style="margin-left: 15px;">
+                                        <strong>Periode:</strong> 
+                                        <t t-esc="date_from_display"/> s/d <t t-esc="date_to_display"/>
+                                    </span>
+                                    <t t-if="unit_name">
+                                        <span style="margin-left: 15px;">
+                                            <strong>Unit:</strong> <t t-esc="unit_name"/>
+                                        </span>
+                                    </t>
+                                </p>
+                            </div>
+                            <div class="col-4 text-end" style="font-size: 11px; color: #666666;">
+                                <div><strong>Mata Uang:</strong> IDR (Rp)</div>
+                                <div>Dicetak pada: <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y %H:%M')"/></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabel Profit and Loss Multistep -->
+                    <table class="table table-sm table-bordered" style="width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 11px;">
+                        <thead>
+                            <tr style="background-color: #f1ecf0; color: #502848; font-weight: bold;">
+                                <th style="width: 75%; padding: 6px 10px;">KOMPONEN LABA RUGI</th>
+                                <th style="width: 25%; text-align: right; padding: 6px 10px;">JUMLAH (RP)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                            <!-- 1. Revenue -->
+                            <tr style="background-color: #f8fafc; font-weight: bold; color: #1e293b;">
+                                <td style="padding-left: 10px;">▶ <t t-esc="sections['revenue']['name']"/></td>
+                                <td style="text-align: right; font-weight: bold;" t-att-style="'color: #dc2626;' if sections['revenue']['is_negative'] else ''">
+                                    <t t-esc="sections['revenue']['total_formatted']"/>
+                                </td>
+                            </tr>
+                            <t t-foreach="sections['revenue']['accounts']" t-as="acc">
+                                <tr>
+                                    <td style="padding-left: 30px; color: #444444;"><t t-esc="acc['full_name']"/></td>
+                                    <td style="text-align: right; color: #444444;" t-att-style="'color: #dc2626;' if acc['is_negative'] else ''">
+                                        <t t-esc="acc['balance_formatted']"/>
+                                    </td>
+                                </tr>
+                            </t>
+
+                            <!-- 2. Costs of Revenue -->
+                            <tr style="background-color: #f8fafc; font-weight: bold; color: #1e293b;">
+                                <td style="padding-left: 10px;">▶ <t t-esc="sections['costs_of_revenue']['name']"/></td>
+                                <td style="text-align: right; font-weight: bold;" t-att-style="'color: #dc2626;' if sections['costs_of_revenue']['is_negative'] else ''">
+                                    <t t-esc="sections['costs_of_revenue']['total_formatted']"/>
+                                </td>
+                            </tr>
+                            <t t-foreach="sections['costs_of_revenue']['accounts']" t-as="acc">
+                                <tr>
+                                    <td style="padding-left: 30px; color: #444444;"><t t-esc="acc['full_name']"/></td>
+                                    <td style="text-align: right; color: #444444;" t-att-style="'color: #dc2626;' if acc['is_negative'] else ''">
+                                        <t t-esc="acc['balance_formatted']"/>
+                                    </td>
+                                </tr>
+                            </t>
+
+                            <!-- 3. Gross Profit (Highlight Band) -->
+                            <tr style="background-color: #e2e8f0; font-weight: bold; color: #0f172a; border-top: 1.5px solid #94a3b8; border-bottom: 1.5px solid #94a3b8;">
+                                <td style="padding-left: 10px; font-size: 11.5px;"><t t-esc="sections['gross_profit']['name']"/></td>
+                                <td style="text-align: right; font-size: 11.5px;" t-att-style="'color: #dc2626;' if sections['gross_profit']['is_negative'] else 'color: #0f172a;'">
+                                    <t t-esc="sections['gross_profit']['total_formatted']"/>
+                                </td>
+                            </tr>
+
+                            <!-- 4. Operating Expenses -->
+                            <tr style="background-color: #f8fafc; font-weight: bold; color: #1e293b;">
+                                <td style="padding-left: 10px;">▶ <t t-esc="sections['operating_expenses']['name']"/></td>
+                                <td style="text-align: right; font-weight: bold;" t-att-style="'color: #dc2626;' if sections['operating_expenses']['is_negative'] else ''">
+                                    <t t-esc="sections['operating_expenses']['total_formatted']"/>
+                                </td>
+                            </tr>
+                            <t t-foreach="sections['operating_expenses']['accounts']" t-as="acc">
+                                <tr>
+                                    <td style="padding-left: 30px; color: #444444;"><t t-esc="acc['full_name']"/></td>
+                                    <td style="text-align: right; color: #444444;" t-att-style="'color: #dc2626;' if acc['is_negative'] else ''">
+                                        <t t-esc="acc['balance_formatted']"/>
+                                    </td>
+                                </tr>
+                            </t>
+
+                            <!-- 5. Operating Income (Highlight Band) -->
+                            <tr style="background-color: #e2e8f0; font-weight: bold; color: #0f172a; border-top: 1.5px solid #94a3b8; border-bottom: 1.5px solid #94a3b8;">
+                                <td style="padding-left: 10px; font-size: 11.5px;"><t t-esc="sections['operating_income']['name']"/></td>
+                                <td style="text-align: right; font-size: 11.5px;" t-att-style="'color: #dc2626;' if sections['operating_income']['is_negative'] else 'color: #0f172a;'">
+                                    <t t-esc="sections['operating_income']['total_formatted']"/>
+                                </td>
+                            </tr>
+
+                            <!-- 6. Other Income -->
+                            <tr style="background-color: #f8fafc; font-weight: bold; color: #1e293b;">
+                                <td style="padding-left: 10px;">▶ <t t-esc="sections['other_income']['name']"/></td>
+                                <td style="text-align: right; font-weight: bold;" t-att-style="'color: #dc2626;' if sections['other_income']['is_negative'] else ''">
+                                    <t t-esc="sections['other_income']['total_formatted']"/>
+                                </td>
+                            </tr>
+                            <t t-foreach="sections['other_income']['accounts']" t-as="acc">
+                                <tr>
+                                    <td style="padding-left: 30px; color: #444444;"><t t-esc="acc['full_name']"/></td>
+                                    <td style="text-align: right; color: #444444;" t-att-style="'color: #dc2626;' if acc['is_negative'] else ''">
+                                        <t t-esc="acc['balance_formatted']"/>
+                                    </td>
+                                </tr>
+                            </t>
+
+                            <!-- 7. Other Expenses -->
+                            <tr style="background-color: #f8fafc; font-weight: bold; color: #1e293b;">
+                                <td style="padding-left: 10px;">▶ <t t-esc="sections['other_expenses']['name']"/></td>
+                                <td style="text-align: right; font-weight: bold;" t-att-style="'color: #dc2626;' if sections['other_expenses']['is_negative'] else ''">
+                                    <t t-esc="sections['other_expenses']['total_formatted']"/>
+                                </td>
+                            </tr>
+                            <t t-foreach="sections['other_expenses']['accounts']" t-as="acc">
+                                <tr>
+                                    <td style="padding-left: 30px; color: #444444;"><t t-esc="acc['full_name']"/></td>
+                                    <td style="text-align: right; color: #444444;" t-att-style="'color: #dc2626;' if acc['is_negative'] else ''">
+                                        <t t-esc="acc['balance_formatted']"/>
+                                    </td>
+                                </tr>
+                            </t>
+
+                            <!-- 8. Net Profit (Highlight Band) -->
+                            <tr style="background-color: #cbd5e1; font-weight: bold; color: #0f172a; border-top: 1.5px solid #64748b; border-bottom: 1.5px solid #64748b;">
+                                <td style="padding-left: 10px; font-size: 12px;"><t t-esc="sections['net_profit']['name']"/></td>
+                                <td style="text-align: right; font-size: 12px;" t-att-style="'color: #dc2626;' if sections['net_profit']['is_negative'] else 'color: #0f172a;'">
+                                    <t t-esc="sections['net_profit']['total_formatted']"/>
+                                </td>
+                            </tr>
+
+                            <!-- 9. Allocations -->
+                            <tr style="background-color: #f8fafc; font-weight: bold; color: #1e293b;">
+                                <td style="padding-left: 10px;">▶ <t t-esc="sections['allocations']['name']"/></td>
+                                <td style="text-align: right; font-weight: bold;" t-att-style="'color: #dc2626;' if sections['allocations']['is_negative'] else ''">
+                                    <t t-esc="sections['allocations']['total_formatted']"/>
+                                </td>
+                            </tr>
+                            <t t-foreach="sections['allocations']['accounts']" t-as="acc">
+                                <tr>
+                                    <td style="padding-left: 30px; color: #444444;"><t t-esc="acc['full_name']"/></td>
+                                    <td style="text-align: right; color: #444444;">
+                                        <t t-esc="acc['balance_formatted']"/>
+                                    </td>
+                                </tr>
+                            </t>
+
+                            <!-- 10. Net Profit Left After Allocations (Final Grand Band) -->
+                            <tr style="background-color: #0f172a; color: #ffffff; font-weight: bold; font-size: 12.5px;">
+                                <td style="padding: 8px 10px;"><t t-esc="sections['net_profit_after_alloc']['name']"/></td>
+                                <td style="text-align: right; padding: 8px 10px;" t-att-style="'color: #fca5a5;' if sections['net_profit_after_alloc']['is_negative'] else 'color: #86efac;'">
+                                    <t t-esc="sections['net_profit_after_alloc']['total_formatted']"/>
+                                </td>
+                            </tr>
+
+                        </tbody>
+                    </table>
+
+                </div>
+            </t>
+        </t>
+    </template>
+
+</odoo>

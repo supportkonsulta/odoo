@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Client Action untuk Profit and Loss Interaktif Full-Page -->
+    <record id="action_sif_profit_loss_client" model="ir.actions.client">
+        <field name="name">Profit and Loss</field>
+        <field name="tag">sif_keuangan.profit_loss</field>
+        <field name="target">main</field>
+    </record>
+
+    <!-- Wizard Form View (Fallback jika dipanggil lewat form dialog) -->
+    <record id="view_sif_profit_loss_wizard_form" model="ir.ui.view">
+        <field name="name">sif.profit.loss.wizard.form</field>
+        <field name="model">sif.profit.loss.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Cetak Laporan Profit and Loss">
+                <sheet>
+                    <div class="oe_title">
+                        <h2>Laporan Profit and Loss (Laba Rugi)</h2>
+                    </div>
+                    <group>
+                        <group string="Rentang Tanggal">
+                            <field name="date_from" required="1"/>
+                            <field name="date_to" required="1"/>
+                        </group>
+                        <group string="Opsi Filter">
+                            <field name="target_move" widget="radio"/>
+                            <field name="unit_name"/>
+                            <field name="comparison_type"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_print_pdf" string="Cetak PDF" type="object" class="btn-primary" icon="fa-file-pdf-o"/>
+                    <button name="action_export_xlsx" string="Ekspor Excel (XLSX)" type="object" class="btn-secondary" icon="fa-file-excel-o"/>
+                    <button string="Batal" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action Window untuk Wizard -->
+    <record id="action_sif_profit_loss_wizard" model="ir.actions.act_window">
+        <field name="name">Profit and Loss (Wizard)</field>
+        <field name="res_model">sif.profit.loss.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>

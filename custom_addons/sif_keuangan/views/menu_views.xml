@@ -3,7 +3,7 @@
 
     <!-- Menu Utama Modul SIFNEXT Keuangan -->
     <menuitem id="menu_sif_keuangan_root" 
-              name="Jurnal Besar" 
+              name="Accounting" 
               sequence="20" 
               web_icon="sif_keuangan,static/description/icon.png"/>
 
@@ -19,17 +19,37 @@
               action="action_sif_jurnal_entry" 
               sequence="10"/>
 
-    <!-- Kategori 2: Laporan (Membuka Wizard Filter Tanggal) -->
+    <!-- Kategori 2: Laporan -->
     <menuitem id="menu_sif_laporan" 
               name="Laporan" 
               parent="menu_sif_keuangan_root" 
               sequence="20"/>
 
     <menuitem id="menu_sif_buku_besar_sub" 
-              name="Buku Besar" 
+              name="Buku Besar (SISKEU)" 
               parent="menu_sif_laporan" 
               action="action_sif_buku_besar_wizard" 
               sequence="10"/>
+
+    <menuitem id="menu_sif_general_ledger_sub" 
+              name="General Ledger" 
+              parent="menu_sif_laporan" 
+              action="action_sif_general_ledger_client" 
+              sequence="20"/>
+
+    <menuitem id="menu_sif_balance_sheet_sub" 
+              name="Balance Sheet (Neraca)" 
+              parent="menu_sif_laporan" 
+              action="action_sif_balance_sheet_client" 
+              sequence="30"/>
+
+    <menuitem id="menu_sif_profit_loss_sub" 
+              name="Profit and Loss (Laba Rugi)" 
+              parent="menu_sif_laporan" 
+              action="action_sif_profit_loss_client" 
+              sequence="40"/>
+
+
 
     <!-- Kategori 3: Master Data -->
     <menuitem id="menu_sif_master" 

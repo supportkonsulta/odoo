@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_pendapatan_category_user,pendapatan.category,model_pendapatan_category,group_pendapatan_user,1,1,1,0
+access_pendapatan_pendapatan_user,pendapatan.pendapatan,model_pendapatan_pendapatan,group_pendapatan_user,1,1,1,0
+access_pendapatan_laporan_wizard,pendapatan.laporan.wizard,model_pendapatan_laporan_wizard,group_pendapatan_user,1,1,1,0
+access_pendapatan_category_manager,pendapatan.category.manager,model_pendapatan_category,group_pendapatan_manager,1,1,1,1
+access_pendapatan_pendapatan_manager,pendapatan.pendapatan.manager,model_pendapatan_pendapatan,group_pendapatan_manager,1,1,1,1

@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Definisi Aksi Laporan PDF Balance Sheet -->
+    <record id="action_report_balance_sheet" model="ir.actions.report">
+        <field name="name">Balance Sheet (Neraca Keuangan)</field>
+        <field name="model">sif.balance.sheet.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">sif_keuangan.report_balance_sheet_document</field>
+        <field name="report_file">sif_keuangan.report_balance_sheet_document</field>
+        <field name="print_report_name">'Balance_Sheet_' + (object.date_to.strftime('%Y%m%d') if object.date_to else 'All')</field>
+    </record>
+
+    <!-- Template Laporan PDF Balance Sheet -->
+    <template id="report_balance_sheet_document">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page" style="font-family: Arial, sans-serif; font-size: 11px; color: #333333;">
+                    
+                    <!-- Header Laporan -->
+                    <div style="border-bottom: 2px solid #714B67; padding-bottom: 8px; margin-bottom: 15px;">
+                        <div class="row">
+                            <div class="col-8">
+                                <h2 style="color: #714B67; margin: 0; font-weight: bold; font-size: 20px;">
+                                    Balance Sheet (Neraca)
+                                </h2>
+                                <p style="margin: 3px 0 0 0; color: #555555; font-size: 12px;">
+                                    <strong>Perusahaan:</strong> <t t-esc="company.name"/>
+                                    <span style="margin-left: 15px;">
+                                        <strong>Periode:</strong> <t t-esc="data.get('date_from_display')"/> s/d <t t-esc="data.get('date_to_display')"/>
+                                    </span>
+                                </p>
+                            </div>
+                            <div class="col-4 text-end" style="font-size: 11px; color: #666666;">
+                                <div><strong>Mata Uang:</strong> IDR (Rp)</div>
+                                <div>Dicetak pada: <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y %H:%M')"/></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabel Neraca Format Standar -->
+                    <table class="table table-sm table-bordered" style="width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 11px;">
+                        <thead>
+                            <tr style="background-color: #f1ecf0; color: #502848; font-weight: bold;">
+                                <th style="width: 75%; padding: 6px 10px;">KOMPONEN NERACA</th>
+                                <th style="width: 25%; text-align: right; padding: 6px 10px;">JUMLAH (RP)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                            <!-- ================= 1. ASSETS ================= -->
+                            <tr style="background-color: #714B67; color: #ffffff; font-weight: bold;">
+                                <td colspan="2" style="padding: 6px 10px; font-size: 12px;">
+                                    <t t-esc="data['assets']['title']"/>
+                                </td>
+                            </tr>
+
+                            <!-- Current Assets -->
+                            <tr style="background-color: #f8fafc; font-weight: bold; color: #1e293b;">
+                                <td style="padding-left: 20px;"><t t-esc="data['assets']['current_assets']['title']"/></td>
+                                <td></td>
+                            </tr>
+                            <!-- Bank & Cash -->
+                            <tr>
+                                <td style="padding-left: 35px;"><t t-esc="data['assets']['current_assets']['bank_and_cash']['title']"/></td>
+                                <td style="text-align: right; font-weight: 600;" t-att-style="'color: #dc2626;' if data['assets']['current_assets']['bank_and_cash']['is_negative'] else ''">
+                                    <t t-esc="data['assets']['current_assets']['bank_and_cash']['total_formatted']"/>
+                                </td>
+                            </tr>
+                            <t t-foreach="data['assets']['current_assets']['bank_and_cash']['lines']" t-as="l">
+                                <tr style="color: #666666; font-size: 10px;">
+                                    <td style="padding-left: 50px;">• <t t-esc="l['full_name']"/></td>
+                                    <td style="text-align: right;" t-att-style="'color: #dc2626;' if l['is_negative'] else ''"><t t-esc="l['amount_formatted']"/></td>
+                                </tr>
+                            </t>
+
+                            <!-- Receivables -->
+                            <tr>
+                                <td style="padding-left: 35px;"><t t-esc="data['assets']['current_assets']['receivables']['title']"/></td>
+                                <td style="text-align: right; font-weight: 600;" t-att-style="'color: #dc2626;' if data['assets']['current_assets']['receivables']['is_negative'] else ''">
+                                    <t t-esc="data['assets']['current_assets']['receivables']['total_formatted']"/>
+                                </td>
+                            </tr>
+                            <t t-foreach="data['assets']['current_assets']['receivables']['lines']" t-as="l">
+                                <tr style="color: #666666; font-size: 10px;">
+                                    <td style="padding-left: 50px;">• <t t-esc="l['full_name']"/></td>
+                                    <td style="text-align: right;" t-att-style="'color: #dc2626;' if l['is_negative'] else ''"><t t-esc="l['amount_formatted']"/></td>
+                                </tr>
+                            </t>
+
+                            <!-- Current Assets Other -->
+                            <tr>
+                                <td style="padding-left: 35px;"><t t-esc="data['assets']['current_assets']['other_current_assets']['title']"/></td>
+                                <td style="text-align: right; font-weight: 600;" t-att-style="'color: #dc2626;' if data['assets']['current_assets']['other_current_assets']['is_negative'] else ''">
+                                    <t t-esc="data['assets']['current_assets']['other_current_assets']['total_formatted']"/>
+                                </td>
+                            </tr>
+                            <t t-foreach="data['assets']['current_assets']['other_current_assets']['lines']" t-as="l">
+                                <tr style="color: #666666; font-size: 10px;">
+                                    <td style="padding-left: 50px;">• <t t-esc="l['full_name']"/></td>
+                                    <td style="text-align: right;" t-att-style="'color: #dc2626;' if l['is_negative'] else ''"><t t-esc="l['amount_formatted']"/></td>
+                                </tr>
+                            </t>
+
+                            <!-- Prepayments -->
+                            <tr>
+                                <td style="padding-left: 35px;"><t t-esc="data['assets']['current_assets']['prepayments']['title']"/></td>
+                                <td style="text-align: right; font-weight: 600;" t-att-style="'color: #dc2626;' if data['assets']['current_assets']['prepayments']['is_negative'] else ''">
+                                    <t t-esc="data['assets']['current_assets']['prepayments']['total_formatted']"/>
+                                </td>
+                            </tr>
+                            <t t-foreach="data['assets']['current_assets']['prepayments']['lines']" t-as="l">
+                                <tr style="color: #666666; font-size: 10px;">
+                                    <td style="padding-left: 50px;">• <t t-esc="l['full_name']"/></td>
+                                    <td style="text-align: right;" t-att-style="'color: #dc2626;' if l['is_negative'] else ''"><t t-esc="l['amount_formatted']"/></td>
+                                </tr>
+                            </t>
+
+                            <!-- Total Current Assets -->
+                            <tr style="background-color: #f1f5f9; font-weight: bold; color: #1e293b;">
+                                <td style="padding-left: 20px;">Total <t t-esc="data['assets']['current_assets']['title']"/></td>
+                                <td style="text-align: right;" t-att-style="'color: #dc2626;' if data['assets']['current_assets']['is_negative'] else ''">
+                                    <t t-esc="data['assets']['current_assets']['total_formatted']"/>
+                                </td>
+                            </tr>
+
+                            <!-- Fixed Assets -->
+                            <tr>
+                                <td style="padding-left: 20px; font-weight: bold;"><t t-esc="data['assets']['fixed_assets']['title']"/></td>
+                                <td style="text-align: right; font-weight: 600;" t-att-style="'color: #dc2626;' if data['assets']['fixed_assets']['is_negative'] else ''">
+                                    <t t-esc="data['assets']['fixed_assets']['total_formatted']"/>
+                                </td>
+                            </tr>
+                            <t t-foreach="data['assets']['fixed_assets']['lines']" t-as="l">
+                                <tr style="color: #666666; font-size: 10px;">
+                                    <td style="padding-left: 40px;">• <t t-esc="l['full_name']"/></td>
+                                    <td style="text-align: right;" t-att-style="'color: #dc2626;' if l['is_negative'] else ''"><t t-esc="l['amount_formatted']"/></td>
+                                </tr>
+                            </t>
+
+                            <!-- Non-current Assets -->
+                            <tr>
+                                <td style="padding-left: 20px; font-weight: bold;"><t t-esc="data['assets']['non_current_assets']['title']"/></td>
+                                <td style="text-align: right; font-weight: 600;" t-att-style="'color: #dc2626;' if data['assets']['non_current_assets']['is_negative'] else ''">
+                                    <t t-esc="data['assets']['non_current_assets']['total_formatted']"/>
+                                </td>
+                            </tr>
+
+                            <!-- Total ASSETS -->
+                            <tr style="background-color: #f7f5f7; font-weight: bold; font-size: 12px; border-top: 2px solid #714B67; border-bottom: 2px solid #714B67;">
+                                <td style="color: #502848;">TOTAL <t t-esc="data['assets']['title']"/></td>
+                                <td style="text-align: right; color: #714B67;">
+                                    <t t-esc="data['assets']['total_formatted']"/>
+                                </td>
+                            </tr>
+
+                            <!-- Spacer -->
+                            <tr><td colspan="2" style="border: none; height: 12px;"></td></tr>
+
+                            <!-- ================= 2. LIABILITIES ================= -->
+                            <tr style="background-color: #714B67; color: #ffffff; font-weight: bold;">
+                                <td colspan="2" style="padding: 6px 10px; font-size: 12px;">
+                                    <t t-esc="data['liabilities']['title']"/>
+                                </td>
+                            </tr>
+
+                            <!-- Current Liabilities -->
+                            <tr style="background-color: #f8fafc; font-weight: bold; color: #1e293b;">
+                                <td style="padding-left: 20px;"><t t-esc="data['liabilities']['current_liabilities']['title']"/></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td style="padding-left: 35px;"><t t-esc="data['liabilities']['current_liabilities']['general_current']['title']"/></td>
+                                <td style="text-align: right; font-weight: 600;" t-att-style="'color: #dc2626;' if data['liabilities']['current_liabilities']['general_current']['is_negative'] else ''">
+                                    <t t-esc="data['liabilities']['current_liabilities']['general_current']['total_formatted']"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding-left: 35px;"><t t-esc="data['liabilities']['current_liabilities']['credit_card']['title']"/></td>
+                                <td style="text-align: right; font-weight: 600;"><t t-esc="data['liabilities']['current_liabilities']['credit_card']['total_formatted']"/></td>
+                            </tr>
+                            <tr>
+                                <td style="padding-left: 35px;"><t t-esc="data['liabilities']['current_liabilities']['payables']['title']"/></td>
+                                <td style="text-align: right; font-weight: 600;" t-att-style="'color: #dc2626;' if data['liabilities']['current_liabilities']['payables']['is_negative'] else ''">
+                                    <t t-esc="data['liabilities']['current_liabilities']['payables']['total_formatted']"/>
+                                </td>
+                            </tr>
+                            <t t-foreach="data['liabilities']['current_liabilities']['payables']['lines']" t-as="l">
+                                <tr style="color: #666666; font-size: 10px;">
+                                    <td style="padding-left: 50px;">• <t t-esc="l['full_name']"/></td>
+                                    <td style="text-align: right;" t-att-style="'color: #dc2626;' if l['is_negative'] else ''"><t t-esc="l['amount_formatted']"/></td>
+                                </tr>
+                            </t>
+
+                            <!-- Total Current Liabilities -->
+                            <tr style="background-color: #f1f5f9; font-weight: bold; color: #1e293b;">
+                                <td style="padding-left: 20px;">Total <t t-esc="data['liabilities']['current_liabilities']['title']"/></td>
+                                <td style="text-align: right;" t-att-style="'color: #dc2626;' if data['liabilities']['current_liabilities']['is_negative'] else ''">
+                                    <t t-esc="data['liabilities']['current_liabilities']['total_formatted']"/>
+                                </td>
+                            </tr>
+
+                            <!-- Non-current Liabilities -->
+                            <tr>
+                                <td style="padding-left: 20px; font-weight: bold;"><t t-esc="data['liabilities']['non_current_liabilities']['title']"/></td>
+                                <td style="text-align: right; font-weight: 600;"><t t-esc="data['liabilities']['non_current_liabilities']['total_formatted']"/></td>
+                            </tr>
+
+                            <!-- Total LIABILITIES -->
+                            <tr style="background-color: #f7f5f7; font-weight: bold; font-size: 12px; border-top: 2px solid #714B67; border-bottom: 2px solid #714B67;">
+                                <td style="color: #502848;">TOTAL <t t-esc="data['liabilities']['title']"/></td>
+                                <td style="text-align: right; color: #714B67;">
+                                    <t t-esc="data['liabilities']['total_formatted']"/>
+                                </td>
+                            </tr>
+
+                            <!-- Spacer -->
+                            <tr><td colspan="2" style="border: none; height: 12px;"></td></tr>
+
+                            <!-- ================= 3. EQUITY (& EARNINGS) ================= -->
+                            <tr style="background-color: #714B67; color: #ffffff; font-weight: bold;">
+                                <td colspan="2" style="padding: 6px 10px; font-size: 12px;">
+                                    <t t-esc="data['equity']['title']"/>
+                                </td>
+                            </tr>
+
+                            <!-- Equity -->
+                            <tr>
+                                <td style="padding-left: 20px; font-weight: bold;"><t t-esc="data['equity']['direct_equity']['title']"/></td>
+                                <td style="text-align: right; font-weight: 600;"><t t-esc="data['equity']['direct_equity']['total_formatted']"/></td>
+                            </tr>
+
+                            <!-- Earnings -->
+                            <tr style="background-color: #f8fafc; font-weight: bold; color: #1e293b;">
+                                <td style="padding-left: 20px;"><t t-esc="data['equity']['earnings']['title']"/></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td style="padding-left: 35px;"><t t-esc="data['equity']['earnings']['current_year_earnings']['title']"/></td>
+                                <td style="text-align: right; font-weight: 600;" t-att-style="'color: #dc2626;' if data['equity']['earnings']['current_year_earnings']['is_negative'] else ''">
+                                    <t t-esc="data['equity']['earnings']['current_year_earnings']['total_formatted']"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding-left: 35px;"><t t-esc="data['equity']['earnings']['previous_years_earnings']['title']"/></td>
+                                <td style="text-align: right; font-weight: 600;" t-att-style="'color: #dc2626;' if data['equity']['earnings']['previous_years_earnings']['is_negative'] else ''">
+                                    <t t-esc="data['equity']['earnings']['previous_years_earnings']['total_formatted']"/>
+                                </td>
+                            </tr>
+
+                            <!-- Total Earnings -->
+                            <tr style="background-color: #f1f5f9; font-weight: bold; color: #1e293b;">
+                                <td style="padding-left: 20px;">Total <t t-esc="data['equity']['earnings']['title']"/></td>
+                                <td style="text-align: right;" t-att-style="'color: #dc2626;' if data['equity']['earnings']['is_negative'] else ''">
+                                    <t t-esc="data['equity']['earnings']['total_formatted']"/>
+                                </td>
+                            </tr>
+
+                            <!-- Total EQUITY (& EARNINGS) -->
+                            <tr style="background-color: #f7f5f7; font-weight: bold; font-size: 12px; border-top: 2px solid #714B67; border-bottom: 2px solid #714B67;">
+                                <td style="color: #502848;">TOTAL <t t-esc="data['equity']['title']"/></td>
+                                <td style="text-align: right; color: #714B67;">
+                                    <t t-esc="data['equity']['total_formatted']"/>
+                                </td>
+                            </tr>
+
+                        </tbody>
+                    </table>
+
+                    <!-- Ringkasan Neraca Seimbang -->
+                    <div style="margin-top: 20px; page-break-inside: avoid; border: 2px solid #714B67; border-radius: 4px; background-color: #faf6f9; padding: 10px;">
+                        <table style="width: 100%; font-size: 12px; font-weight: bold;">
+                            <tr>
+                                <td style="width: 50%; color: #714B67; font-size: 13px;">
+                                    LIABILITIES + EQUITY
+                                </td>
+                                <td style="width: 25%; text-align: right; color: #000000; font-size: 13px;">
+                                    <t t-esc="data['summary']['total_liabilities_and_equity_formatted']"/>
+                                </td>
+                                <td style="width: 25%; text-align: right;">
+                                    <span t-att-style="'color: #16a34a;' if data['summary']['is_balanced'] else 'color: #dc2626;'">
+                                        <t t-if="data['summary']['is_balanced']">✓ Neraca Seimbang (Balance)</t>
+                                        <t t-else="">⚠ Selisih: <t t-esc="data['summary']['difference_formatted']"/></t>
+                                    </span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                </div>
+            </t>
+        </t>
+    </template>
+
+</odoo>

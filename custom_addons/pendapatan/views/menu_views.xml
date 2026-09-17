@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Menu Utama Modul Pendapatan -->
+    <menuitem id="menu_pendapatan_root"
+              name="Pendapatan"
+              sequence="30"
+              web_icon="pendapatan,static/description/icon.png"/>
+
+    <!-- Kategori 1: Daftar Pendapatan -->
+    <menuitem id="menu_pendapatan_transaksi"
+              name="Daftar Pendapatan"
+              parent="menu_pendapatan_root"
+              action="action_pendapatan_all"
+              sequence="10"/>
+
+    <!-- Kategori 2: Laporan -->
+    <menuitem id="menu_pendapatan_laporan"
+              name="Laporan"
+              parent="menu_pendapatan_root"
+              sequence="20"/>
+
+    <menuitem id="menu_pendapatan_laporan_sub"
+              name="Laporan Pendapatan"
+              parent="menu_pendapatan_laporan"
+              action="action_pendapatan_laporan_wizard"
+              sequence="10"/>
+
+    <!-- Kategori 3: Master Data -->
+    <menuitem id="menu_pendapatan_master"
+              name="Master Data"
+              parent="menu_pendapatan_root"
+              sequence="30"/>
+
+    <menuitem id="menu_pendapatan_category_sub"
+              name="Kategori Pendapatan"
+              parent="menu_pendapatan_master"
+              action="action_pendapatan_category"
+              sequence="10"/>
+
+</odoo>
