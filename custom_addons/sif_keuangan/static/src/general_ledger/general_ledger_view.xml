@@ -332,7 +332,8 @@
                     <span class="badge bg-primary px-3 py-1.5 fw-bold">
                         <t t-esc="state.data ? state.data.accounts.length : 0" /> <t t-esc="t('gl.footer_accounts')" />
                     </span>
-                    <span class="text-white-50 small">
+                    <span class="text-white-75 small fw-medium">
+                        <i class="fa fa-calculator me-1 opacity-75" />
                         <t t-esc="t('gl.footer_system')" />
                     </span>
                 </div>
