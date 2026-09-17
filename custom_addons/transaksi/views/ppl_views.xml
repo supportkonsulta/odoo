@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Ekstensi Form PPL: Tombol Pengajuan Transfer & Stat Button -->
+    <record id="view_sifnext_ppl_form_inherit_transaksi" model="ir.ui.view">
+        <field name="name">sifnext.ppl.form.inherit.transaksi</field>
+        <field name="model">sifnext.ppl</field>
+        <field name="inherit_id" ref="sifnext_ppl.view_sifnext_ppl_form"/>
+        <field name="arch" type="xml">
+            <!-- Tombol Header: Ajukan Transfer Bank -->
+            <xpath expr="//header" position="inside">
+                <button name="action_create_bank_transfer" type="object" string="Ajukan Transfer Bank" class="btn-primary"
+                        groups="sifnext_ppl.group_ppl_finance,transaksi.group_transaksi_finance,transaksi.group_transaksi_manager"
+                        invisible="state != 'approved' or payment_method != 'bank' or (transaction_id and transaction_state not in ('rejected', 'failed'))"/>
+            </xpath>
+
+            <!-- Stat Button: Transfer Bank -->
+            <xpath expr="//div[hasclass('oe_title')]" position="before">
+                <div class="oe_button_box" name="button_box">
+                    <button name="action_view_bank_transfer" type="object" class="oe_stat_button" icon="fa-university"
+                            invisible="not transaction_id">
+                        <div class="o_stat_info">
+                            <span class="o_stat_text">Transfer Bank</span>
+                            <field name="transaction_state" class="text-muted small" readonly="1"/>
+                        </div>
+                    </button>
+                </div>
+            </xpath>
+
+            <!-- Detail Pembayaran: Tautan Dokumen Transaksi -->
+            <xpath expr="//field[@name='payment_reference']" position="after">
+                <field name="transaction_id" readonly="1" invisible="not transaction_id"/>
+                <field name="transaction_state" readonly="1" invisible="not transaction_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Server Action: Buat Transfer Bank Kolektif pada List View PPL -->
+    <record id="action_ppl_create_batch_transfer" model="ir.actions.server">
+        <field name="name">Buat Transfer Bank Kolektif</field>
+        <field name="model_id" ref="sifnext_ppl.model_sifnext_ppl"/>
+        <field name="binding_model_id" ref="sifnext_ppl.model_sifnext_ppl"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+action = records.action_create_batch_bank_transfer()
+        </field>
+    </record>
+</odoo>

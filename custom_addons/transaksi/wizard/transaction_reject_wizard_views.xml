@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_transaksi_reject_wizard_form" model="ir.ui.view">
+        <field name="name">transaksi.reject.wizard.form</field>
+        <field name="model">transaksi.reject.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Tolak Pengajuan Transaksi">
+                <sheet>
+                    <div class="alert alert-warning mb-3" role="alert">
+                        Silakan masukkan alasan penolakan pengajuan transfer ini. Alasan akan tercatat dalam riwayat dokumen.
+                    </div>
+                    <group>
+                        <field name="transaction_id" invisible="1"/>
+                        <field name="reason" placeholder="Tuliskan alasan penolakan secara jelas di sini..." widget="text"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_confirm_reject" string="Konfirmasi Tolak" type="object" class="btn-danger"/>
+                    <button string="Batal" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>
