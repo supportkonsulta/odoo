@@ -26,6 +26,11 @@ class SifJurnalEntry(models.Model):
     kwitansi_ref = fields.Char(
         string='No. Kwitansi / Bukti Fisik'
     )
+    partner_id = fields.Many2one(
+        'res.partner',
+        string='Partner / Rekanan',
+        index=True
+    )
     unit_name = fields.Char(
         string='Unit Kerja',
         default='KANTOR'
@@ -141,10 +146,12 @@ class SifJurnalEntry(models.Model):
     def create_journal_from_ppl(self, vals):
         if hasattr(vals, '_name'):
             ppl = vals
+            partner_rec = getattr(ppl, 'partner_id', False)
             vals = {
                 'date': ppl.payment_date if hasattr(ppl, 'payment_date') and ppl.payment_date else fields.Date.today(),
                 'ref': ppl.name if hasattr(ppl, 'name') else 'PPL',
                 'kwitansi_ref': getattr(ppl, 'kwitansi_ref', '') or getattr(ppl, 'receipt_number', ''),
+                'partner_id': partner_rec.id if partner_rec else False,
                 'unit_name': getattr(ppl, 'unit_name', '') or (ppl.department_id.name if hasattr(ppl, 'department_id') and ppl.department_id else 'KANTOR'),
                 'source_type': 'ppl',
                 'lines': []
@@ -162,6 +169,7 @@ class SifJurnalEntry(models.Model):
                 if dpp > 0:
                     lines.append({
                         'account_id': exp_acc.id,
+                        'partner_id': partner_rec.id if partner_rec else False,
                         'name': f"Biaya Pengadaan {vals['ref']}",
                         'debit': dpp,
                         'credit': 0.0
@@ -169,12 +177,14 @@ class SifJurnalEntry(models.Model):
                 if ppn > 0 and ppn_acc:
                     lines.append({
                         'account_id': ppn_acc.id,
+                        'partner_id': partner_rec.id if partner_rec else False,
                         'name': f"PPN Masukan (Aset) {vals['ref']}",
                         'debit': ppn,
                         'credit': 0.0
                     })
                 lines.append({
                     'account_id': pay_acc.id,
+                    'partner_id': partner_rec.id if partner_rec else False,
                     'name': f"Pembayaran {vals['ref']}",
                     'debit': 0.0,
                     'credit': total
@@ -186,6 +196,7 @@ class SifJurnalEntry(models.Model):
         for l in raw_lines:
             lines_command.append((0, 0, {
                 'account_id': l.get('account_id'),
+                'partner_id': l.get('partner_id') or vals.get('partner_id'),
                 'name': l.get('name', 'Transaksi PPL'),
                 'debit': l.get('debit', 0.0),
                 'credit': l.get('credit', 0.0),
@@ -195,6 +206,7 @@ class SifJurnalEntry(models.Model):
             'date': vals.get('date', fields.Date.today()),
             'ref': vals.get('ref', 'PPL'),
             'kwitansi_ref': vals.get('kwitansi_ref', ''),
+            'partner_id': vals.get('partner_id', False),
             'unit_name': vals.get('unit_name', 'KANTOR'),
             'source_type': 'ppl',
             'line_ids': lines_command,
@@ -308,6 +320,14 @@ class SifJurnalLine(models.Model):
         string='Kwitansi',
         store=True
     )
+    partner_id = fields.Many2one(
+        'res.partner',
+        string='Partner / Rekanan',
+        compute='_compute_partner_id',
+        store=True,
+        readonly=False,
+        index=True
+    )
     state = fields.Selection(
         related='entry_id.state',
         string='Status',
@@ -358,6 +378,12 @@ class SifJurnalLine(models.Model):
     def _compute_balance(self):
         for rec in self:
             rec.balance = (rec.debit or 0.0) - (rec.credit or 0.0)
+
+    @api.depends('entry_id.partner_id')
+    def _compute_partner_id(self):
+        for rec in self:
+            if not rec.partner_id and rec.entry_id.partner_id:
+                rec.partner_id = rec.entry_id.partner_id
 
 
 # =========================================================================

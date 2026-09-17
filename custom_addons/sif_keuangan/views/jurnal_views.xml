@@ -137,6 +137,7 @@
                             <field name="date"/>
                             <field name="ref"/>
                             <field name="kwitansi_ref"/>
+                            <field name="partner_id"/>
                         </group>
                         <group>
                             <field name="unit_name"/>
@@ -148,6 +149,7 @@
                             <field name="line_ids">
                                 <list editable="bottom">
                                     <field name="account_id"/>
+                                    <field name="partner_id" optional="show"/>
                                     <field name="name" string="Keterangan"/>
                                     <field name="unit_name" string="Unit Kerja"/>
                                     <field name="debit" sum="Total Debet"/>
