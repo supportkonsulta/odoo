@@ -27,7 +27,7 @@
                                 <p style="margin: 3px 0 0 0; color: #555555; font-size: 12px;">
                                     <strong>Perusahaan:</strong> <t t-esc="company.name"/>
                                     <span style="margin-left: 15px;">
-                                        <strong>Posisi Per:</strong> <t t-esc="date_to_display"/>
+                                        <strong>Periode:</strong> <t t-esc="data.get('date_from_display')"/> s/d <t t-esc="data.get('date_to_display')"/>
                                     </span>
                                 </p>
                             </div>
