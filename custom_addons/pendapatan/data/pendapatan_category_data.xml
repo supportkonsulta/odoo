@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- 1. 50002: PENDAPATAN OPERASIONAL NON AFILIASI -->
+        <record id="category_ops_non_afiliasi" model="pendapatan.category">
+            <field name="name">Pendapatan Operasional Pendidikan (SPP / UKT)</field>
+            <field name="code">SPP-NON-AFILIASI</field>
+            <field name="periodicity">bulanan</field>
+            <field name="coa_pendapatan_id" ref="sif_keuangan.coa_50002"/>
+            <field name="coa_kas_id" ref="sif_keuangan.coa_11101"/>
+            <field name="description">Penerimaan iuran SPP rutin, uang kuliah tunggal, dan biaya pendidikan dari siswa/mahasiswa umum.</field>
+        </record>
+
+        <!-- 2. 50001: PENDAPATAN OPERASIONAL AFILIASI -->
+        <record id="category_ops_afiliasi" model="pendapatan.category">
+            <field name="name">Pendapatan Operasional Afiliasi &amp; Yayasan</field>
+            <field name="code">OPS-AFILIASI</field>
+            <field name="periodicity">semester</field>
+            <field name="coa_pendapatan_id" ref="sif_keuangan.coa_50001"/>
+            <field name="coa_kas_id" ref="sif_keuangan.coa_11104"/>
+            <field name="description">Penerimaan operasional dari unit afiliasi, program beasiswa yayasan, dan kerjasama antar lembaga internal.</field>
+        </record>
+
+        <!-- 3. 80001: BUNGA DEPOSITO -->
+        <record id="category_bunga_deposito" model="pendapatan.category">
+            <field name="name">Bunga &amp; Bagi Hasil Deposito</field>
+            <field name="code">BUNGA-DEPOSITO</field>
+            <field name="periodicity">bulanan</field>
+            <field name="coa_pendapatan_id" ref="sif_keuangan.coa_80001"/>
+            <field name="coa_kas_id" ref="sif_keuangan.coa_11201"/>
+            <field name="description">Penerimaan imbal hasil dan bunga penempatan dana deposito di perbankan.</field>
+        </record>
+
+        <!-- 4. 80002: JASA GIRO -->
+        <record id="category_jasa_giro" model="pendapatan.category">
+            <field name="name">Pendapatan Jasa Giro Rekening Bank</field>
+            <field name="code">JASA-GIRO</field>
+            <field name="periodicity">bulanan</field>
+            <field name="coa_pendapatan_id" ref="sif_keuangan.coa_80002"/>
+            <field name="coa_kas_id" ref="sif_keuangan.coa_11103"/>
+            <field name="description">Penerimaan imbalan jasa giro dari rekening koran / operasional bank.</field>
+        </record>
+
+        <!-- 5. 80003: PENDAPATAN LAINNYA -->
+        <record id="category_pendapatan_lainnya" model="pendapatan.category">
+            <field name="name">Pendapatan Lain-Lain, Hibah &amp; Donasi</field>
+            <field name="code">PENDAPATAN-LAIN</field>
+            <field name="periodicity">insidentil</field>
+            <field name="coa_pendapatan_id" ref="sif_keuangan.coa_80003"/>
+            <field name="coa_kas_id" ref="sif_keuangan.coa_11105"/>
+            <field name="description">Penerimaan dana hibah penelitian, donasi/CSR, penyewaan fasilitas kampus, dan penerimaan non-operasional lainnya.</field>
+        </record>
+    </data>
+</odoo>
