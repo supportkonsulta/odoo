@@ -1,0 +1,386 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- =========================================================
+         LIST VIEW
+    ========================================================== -->
+
+    <record id="view_ksg_sales_project_list" model="ir.ui.view">
+        <field name="name">ksg.sales.project.list</field>
+        <field name="model">ksg.sales.project</field>
+        <field name="arch" type="xml">
+
+            <list string="Data Proyek">
+
+                <field name="kode_proyek"/>
+                <field name="nama_pekerjaan"/>
+                <field name="klien"/>
+                <field name="kategori"/>
+                <field name="status"/>
+                <field name="tanggal_po_diterima"/>
+                <field name="no_pk"/>
+                <field name="awal_kontrak"/>
+                <field name="akhir_kontrak"/>
+                <field name="nilai_kontrak_awal"/>
+                <field name="nilai_kontrak_terkini"/>
+                <field name="sisa_nilai_kontrak"/>
+                <field name="sistem_penagihan"/>
+
+            </list>
+
+        </field>
+    </record>
+
+
+    <!-- =========================================================
+         FORM VIEW
+    ========================================================== -->
+
+    <record id="view_ksg_sales_project_form" model="ir.ui.view">
+        <field name="name">ksg.sales.project.form</field>
+        <field name="model">ksg.sales.project</field>
+        <field name="arch" type="xml">
+
+            <form string="Data Proyek">
+
+                <!-- =================================================
+                     HEADER / ACTION
+                ================================================== -->
+
+                <header>
+
+                    <button
+                        name="action_generate_terms"
+                        string="Generate Termin"
+                        type="object"
+                        class="btn-primary"
+                    />
+
+                </header>
+
+
+                <sheet>
+
+                    <!-- =================================================
+                         JUDUL PROYEK
+                    ================================================== -->
+
+                    <div class="oe_title">
+
+                        <label for="nama_pekerjaan"/>
+
+                        <h1>
+                            <field name="nama_pekerjaan"/>
+                        </h1>
+
+                    </div>
+
+
+                    <!-- =================================================
+                         INFORMASI PROYEK
+                    ================================================== -->
+
+                    <group>
+
+                        <group string="Informasi Proyek">
+
+                            <field
+                                name="kode_proyek"
+                                readonly="1"
+                            />
+
+                            <field name="klien"/>
+
+                            <field name="kategori"/>
+
+                            <field name="status"/>
+
+                            <field name="tanggal_po_diterima"/>
+
+                            <field name="no_pk"/>
+
+                        </group>
+
+
+                        <!-- =================================================
+                             KONTRAK
+                        ================================================== -->
+
+                        <group string="Kontrak">
+
+                            <field name="awal_kontrak"/>
+
+                            <field name="akhir_kontrak"/>
+
+                            <field name="currency_id"/>
+
+                            <field name="nilai_kontrak_awal"/>
+
+                            <field
+                                name="nilai_kontrak_terkini"
+                                readonly="1"
+                            />
+
+                            <field
+                                name="sisa_nilai_kontrak"
+                                readonly="1"
+                            />
+
+                        </group>
+
+                    </group>
+
+
+                    <!-- =================================================
+                         SISTEM PENAGIHAN
+                    ================================================== -->
+
+                    <group string="Termin Penagihan">
+
+                        <field name="sistem_penagihan"/>
+
+                    </group>
+
+
+                    <!-- =================================================
+                         DETAIL PROYEK
+                    ================================================== -->
+
+                    <notebook>
+
+                        <!-- =================================================
+                             CHECKLIST
+                        ================================================== -->
+
+                        <page string="Checklist Dokumen Engineering">
+
+                            <field
+                                name="checklist_dokumen_ids"
+                                widget="many2many_tags"
+                            />
+
+                        </page>
+
+
+                        <!-- =================================================
+                             ADDENDUM
+                        ================================================== -->
+
+                        <page string="Addendum Kontrak">
+
+                            <field name="addendum_ids">
+
+                                <list editable="bottom">
+
+                                    <field name="nilai_awal"/>
+                                    <field name="nilai_kontrak_baru"/>
+                                    <field name="tanggal_perubahan"/>
+                                    <field name="kategori_alasan"/>
+                                    <field name="state"/>
+
+                                </list>
+
+                            </field>
+
+                        </page>
+
+
+                        <!-- =================================================
+                             RAB
+                        ================================================== -->
+
+                        <page string="RAB">
+
+                            <field name="rab_ids">
+
+                                <list>
+
+                                    <field name="name"/>
+                                    <field name="tanggal_rab"/>
+                                    <field name="total_rab"/>
+                                    <field name="state"/>
+
+                                </list>
+
+                            </field>
+
+                        </page>
+
+
+                        <!-- =================================================
+                             TERMIN PENAGIHAN
+                        ================================================== -->
+
+                        <page string="Termin Penagihan">
+
+                            <field name="term_ids">
+
+                                <list
+                                    editable="bottom"
+                                    decoration-success="state == 'sudah_ditagih'"
+                                    decoration-warning="state == 'jatuh_tempo'"
+                                >
+
+                                    <field
+                                        name="no_termin"
+                                        string="No. Termin"
+                                    />
+
+                                    <field
+                                        name="deskripsi"
+                                        string="Deskripsi"
+                                    />
+
+                                    <field
+                                        name="persentase"
+                                        string="Persentase (%)"
+                                    />
+
+                                    <field
+                                        name="syarat_progress"
+                                        string="Syarat Progress (%)"
+                                    />
+
+                                    <field
+                                        name="nominal"
+                                        string="Nominal"
+                                        readonly="1"
+                                    />
+
+                                    <field
+                                        name="tanggal_jatuh_tempo"
+                                        string="Tanggal Jatuh Tempo"
+                                    />
+
+                                    <field
+                                        name="invoice_id"
+                                        string="Invoice"
+                                        readonly="1"
+                                    />
+
+                                    <field
+                                        name="state"
+                                        string="Status"
+                                        readonly="1"
+                                    />
+
+                                    <!-- =================================================
+                                         BUAT INVOICE
+                                    ================================================== -->
+
+                                    <button
+                                        name="action_create_invoice"
+                                        string="Buat Invoice"
+                                        type="object"
+                                        class="btn-primary"
+                                        invisible="invoice_id"
+                                    />
+
+                                    <!-- =================================================
+                                         LIHAT INVOICE
+                                    ================================================== -->
+
+                                    <button
+                                        name="action_open_invoice"
+                                        string="Lihat Invoice"
+                                        type="object"
+                                        invisible="not invoice_id"
+                                    />
+
+                                </list>
+
+                            </field>
+
+                        </page>
+
+
+                        <!-- =================================================
+                             KETERANGAN
+                        ================================================== -->
+
+                        <page string="Keterangan">
+
+                            <field
+                                name="keterangan"
+                                placeholder="Keterangan proyek..."
+                            />
+
+                        </page>
+
+                    </notebook>
+
+                </sheet>
+
+
+                <!-- =================================================
+                     CHATTER
+                ================================================== -->
+
+                <chatter/>
+
+            </form>
+
+        </field>
+    </record>
+
+
+    <!-- =========================================================
+         ACTION
+    ========================================================== -->
+
+    <record
+        id="action_ksg_sales_project"
+        model="ir.actions.act_window"
+    >
+
+        <field name="name">Data Proyek</field>
+
+        <field name="res_model">ksg.sales.project</field>
+
+        <field name="view_mode">list,form</field>
+
+    </record>
+
+
+    <!-- =========================================================
+         MENU
+    ========================================================== -->
+
+    <menuitem
+        id="menu_ksg_sales_root"
+        name="Penjualan KSG"
+        sequence="10"
+    />
+
+    <menuitem
+        id="menu_ksg_sales_project"
+        name="Data Proyek"
+        parent="menu_ksg_sales_root"
+        action="action_ksg_sales_project"
+        sequence="10"
+    />
+
+    <menuitem
+        id="menu_ksg_sales_master"
+        name="Master Data"
+        parent="menu_ksg_sales_root"
+        sequence="20"
+    />
+
+    <menuitem
+        id="menu_ksg_sales_category"
+        name="Kategori Pekerjaan"
+        parent="menu_ksg_sales_master"
+        action="action_ksg_sales_category"
+        sequence="10"
+    />
+
+    <menuitem
+        id="menu_ksg_sales_document_checklist"
+        name="Checklist Dokumen"
+        parent="menu_ksg_sales_master"
+        action="action_ksg_sales_document_checklist"
+        sequence="20"
+    />
+
+</odoo>

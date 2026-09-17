@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record id="seq_ksg_sales_rab" model="ir.sequence">
+        <field name="name">KSG Sales RAB</field>
+        <field name="code">ksg.sales.rab</field>
+        <field name="prefix">RAB/%(year)s/</field>
+        <field name="padding">5</field>
+        <field name="number_next">1</field>
+        <field name="number_increment">1</field>
+    </record>
+
+    <record id="seq_ksg_sales_hpp" model="ir.sequence">
+        <field name="name">KSG Sales HPP</field>
+        <field name="code">ksg.sales.hpp</field>
+        <field name="prefix">HPP/%(year)s/</field>
+        <field name="padding">5</field>
+        <field name="number_next">1</field>
+        <field name="number_increment">1</field>
+    </record>
+
+</odoo>

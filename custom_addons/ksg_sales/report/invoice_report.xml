@@ -1,0 +1,16 @@
+<odoo>
+
+    <record id="action_report_ksg_invoice" model="ir.actions.report">
+        <field name="name">KSG Invoice</field>
+        <field name="model">account.move</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ksg_sales.report_ksg_invoice</field>
+        <field name="report_file">ksg_sales.report_ksg_invoice</field>
+        <field name="print_report_name">
+            'Invoice - %s' % (object.name or 'Draft')
+        </field>
+        <field name="binding_model_id" ref="account.model_account_move"/>
+        <field name="binding_type">report</field>
+    </record>
+
+</odoo>

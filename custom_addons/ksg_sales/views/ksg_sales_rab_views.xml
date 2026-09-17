@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- ====================================================== -->
+    <!-- RAB LIST -->
+    <!-- ====================================================== -->
+
+    <record id="view_ksg_sales_rab_list" model="ir.ui.view">
+        <field name="name">ksg.sales.rab.list</field>
+        <field name="model">ksg.sales.rab</field>
+        <field name="arch" type="xml">
+
+            <list string="RAB">
+
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="tanggal_rab"/>
+                <field name="total_rab"/>
+                <field name="state"/>
+
+            </list>
+
+        </field>
+    </record>
+
+
+    <!-- ====================================================== -->
+    <!-- RAB FORM -->
+    <!-- ====================================================== -->
+
+    <record id="view_ksg_sales_rab_form" model="ir.ui.view">
+        <field name="name">ksg.sales.rab.form</field>
+        <field name="model">ksg.sales.rab</field>
+        <field name="arch" type="xml">
+
+            <form string="RAB">
+
+                <header>
+
+                    <!-- AJUKAN RAB -->
+
+                    <button
+                        name="action_submit"
+                        string="Ajukan"
+                        type="object"
+                        class="btn-primary"
+                        invisible="state != 'draft'"
+                    />
+
+
+                    <!-- APPROVE RAB -->
+
+                    <button
+                        name="action_approve"
+                        string="Approve"
+                        type="object"
+                        class="btn-primary"
+                        groups="ksg_sales.group_sales_manager"
+                        invisible="state != 'submitted'"
+                    />
+
+
+                    <!-- BUAT HPP DARI RAB -->
+
+                    <button
+                        name="action_create_hpp"
+                        string="Buat HPP"
+                        type="object"
+                        class="btn-secondary"
+                        invisible="state != 'approved'"
+                    />
+
+
+                    <!-- STATUS -->
+
+                    <field
+                        name="state"
+                        widget="statusbar"
+                        statusbar_visible="draft,submitted,approved"
+                    />
+
+                </header>
+
+
+                <sheet>
+
+                    <!-- ================================================== -->
+                    <!-- JUDUL -->
+                    <!-- ================================================== -->
+
+                    <div class="oe_title">
+
+                        <label for="name"/>
+
+                        <h1>
+
+                            <field
+                                name="name"
+                                readonly="1"
+                            />
+
+                        </h1>
+
+                    </div>
+
+
+                    <!-- ================================================== -->
+                    <!-- INFORMASI RAB -->
+                    <!-- ================================================== -->
+
+                    <group>
+
+                        <group string="Informasi RAB">
+
+                            <field
+                                name="project_id"
+                                readonly="state == 'approved'"
+                            />
+
+                            <field
+                                name="tanggal_rab"
+                                readonly="state == 'approved'"
+                            />
+
+                        </group>
+
+
+                        <group string="Nilai">
+
+                            <field
+                                name="currency_id"
+                                readonly="1"
+                            />
+
+                            <field
+                                name="total_rab"
+                                readonly="1"
+                            />
+
+                        </group>
+
+                    </group>
+
+
+                    <!-- ================================================== -->
+                    <!-- DESKRIPSI -->
+                    <!-- ================================================== -->
+
+                    <group string="Deskripsi">
+
+                        <field
+                            name="deskripsi"
+                            placeholder="Deskripsi RAB..."
+                            readonly="state == 'approved'"
+                        />
+
+                    </group>
+
+
+                    <!-- ================================================== -->
+                    <!-- DETAIL RAB -->
+                    <!-- ================================================== -->
+
+                    <notebook>
+
+                        <page string="Detail RAB">
+
+                            <field
+                                name="line_ids"
+                                readonly="state == 'approved'"
+                            >
+
+                                <list editable="bottom">
+
+                                    <field
+                                        name="sequence"
+                                        widget="handle"
+                                    />
+
+                                    <field
+                                        name="kategori"
+                                    />
+
+                                    <field
+                                        name="uraian"
+                                    />
+
+                                    <field
+                                        name="spesifikasi"
+                                    />
+
+                                    <field
+                                        name="satuan"
+                                    />
+
+                                    <field
+                                        name="qty"
+                                    />
+
+                                    <field
+                                        name="harga_satuan"
+                                    />
+
+                                    <field
+                                        name="subtotal"
+                                        readonly="1"
+                                    />
+
+                                    <field
+                                        name="keterangan"
+                                    />
+
+                                </list>
+
+                            </field>
+
+
+                            <!-- ================================================== -->
+                            <!-- TOTAL -->
+                            <!-- ================================================== -->
+
+                            <group class="oe_subtotal_footer oe_right">
+
+                                <field
+                                    name="total_rab"
+                                    readonly="1"
+                                />
+
+                            </group>
+
+                        </page>
+
+                    </notebook>
+
+                </sheet>
+
+
+                <!-- ====================================================== -->
+                <!-- CHATTER -->
+                <!-- ====================================================== -->
+
+                <chatter/>
+
+            </form>
+
+        </field>
+    </record>
+
+
+    <!-- ====================================================== -->
+    <!-- RAB ACTION -->
+    <!-- ====================================================== -->
+
+    <record
+        id="action_ksg_sales_rab"
+        model="ir.actions.act_window"
+    >
+
+        <field name="name">RAB</field>
+
+        <field name="res_model">ksg.sales.rab</field>
+
+        <field name="view_mode">list,form</field>
+
+    </record>
+
+
+    <!-- ====================================================== -->
+    <!-- RAB MENU -->
+    <!-- ====================================================== -->
+
+    <menuitem
+        id="menu_ksg_sales_rab"
+        name="RAB"
+        parent="menu_ksg_sales_root"
+        action="action_ksg_sales_rab"
+        sequence="30"
+    />
+
+</odoo>

@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- LIST HPP -->
+
+    <record id="view_ksg_sales_hpp_list" model="ir.ui.view">
+        <field name="name">ksg.sales.hpp.list</field>
+        <field name="model">ksg.sales.hpp</field>
+        <field name="arch" type="xml">
+
+            <list string="HPP">
+
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="rab_id"/>
+                <field name="tanggal_hpp"/>
+                <field name="total_hpp"/>
+                <field name="state"/>
+
+            </list>
+
+        </field>
+    </record>
+
+
+    <!-- FORM HPP -->
+
+    <record id="view_ksg_sales_hpp_form" model="ir.ui.view">
+        <field name="name">ksg.sales.hpp.form</field>
+        <field name="model">ksg.sales.hpp</field>
+        <field name="arch" type="xml">
+
+            <form string="HPP">
+
+                <header>
+
+                    <button
+                        name="action_submit"
+                        string="Ajukan"
+                        type="object"
+                        class="btn-primary"
+                        invisible="state != 'draft'"
+                    />
+
+                    <button
+                        name="action_approve"
+                        string="Approve"
+                        type="object"
+                        class="btn-primary"
+                        groups="ksg_sales.group_sales_manager"
+                        invisible="state != 'submitted'"
+                    />
+
+                    <field
+                        name="state"
+                        widget="statusbar"
+                        statusbar_visible="draft,submitted,approved"
+                    />
+
+                </header>
+
+                <sheet>
+
+                    <div class="oe_title">
+
+                        <label for="name"/>
+
+                        <h1>
+
+                            <field
+                                name="name"
+                                readonly="1"
+                            />
+
+                        </h1>
+
+                    </div>
+
+
+                    <group>
+
+                        <group string="Informasi HPP">
+
+                            <field
+                                name="project_id"
+                                readonly="state == 'approved'"
+                            />
+
+                            <field
+                                name="rab_id"
+                                readonly="state == 'approved'"
+                            />
+
+                            <field
+                                name="tanggal_hpp"
+                                readonly="state == 'approved'"
+                            />
+
+                        </group>
+
+
+                        <group string="Nilai">
+
+                            <field
+                                name="currency_id"
+                                readonly="1"
+                            />
+
+                            <field
+                                name="total_hpp"
+                                readonly="1"
+                            />
+
+                        </group>
+
+                    </group>
+
+
+                    <group string="Deskripsi">
+
+                        <field
+                            name="deskripsi"
+                            placeholder="Deskripsi HPP..."
+                            readonly="state == 'approved'"
+                        />
+
+                    </group>
+
+
+                    <notebook>
+
+                        <page string="Detail HPP">
+
+                            <field
+                                name="line_ids"
+                                readonly="state == 'approved'"
+                            >
+
+                                <list editable="bottom">
+
+                                    <field
+                                        name="sequence"
+                                        widget="handle"
+                                    />
+
+                                    <field
+                                        name="kategori"
+                                    />
+
+                                    <field
+                                        name="uraian"
+                                    />
+
+                                    <field
+                                        name="spesifikasi"
+                                    />
+
+                                    <field
+                                        name="satuan"
+                                    />
+
+                                    <field
+                                        name="qty"
+                                    />
+
+                                    <field
+                                        name="harga_satuan"
+                                    />
+
+                                    <field
+                                        name="subtotal"
+                                        readonly="1"
+                                    />
+
+                                    <field
+                                        name="keterangan"
+                                    />
+
+                                </list>
+
+                            </field>
+
+
+                            <group class="oe_subtotal_footer oe_right">
+
+                                <field
+                                    name="total_hpp"
+                                    readonly="1"
+                                />
+
+                            </group>
+
+                        </page>
+
+                    </notebook>
+
+                </sheet>
+
+
+                <chatter/>
+
+            </form>
+
+        </field>
+    </record>
+
+
+    <!-- ACTION -->
+
+    <record
+        id="action_ksg_sales_hpp"
+        model="ir.actions.act_window"
+    >
+
+        <field name="name">HPP</field>
+
+        <field name="res_model">ksg.sales.hpp</field>
+
+        <field name="view_mode">list,form</field>
+
+    </record>
+
+
+    <!-- MENU -->
+
+    <menuitem
+        id="menu_ksg_sales_hpp"
+        name="HPP"
+        parent="menu_ksg_sales_root"
+        action="action_ksg_sales_hpp"
+        sequence="40"
+    />
+
+</odoo>

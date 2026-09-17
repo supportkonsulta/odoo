@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="seq_ksg_sales_project" model="ir.sequence">
+        <field name="name">KSG Sales Project</field>
+        <field name="code">ksg.sales.project</field>
+        <field name="prefix">%(y)s</field>
+        <field name="padding">3</field>
+        <field name="number_increment">1</field>
+        <field name="number_next">1</field>
+    </record>
+</odoo>

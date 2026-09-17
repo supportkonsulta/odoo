@@ -1,0 +1,566 @@
+<odoo>
+
+    <template id="report_ksg_invoice">
+
+        <t t-call="web.html_container">
+
+            <t t-foreach="docs" t-as="o">
+
+                <div class="page"
+                     style="
+                        font-family: Arial, Helvetica, sans-serif;
+                        font-size: 10px;
+                        color: #222;
+                        padding: 20px 35px 15px 35px;
+                     ">
+
+                    <!-- ================================================= -->
+                    <!-- HEADER KSG -->
+                    <!-- ================================================= -->
+
+                    <div style="
+                        width: 100%;
+                        text-align: center;
+                        margin-bottom: 4px;
+                    ">
+
+                        <div style="
+                            width: 100%;
+                            text-align: left;
+                            margin-bottom: 3px;
+                        ">
+
+                            <img
+                                t-if="o.company_id.logo"
+                                t-att-src="image_data_uri(o.company_id.logo)"
+                                style="
+                                    max-height: 45px;
+                                    max-width: 330px;
+                                    object-fit: contain;
+                                "
+                            />
+
+                        </div>
+
+                        <div style="
+                            border-bottom: 1px solid #555;
+                            width: 100%;
+                            margin-top: 2px;
+                        "></div>
+
+                    </div>
+
+
+                    <!-- ================================================= -->
+                    <!-- JUDUL INVOICE -->
+                    <!-- ================================================= -->
+
+                    <div style="
+                        text-align: center;
+                        font-size: 18px;
+                        font-weight: bold;
+                        margin-top: 5px;
+                        margin-bottom: 18px;
+                    ">
+                        INVOICE
+                    </div>
+
+
+                    <!-- ================================================= -->
+                    <!-- CUSTOMER + INFORMASI INVOICE -->
+                    <!-- ================================================= -->
+
+                    <table style="
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-bottom: 12px;
+                    ">
+
+                        <tr>
+
+                            <!-- CUSTOMER -->
+                            <td style="
+                                width: 55%;
+                                vertical-align: top;
+                                padding-right: 20px;
+                            ">
+
+                                <div style="font-weight: bold;">
+                                    Kepada Yth.
+                                </div>
+
+                                <div style="margin-top: 3px;">
+                                    <span t-field="o.partner_id.name"/>
+                                </div>
+
+                                <div t-if="o.partner_id.street">
+                                    <span t-field="o.partner_id.street"/>
+                                </div>
+
+                                <div t-if="o.partner_id.street2">
+                                    <span t-field="o.partner_id.street2"/>
+                                </div>
+
+                                <div t-if="o.partner_id.city">
+                                    <span t-field="o.partner_id.city"/>
+                                </div>
+
+                                <div t-if="o.partner_id.state_id">
+                                    <span t-field="o.partner_id.state_id.name"/>
+                                </div>
+
+                            </td>
+
+
+                            <!-- INFORMASI INVOICE -->
+                            <td style="
+                                width: 45%;
+                                vertical-align: top;
+                            ">
+
+                                <table style="
+                                    width: 100%;
+                                    border-collapse: collapse;
+                                ">
+
+                                    <tr>
+                                        <td style="width: 125px;">
+                                            Tanggal
+                                        </td>
+                                        <td style="width: 10px;">
+                                            :
+                                        </td>
+                                        <td>
+                                            <span t-field="o.invoice_date"/>
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>
+                                            Nomor
+                                        </td>
+                                        <td>
+                                            :
+                                        </td>
+                                        <td>
+                                            <span t-field="o.name"/>
+                                        </td>
+                                    </tr>
+
+                                    <tr t-if="o.ksg_project_id">
+                                        <td>
+                                            Surat Perintah Kerja
+                                        </td>
+                                        <td>
+                                            :
+                                        </td>
+                                        <td>
+                                            <span t-field="o.ksg_project_id.no_pk"/>
+                                        </td>
+                                    </tr>
+
+                                    <tr t-if="o.ksg_project_id">
+                                        <td>
+                                            ID Project
+                                        </td>
+                                        <td>
+                                            :
+                                        </td>
+                                        <td>
+                                            <span t-field="o.ksg_project_id.kode_proyek"/>
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>
+                                            Jatuh Tempo
+                                        </td>
+                                        <td>
+                                            :
+                                        </td>
+                                        <td>
+                                            <span t-field="o.invoice_date_due"/>
+                                        </td>
+                                    </tr>
+
+                                </table>
+
+                            </td>
+
+                        </tr>
+
+                    </table>
+
+
+                    <!-- ================================================= -->
+                    <!-- TABEL PEKERJAAN -->
+                    <!-- ================================================= -->
+
+                    <table style="
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-top: 8px;
+                    ">
+
+                        <thead>
+
+                            <tr style="
+                                border-top: 1px solid #555;
+                                border-bottom: 1px solid #555;
+                            ">
+
+                                <th style="
+                                    width: 75%;
+                                    text-align: center;
+                                    padding: 6px 4px;
+                                    font-weight: bold;
+                                ">
+                                    PEKERJAAN
+                                </th>
+
+                                <th style="
+                                    width: 25%;
+                                    text-align: center;
+                                    padding: 6px 4px;
+                                    font-weight: bold;
+                                ">
+                                    JUMLAH
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            <tr t-foreach="o.invoice_line_ids" t-as="line">
+
+                                <td style="
+                                    padding: 8px 4px;
+                                    vertical-align: top;
+                                ">
+                                    <span t-field="line.name"/>
+                                </td>
+
+                                <td style="
+                                    padding: 8px 4px;
+                                    text-align: right;
+                                    vertical-align: top;
+                                    white-space: nowrap;
+                                ">
+                                    <span t-field="line.price_subtotal"/>
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+
+                    <!-- ================================================= -->
+                    <!-- TOTAL -->
+                    <!-- ================================================= -->
+
+                    <table style="
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-top: 10px;
+                    ">
+
+                        <tr>
+
+                            <td style="width: 65%;"></td>
+
+                            <td style="
+                                width: 17%;
+                                padding: 3px 4px;
+                                text-align: left;
+                            ">
+                                JUMLAH
+                            </td>
+
+                            <td style="
+                                width: 18%;
+                                padding: 3px 4px;
+                                text-align: right;
+                                white-space: nowrap;
+                            ">
+                                <span t-field="o.amount_untaxed"/>
+                            </td>
+
+                        </tr>
+
+
+                        <tr>
+
+                            <td></td>
+
+                            <td style="
+                                padding: 3px 4px;
+                            ">
+                                PPN
+                            </td>
+
+                            <td style="
+                                padding: 3px 4px;
+                                text-align: right;
+                                white-space: nowrap;
+                            ">
+                                <span t-field="o.amount_tax"/>
+                            </td>
+
+                        </tr>
+
+
+                        <tr>
+
+                            <td></td>
+
+                            <td style="
+                                padding: 4px;
+                                font-weight: bold;
+                            ">
+                                TOTAL
+                            </td>
+
+                            <td style="
+                                padding: 4px;
+                                text-align: right;
+                                font-weight: bold;
+                                white-space: nowrap;
+                                border-top: 1px solid #555;
+                            ">
+                                <span t-field="o.amount_total"/>
+                            </td>
+
+                        </tr>
+
+                    </table>
+
+
+                    <!-- ================================================= -->
+                    <!-- TERBILANG -->
+                    <!-- ================================================= -->
+
+                    <div style="
+                        margin-top: 16px;
+                    ">
+
+                        <div style="font-weight: bold;">
+                            Terbilang :
+                        </div>
+
+                        <div style="
+                            margin-top: 4px;
+                            font-style: italic;
+                            font-weight: bold;
+                        ">
+                            <span
+                                t-esc="o.currency_id.amount_to_text(o.amount_total)"
+                            />
+                        </div>
+
+                    </div>
+
+
+                    <!-- ================================================= -->
+                    <!-- TRANSFER KE -->
+                    <!-- ================================================= -->
+
+                    <div style="
+                        margin-top: 18px;
+                    ">
+
+                        <div style="font-weight: bold;">
+                            Transfer ke :
+                        </div>
+
+                        <table style="
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin-top: 4px;
+                        ">
+
+                            <tr>
+
+                                <td style="width: 80px;">
+                                    BANK
+                                </td>
+
+                                <td style="width: 10px;">
+                                    :
+                                </td>
+
+                                <td>
+
+                                    <span
+                                        t-if="o.company_id.partner_id.bank_ids"
+                                        t-esc="o.company_id.partner_id.bank_ids[0].bank_id.name"
+                                    />
+
+                                    <span
+                                        t-if="not o.company_id.partner_id.bank_ids"
+                                        t-esc="o.company_id.name"
+                                    />
+
+                                </td>
+
+                            </tr>
+
+
+                            <tr>
+
+                                <td>
+                                    NO. REKENING
+                                </td>
+
+                                <td>
+                                    :
+                                </td>
+
+                                <td>
+
+                                    <span
+                                        t-if="o.company_id.partner_id.bank_ids"
+                                        t-esc="o.company_id.partner_id.bank_ids[0].acc_number"
+                                    />
+
+                                    <span
+                                        t-if="not o.company_id.partner_id.bank_ids"
+                                    >
+                                        -
+                                    </span>
+
+                                </td>
+
+                            </tr>
+
+
+                            <tr>
+
+                                <td>
+                                    NAMA
+                                </td>
+
+                                <td>
+                                    :
+                                </td>
+
+                                <td>
+
+                                    <span
+                                        t-if="o.company_id.partner_id.bank_ids"
+                                        t-esc="
+                                            o.company_id.partner_id.bank_ids[0].acc_holder_name
+                                            or o.company_id.name
+                                        "
+                                    />
+
+                                    <span
+                                        t-if="not o.company_id.partner_id.bank_ids"
+                                        t-esc="o.company_id.name"
+                                    />
+
+                                </td>
+
+                            </tr>
+
+                        </table>
+
+                    </div>
+
+
+                    <!-- ================================================= -->
+                    <!-- CATATAN -->
+                    <!-- ================================================= -->
+
+                    <div style="
+                        margin-top: 14px;
+                    ">
+
+                        <div style="font-weight: bold;">
+                            Catatan :
+                        </div>
+
+                        <div style="margin-top: 3px;">
+                            - Invoice ini juga berlaku sebagai bukti permintaan pembayaran.
+                        </div>
+
+                        <div>
+                            - Pembayaran dianggap lunas apabila dana telah masuk ke rekening PT Konsulta Semen Gresik.
+                        </div>
+
+                        <div>
+                            - Pembayaran harap mencantumkan nomor invoice.
+                        </div>
+
+                    </div>
+
+
+                    <!-- ================================================= -->
+                    <!-- PENUTUP + TANDA TANGAN -->
+                    <!-- ================================================= -->
+
+                    <div style="
+                        margin-top: 20px;
+                    ">
+
+                        <div>
+                            Hormat kami,
+                        </div>
+
+                        <div style="
+                            margin-top: 2px;
+                            font-weight: bold;
+                        ">
+                            <span t-esc="o.company_id.name"/>
+                        </div>
+
+                        <div style="
+                            height: 45px;
+                        "></div>
+
+                        <div style="font-weight: bold;">
+                            Direktur
+                        </div>
+
+                    </div>
+
+
+                    <!-- ================================================= -->
+                    <!-- FOOTER KSG -->
+                    <!-- ================================================= -->
+
+                    <div style="
+                        margin-top: 18px;
+                        padding-top: 5px;
+                        border-top: 1px solid #777;
+                        font-size: 8px;
+                        text-align: center;
+                    ">
+
+                        <div t-if="o.company_id.phone">
+                            Telp. <span t-esc="o.company_id.phone"/>
+                        </div>
+
+                        <div t-if="o.company_id.email">
+                            Email: <span t-esc="o.company_id.email"/>
+                        </div>
+
+                        <div t-if="o.company_id.website">
+                            <span t-esc="o.company_id.website"/>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </t>
+
+        </t>
+
+    </template>
+
+</odoo>

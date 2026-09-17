@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record id="group_sales_user" model="res.groups">
+        <field name="name">Sales User</field>
+    </record>
+
+    <record id="group_sales_manager" model="res.groups">
+        <field name="name">Sales Manager</field>
+        <field name="implied_ids" eval="[(4, ref('ksg_sales.group_sales_user'))]"/>
+    </record>
+
+</odoo>

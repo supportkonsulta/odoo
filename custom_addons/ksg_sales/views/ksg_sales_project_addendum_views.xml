@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- ====================================================== -->
+    <!-- LIST VIEW -->
+    <!-- ====================================================== -->
+
+    <record id="view_ksg_sales_project_addendum_list" model="ir.ui.view">
+        <field name="name">ksg.sales.project.addendum.list</field>
+        <field name="model">ksg.sales.project.addendum</field>
+        <field name="arch" type="xml">
+
+            <list string="Addendum Kontrak">
+
+                <field name="project_id"/>
+                <field name="nilai_awal"/>
+                <field name="nilai_kontrak_baru"/>
+                <field name="tanggal_perubahan"/>
+                <field name="kategori_alasan"/>
+                <field name="state"/>
+
+            </list>
+
+        </field>
+    </record>
+
+
+    <!-- ====================================================== -->
+    <!-- FORM VIEW -->
+    <!-- ====================================================== -->
+
+    <record id="view_ksg_sales_project_addendum_form" model="ir.ui.view">
+        <field name="name">ksg.sales.project.addendum.form</field>
+        <field name="model">ksg.sales.project.addendum</field>
+        <field name="arch" type="xml">
+
+            <form string="Addendum Kontrak">
+
+                <header>
+
+                    <!-- AJUKAN APPROVAL -->
+                    <button
+                        name="action_submit_approval"
+                        string="Ajukan Approval"
+                        type="object"
+                        class="btn-primary"
+                        invisible="state != 'draft'"
+                        groups="ksg_sales.group_sales_user"
+                    />
+
+                    <!-- APPROVE -->
+                    <button
+                        name="action_approve"
+                        string="Setujui"
+                        type="object"
+                        class="btn-primary"
+                        invisible="state != 'waiting_approval'"
+                        groups="ksg_sales.group_sales_manager"
+                    />
+
+                    <!-- REJECT -->
+                    <button
+                        name="action_reject"
+                        string="Tolak"
+                        type="object"
+                        class="btn-secondary"
+                        invisible="state != 'waiting_approval'"
+                        groups="ksg_sales.group_sales_manager"
+                    />
+
+                    <field
+                        name="state"
+                        widget="statusbar"
+                        statusbar_visible="draft,waiting_approval,approved,rejected"
+                    />
+
+                </header>
+
+
+                <sheet>
+
+                    <div class="oe_title">
+                        <h1>
+                            <span>Addendum Kontrak</span>
+                        </h1>
+                    </div>
+
+
+                    <group>
+
+                        <group string="Informasi Proyek">
+
+                            <field
+                                name="project_id"
+                                readonly="state != 'draft'"
+                            />
+
+                            <field
+                                name="tanggal_perubahan"
+                                readonly="state != 'draft'"
+                            />
+
+                            <field
+                                name="kategori_alasan"
+                                readonly="state != 'draft'"
+                            />
+
+                        </group>
+
+
+                        <group string="Nilai Kontrak">
+
+                            <field
+                                name="currency_id"
+                                invisible="1"
+                            />
+
+                            <field
+                                name="nilai_awal"
+                                readonly="1"
+                            />
+
+                            <field
+                                name="nilai_kontrak_baru"
+                                readonly="state != 'draft'"
+                            />
+
+                        </group>
+
+                    </group>
+
+
+                    <group string="Catatan">
+
+                        <field
+                            name="catatan"
+                            readonly="state != 'draft'"
+                            placeholder="Jelaskan alasan atau keterangan perubahan kontrak..."
+                        />
+
+                    </group>
+
+
+                </sheet>
+
+
+                <chatter/>
+
+            </form>
+
+        </field>
+    </record>
+
+
+    <!-- ====================================================== -->
+    <!-- ACTION -->
+    <!-- ====================================================== -->
+
+    <record id="action_ksg_sales_project_addendum" model="ir.actions.act_window">
+
+        <field name="name">Addendum Kontrak</field>
+        <field name="res_model">ksg.sales.project.addendum</field>
+        <field name="view_mode">list,form</field>
+        
+    </record>
+
+    <!-- ====================================================== -->
+    <!-- MENU -->
+    <!-- ====================================================== -->
+
+    <menuitem
+        id="menu_ksg_sales_addendum"
+        name="Addendum Kontrak"
+        parent="menu_ksg_sales_root"
+        action="action_ksg_sales_project_addendum"
+        sequence="15"
+    />
+
+</odoo>
