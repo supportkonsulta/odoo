@@ -17,12 +17,14 @@ export class BalanceSheetView extends Component {
         const year = today.getFullYear();
         const actionParams = this.props.action?.params || {};
         const initialSearch = actionParams.search || "";
+        const initialDateFrom = actionParams.date_from || `${year}-01-01`;
         const initialDateTo = actionParams.date_to || `${year}-12-31`;
         const initialTargetMove = actionParams.target_move || "posted";
         const initialUnitName = actionParams.unit_name || "";
 
         this.state = useState({
             filters: {
+                date_from: initialDateFrom,
                 date_to: initialDateTo,
                 comparison_type: "none",
                 comparison_date: `${year - 1}-12-31`,
@@ -35,6 +37,8 @@ export class BalanceSheetView extends Component {
             selectedUnitName: initialUnitName,
             comparisonMode: "none",
             customComparisonDate: `${year - 1}-12-31`,
+            customDateFrom: initialDateFrom,
+            customDateTo: initialDateTo,
             unfolded: {
                 assets: true,
                 current_assets: true,
@@ -56,7 +60,8 @@ export class BalanceSheetView extends Component {
             },
             data: null,
             loading: true,
-            datePreset: initialSearch ? "custom" : "end_of_year",
+            datePreset: initialSearch ? "custom" : "this_year",
+            customDateFrom: initialDateFrom,
             customDateTo: initialDateTo,
         });
 
@@ -121,29 +126,44 @@ export class BalanceSheetView extends Component {
         const year = today.getFullYear();
         const month = today.getMonth();
 
-        if (preset === "today") {
-            const mStr = String(month + 1).padStart(2, "0");
-            const dStr = String(today.getDate()).padStart(2, "0");
-            this.state.filters.date_to = `${year}-${mStr}-${dStr}`;
-        } else if (preset === "end_of_month") {
+        if (preset === "this_year") {
+            this.state.filters.date_from = `${year}-01-01`;
+            this.state.filters.date_to = `${year}-12-31`;
+        } else if (preset === "this_month") {
             const mStr = String(month + 1).padStart(2, "0");
             const lastDay = new Date(year, month + 1, 0).getDate();
+            this.state.filters.date_from = `${year}-${mStr}-01`;
             this.state.filters.date_to = `${year}-${mStr}-${String(lastDay).padStart(2, "0")}`;
-        } else if (preset === "end_of_last_month") {
+        } else if (preset === "this_quarter") {
+            const qStartMonth = Math.floor(month / 3) * 3;
+            const qEndMonth = qStartMonth + 2;
+            const qStartStr = String(qStartMonth + 1).padStart(2, "0");
+            const qEndStr = String(qEndMonth + 1).padStart(2, "0");
+            const lastDay = new Date(year, qEndMonth + 1, 0).getDate();
+            this.state.filters.date_from = `${year}-${qStartStr}-01`;
+            this.state.filters.date_to = `${year}-${qEndStr}-${String(lastDay).padStart(2, "0")}`;
+        } else if (preset === "last_month") {
             const prevMonth = month === 0 ? 11 : month - 1;
             const prevYear = month === 0 ? year - 1 : year;
             const mStr = String(prevMonth + 1).padStart(2, "0");
             const lastDay = new Date(prevYear, prevMonth + 1, 0).getDate();
+            this.state.filters.date_from = `${prevYear}-${mStr}-01`;
             this.state.filters.date_to = `${prevYear}-${mStr}-${String(lastDay).padStart(2, "0")}`;
-        } else if (preset === "end_of_year") {
-            this.state.filters.date_to = `${year}-12-31`;
-        } else if (preset === "end_of_last_year") {
-            this.state.filters.date_to = `${year - 1}-12-31`;
+        } else if (preset === "last_year") {
+            const prevYear = year - 1;
+            this.state.filters.date_from = `${prevYear}-01-01`;
+            this.state.filters.date_to = `${prevYear}-12-31`;
         }
 
         if (preset !== "custom") {
             await this.loadData();
         }
+    }
+
+    async onCustomDateFromChange(ev) {
+        this.state.customDateFrom = ev.target.value;
+        this.state.filters.date_from = ev.target.value;
+        await this.loadData();
     }
 
     async onCustomDateToChange(ev) {
@@ -188,8 +208,9 @@ export class BalanceSheetView extends Component {
     }
 
     onExportPDF() {
-        const { date_to, comparison_type, comparison_date, target_move, unit_name, search } = this.state.filters;
+        const { date_from, date_to, comparison_type, comparison_date, target_move, unit_name, search } = this.state.filters;
         const queryParams = new URLSearchParams({
+            date_from: date_from || "",
             date_to: date_to || "",
             comparison_type: comparison_type || "none",
             comparison_date: comparison_date || "",
@@ -203,8 +224,9 @@ export class BalanceSheetView extends Component {
     downloadPdf() { this.onExportPDF(); }
 
     onExportXLSX() {
-        const { date_to, comparison_type, comparison_date, target_move, unit_name, search } = this.state.filters;
+        const { date_from, date_to, comparison_type, comparison_date, target_move, unit_name, search } = this.state.filters;
         const queryParams = new URLSearchParams({
+            date_from: date_from || "",
             date_to: date_to || "",
             comparison_type: comparison_type || "none",
             comparison_date: comparison_date || "",
