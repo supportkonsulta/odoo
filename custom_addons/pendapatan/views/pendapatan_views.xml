@@ -168,25 +168,9 @@
     <!-- 4. ACTIONS                                                  -->
     <!-- ============================================================ -->
     <record id="action_pendapatan_all" model="ir.actions.act_window">
-        <field name="name">Semua Pendapatan</field>
+        <field name="name">Daftar Pendapatan</field>
         <field name="res_model">pendapatan.pendapatan</field>
         <field name="view_mode">list,form</field>
         <field name="search_view_id" ref="view_pendapatan_search"/>
-    </record>
-
-    <record id="action_pendapatan_draft" model="ir.actions.act_window">
-        <field name="name">Pendapatan Draft</field>
-        <field name="res_model">pendapatan.pendapatan</field>
-        <field name="view_mode">list,form</field>
-        <field name="search_view_id" ref="view_pendapatan_search"/>
-        <field name="domain">[('state', 'in', ('draft', 'submitted'))]</field>
-    </record>
-
-    <record id="action_pendapatan_posted" model="ir.actions.act_window">
-        <field name="name">Pendapatan Terposting</field>
-        <field name="res_model">pendapatan.pendapatan</field>
-        <field name="view_mode">list,form</field>
-        <field name="search_view_id" ref="view_pendapatan_search"/>
-        <field name="domain">[('state', '=', 'posted')]</field>
     </record>
 </odoo>

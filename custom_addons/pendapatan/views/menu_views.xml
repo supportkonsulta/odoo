@@ -7,29 +7,12 @@
               sequence="30"
               web_icon="pendapatan,static/description/icon.png"/>
 
-    <!-- Kategori 1: Transaksi -->
+    <!-- Kategori 1: Daftar Pendapatan -->
     <menuitem id="menu_pendapatan_transaksi"
-              name="Transaksi"
+              name="Daftar Pendapatan"
               parent="menu_pendapatan_root"
-              sequence="10"/>
-
-    <menuitem id="menu_pendapatan_all_sub"
-              name="Semua Pendapatan"
-              parent="menu_pendapatan_transaksi"
               action="action_pendapatan_all"
               sequence="10"/>
-
-    <menuitem id="menu_pendapatan_draft_sub"
-              name="Menunggu Approval"
-              parent="menu_pendapatan_transaksi"
-              action="action_pendapatan_draft"
-              sequence="20"/>
-
-    <menuitem id="menu_pendapatan_posted_sub"
-              name="Pendapatan Terposting"
-              parent="menu_pendapatan_transaksi"
-              action="action_pendapatan_posted"
-              sequence="30"/>
 
     <!-- Kategori 2: Laporan -->
     <menuitem id="menu_pendapatan_laporan"
