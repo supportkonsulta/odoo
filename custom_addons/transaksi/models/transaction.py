@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from markupsafe import Markup
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError, ValidationError
 
@@ -583,10 +584,10 @@ class TransaksiTransaction(models.Model):
                 ppl.sudo().write(vals)
                 ppl.sudo().with_context(from_bank_transfer_approval=True).action_pay()
                 ppl.message_post(
-                    body=_(
+                    body=Markup(_(
                         "Pembayaran telah direalisasikan secara otomatis melalui "
                         "Transaksi Transfer Bank <a href='#' data-oe-model='transaksi.transaction' data-oe-id='%d'>%s</a>."
-                    )
+                    ))
                     % (rec.id, rec.name)
                 )
 
@@ -600,16 +601,16 @@ class TransaksiTransaction(models.Model):
             })
             body = _("Transaksi ditolak oleh %s.") % self.env.user.name
             if reason:
-                body += _("<br/><strong>Alasan Penolakan:</strong> %s") % reason
+                body = Markup(_("Transaksi ditolak oleh %s.<br/><strong>Alasan Penolakan:</strong> %s")) % (self.env.user.name, reason)
             rec.message_post(body=body)
 
             target_ppls = rec.ppl_id | rec.ppl_ids | rec.line_ids.mapped("ppl_id")
             for ppl in target_ppls:
-                ppl_msg = _(
+                ppl_msg = Markup(_(
                     "Pengajuan Transfer Bank <a href='#' data-oe-model='transaksi.transaction' data-oe-id='%d'>%s</a> ditolak oleh %s."
-                ) % (rec.id, rec.name, self.env.user.name)
+                )) % (rec.id, rec.name, self.env.user.name)
                 if reason:
-                    ppl_msg += _("<br/><strong>Alasan Penolakan:</strong> %s") % reason
+                    ppl_msg += Markup(_("<br/><strong>Alasan Penolakan:</strong> %s")) % reason
                 ppl.message_post(body=ppl_msg)
                 ppl.sudo().write({"transaction_id": False})
         return True
