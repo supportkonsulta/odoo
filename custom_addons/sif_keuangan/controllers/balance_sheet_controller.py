@@ -8,11 +8,12 @@ from odoo.http import request
 class BalanceSheetController(http.Controller):
 
     @http.route('/sif_keuangan/export_balance_sheet_xlsx', type='http', auth='user')
-    def export_balance_sheet_xlsx(self, date_to=None, target_move='posted', unit_name=None, comparison_type='none', comparison_date=None, **kw):
+    def export_balance_sheet_xlsx(self, date_from=None, date_to=None, target_move='posted', unit_name=None, comparison_type='none', comparison_date=None, **kw):
         """
         Stream export Balance Sheet ke Excel (.xlsx) dengan dukungan komparasi periode dan filter unit kerja.
         """
         filters = {
+            'date_from': date_from,
             'date_to': date_to,
             'target_move': target_move or 'posted',
             'unit_name': unit_name or False,
@@ -52,7 +53,7 @@ class BalanceSheetController(http.Controller):
 
         company_name = data.get('company_name', 'PT Konsulta Semen Gresik')
         worksheet.write(0, 0, company_name, fmt_title)
-        sub_title = f"BALANCE SHEET (NERACA) — Posisi: {data.get('date_to_display')}"
+        sub_title = f"BALANCE SHEET (NERACA) — Periode: {data.get('date_from_display')} s/d {data.get('date_to_display')}"
         if has_comp:
             sub_title += f" vs {data.get('comparison_date_display')}"
         if data.get('unit_name'):
@@ -221,11 +222,12 @@ class BalanceSheetController(http.Controller):
         )
 
     @http.route('/sif_keuangan/export_balance_sheet_pdf', type='http', auth='user')
-    def export_balance_sheet_pdf(self, date_to=None, target_move='posted', unit_name=None, comparison_type='none', comparison_date=None, **kw):
+    def export_balance_sheet_pdf(self, date_from=None, date_to=None, target_move='posted', unit_name=None, comparison_type='none', comparison_date=None, **kw):
         """
         Stream export Balance Sheet langsung ke berkas PDF.
         """
         wizard = request.env['sif.balance.sheet.wizard'].create({
+            'date_from': date_from or False,
             'date_to': date_to or request.env['sif.balance.sheet']._default_date_to(),
             'target_move': target_move or 'posted',
             'unit_name': unit_name or False,
