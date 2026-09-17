@@ -127,6 +127,7 @@ class SifBalanceSheet(models.AbstractModel):
         is_id = str(lang).lower().startswith('id')
         
         date_to = filters.get('date_to') or today.strftime('%Y-%m-%d')
+        date_from = filters.get('date_from') or today.replace(month=1, day=1).strftime('%Y-%m-%d')
         target_move = filters.get('target_move', 'posted')
         unit_name = filters.get('unit_name') or False
         comparison_type = filters.get('comparison_type', 'none')
@@ -313,7 +314,15 @@ class SifBalanceSheet(models.AbstractModel):
         is_balanced_cur = abs(net_diff_cur) < 0.01
 
         # Format display dates
-        d_to_display = snap_cur['date_to_dt'].strftime('%d/%m/%Y')
+        try:
+            d_from_display = datetime.datetime.strptime(str(date_from), '%Y-%m-%d').strftime('%d/%m/%Y')
+        except Exception:
+            d_from_display = str(date_from)
+        try:
+            d_to_display = snap_cur['date_to_dt'].strftime('%d/%m/%Y')
+        except Exception:
+            d_to_display = str(date_to)
+
         comp_date_display = snap_comp['date_to_dt'].strftime('%d/%m/%Y') if has_comparison else ''
 
         diff_assets = tot_cur_assets - tot_comp_assets
@@ -321,7 +330,9 @@ class SifBalanceSheet(models.AbstractModel):
 
         return {
             'company_name': self.env.company.name or 'PT Konsulta Semen Gresik',
+            'date_from': date_from,
             'date_to': date_to,
+            'date_from_display': d_from_display,
             'date_to_display': d_to_display,
             'has_comparison': has_comparison,
             'comparison_type': comparison_type,
@@ -470,8 +481,12 @@ class SifBalanceSheetWizard(models.TransientModel):
     _name = 'sif.balance.sheet.wizard'
     _description = 'Wizard Filter Laporan Balance Sheet'
 
+    date_from = fields.Date(
+        string='Dari Tanggal',
+        default=lambda self: fields.Date.context_today(self).replace(month=1, day=1)
+    )
     date_to = fields.Date(
-        string='Posisi Per Tanggal',
+        string='Sampai Tanggal',
         required=True,
         default=lambda self: fields.Date.context_today(self)
     )
@@ -489,7 +504,7 @@ class SifBalanceSheetWizard(models.TransientModel):
     comparison_date = fields.Date(string='Tanggal Komparasi')
 
     def action_print_pdf(self):
-        query = f"date_to={self.date_to}&target_move={self.target_move}"
+        query = f"date_from={self.date_from or ''}&date_to={self.date_to}&target_move={self.target_move}"
         if self.unit_name:
             query += f"&unit_name={self.unit_name}"
         if self.comparison_type and self.comparison_type != 'none':
@@ -503,7 +518,7 @@ class SifBalanceSheetWizard(models.TransientModel):
         }
 
     def action_export_xlsx(self):
-        query = f"date_to={self.date_to}&target_move={self.target_move}"
+        query = f"date_from={self.date_from or ''}&date_to={self.date_to}&target_move={self.target_move}"
         if self.unit_name:
             query += f"&unit_name={self.unit_name}"
         if self.comparison_type and self.comparison_type != 'none':
@@ -526,6 +541,7 @@ class ReportBalanceSheetDocument(models.AbstractModel):
         docs = self.env['sif.balance.sheet.wizard'].browse(docids)
         doc = docs[0] if docs else None
 
+        date_from = doc.date_from.strftime('%Y-%m-%d') if doc and doc.date_from else None
         date_to = doc.date_to.strftime('%Y-%m-%d') if doc and doc.date_to else fields.Date.today().strftime('%Y-%m-%d')
         target_move = doc.target_move if doc else 'posted'
         unit_name = doc.unit_name if doc and doc.unit_name else False
@@ -534,6 +550,7 @@ class ReportBalanceSheetDocument(models.AbstractModel):
 
         bs_engine = self.env['sif.balance.sheet']
         bs_data = bs_engine.get_balance_sheet_data({
+            'date_from': date_from,
             'date_to': date_to,
             'target_move': target_move,
             'unit_name': unit_name,
