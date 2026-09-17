@@ -37,6 +37,7 @@ Use case:
         'security/security_groups.xml',
         'security/ir.model.access.csv',
         'data/sequence_data.xml',
+        'data/pendapatan_category_data.xml',
         'views/pendapatan_category_views.xml',
         'views/pendapatan_views.xml',
         'wizard/laporan_pendapatan_wizard_views.xml',
