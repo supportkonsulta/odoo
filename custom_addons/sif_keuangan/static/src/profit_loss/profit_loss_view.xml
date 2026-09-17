@@ -704,7 +704,8 @@
                             <i class="fa fa-info-circle me-1" /> <t t-esc="t('pl.net_loss_current')" />
                         </span>
                     </t>
-                    <span class="text-white-50 small">
+                    <span class="text-white-75 small fw-medium">
+                        <i class="fa fa-calculator me-1 opacity-75" />
                         <t t-esc="t('pl.footer_system')" />
                     </span>
                 </div>
