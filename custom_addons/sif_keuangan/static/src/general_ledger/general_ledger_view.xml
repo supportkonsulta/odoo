@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="sif_keuangan.GeneralLedgerView" owl="1">
+        <div class="o_general_ledger_app o_report_app d-flex flex-column h-100">
+
+            <!-- ================= TOP CONTROL BAR ================= -->
+            <div class="o_gl_topbar o_report_topbar px-4 py-2 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <!-- Left: Export & View Actions -->
+                <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-sm btn-report-pdf d-flex align-items-center gap-1 shadow-sm"
+                            t-on-click="onExportPDF"
+                            t-att-disabled="state.loading">
+                        <i class="fa fa-file-pdf-o" />
+                        <span><t t-esc="t('btn.pdf')" /></span>
+                    </button>
+                    <button class="btn btn-sm btn-report-xlsx d-flex align-items-center gap-1 shadow-sm"
+                            t-on-click="onExportXLSX"
+                            t-att-disabled="state.loading">
+                        <i class="fa fa-file-excel-o" />
+                        <span><t t-esc="t('btn.xlsx')" /></span>
+                    </button>
+                    <div class="btn-group shadow-sm ms-1">
+                        <button class="btn btn-sm btn-light border d-flex align-items-center gap-1 fw-semibold px-2 py-1"
+                                t-on-click="unfoldAll"
+                                t-att-title="t('btn.expand_all')">
+                            <i class="fa fa-expand text-secondary" />
+                            <span class="d-none d-md-inline small"><t t-esc="t('btn.expand_all')" /></span>
+                        </button>
+                        <button class="btn btn-sm btn-light border d-flex align-items-center gap-1 fw-semibold px-2 py-1"
+                                t-on-click="foldAll"
+                                t-att-title="t('btn.collapse_all')">
+                            <i class="fa fa-compress text-secondary" />
+                            <span class="d-none d-md-inline small"><t t-esc="t('btn.collapse_all')" /></span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right: High-Precision Filters -->
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <!-- Search Account / Description -->
+                    <div class="input-group input-group-sm rounded shadow-sm border bg-white" style="width: 180px;">
+                        <span class="input-group-text bg-transparent border-0 pe-1 text-muted">
+                            <i class="fa fa-search" />
+                        </span>
+                        <input type="text"
+                               class="form-control border-0 ps-1 bg-transparent"
+                               t-att-placeholder="t('search.gl')"
+                               t-model="state.searchQuery" />
+                    </div>
+
+                    <!-- Unit Kerja Filter -->
+                    <t t-if="state.data and state.data.units_list and state.data.units_list.length > 0">
+                        <div class="o_report_filter_pill">
+                            <i class="fa fa-building-o o_filter_icon" />
+                            <select class="form-select form-select-sm border-0 bg-transparent shadow-none py-0"
+                                    style="width: auto; cursor: pointer;"
+                                    t-on-change="onUnitChange">
+                                <option value=""><t t-esc="t('filter.all_units')" /></option>
+                                <t t-foreach="state.data.units_list" t-as="u" t-key="u">
+                                    <option t-att-value="u" t-att-selected="state.selectedUnitName == u or state.filters.unit_name == u">
+                                        <t t-esc="u" />
+                                    </option>
+                                </t>
+                            </select>
+                        </div>
+                    </t>
+
+                    <!-- Partner Filter -->
+                    <t t-if="state.data and state.data.partners_list and state.data.partners_list.length > 0">
+                        <div class="o_report_filter_pill">
+                            <i class="fa fa-users o_filter_icon" />
+                            <select class="form-select form-select-sm border-0 bg-transparent shadow-none py-0"
+                                    style="width: auto; max-width: 150px; cursor: pointer;"
+                                    t-on-change="onPartnerChange">
+                                <option value=""><t t-esc="t('filter.all_partners')" /></option>
+                                <t t-foreach="state.data.partners_list" t-as="p" t-key="p.id">
+                                    <option t-att-value="p.id" t-att-selected="state.selectedPartnerId == p.id or state.filters.partner_id == p.id">
+                                        <t t-esc="p.name" />
+                                    </option>
+                                </t>
+                            </select>
+                        </div>
+                    </t>
+
+                    <!-- Date Presets -->
+                    <div class="o_report_filter_pill">
+                        <i class="fa fa-calendar o_filter_icon" />
+                        <select class="form-select form-select-sm border-0 bg-transparent shadow-none py-0"
+                                style="width: auto; cursor: pointer;"
+                                t-on-change="onDatePresetChange">
+                            <option value="this_year" t-att-selected="state.datePreset == 'this_year'"><t t-esc="t('preset.this_year')" /></option>
+                            <option value="this_month" t-att-selected="state.datePreset == 'this_month'"><t t-esc="t('preset.this_month')" /></option>
+                            <option value="last_month" t-att-selected="state.datePreset == 'last_month'"><t t-esc="t('preset.last_month')" /></option>
+                            <option value="last_year" t-att-selected="state.datePreset == 'last_year'"><t t-esc="t('preset.last_year')" /></option>
+                            <option value="custom" t-att-selected="state.datePreset == 'custom'"><t t-esc="t('preset.custom')" /></option>
+                        </select>
+                    </div>
+
+                    <!-- Custom Date Range -->
+                    <t t-if="state.datePreset == 'custom'">
+                        <div class="d-flex align-items-center gap-1 bg-white p-1 rounded border shadow-sm">
+                            <input type="date"
+                                   class="form-control form-control-sm border-0 py-0"
+                                   style="width: 130px;"
+                                   t-att-value="state.customDateFrom"
+                                   t-on-change="onCustomDateFromChange" />
+                            <span class="text-muted small">s/d</span>
+                            <input type="date"
+                                   class="form-control form-control-sm border-0 py-0"
+                                   style="width: 130px;"
+                                   t-att-value="state.customDateTo"
+                                   t-on-change="onCustomDateToChange" />
+                        </div>
+                    </t>
+
+                    <!-- Target Move -->
+                    <div class="o_report_filter_pill">
+                        <i class="fa fa-sliders o_filter_icon" />
+                        <select class="form-select form-select-sm border-0 bg-transparent shadow-none py-0"
+                                style="width: auto; cursor: pointer;"
+                                t-on-change="onTargetMoveChange">
+                            <option value="posted" t-att-selected="state.targetMove == 'posted'"><t t-esc="t('move.posted')" /></option>
+                            <option value="all" t-att-selected="state.targetMove == 'all'"><t t-esc="t('move.all')" /></option>
+                        </select>
+                    </div>
+
+                    <!-- Currency indicator -->
+                    <div class="badge rounded-pill bg-white text-secondary border px-2.5 py-1.5 fw-bold shadow-sm">
+                        <t t-esc="t('currency.in_rp')" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= MAIN TABLE CONTENT ================= -->
+            <div class="o_gl_table_container o_report_table_container flex-grow-1 overflow-auto p-3">
+                <t t-if="state.loading">
+                    <div class="d-flex flex-column justify-content-center align-items-center h-100 py-5">
+                        <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <h6 class="fw-bold text-dark mb-1"><t t-esc="t('gl.title')" />...</h6>
+                    </div>
+                </t>
+                <t t-elif="!filteredAccounts or filteredAccounts.length == 0">
+                    <div class="text-center py-5 text-dark bg-white rounded border shadow-sm p-4 mx-auto" style="max-width: 600px; margin-top: 3rem;">
+                        <i class="fa fa-folder-open-o fs-1 d-block mb-3 text-secondary" />
+                        <h5 class="fw-bold text-dark"><t t-esc="t('gl.empty_title')" /></h5>
+                        <p class="text-secondary small mb-3">
+                            <t t-esc="t('gl.empty_desc')" />
+                        </p>
+                        <button class="btn btn-sm btn-outline-primary" t-on-click="() => this.state.searchQuery = ''">
+                            <t t-esc="t('btn.reset_search')" />
+                        </button>
+                    </div>
+                </t>
+                <t t-elif="state.data">
+                    <div class="o_gl_sheet_card o_report_sheet_card mx-auto shadow-sm rounded-3 border bg-white">
+                        <!-- Sheet Header -->
+                        <div class="o_gl_sheet_header o_report_sheet_header px-4 py-3 border-bottom d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="o_sheet_title"><t t-esc="t('gl.title')" /></div>
+                                <div class="o_sheet_subtitle">
+                                    <t t-esc="state.data.company_name" />
+                                    <span class="mx-2 text-muted">•</span>
+                                    <t t-esc="t('gl.period_prefix')" />: <span class="o_meta_highlight"><t t-esc="state.data.date_from_display" /> s/d <t t-esc="state.data.date_to_display" /></span>
+                                    <t t-if="state.data.unit_name">
+                                        <span class="mx-2 text-muted">•</span>
+                                        Unit: <span class="badge bg-secondary text-white"><t t-esc="state.data.unit_name" /></span>
+                                    </t>
+                                    <t t-if="state.data.partner_name">
+                                        <span class="mx-2 text-muted">•</span>
+                                        Partner: <span class="badge bg-secondary text-white"><t t-esc="state.data.partner_name" /></span>
+                                    </t>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge rounded-pill bg-light text-dark border px-3 py-1.5 fw-bold shadow-sm">
+                                    <t t-esc="state.data.target_move == 'posted' ? t('status.posted_only') : t('status.all_entries')" />
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Universal Table -->
+                        <table class="table table-sm o_gl_table o_report_table mb-0 align-middle">
+                            <thead>
+                                <tr>
+                                    <th style="width: 34%; min-width: 280px;" class="ps-4"><t t-esc="t('th.account_desc')" /></th>
+                                    <th style="width: 10%;" class="text-center"><t t-esc="t('th.date')" /></th>
+                                    <th style="width: 14%;"><t t-esc="t('th.voucher_journal')" /></th>
+                                    <th style="width: 14%;"><t t-esc="t('th.partner')" /></th>
+                                    <th style="width: 10%;" class="text-end"><t t-esc="t('th.debit')" /></th>
+                                    <th style="width: 10%;" class="text-end"><t t-esc="t('th.credit')" /></th>
+                                    <th style="width: 8%;" class="text-end pe-4"><t t-esc="t('th.balance')" /></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="filteredAccounts" t-as="acc" t-key="acc.id">
+                                    <!-- ================= ACCOUNT HEADER ROW ================= -->
+                                    <tr class="o_report_section_row"
+                                        t-on-click="() => this.toggleAccount(acc.id)">
+                                        <td class="ps-4" colspan="4">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <i t-att-class="state.unfoldedAccounts[acc.id] ? 'fa fa-chevron-down text-primary' : 'fa fa-chevron-right text-secondary'"
+                                                   style="width: 14px;" />
+                                                <span class="fw-bold text-dark"><t t-esc="acc.full_name" /></span>
+                                                <span class="o_badge_pill ms-1"
+                                                      t-att-class="acc.normal_balance === 'debit' ? 'o_badge_debit' : 'o_badge_credit'"
+                                                      t-att-title="'Saldo Normal: ' + acc.normal_balance">
+                                                    <t t-esc="acc.normal_balance === 'debit' ? t('gl.normal_debit') : t('gl.normal_credit')" />
+                                                </span>
+                                                <span class="o_badge_pill o_badge_lines ms-1">
+                                                    <t t-esc="acc.lines.length" /> <t t-esc="t('gl.lines')" />
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td class="text-end o_report_num">
+                                            <t t-esc="acc.total_debit_formatted" />
+                                        </td>
+                                        <td class="text-end o_report_num">
+                                            <t t-esc="acc.total_credit_formatted" />
+                                        </td>
+                                        <td class="text-end pe-4 o_report_num"
+                                            t-att-class="acc.is_negative ? 'o_val_neg' : 'o_val_neu'">
+                                            <t t-esc="acc.ending_balance_formatted" />
+                                        </td>
+                                    </tr>
+
+                                    <!-- ================= ACCOUNT DETAILS ================= -->
+                                    <t t-if="state.unfoldedAccounts[acc.id]">
+                                        <!-- Initial Balance Row -->
+                                        <tr class="o_report_subsec_row">
+                                            <td class="ps-4 fw-bold text-dark">
+                                                <i class="fa fa-history text-muted me-2 ms-3" />
+                                                <span><t t-esc="t('gl.initial_balance')" /></span>
+                                            </td>
+                                            <td class="text-center o_tx_date"><t t-esc="state.data.date_from_display" /></td>
+                                            <td class="text-muted small">-</td>
+                                            <td class="text-muted small">-</td>
+                                            <td class="text-end text-muted small">-</td>
+                                            <td class="text-end text-muted small">-</td>
+                                            <td class="text-end pe-4 o_report_num fw-bold"
+                                                t-att-class="acc.initial_balance &lt; 0 ? 'o_val_neg' : 'o_val_neu'">
+                                                <t t-esc="acc.initial_balance_formatted" />
+                                            </td>
+                                        </tr>
+
+                                        <!-- Transaction Line Rows -->
+                                        <t t-foreach="acc.lines" t-as="line" t-key="line.id">
+                                            <tr class="o_report_line_row">
+                                                <td class="ps-4">
+                                                    <div class="ms-3 o_tx_desc text-truncate" style="max-width: 320px;" t-att-title="line.desc || line.title">
+                                                        <t t-esc="line.desc || line.title || '-'" />
+                                                    </div>
+                                                </td>
+                                                <td class="text-center o_tx_date">
+                                                    <t t-esc="line.date || '-'" />
+                                                </td>
+                                                <td>
+                                                    <a class="o_voucher_link"
+                                                       t-on-click.stop="() => this.openJournalEntry(line.entry_id)"
+                                                       t-att-title="'Buka Entri Jurnal: ' + line.entry_num">
+                                                        <i class="fa fa-external-link small me-1" />
+                                                        <t t-esc="line.entry_num || '-'" />
+                                                    </a>
+                                                </td>
+                                                <td>
+                                                    <span class="text-secondary small text-truncate d-inline-block" style="max-width: 140px;" t-att-title="line.partner_name">
+                                                        <t t-esc="line.partner_name || '-'" />
+                                                    </span>
+                                                </td>
+                                                <td class="text-end o_report_num">
+                                                    <t t-esc="line.debit_formatted" />
+                                                </td>
+                                                <td class="text-end o_report_num">
+                                                    <t t-esc="line.credit_formatted" />
+                                                </td>
+                                                <td class="text-end pe-4 o_report_num"
+                                                    t-att-class="line.is_negative ? 'o_val_neg' : 'o_val_neu'">
+                                                    <t t-esc="line.balance_formatted" />
+                                                </td>
+                                            </tr>
+                                        </t>
+
+                                        <!-- Account Subtotal Footer -->
+                                        <tr class="o_report_subtotal_band">
+                                            <td class="ps-4 fw-bold text-dark" colspan="4">
+                                                <i class="fa fa-calculator text-muted me-2 ms-3" />
+                                                <span><t t-esc="t('gl.total_movement')" /> (<t t-esc="acc.code" />)</span>
+                                            </td>
+                                            <td class="text-end fw-bold text-dark o_report_num">
+                                                <t t-esc="acc.total_debit_formatted" />
+                                            </td>
+                                            <td class="text-end fw-bold text-dark o_report_num">
+                                                <t t-esc="acc.total_credit_formatted" />
+                                            </td>
+                                            <td class="text-end pe-4 fw-bold o_report_num"
+                                                t-att-class="acc.is_negative ? 'o_val_neg' : 'o_val_neu'">
+                                                <t t-esc="acc.ending_balance_formatted" />
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </t>
+
+                                <!-- ================= GRAND TOTAL ROW ================= -->
+                                <tr class="o_report_highlight_band o_report_major_band">
+                                    <td class="ps-4 fw-bold text-dark" colspan="4">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="fa fa-cubes text-dark" />
+                                            <span class="text-uppercase tracking-wider"><t t-esc="t('gl.grand_total')" /></span>
+                                        </div>
+                                    </td>
+                                    <td class="text-end py-3 fw-bold text-dark o_report_num">
+                                        <t t-esc="state.data.grand_total.total_debit_formatted" />
+                                    </td>
+                                    <td class="text-end py-3 fw-bold text-dark o_report_num">
+                                        <t t-esc="state.data.grand_total.total_credit_formatted" />
+                                    </td>
+                                    <td class="text-end pe-4 py-3 fw-bold text-dark o_report_num">
+                                        <t t-esc="state.data.grand_total.difference_formatted" />
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </t>
+            </div>
+
+            <!-- ================= GRAND SUMMARY FOOTER ================= -->
+            <div class="o_gl_footer o_report_sticky_footer d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-3">
+                    <span class="badge bg-primary px-3 py-1.5 fw-bold">
+                        <t t-esc="state.data ? state.data.accounts.length : 0" /> <t t-esc="t('gl.footer_accounts')" />
+                    </span>
+                    <span class="text-white-50 small">
+                        <t t-esc="t('gl.footer_system')" />
+                    </span>
+                </div>
+                <div class="d-flex align-items-center gap-4 text-end">
+                    <div>
+                        <div class="o_footer_label"><t t-esc="t('gl.footer_total_debit')" /></div>
+                        <div class="o_footer_val o_report_num">
+                            <t t-esc="state.data ? state.data.grand_total.total_debit_formatted : 'Rp 0,00'" />
+                        </div>
+                    </div>
+                    <div>
+                        <div class="o_footer_label"><t t-esc="t('gl.footer_total_credit')" /></div>
+                        <div class="o_footer_val o_report_num">
+                            <t t-esc="state.data ? state.data.grand_total.total_credit_formatted : 'Rp 0,00'" />
+                        </div>
+                    </div>
+                    <div>
+                        <div class="o_footer_label"><t t-esc="t('gl.footer_net_diff')" /></div>
+                        <div class="o_footer_val o_report_num">
+                            <t t-esc="state.data ? state.data.grand_total.difference_formatted : 'Rp 0,00'" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </t>
+
+</templates>
