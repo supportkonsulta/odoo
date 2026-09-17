@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from markupsafe import Markup
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError, ValidationError, AccessError
 
@@ -64,10 +65,10 @@ class SifnextPPL(models.Model):
         tx = self.env["transaksi.transaction"].create(tx_vals)
         self.write({"transaction_id": tx.id})
         self.message_post(
-            body=_(
+            body=Markup(_(
                 "Dibuatkan pengajuan transfer bank tunggal: "
                 "<a href='#' data-oe-model='transaksi.transaction' data-oe-id='%d'>%s</a>."
-            )
+            ))
             % (tx.id, tx.name)
         )
         return {
@@ -155,10 +156,10 @@ class SifnextPPL(models.Model):
         self.write({"transaction_id": tx.id})
         for ppl in self:
             ppl.message_post(
-                body=_(
+                body=Markup(_(
                     "Didaftarkan ke pengajuan transfer bank kolektif: "
                     "<a href='#' data-oe-model='transaksi.transaction' data-oe-id='%d'>%s</a>."
-                )
+                ))
                 % (tx.id, tx.name)
             )
 
