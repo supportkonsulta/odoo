@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Definisi Aksi Laporan PDF General Ledger -->
+    <record id="action_report_general_ledger" model="ir.actions.report">
+        <field name="name">General Ledger (Buku Besar Akun)</field>
+        <field name="model">sif.general.ledger.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">sif_keuangan.report_general_ledger_document</field>
+        <field name="report_file">sif_keuangan.report_general_ledger_document</field>
+        <field name="print_report_name">'General_Ledger_' + (object.date_from.strftime('%Y%m%d') if object.date_from else 'All') + '_' + (object.date_to.strftime('%Y%m%d') if object.date_to else 'All')</field>
+    </record>
+
+    <!-- Template Laporan PDF General Ledger -->
+    <template id="report_general_ledger_document">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page" style="font-family: Arial, sans-serif; font-size: 11px; color: #333333;">
+                    
+                    <!-- Header Laporan -->
+                    <div style="border-bottom: 2px solid #714B67; padding-bottom: 8px; margin-bottom: 15px;">
+                        <div class="row">
+                            <div class="col-8">
+                                <h2 style="color: #714B67; margin: 0; font-weight: bold; font-size: 20px;">
+                                    General Ledger (Buku Besar)
+                                </h2>
+                                <p style="margin: 3px 0 0 0; color: #555555; font-size: 12px;">
+                                    <strong>Perusahaan:</strong> <t t-esc="company.name"/>
+                                    <span style="margin-left: 15px;">
+                                        <strong>Periode:</strong> 
+                                        <t t-esc="date_from_display"/> s/d <t t-esc="date_to_display"/>
+                                    </span>
+                                </p>
+                            </div>
+                            <div class="col-4 text-end" style="font-size: 11px; color: #666666;">
+                                <div><strong>Mata Uang:</strong> IDR (Rp)</div>
+                                <div>Dicetak pada: <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y %H:%M')"/></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Iterasi Akun COA -->
+                    <t t-if="not accounts">
+                        <div class="alert alert-info text-center" style="margin-top: 30px;">
+                            Tidak ada data transaksi atau saldo untuk periode yang dipilih.
+                        </div>
+                    </t>
+
+                    <t t-foreach="accounts" t-as="acc">
+                        <div style="margin-bottom: 20px; page-break-inside: avoid;">
+                            
+                            <!-- Header Akun -->
+                            <div style="background-color: #f1ecf0; border: 1px solid #dfd7de; padding: 6px 10px; font-size: 12px; font-weight: bold; color: #502848; border-radius: 4px 4px 0 0;">
+                                <span t-esc="acc['full_name']"/>
+                            </div>
+
+                            <!-- Tabel Baris Mutasi -->
+                            <table class="table table-sm table-bordered" style="width: 100%; border-collapse: collapse; margin-bottom: 0; font-size: 10.5px; border-top: none;">
+                                <thead>
+                                    <tr style="background-color: #fcfbfa; text-align: center; font-weight: bold; border-bottom: 1.5px solid #cccccc; color: #444444;">
+                                        <th style="width: 11%; padding: 5px; text-align: center;">TANGGAL</th>
+                                        <th style="width: 32%; padding: 5px; text-align: left;">NO. BUKTI / KETERANGAN</th>
+                                        <th style="width: 18%; padding: 5px; text-align: left;">PARTNER</th>
+                                        <th style="width: 13%; padding: 5px; text-align: right;">DEBET</th>
+                                        <th style="width: 13%; padding: 5px; text-align: right;">KREDIT</th>
+                                        <th style="width: 13%; padding: 5px; text-align: right;">SALDO</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Baris Saldo Awal -->
+                                    <tr style="background-color: #faf9fb; font-style: italic; color: #555555;">
+                                        <td style="text-align: center; padding: 4px;">-</td>
+                                        <td style="padding: 4px;">Saldo Awal (Initial Balance)</td>
+                                        <td style="padding: 4px;">-</td>
+                                        <td style="text-align: right; padding: 4px;">-</td>
+                                        <td style="text-align: right; padding: 4px;">-</td>
+                                        <td style="text-align: right; font-weight: bold; padding: 4px;" t-att-style="'color: #dc2626;' if acc['initial_balance'] &lt; 0 else 'color: #222222;'">
+                                            <t t-esc="acc['initial_balance_formatted']"/>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Baris Transaksi -->
+                                    <t t-foreach="acc['lines']" t-as="l">
+                                        <tr style="border-bottom: 1px solid #eeeeee;">
+                                            <td style="text-align: center; padding: 4px;">
+                                                <t t-esc="l['date']"/>
+                                            </td>
+                                            <td style="padding: 4px;">
+                                                <strong><t t-esc="l['entry_num']"/></strong>
+                                                <t t-if="l['ref_src']">
+                                                    <span class="text-muted" style="font-size: 9.5px;">(<t t-esc="l['ref_src']"/>)</span>
+                                                </t>
+                                                <t t-if="l['desc'] and l['desc'] != '-'">
+                                                    <br/>
+                                                    <span style="color: #444444;"><t t-esc="l['desc']"/></span>
+                                                </t>
+                                            </td>
+                                            <td style="padding: 4px; color: #444444;">
+                                                <t t-esc="l['partner_name']"/>
+                                            </td>
+                                            <td style="text-align: right; padding: 4px;">
+                                                <t t-esc="l['debit_formatted'] if l['debit'] > 0 else '-'"/>
+                                            </td>
+                                            <td style="text-align: right; padding: 4px;">
+                                                <t t-esc="l['credit_formatted'] if l['credit'] > 0 else '-'"/>
+                                            </td>
+                                            <td style="text-align: right; padding: 4px; font-weight: 500;" t-att-style="'color: #dc2626; font-weight: bold;' if l['is_negative'] else 'color: #333333;'">
+                                                <t t-esc="l['balance_formatted']"/>
+                                            </td>
+                                        </tr>
+                                    </t>
+
+                                    <!-- Subtotal Akun -->
+                                    <tr style="background-color: #f7f5f7; font-weight: bold; border-top: 1.5px solid #cccccc; border-bottom: 1.5px solid #aaaaaa;">
+                                        <td colspan="3" style="text-align: right; padding: 5px; color: #502848;">
+                                            Total <t t-esc="acc['full_name']"/>:
+                                        </td>
+                                        <td style="text-align: right; padding: 5px;">
+                                            <t t-esc="acc['total_debit_formatted']"/>
+                                        </td>
+                                        <td style="text-align: right; padding: 5px;">
+                                            <t t-esc="acc['total_credit_formatted']"/>
+                                        </td>
+                                        <td style="text-align: right; padding: 5px;" t-att-style="'color: #dc2626; font-weight: bold;' if acc['is_negative'] else 'color: #714B67;'">
+                                            <t t-esc="acc['ending_balance_formatted']"/>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </t>
+
+                    <!-- Grand Total Laporan -->
+                    <div style="margin-top: 25px; page-break-inside: avoid; border: 2px solid #714B67; border-radius: 4px; background-color: #faf6f9; padding: 10px;">
+                        <table style="width: 100%; font-size: 12px; font-weight: bold;">
+                            <tr>
+                                <td style="width: 45%; color: #714B67; font-size: 13px;">
+                                    TOTAL GENERAL LEDGER (BUKU BESAR)
+                                </td>
+                                <td style="width: 20%; text-align: right; color: #333333;">
+                                    Debet: <br/>
+                                    <span style="font-size: 13px; color: #000000;"><t t-esc="grand_total['total_debit_formatted']"/></span>
+                                </td>
+                                <td style="width: 20%; text-align: right; color: #333333;">
+                                    Kredit: <br/>
+                                    <span style="font-size: 13px; color: #000000;"><t t-esc="grand_total['total_credit_formatted']"/></span>
+                                </td>
+                                <td style="width: 15%; text-align: right; color: #714B67;">
+                                    Selisih: <br/>
+                                    <span style="font-size: 13px;" t-att-style="'color: #16a34a;' if grand_total['is_balanced'] else 'color: #dc2626;'">
+                                        <t t-esc="grand_total['difference_formatted']"/>
+                                        <t t-if="grand_total['is_balanced']"> (Balance)</t>
+                                    </span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                </div>
+            </t>
+        </t>
+    </template>
+
+</odoo>
