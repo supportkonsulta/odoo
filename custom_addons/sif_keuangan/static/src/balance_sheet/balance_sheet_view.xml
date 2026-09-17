@@ -72,18 +72,24 @@
                         <select class="form-select form-select-sm border-0 bg-transparent shadow-none py-0"
                                 style="width: auto; cursor: pointer;"
                                 t-on-change="onDatePresetChange">
-                            <option value="end_of_year" t-att-selected="state.datePreset == 'end_of_year'"><t t-esc="t('preset.end_of_year')" /></option>
-                            <option value="today" t-att-selected="state.datePreset == 'today'"><t t-esc="t('preset.today')" /></option>
-                            <option value="end_of_month" t-att-selected="state.datePreset == 'end_of_month'"><t t-esc="t('preset.end_of_month')" /></option>
-                            <option value="end_of_last_month" t-att-selected="state.datePreset == 'end_of_last_month'"><t t-esc="t('preset.end_of_last_month')" /></option>
-                            <option value="end_of_last_year" t-att-selected="state.datePreset == 'end_of_last_year'"><t t-esc="t('preset.end_of_last_year')" /></option>
+                            <option value="this_year" t-att-selected="state.datePreset == 'this_year'"><t t-esc="t('preset.this_year')" /></option>
+                            <option value="this_month" t-att-selected="state.datePreset == 'this_month'"><t t-esc="t('preset.this_month')" /></option>
+                            <option value="this_quarter" t-att-selected="state.datePreset == 'this_quarter'"><t t-esc="t('preset.this_quarter')" /></option>
+                            <option value="last_month" t-att-selected="state.datePreset == 'last_month'"><t t-esc="t('preset.last_month')" /></option>
+                            <option value="last_year" t-att-selected="state.datePreset == 'last_year'"><t t-esc="t('preset.last_year')" /></option>
                             <option value="custom" t-att-selected="state.datePreset == 'custom'"><t t-esc="t('preset.custom_date')" /></option>
                         </select>
                     </div>
 
-                    <!-- Custom Single Date -->
+                    <!-- Custom Date Range -->
                     <t t-if="state.datePreset == 'custom'">
                         <div class="d-flex align-items-center gap-1 bg-white p-1 rounded border shadow-sm">
+                            <input type="date"
+                                   class="form-control form-control-sm border-0 py-0"
+                                   style="width: 130px;"
+                                   t-att-value="state.customDateFrom"
+                                   t-on-change="onCustomDateFromChange" />
+                            <span class="text-muted small">s/d</span>
                             <input type="date"
                                    class="form-control form-control-sm border-0 py-0"
                                    style="width: 130px;"
@@ -153,7 +159,7 @@
                                 <div class="o_sheet_subtitle">
                                     <t t-esc="state.data.company_name" />
                                     <span class="mx-2 text-muted">•</span>
-                                    <t t-esc="t('bs.posisi_prefix')" />: <span class="o_meta_highlight"><t t-esc="state.data.date_to_display" /></span>
+                                    <t t-esc="t('bs.period_prefix')" />: <span class="o_meta_highlight"><t t-esc="state.data.date_from_display" /> s/d <t t-esc="state.data.date_to_display" /></span>
                                     <t t-if="state.data.has_comparison">
                                         <span class="mx-2 text-muted">•</span>
                                         <t t-esc="t('bs.comp_prefix')" />: <span class="o_meta_comp"><t t-esc="state.data.comparison_date_display" /></span>
@@ -715,7 +721,8 @@
                             <i class="fa fa-exclamation-triangle me-1" /> <t t-esc="t('bs.unbalanced')" />
                         </span>
                     </t>
-                    <span class="text-white-50 small">
+                    <span class="text-white-75 small fw-medium">
+                        <i class="fa fa-calculator me-1 opacity-75" />
                         <t t-esc="t('bs.footer_system')" />
                     </span>
                 </div>
