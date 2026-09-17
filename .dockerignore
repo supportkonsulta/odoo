@@ -1,2 +1,4 @@
 **
 !Dockerfile
+!custom_addons
+!custom_addons/**
