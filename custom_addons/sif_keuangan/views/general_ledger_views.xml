@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ================================================================= -->
+    <!-- 1. CLIENT ACTION INTERAKTIF GENERAL LEDGER (SATU LAYAR PENUH)     -->
+    <!-- ================================================================= -->
+    <record id="action_sif_general_ledger_client" model="ir.actions.client">
+        <field name="name">General Ledger</field>
+        <field name="tag">sif_keuangan.general_ledger</field>
+        <field name="target">current</field>
+    </record>
+
+    <!-- ================================================================= -->
+    <!-- 2. POPUP WIZARD FILTER (FALLBACK & CETAK DOKUMEN)                -->
+    <!-- ================================================================= -->
+    <record id="view_sif_general_ledger_wizard_form" model="ir.ui.view">
+        <field name="name">sif.general.ledger.wizard.form</field>
+        <field name="model">sif.general.ledger.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Filter Laporan General Ledger">
+                <sheet>
+                    <group>
+                        <group string="Rentang Tanggal">
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                        </group>
+                        <group string="Opsi Filter">
+                            <field name="target_move"/>
+                            <field name="unit_name"/>
+                            <field name="partner_id"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_print_pdf" string="Cetak PDF General Ledger" type="object" class="btn-primary" icon="fa-print"/>
+                    <button name="action_export_xlsx" string="Unduh Excel (XLSX)" type="object" class="btn-secondary" icon="fa-file-excel-o"/>
+                    <button string="Batal" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>
