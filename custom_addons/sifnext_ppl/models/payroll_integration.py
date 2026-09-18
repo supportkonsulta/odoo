@@ -19,6 +19,8 @@ class CustomPayrollBatch(models.Model):
                 if slip.total_pendapatan > 0:
                     ppl_lines.append((0, 0, {
                         'description': f"Gaji {slip.employee_id.name}",
+                        'employee_id': slip.employee_id.id,
+                        'slip_id': slip.id,
                         'quantity': 1,
                         'unit_price': slip.total_pendapatan,
                     }))
