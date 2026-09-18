@@ -126,6 +126,7 @@
                                 <list editable="bottom" open_form_view="True">
                                     <field name="is_selected"/>
                                     <field name="sequence" widget="handle"/>
+                                    <field name="employee_id" optional="show" readonly="True"/>
                                     <field name="description"/>
                                     <field name="tax_type"/>
                                     <field name="tax_percentage" invisible="tax_type == 'none'"/>
@@ -149,6 +150,7 @@
                                 <list editable="bottom" create="false" delete="false" open_form_view="True">
                                     <field name="is_selected"/>
                                     <field name="sequence" readonly="True"/>
+                                    <field name="employee_id" optional="show" readonly="True"/>
                                     <field name="description" readonly="True"/>
                                     <field name="tax_type" readonly="True"/>
                                     <field name="tax_percentage" readonly="True" invisible="tax_type == 'none'"/>
@@ -170,6 +172,7 @@
                                    invisible="state in ('draft', 'submitted')">
                                 <list create="false" delete="false" edit="false" open_form_view="True">
                                     <field name="sequence"/>
+                                    <field name="employee_id" optional="show"/>
                                     <field name="description"/>
                                     <field name="tax_type"/>
                                     <field name="tax_percentage" invisible="tax_type == 'none'"/>
@@ -191,6 +194,7 @@
                                    invisible="state != 'submitted'">
                                 <list create="false" delete="false" edit="false" open_form_view="True">
                                     <field name="sequence"/>
+                                    <field name="employee_id" optional="show"/>
                                     <field name="description"/>
                                     <field name="tax_type"/>
                                     <field name="tax_percentage" invisible="tax_type == 'none'"/>
@@ -219,10 +223,15 @@
                                     <field name="payment_date" readonly="state != 'approved'"/>
                                     <field name="payment_reference" readonly="state != 'approved'"/>
                                 </group>
-                                <group string="Rekening Penerima / History Transfer">
+                                <group string="Rekening Penerima / History Transfer" invisible="source_type == 'payroll'">
                                     <field name="payment_dest_bank" readonly="state != 'approved'"/>
                                     <field name="payment_dest_account_number" readonly="state != 'approved'"/>
                                     <field name="payment_dest_account_name" readonly="state != 'approved'"/>
+                                </group>
+                                <group string="Informasi Transfer Payroll" invisible="source_type != 'payroll'">
+                                    <div class="alert alert-info mb-0" role="alert">
+                                        <i class="fa fa-info-circle me-1"/> Pengajuan transfer PPL Payroll diproses otomatis sebagai <strong>Multi-Transfer</strong> ke rekening bank masing-masing karyawan yang terdaftar di master pegawai.
+                                    </div>
                                 </group>
                             </group>
                             <div class="text-muted">PPL hanya mencatat pembayaran administratif. Jurnal transaksi dikelola modul Jurnal Besar.</div>

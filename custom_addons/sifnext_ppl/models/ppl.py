@@ -601,6 +601,8 @@ class SifnextPPLLine(models.Model):
         [("unchecked", "Belum Dicek"), ("sufficient", "Cukup"), ("insufficient", "Tidak Cukup")],
         default="unchecked", readonly=True,
     )
+    employee_id = fields.Many2one("hr.employee", string="Karyawan", ondelete="set null")
+    slip_id = fields.Many2one("custom.payroll.slip", string="Slip Gaji", ondelete="set null")
     attachment_ids = fields.Many2many(
         "ir.attachment",
         "sifnext_ppl_line_attachment_rel",

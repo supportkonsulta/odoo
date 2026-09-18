@@ -87,7 +87,7 @@ class TransaksiTransactionLine(models.Model):
     @api.constrains("rupiah", "ppl_id")
     def _check_ppl_amount(self):
         for line in self:
-            if line.ppl_id and line.rupiah != line.ppl_id.total_amount:
+            if line.ppl_id and line.ppl_id.source_type != "payroll" and line.rupiah != line.ppl_id.total_amount:
                 raise ValidationError(
                     _("Nominal transfer pada baris untuk PPL %s (Rp %s) harus sama dengan total nominal dokumen PPL (Rp %s).")
                     % (line.ppl_id.name, f"{line.rupiah:,.2f}", f"{line.ppl_id.total_amount:,.2f}")

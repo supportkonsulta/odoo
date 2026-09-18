@@ -19,6 +19,8 @@ class CustomPayrollBatch(models.Model):
                 if slip.total_pendapatan > 0:
                     ppl_lines.append((0, 0, {
                         'description': f"Gaji {slip.employee_id.name}",
+                        'employee_id': slip.employee_id.id,
+                        'slip_id': slip.id,
                         'quantity': 1,
                         'unit_price': slip.total_pendapatan,
                     }))
@@ -30,7 +32,7 @@ class CustomPayrollBatch(models.Model):
             # Buat dokumen PPL
             ppl_vals = {
                 'title': f"Pembayaran Gaji - {batch.name}",
-                'source_type': 'pegawai',
+                'source_type': 'payroll',
                 'unit_id': unit.id if unit else False,
                 'description': f"Tagihan Gaji untuk batch: {batch.name}",
                 'line_ids': ppl_lines

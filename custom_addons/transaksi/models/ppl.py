@@ -27,7 +27,7 @@ class SifnextPPL(models.Model):
         return super()._check_group(xmlid, message)
 
     def action_create_bank_transfer(self):
-        """Membuat dokumen transaksi transfer tunggal dari PPL."""
+        """Membuat dokumen transaksi transfer tunggal atau multi-transfer dari PPL."""
         self.ensure_one()
         if not (
             self.env.user.has_group("transaksi.group_transaksi_finance")
@@ -40,8 +40,6 @@ class SifnextPPL(models.Model):
             raise UserError(_("Pengajuan transfer bank hanya dapat dibuat untuk PPL yang telah disetujui."))
         if self.payment_method != "bank":
             raise UserError(_("Pengajuan transfer bank hanya berlaku untuk PPL dengan metode pembayaran Bank."))
-        if not self.payment_dest_bank or not self.payment_dest_account_number:
-            raise ValidationError(_("Nama bank tujuan dan nomor rekening penerima pada PPL wajib diisi sebelum mengajukan transfer."))
         if self.total_amount <= 0:
             raise ValidationError(_("Nominal pembayaran PPL harus lebih dari Rp 0."))
         if self.transaction_id and self.transaction_id.state not in ("rejected", "failed"):
@@ -50,35 +48,107 @@ class SifnextPPL(models.Model):
                 % (self.transaction_id.name, self.transaction_id.state)
             )
 
-        tx_vals = {
-            "transfer_type": "single",
-            "source_account_id": self.payment_source_account_id.id if self.payment_source_account_id else False,
-            "single_bank_name": self.payment_dest_bank,
-            "single_destination_account": self.payment_dest_account_number,
-            "single_account_holder_name": self.payment_dest_account_name or False,
-            "single_rupiah": self.total_amount,
-            "ref_number": (self.name or "")[:19],
-            "remark": f"Bayar PPL {self.name}: {self.title or ''}"[:200],
-            "ppl_id": self.id,
-            "unit_id": self.unit_id.id if self.unit_id else False,
-        }
-        tx = self.env["transaksi.transaction"].create(tx_vals)
-        self.write({"transaction_id": tx.id})
-        self.message_post(
-            body=Markup(_(
-                "Dibuatkan pengajuan transfer bank tunggal: "
-                "<a href='#' data-oe-model='transaksi.transaction' data-oe-id='%d'>%s</a>."
-            ))
-            % (tx.id, tx.name)
-        )
-        return {
-            "type": "ir.actions.act_window",
-            "name": _("Transaksi Transfer Bank"),
-            "res_model": "transaksi.transaction",
-            "res_id": tx.id,
-            "view_mode": "form",
-            "target": "current",
-        }
+        if self.source_type == "payroll":
+            lines = []
+            seq = 1
+            missing_bank_employees = []
+            for line in self.line_ids:
+                if line.subtotal <= 0:
+                    continue
+                emp = line.employee_id
+                bank_acc = False
+                if emp:
+                    bank_acc = getattr(emp, "primary_bank_account_id", False) or (emp.bank_account_ids and emp.bank_account_ids[0]) or (emp.work_contact_id and emp.work_contact_id.bank_ids and emp.work_contact_id.bank_ids[0]) or False
+
+                if not bank_acc and emp and emp.user_id and emp.user_id.partner_id and emp.user_id.partner_id.bank_ids:
+                    bank_acc = emp.user_id.partner_id.bank_ids[0]
+
+                if not bank_acc:
+                    emp_name = emp.name if emp else line.description
+                    missing_bank_employees.append(emp_name)
+                    continue
+
+                b_name = bank_acc.bank_id.name if bank_acc.bank_id else (bank_acc.bank_name or "Bank")
+                lines.append((0, 0, {
+                    "sequence": seq,
+                    "bank_name": b_name,
+                    "destination_account": bank_acc.acc_number or "",
+                    "account_holder_name": bank_acc.acc_holder_name or (emp.name if emp else line.description),
+                    "transfer_method": "bi_fast",
+                    "rupiah": line.subtotal,
+                    "line_notes": f"Gaji {emp.name if emp else ''} - {self.name}"[:100],
+                    "ppl_id": self.id,
+                }))
+                seq += 1
+
+            if missing_bank_employees:
+                raise ValidationError(
+                    _("Karyawan berikut belum memiliki nomor rekening bank terdaftar di Odoo:\n- %s\n\nSilakan lengkapi rekening bank pada profil Karyawan sebelum mengajukan transfer payroll.")
+                    % "\n- ".join(missing_bank_employees)
+                )
+
+            if not lines:
+                raise ValidationError(_("Tidak ada baris pembayaran yang valid untuk diajukan transfer."))
+
+            tx_vals = {
+                "transfer_type": "multiple",
+                "source_account_id": self.payment_source_account_id.id if self.payment_source_account_id else False,
+                "ref_number": (self.name or "")[:19],
+                "remark": f"Multi Transfer Payroll {self.name}: {self.title or ''}"[:200],
+                "ppl_id": self.id,
+                "unit_id": self.unit_id.id if self.unit_id else False,
+                "line_ids": lines,
+            }
+            tx = self.env["transaksi.transaction"].create(tx_vals)
+            self.write({"transaction_id": tx.id})
+            self.message_post(
+                body=Markup(_(
+                    "Dibuatkan pengajuan multi-transfer bank payroll: "
+                    "<a href='#' data-oe-model='transaksi.transaction' data-oe-id='%d'>%s</a>."
+                ))
+                % (tx.id, tx.name)
+            )
+            return {
+                "type": "ir.actions.act_window",
+                "name": _("Transaksi Transfer Bank Payroll"),
+                "res_model": "transaksi.transaction",
+                "res_id": tx.id,
+                "view_mode": "form",
+                "target": "current",
+            }
+        else:
+            if not self.payment_dest_bank or not self.payment_dest_account_number:
+                raise ValidationError(_("Nama bank tujuan dan nomor rekening penerima pada PPL wajib diisi sebelum mengajukan transfer."))
+
+            tx_vals = {
+                "transfer_type": "single",
+                "source_account_id": self.payment_source_account_id.id if self.payment_source_account_id else False,
+                "single_bank_name": self.payment_dest_bank,
+                "single_destination_account": self.payment_dest_account_number,
+                "single_account_holder_name": self.payment_dest_account_name or False,
+                "single_rupiah": self.total_amount,
+                "ref_number": (self.name or "")[:19],
+                "remark": f"Bayar PPL {self.name}: {self.title or ''}"[:200],
+                "ppl_id": self.id,
+                "unit_id": self.unit_id.id if self.unit_id else False,
+            }
+            tx = self.env["transaksi.transaction"].create(tx_vals)
+            self.write({"transaction_id": tx.id})
+            self.message_post(
+                body=Markup(_(
+                    "Dibuatkan pengajuan transfer bank tunggal: "
+                    "<a href='#' data-oe-model='transaksi.transaction' data-oe-id='%d'>%s</a>."
+                ))
+                % (tx.id, tx.name)
+            )
+            return {
+                "type": "ir.actions.act_window",
+                "name": _("Transaksi Transfer Bank"),
+                "res_model": "transaksi.transaction",
+                "res_id": tx.id,
+                "view_mode": "form",
+                "target": "current",
+            }
 
     def action_create_batch_bank_transfer(self):
         """Membuat transaksi transfer massal dari pilihan recordset PPL."""
