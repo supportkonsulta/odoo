@@ -66,6 +66,24 @@ export class ProfitLossView extends Component {
         return translate(key, params);
     }
 
+    filterAccounts(accounts) {
+        if (!accounts || !Array.isArray(accounts)) return [];
+        const q = (this.state.searchQuery || "").toLowerCase().trim();
+        if (!q) return accounts;
+        return accounts.filter(acc =>
+            (acc.name && acc.name.toLowerCase().includes(q)) ||
+            (acc.code && acc.code.toLowerCase().includes(q))
+        );
+    }
+
+    onSearchInput(ev) {
+        this.state.searchQuery = ev.target.value;
+        this.state.filters.search = ev.target.value;
+        if (this.state.searchQuery && this.state.searchQuery.trim()) {
+            this.unfoldAll();
+        }
+    }
+
     async loadData() {
         this.state.loading = true;
         try {
