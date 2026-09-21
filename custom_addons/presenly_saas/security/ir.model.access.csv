@@ -5,3 +5,13 @@ access_presenly_saas_subscription_internal,presenly.saas.subscription.internal,m
 access_presenly_saas_subscription_manager,presenly.saas.subscription.manager,model_presenly_saas_subscription,group_presenly_saas_manager,1,1,1,1
 access_presenly_saas_sync_log_internal,presenly.saas.sync.log.internal,model_presenly_saas_sync_log,base.group_user,1,0,0,0
 access_presenly_saas_sync_log_manager,presenly.saas.sync.log.manager,model_presenly_saas_sync_log,group_presenly_saas_manager,1,1,1,1
+access_presenly_saas_work_location_internal,presenly.saas.work.location.internal,model_presenly_saas_work_location,base.group_user,1,0,0,0
+access_presenly_saas_work_location_manager,presenly.saas.work.location.manager,model_presenly_saas_work_location,group_presenly_saas_manager,1,1,1,1
+access_presenly_saas_shift_internal,presenly.saas.shift.internal,model_presenly_saas_shift,base.group_user,1,0,0,0
+access_presenly_saas_shift_manager,presenly.saas.shift.manager,model_presenly_saas_shift,group_presenly_saas_manager,1,1,1,1
+access_presenly_saas_attendance_mode_internal,presenly.saas.attendance.mode.internal,model_presenly_saas_attendance_mode,base.group_user,1,0,0,0
+access_presenly_saas_attendance_mode_manager,presenly.saas.attendance.mode.manager,model_presenly_saas_attendance_mode,group_presenly_saas_manager,1,1,1,1
+access_presenly_saas_holiday_internal,presenly.saas.holiday.internal,model_presenly_saas_holiday,base.group_user,1,0,0,0
+access_presenly_saas_holiday_manager,presenly.saas.holiday.manager,model_presenly_saas_holiday,group_presenly_saas_manager,1,1,1,1
+access_presenly_saas_work_day_setup_internal,presenly.saas.work.day.setup.internal,model_presenly_saas_work_day_setup,base.group_user,1,0,0,0
+access_presenly_saas_work_day_setup_manager,presenly.saas.work.day.setup.manager,model_presenly_saas_work_day_setup,group_presenly_saas_manager,1,1,1,1

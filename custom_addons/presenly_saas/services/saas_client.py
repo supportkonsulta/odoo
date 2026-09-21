@@ -99,6 +99,10 @@ class PresenlySaasClient:
         """Rekap presensi per pegawai per bulan."""
         return self.get_envelope("/v1/presenly/attendance-recap", params)
 
+    def get_resource(self, resource, params=None):
+        """Ambil satu resource referensi, mis. ``work-locations``."""
+        return self.get_envelope("/v1/%s" % resource, params)
+
     def get_envelope(self, path, params=None):
         """Ambil seluruh amplop respons: ``{"data": ..., "meta": ...}``.
 

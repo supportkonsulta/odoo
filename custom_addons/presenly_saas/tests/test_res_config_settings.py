@@ -226,7 +226,7 @@ class TestPresenlySaasSettings(TransactionCase):
 class TestPresenlySaasMenuStructure(TransactionCase):
     """Struktur menu: operasional di aplikasi, konfigurasi di Settings native."""
 
-    def test_root_menu_holds_operations_and_configuration_shortcut(self):
+    def test_root_menu_holds_operations_and_references(self):
         root = self.env.ref('presenly_saas.menu_presenly_saas_root')
         self.assertEqual(
             sorted(root.child_id.mapped('name')),
@@ -234,20 +234,30 @@ class TestPresenlySaasMenuStructure(TransactionCase):
                 'Configuration',
                 'Data Presensi',
                 'Fitur Presenly',
+                'Referensi',
                 'Rekap Presensi',
                 'Subscription',
                 'Sync Log',
             ],
         )
 
-    def test_every_menu_opens_a_real_action(self):
-        # Menu tanpa action adalah pintu buntu; daftar menu harus tumbuh bersama
-        # action-nya, bukan lebih cepat.
+    def test_setiap_menu_membuka_action_atau_punya_anak(self):
+        # Invarian yang sebenarnya: tidak ada menu pintu buntu. Menu kosong
+        # adalah cacat, entah karena action-nya lupa didaftarkan atau anaknya
+        # lupa ditambahkan.
         root = self.env.ref('presenly_saas.menu_presenly_saas_root')
         for menu in root.child_id:
-            if menu.name == 'Configuration':
-                continue
-            self.assertTrue(menu.action, 'Menu %s tidak punya action.' % menu.name)
+            self.assertTrue(
+                menu.action or menu.child_id,
+                'Menu %s tidak punya action dan tidak punya anak.' % menu.name,
+            )
+
+    def test_menu_referensi_berisi_lima_resource(self):
+        reference = self.env.ref('presenly_saas.menu_presenly_saas_reference')
+        self.assertEqual(
+            sorted(reference.child_id.mapped('name')),
+            ['Hari Libur', 'Lokasi Kerja', 'Mode Absen', 'Setup Hari Kerja', 'Shift'],
+        )
 
     def test_configuration_holds_a_single_settings_shortcut(self):
         configuration = self.env.ref('presenly_saas.menu_presenly_saas_configuration')

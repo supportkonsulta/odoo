@@ -22,6 +22,16 @@ ATTENDANCE_RECAP_PATH = "/api/external/v1/presenly/attendance-recap"
 # mengunci worker. Kalau batasnya tersentuh, itu diberitahukan ke pengguna.
 MAX_PULL_PAGES = 10
 
+# Cermin data referensi. Resource API -> model Odoo yang menyimpannya.
+# Semuanya tanpa periode: penarikan mengganti seluruh isinya.
+REFERENCE_MIRRORS = (
+    ('work-locations', 'presenly.saas.work.location'),
+    ('shifts', 'presenly.saas.shift'),
+    ('attendance-modes', 'presenly.saas.attendance.mode'),
+    ('holidays', 'presenly.saas.holiday'),
+    ('work-day-setups', 'presenly.saas.work.day.setup'),
+)
+
 MANAGER_GROUP = 'presenly_saas.group_presenly_saas_manager'
 
 
@@ -269,6 +279,22 @@ class PresenlySaasConfig(models.Model):
               available=len(features.filtered(lambda f: f.status == 'available'))),
         )
 
+    def action_pull_reference_data(self):
+        """Segarkan seluruh cermin data referensi."""
+        self.ensure_one()
+        self._ensure_manager()
+        summary, error = self._pull_reference_data()
+        if error:
+            return self._notify('danger', _('Gagal menarik data referensi'), error)
+        return self._notify(
+            'success',
+            _('Data referensi diperbarui'),
+            '\n'.join(
+                '%s: %s' % (resource, count)
+                for resource, count in sorted(summary.items())
+            ),
+        )
+
     def action_open_pull_wizard(self):
         """Buka pemilih periode sebelum menarik presensi."""
         self.ensure_one()
@@ -329,6 +355,33 @@ class PresenlySaasConfig(models.Model):
         )
         self._log_pull(FEATURES_PATH, True, None, started)
         return features, False
+
+    def _pull_reference_data(self):
+        """Tarik seluruh resource referensi. Mengembalikan ``(summary, error)``."""
+        self.ensure_one()
+        self._require_enabled()
+        client = self._client()
+        summary = {}
+
+        for resource, model_name in REFERENCE_MIRRORS:
+            started = fields.Datetime.now()
+            try:
+                rows, _meta, _pages = self._fetch_pages(
+                    # Default arg mengikat `resource` per iterasi.
+                    lambda params, r=resource: client.get_resource(r, params),
+                    {'limit': 500},
+                )
+            except SaasClientError as exc:
+                error = redact(exc, self.api_key)
+                self._log_pull('/v1/%s' % resource, False, exc, started)
+                return summary, error
+
+            summary[resource] = self.env[model_name]._mirror_replace(
+                self.company_id, rows
+            )
+            self._log_pull('/v1/%s' % resource, True, None, started)
+
+        return summary, False
 
     def _pull_attendance(self, month, year):
         """Tarik log dan rekap presensi untuk satu bulan.

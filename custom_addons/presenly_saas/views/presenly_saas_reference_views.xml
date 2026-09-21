@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Lokasi kerja ==================================================== -->
+
+    <record id="view_presenly_saas_work_location_list" model="ir.ui.view">
+        <field name="name">presenly.saas.work.location.list</field>
+        <field name="model">presenly.saas.work.location</field>
+        <field name="arch" type="xml">
+            <list string="Lokasi Kerja" create="false" edit="false" delete="false">
+                <field name="name"/>
+                <field name="internal_company_name"/>
+                <field name="attendance_type"/>
+                <field name="radius_meters"/>
+                <field name="timezone" optional="show"/>
+                <field name="is_active"/>
+                <field name="project_name" optional="hide"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+                <field name="fetched_at" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_presenly_saas_work_location_search" model="ir.ui.view">
+        <field name="name">presenly.saas.work.location.search</field>
+        <field name="model">presenly.saas.work.location</field>
+        <field name="arch" type="xml">
+            <search string="Lokasi Kerja">
+                <field name="name"/>
+                <field name="internal_company_name"/>
+                <filter name="active" string="Aktif" domain="[('is_active', '=', True)]"/>
+                <group>
+                    <filter name="group_company" string="Perusahaan Internal"
+                            context="{'group_by': 'internal_company_name'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_presenly_saas_work_location" model="ir.actions.act_window">
+        <field name="name">Lokasi Kerja</field>
+        <field name="res_model">presenly.saas.work.location</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <!-- Shift =========================================================== -->
+
+    <record id="view_presenly_saas_shift_list" model="ir.ui.view">
+        <field name="name">presenly.saas.shift.list</field>
+        <field name="model">presenly.saas.shift</field>
+        <field name="arch" type="xml">
+            <list string="Shift" create="false" edit="false" delete="false">
+                <field name="shift_name"/>
+                <field name="location_name"/>
+                <field name="start_time"/>
+                <field name="end_time"/>
+                <field name="late_index" optional="show"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+                <field name="fetched_at" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_presenly_saas_shift_search" model="ir.ui.view">
+        <field name="name">presenly.saas.shift.search</field>
+        <field name="model">presenly.saas.shift</field>
+        <field name="arch" type="xml">
+            <search string="Shift">
+                <field name="shift_name"/>
+                <field name="location_name"/>
+                <group>
+                    <filter name="group_location" string="Lokasi"
+                            context="{'group_by': 'location_name'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_presenly_saas_shift" model="ir.actions.act_window">
+        <field name="name">Shift</field>
+        <field name="res_model">presenly.saas.shift</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <!-- Mode absen ====================================================== -->
+
+    <record id="view_presenly_saas_attendance_mode_list" model="ir.ui.view">
+        <field name="name">presenly.saas.attendance.mode.list</field>
+        <field name="model">presenly.saas.attendance.mode</field>
+        <field name="arch" type="xml">
+            <list string="Mode Absen" create="false" edit="false" delete="false">
+                <field name="name"/>
+                <field name="fetched_at" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_presenly_saas_attendance_mode" model="ir.actions.act_window">
+        <field name="name">Mode Absen</field>
+        <field name="res_model">presenly.saas.attendance.mode</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <!-- Hari libur ====================================================== -->
+
+    <record id="view_presenly_saas_holiday_list" model="ir.ui.view">
+        <field name="name">presenly.saas.holiday.list</field>
+        <field name="model">presenly.saas.holiday</field>
+        <field name="arch" type="xml">
+            <list string="Hari Libur" create="false" edit="false" delete="false">
+                <field name="date"/>
+                <field name="name"/>
+                <field name="holiday_type"/>
+                <field name="location_name"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+                <field name="fetched_at" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_presenly_saas_holiday_search" model="ir.ui.view">
+        <field name="name">presenly.saas.holiday.search</field>
+        <field name="model">presenly.saas.holiday</field>
+        <field name="arch" type="xml">
+            <search string="Hari Libur">
+                <field name="name"/>
+                <field name="location_name"/>
+                <filter name="date" string="Tanggal" date="date"/>
+                <group>
+                    <filter name="group_type" string="Tipe" context="{'group_by': 'holiday_type'}"/>
+                    <filter name="group_location" string="Lokasi"
+                            context="{'group_by': 'location_name'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_presenly_saas_holiday" model="ir.actions.act_window">
+        <field name="name">Hari Libur</field>
+        <field name="res_model">presenly.saas.holiday</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <!-- Setup hari kerja ================================================ -->
+
+    <record id="view_presenly_saas_work_day_setup_list" model="ir.ui.view">
+        <field name="name">presenly.saas.work.day.setup.list</field>
+        <field name="model">presenly.saas.work.day.setup</field>
+        <field name="arch" type="xml">
+            <list string="Setup Hari Kerja" create="false" edit="false" delete="false">
+                <field name="year"/>
+                <field name="location_name"/>
+                <field name="total_days" sum="Total hari kerja"/>
+                <field name="jan" optional="show"/>
+                <field name="feb" optional="hide"/>
+                <field name="mar" optional="hide"/>
+                <field name="apr" optional="hide"/>
+                <field name="may" optional="hide"/>
+                <field name="jun" optional="hide"/>
+                <field name="jul" optional="hide"/>
+                <field name="aug" optional="hide"/>
+                <field name="sep" optional="hide"/>
+                <field name="oct" optional="hide"/>
+                <field name="nov" optional="hide"/>
+                <field name="dec" optional="hide"/>
+                <field name="fetched_at" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_presenly_saas_work_day_setup" model="ir.actions.act_window">
+        <field name="name">Setup Hari Kerja</field>
+        <field name="res_model">presenly.saas.work.day.setup</field>
+        <field name="view_mode">list</field>
+    </record>
+
+</odoo>

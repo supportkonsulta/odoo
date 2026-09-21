@@ -32,9 +32,14 @@ native Odoo. Kebijakan produk: full access, tanpa gating fitur per paket.
         'views/presenly_saas_config_views.xml',
         'views/presenly_saas_sync_log_views.xml',
         'views/presenly_saas_external_feature_views.xml',
+        'views/presenly_saas_reference_views.xml',
         'views/presenly_saas_attendance_views.xml',
         'wizard/presenly_saas_pull_wizard_views.xml',
+        # Menu root didefinisikan di sini. Setiap berkas yang menambah menu
+        # harus dimuat SETELAHNYA, kalau tidak `parent="menu_presenly_saas_root"`
+        # tidak ditemukan.
         'views/presenly_saas_menus.xml',
+        'views/presenly_saas_reference_menus.xml',
         # Settings native memakai action dari menus, dan form langganan memakai
         # action settings, jadi urutannya harus begini.
         'views/res_config_settings_views.xml',

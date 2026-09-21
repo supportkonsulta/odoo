@@ -18,6 +18,12 @@
                             type="action"
                             string="Pengaturan"
                             groups="presenly_saas.group_presenly_saas_manager"/>
+                    <!-- Server action, bukan method di model ini: penarikan
+                         referensi dikerjakan oleh `presenly.saas.config`. -->
+                    <button name="%(action_presenly_saas_pull_reference)d"
+                            type="action"
+                            string="Segarkan Referensi"
+                            groups="presenly_saas.group_presenly_saas_manager"/>
                     <field name="state_source" widget="badge"
                            decoration-success="state_source == 'live'"
                            decoration-warning="state_source == 'cached'"
