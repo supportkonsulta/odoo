@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Tampilan hanya-baca.
+
+         Ini bukan tempat mengubah konfigurasi: pengaturannya ada di halaman
+         Settings native (blok "Presenly SaaS"). Form ini tetap ada karena
+         `presenly.saas.subscription.config_id` menunjuk ke sini, sehingga
+         operator bisa memeriksa dari mana sebuah snapshot berasal tanpa
+         berpindah ke layar pengaturan. -->
+    <record id="view_presenly_saas_config_form" model="ir.ui.view">
+        <field name="name">presenly.saas.config.form</field>
+        <field name="model">presenly.saas.config</field>
+        <field name="arch" type="xml">
+            <form string="Presenly SaaS Connection" create="false" edit="false" delete="false">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" string="Connection"/>
+                        <h1>
+                            <field name="name" readonly="1" placeholder="Presenly SaaS"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group string="Scope">
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="enabled"/>
+                        </group>
+                        <group string="Last Check">
+                            <field name="last_check_at"/>
+                            <field name="last_check_status" widget="badge"
+                                   decoration-success="last_check_status == 'success'"
+                                   decoration-danger="last_check_status == 'failed'"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Koneksi" name="connection">
+                            <group>
+                                <group string="Server">
+                                    <field name="environment"/>
+                                    <field name="base_url"/>
+                                </group>
+                                <group string="Kredensial">
+                                    <field name="tenant_code"/>
+                                    <field name="api_key" password="True"/>
+                                    <field name="timeout_seconds"/>
+                                    <field name="retry_count"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Kebijakan" name="policy">
+                            <group>
+                                <group string="Enforcement">
+                                    <field name="guard_mode"/>
+                                    <field name="grace_days"/>
+                                    <field name="show_banner"/>
+                                </group>
+                                <group/>
+                            </group>
+                        </page>
+
+                        <page string="Diagnostik" name="diagnostics">
+                            <group>
+                                <field name="last_check_message" nolabel="1" colspan="2"/>
+                            </group>
+                            <div class="text-muted">
+                                Pemeriksaan yang gagal tidak pernah mengubah status langganan
+                                yang tersimpan. Hanya jawaban nyata dari server SaaS yang bisa.
+                            </div>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+</odoo>

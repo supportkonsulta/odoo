@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.presenly.saas</field>
+        <field name="model">res.config.settings</field>
+        <field name="priority" eval="90"/>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="Presenly SaaS"
+                     string="Presenly SaaS"
+                     name="presenly_saas"
+                     groups="presenly_saas.group_presenly_saas_manager">
+
+                    <block title="Koneksi" name="presenly_saas_connection">
+                        <setting string="Aktifkan Koneksi"
+                                 help="Saat nonaktif, modul tidak pernah memanggil server Presenly SaaS dan semua pemeriksaan langganan dilewati.">
+                            <field name="presenly_saas_enabled"/>
+                        </setting>
+                        <setting string="Base URL"
+                                 help="Alamat server Presenly SaaS, misalnya https://presensi.example.com. Akhiran /api opsional.">
+                            <field name="presenly_saas_base_url" placeholder="https://presensi.example.com"/>
+                        </setting>
+                        <setting string="Kode Tenant"
+                                 help="Penanda tenant di sisi SaaS, dikirim sebagai header X-Tenant-ID. Contoh: pelni.">
+                            <field name="presenly_saas_tenant_code" placeholder="pelni"/>
+                        </setting>
+                        <setting string="Kunci API"
+                                 help="Dibuat di web Presenly pada menu Integrasi. Hanya ditampilkan sekali saat dibuat, dan hanya berlaku untuk tenant ini.">
+                            <field name="presenly_saas_api_key" password="True"/>
+                        </setting>
+                        <setting string="Lingkungan"
+                                 help="Hanya penanda, agar koneksi sandbox tidak tertukar dengan produksi saat penanganan masalah.">
+                            <field name="presenly_saas_environment"/>
+                        </setting>
+                    </block>
+
+                    <block title="Keandalan" name="presenly_saas_reliability">
+                        <setting string="Batas Waktu"
+                                 help="Batas waktu satu permintaan ke server Presenly SaaS.">
+                            <field name="presenly_saas_timeout_seconds" class="text-center o_input" style="width: 6ch;"/>
+                            <span> detik</span>
+                        </setting>
+                        <setting string="Percobaan Ulang"
+                                 help="Diulang untuk galat jaringan dan respons 5xx. Kegagalan autentikasi tidak pernah diulang.">
+                            <field name="presenly_saas_retry_count" class="text-center o_input" style="width: 6ch;"/>
+                            <span> kali</span>
+                        </setting>
+                    </block>
+
+                    <block title="Kebijakan" name="presenly_saas_policy">
+                        <setting string="Mode Penegakan"
+                                 help="Nonaktif: status hanya terlihat di dashboard. Peringatan saja: ditambah banner di backend. Wajibkan: guard menaikkan galat untuk modul yang memanggilnya.">
+                            <field name="presenly_saas_guard_mode" widget="radio"/>
+                        </setting>
+                        <setting string="Masa Tenggang"
+                                 help="Berapa lama status cache masih dianggap wajar setelah sinkronisasi terakhir yang berhasil.">
+                            <field name="presenly_saas_grace_days" class="text-center o_input" style="width: 6ch;"/>
+                            <span> hari</span>
+                        </setting>
+                        <setting string="Tampilkan Banner"
+                                 help="Tampilkan banner peringatan di backend saat status langganan perlu perhatian.">
+                            <field name="presenly_saas_show_banner"/>
+                        </setting>
+                    </block>
+
+                    <block title="Diagnostik" name="presenly_saas_diagnostics">
+                        <setting string="Uji dan Segarkan"
+                                 help="Uji Koneksi memanggil server tanpa menulis log. Segarkan Langganan memanggil server lalu memperbarui snapshot dan log.">
+                            <div class="mt16">
+                                <button name="action_presenly_saas_test_connection"
+                                        type="object"
+                                        string="Uji Koneksi"
+                                        class="btn-primary"/>
+                                <button name="action_presenly_saas_refresh_subscription"
+                                        type="object"
+                                        string="Segarkan Langganan"/>
+                            </div>
+                            <div class="mt8">
+                                <button name="action_presenly_saas_open_subscription"
+                                        type="object"
+                                        string="Buka Langganan"
+                                        class="btn-link"
+                                        icon="fa-arrow-right"/>
+                                <button name="%(action_presenly_saas_sync_log)d"
+                                        type="action"
+                                        string="Buka Log Sinkronisasi"
+                                        class="btn-link"
+                                        icon="fa-list"/>
+                            </div>
+                        </setting>
+                        <setting string="Hasil Pemeriksaan Terakhir">
+                            <div class="o_row">
+                                <field name="presenly_saas_last_check_at" readonly="1"/>
+                                <field name="presenly_saas_last_check_status"
+                                       widget="badge"
+                                       readonly="1"
+                                       decoration-success="presenly_saas_last_check_status == 'success'"
+                                       decoration-danger="presenly_saas_last_check_status == 'failed'"/>
+                            </div>
+                            <div class="mt8 text-muted">
+                                <field name="presenly_saas_last_check_message"
+                                       readonly="1"
+                                       nolabel="1"
+                                       placeholder="Belum ada pemeriksaan. Gunakan Uji Koneksi."/>
+                            </div>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_presenly_saas_settings" model="ir.actions.act_window">
+        <field name="name">Settings</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="context">{'module': 'presenly_saas'}</field>
+    </record>
+
+    <!-- Pintasan ke halaman Settings native.
+
+         Ini bukan form kedua: action di atas membuka blok "Presenly SaaS" yang
+         sama, hanya dari dalam aplikasi. Tanpa pintasan ini pengguna harus tahu
+         sendiri bahwa pengaturannya ada di aplikasi Settings global.
+         Konvensi yang sama dipakai hr_attendance. -->
+    <menuitem id="menu_presenly_saas_configuration"
+              name="Configuration"
+              parent="menu_presenly_saas_root"
+              sequence="90"
+              groups="presenly_saas.group_presenly_saas_manager"/>
+
+    <menuitem id="menu_presenly_saas_settings"
+              name="Settings"
+              parent="menu_presenly_saas_configuration"
+              action="action_presenly_saas_settings"
+              sequence="10"/>
+
+</odoo>

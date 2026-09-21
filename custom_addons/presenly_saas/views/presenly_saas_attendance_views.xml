@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Log presensi  -->
+
+    <record id="view_presenly_saas_attendance_log_list" model="ir.ui.view">
+        <field name="name">presenly.saas.attendance.log.list</field>
+        <field name="model">presenly.saas.attendance.log</field>
+        <field name="arch" type="xml">
+            <list string="Log Presensi" create="false" edit="false" delete="false">
+                <field name="work_date"/>
+                <field name="employee_name"/>
+                <field name="employee_nopeg" optional="show"/>
+                <field name="location_name"/>
+                <field name="tenant_client_name" optional="show"/>
+                <field name="shift_name" optional="show"/>
+                <field name="status" widget="badge"
+                       decoration-success="status == 'closed'"
+                       decoration-info="status == 'open'"
+                       decoration-warning="status == 'alpha'"/>
+                <field name="late_minutes" optional="show"/>
+                <field name="check_in_time"/>
+                <field name="check_out_time"/>
+                <field name="is_overtime" optional="hide"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+                <field name="fetched_at" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_presenly_saas_attendance_log_search" model="ir.ui.view">
+        <field name="name">presenly.saas.attendance.log.search</field>
+        <field name="model">presenly.saas.attendance.log</field>
+        <field name="arch" type="xml">
+            <search string="Log Presensi">
+                <field name="employee_name"/>
+                <field name="employee_nopeg"/>
+                <field name="location_name"/>
+                <filter name="late" string="Terlambat" domain="[('late_minutes', '&gt;', 0)]"/>
+                <filter name="overtime" string="Sesi Lembur" domain="[('is_overtime', '=', True)]"/>
+                <separator/>
+                <filter name="work_date" string="Tanggal Kerja" date="work_date"/>
+                <separator/>
+                <filter name="closed" string="Selesai" domain="[('status', '=', 'closed')]"/>
+                <filter name="open" string="Terbuka" domain="[('status', '=', 'open')]"/>
+                <filter name="alpha" string="Alpha" domain="[('status', '=', 'alpha')]"/>
+                <group>
+                    <filter name="group_employee" string="Pegawai" context="{'group_by': 'employee_name'}"/>
+                    <filter name="group_location" string="Lokasi" context="{'group_by': 'location_name'}"/>
+                    <filter name="group_date" string="Tanggal" context="{'group_by': 'work_date'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_presenly_saas_attendance_log" model="ir.actions.act_window">
+        <field name="name">Data Presensi</field>
+        <field name="res_model">presenly.saas.attendance.log</field>
+        <field name="view_mode">list</field>
+        <field name="search_view_id" ref="view_presenly_saas_attendance_log_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Belum ada log presensi</p>
+            <p>
+                Gunakan tombol <b>Tarik Data Presensi</b> untuk menarik log dan rekap
+                dari server Presenly SaaS untuk satu bulan.
+            </p>
+        </field>
+    </record>
+
+    <!-- Rekap presensi  -->
+
+    <record id="view_presenly_saas_attendance_recap_list" model="ir.ui.view">
+        <field name="name">presenly.saas.attendance.recap.list</field>
+        <field name="model">presenly.saas.attendance.recap</field>
+        <field name="arch" type="xml">
+            <list string="Rekap Presensi" create="false" edit="false" delete="false">
+                <field name="year" optional="show"/>
+                <field name="month" optional="show"/>
+                <field name="employee_name"/>
+                <field name="employee_nopeg" optional="show"/>
+                <field name="project_name" optional="show"/>
+                <field name="attendance_count" sum="Total kehadiran"/>
+                <field name="total_late_minutes" sum="Total terlambat"/>
+                <field name="absent_count" sum="Total alpha"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+                <field name="fetched_at" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_presenly_saas_attendance_recap_search" model="ir.ui.view">
+        <field name="name">presenly.saas.attendance.recap.search</field>
+        <field name="model">presenly.saas.attendance.recap</field>
+        <field name="arch" type="xml">
+            <search string="Rekap Presensi">
+                <field name="employee_name"/>
+                <field name="employee_nopeg"/>
+                <filter name="late" string="Ada Keterlambatan" domain="[('total_late_minutes', '&gt;', 0)]"/>
+                <filter name="absent" string="Ada Alpha" domain="[('absent_count', '&gt;', 0)]"/>
+                <group>
+                    <filter name="group_employee" string="Pegawai" context="{'group_by': 'employee_name'}"/>
+                    <filter name="group_period" string="Periode" context="{'group_by': 'year'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_presenly_saas_attendance_recap" model="ir.actions.act_window">
+        <field name="name">Rekap Presensi</field>
+        <field name="res_model">presenly.saas.attendance.recap</field>
+        <field name="view_mode">list</field>
+        <field name="search_view_id" ref="view_presenly_saas_attendance_recap_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Belum ada rekap presensi</p>
+            <p>
+                Rekap ditarik bersama log presensi melalui tombol
+                <b>Tarik Data Presensi</b>.
+            </p>
+        </field>
+    </record>
+
+</odoo>

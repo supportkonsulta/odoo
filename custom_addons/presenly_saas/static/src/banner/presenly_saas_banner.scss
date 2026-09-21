@@ -1,0 +1,72 @@
+/**
+ * Subscription notice.
+ *
+ * Colour comes from the Odoo alert tokens so the notice follows the active
+ * theme, including contrast, without this module defining a palette of its
+ * own. The only thing set here is placement: a compact bar anchored to the
+ * bottom of the viewport, where it does not push the action area around.
+ */
+.presenly-saas-banner {
+    position: fixed;
+    bottom: 0.75rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1035;
+    // Sass resolves its own min()/max() before CSS does, and refuses a calc()
+    // argument. A plain width plus max-width says the same thing safely.
+    width: 46rem;
+    max-width: calc(100vw - 1.5rem);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0.5rem 0.75rem;
+    box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.12);
+
+    .presenly-saas-banner-text {
+        flex: 1 1 auto;
+        min-width: 0;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 0.375rem;
+    }
+
+    .presenly-saas-banner-title {
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .presenly-saas-banner-actions {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    // The dismiss control sits inside an alert, so it does not inherit the
+    // alert text colour by default.
+    .btn-close {
+        opacity: 0.6;
+
+        &:hover,
+        &:focus-visible {
+            opacity: 1;
+        }
+    }
+}
+
+// Narrow screens: keep the bar readable and the dismiss target reachable.
+@media (max-width: 575.98px) {
+    .presenly-saas-banner {
+        bottom: 0.5rem;
+        max-width: calc(100vw - 1rem);
+        flex-wrap: wrap;
+        padding: 0.5rem;
+
+        .presenly-saas-banner-actions {
+            width: 100%;
+            justify-content: flex-end;
+        }
+    }
+}

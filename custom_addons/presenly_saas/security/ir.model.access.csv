@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_presenly_saas_config_internal,presenly.saas.config.internal,model_presenly_saas_config,base.group_user,1,0,0,0
+access_presenly_saas_config_manager,presenly.saas.config.manager,model_presenly_saas_config,group_presenly_saas_manager,1,1,1,1
+access_presenly_saas_subscription_internal,presenly.saas.subscription.internal,model_presenly_saas_subscription,base.group_user,1,0,0,0
+access_presenly_saas_subscription_manager,presenly.saas.subscription.manager,model_presenly_saas_subscription,group_presenly_saas_manager,1,1,1,1
+access_presenly_saas_sync_log_internal,presenly.saas.sync.log.internal,model_presenly_saas_sync_log,base.group_user,1,0,0,0
+access_presenly_saas_sync_log_manager,presenly.saas.sync.log.manager,model_presenly_saas_sync_log,group_presenly_saas_manager,1,1,1,1

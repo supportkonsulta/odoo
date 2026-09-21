@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="action_presenly_saas_sync_log" model="ir.actions.act_window">
+        <field name="name">Sync Log</field>
+        <field name="res_model">presenly.saas.sync.log</field>
+        <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Belum ada entri sinkronisasi</p>
+            <p>
+                Setiap panggilan ke server Presenly SaaS dicatat di sini beserta hasilnya,
+                sehingga kegagalan penyegaran bisa ditelusuri tanpa membaca log server.
+            </p>
+        </field>
+    </record>
+
+    <!-- Konfigurasi koneksi tidak punya menu sendiri. Ia berada di halaman
+         Settings native Odoo, di blok "Presenly SaaS", supaya hanya ada satu
+         tempat untuk mengubahnya. Menu aplikasi ini hanya berisi hal yang
+         bersifat operasional. -->
+    <menuitem id="menu_presenly_saas_root"
+              name="Presenly SaaS"
+              sequence="95"
+              web_icon="presenly_saas,static/description/icon.png"
+              groups="presenly_saas.group_presenly_saas_manager"/>
+
+    <menuitem id="menu_presenly_saas_subscription"
+              name="Subscription"
+              parent="menu_presenly_saas_root"
+              action="action_presenly_saas_open_subscription"
+              sequence="10"/>
+
+    <menuitem id="menu_presenly_saas_attendance_log"
+              name="Data Presensi"
+              parent="menu_presenly_saas_root"
+              action="action_presenly_saas_attendance_log"
+              sequence="20"/>
+
+    <menuitem id="menu_presenly_saas_attendance_recap"
+              name="Rekap Presensi"
+              parent="menu_presenly_saas_root"
+              action="action_presenly_saas_attendance_recap"
+              sequence="30"/>
+
+    <menuitem id="menu_presenly_saas_external_feature"
+              name="Fitur Presenly"
+              parent="menu_presenly_saas_root"
+              action="action_presenly_saas_external_feature"
+              sequence="40"/>
+
+    <menuitem id="menu_presenly_saas_sync_log"
+              name="Sync Log"
+              parent="menu_presenly_saas_root"
+              action="action_presenly_saas_sync_log"
+              sequence="50"/>
+
+</odoo>

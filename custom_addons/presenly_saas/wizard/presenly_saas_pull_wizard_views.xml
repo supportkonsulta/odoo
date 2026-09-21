@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_presenly_saas_pull_wizard_form" model="ir.ui.view">
+        <field name="name">presenly.saas.pull.wizard.form</field>
+        <field name="model">presenly.saas.pull.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Tarik Data Presensi">
+                <group>
+                    <group string="Periode">
+                        <field name="month"/>
+                        <field name="year"/>
+                    </group>
+                    <group string="Koneksi">
+                        <field name="config_id" readonly="1"/>
+                    </group>
+                </group>
+                <div class="text-muted">
+                    Log presensi dan rekap untuk periode ini akan <b>menggantikan</b> data
+                    yang sudah ada pada bulan yang sama. Bulan lain tidak tersentuh.
+                </div>
+                <footer>
+                    <button name="action_pull"
+                            type="object"
+                            string="Tarik Sekarang"
+                            class="btn-primary"/>
+                    <button string="Batal" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

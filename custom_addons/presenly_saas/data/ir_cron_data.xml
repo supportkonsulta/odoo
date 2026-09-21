@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <data noupdate="1">
+
+        <record id="ir_cron_presenly_saas_refresh" model="ir.cron">
+            <field name="name">Presenly SaaS: Refresh Subscription</field>
+            <field name="model_id" ref="model_presenly_saas_config"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_refresh_all()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <!-- Odoo mengisi `user_id` dari pengguna yang memuat data XML, yaitu
+                 __system__. Nilainya di sini disamakan tetapi ditulis eksplisit
+                 supaya jelas siapa yang menjalankan cron ini, dan supaya tidak
+                 ikut berubah kalau cara pemuatan data berubah. -->
+            <field name="user_id" ref="base.user_root"/>
+        </record>
+
+    </data>
+
+</odoo>

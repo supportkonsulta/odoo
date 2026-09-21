@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_presenly_saas_sync_log_list" model="ir.ui.view">
+        <field name="name">presenly.saas.sync.log.list</field>
+        <field name="model">presenly.saas.sync.log</field>
+        <field name="arch" type="xml">
+            <list string="Sync Log" create="false" edit="false" delete="false">
+                <field name="create_date" string="When"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="endpoint"/>
+                <field name="success" widget="boolean_toggle" readonly="1"/>
+                <field name="http_status"/>
+                <field name="duration_ms"/>
+                <field name="error_message" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_presenly_saas_sync_log_search" model="ir.ui.view">
+        <field name="name">presenly.saas.sync.log.search</field>
+        <field name="model">presenly.saas.sync.log</field>
+        <field name="arch" type="xml">
+            <search string="Sync Log">
+                <field name="endpoint"/>
+                <filter name="failed" string="Failed" domain="[('success', '=', False)]"/>
+                <separator/>
+                <filter name="when" string="When" date="create_date"/>
+                <separator/>
+                <group>
+                    <filter name="group_success" string="Result" context="{'group_by': 'success'}"/>
+                    <filter name="group_company" string="Company" context="{'group_by': 'company_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+</odoo>
