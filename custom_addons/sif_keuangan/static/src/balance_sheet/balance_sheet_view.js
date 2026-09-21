@@ -74,6 +74,24 @@ export class BalanceSheetView extends Component {
         return translate(key, params);
     }
 
+    filterLines(lines) {
+        if (!lines || !Array.isArray(lines)) return [];
+        const q = (this.state.searchQuery || "").toLowerCase().trim();
+        if (!q) return lines;
+        return lines.filter(l =>
+            (l.name && l.name.toLowerCase().includes(q)) ||
+            (l.code && l.code.toLowerCase().includes(q))
+        );
+    }
+
+    onSearchInput(ev) {
+        this.state.searchQuery = ev.target.value;
+        this.state.filters.search = ev.target.value;
+        if (this.state.searchQuery && this.state.searchQuery.trim()) {
+            this.unfoldAll();
+        }
+    }
+
     async loadData() {
         this.state.loading = true;
         try {
