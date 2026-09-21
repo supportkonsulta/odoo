@@ -207,6 +207,21 @@ export class GeneralLedgerView extends Component {
         });
     }
 
+    async onResetSearch() {
+        this.state.searchQuery = "";
+        this.state.filters.search = "";
+        this.state.filters.unit_name = "";
+        this.state.filters.partner_id = "";
+        this.state.datePreset = "this_year";
+        const today = new Date();
+        const year = today.getFullYear();
+        this.state.filters.date_from = `${year}-01-01`;
+        this.state.filters.date_to = `${year}-12-31`;
+        this.state.customDateFrom = `${year}-01-01`;
+        this.state.customDateTo = `${year}-12-31`;
+        await this.loadData();
+    }
+
     onExportPDF() {
         const queryParams = new URLSearchParams({
             date_from: this.state.filters.date_from || "",
@@ -217,8 +232,9 @@ export class GeneralLedgerView extends Component {
             partner_id: this.state.filters.partner_id || "",
             lang: getActiveLang(),
         });
-        window.open(`/sif_keuangan/general_ledger/export_pdf?${queryParams.toString()}`, "_blank");
+        window.location.href = `/sif_keuangan/export_general_ledger_pdf?${queryParams.toString()}`;
     }
+    downloadPdf() { this.onExportPDF(); }
 
     onExportXLSX() {
         const queryParams = new URLSearchParams({
@@ -230,8 +246,9 @@ export class GeneralLedgerView extends Component {
             partner_id: this.state.filters.partner_id || "",
             lang: getActiveLang(),
         });
-        window.open(`/sif_keuangan/general_ledger/export_xlsx?${queryParams.toString()}`, "_blank");
+        window.location.href = `/sif_keuangan/export_general_ledger_xlsx?${queryParams.toString()}`;
     }
+    downloadXlsx() { this.onExportXLSX(); }
 }
 
 registry.category("actions").add("sif_keuangan.GeneralLedgerView", GeneralLedgerView);
