@@ -149,7 +149,8 @@
                         <p class="text-secondary small mb-3">
                             <t t-esc="t('gl.empty_desc')" />
                         </p>
-                        <button class="btn btn-sm btn-outline-primary" t-on-click="() => this.state.searchQuery = ''">
+                        <button class="btn btn-sm btn-outline-primary" t-on-click="onResetSearch">
+                            <i class="fa fa-refresh me-1" />
                             <t t-esc="t('btn.reset_search')" />
                         </button>
                     </div>
