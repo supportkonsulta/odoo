@@ -1,4 +1,4 @@
-from odoo import models, fields, _
+from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 
 class KsgOperationalProcurementRequest(models.Model):
@@ -18,12 +18,23 @@ class KsgOperationalProcurementRequest(models.Model):
         ('rejected', 'Ditolak')
     ], string='Status', default='draft', tracking=True)
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('name', _('New')) == _('New'):
+                seq = self.env['ir.sequence'].next_by_code('ksg.operational.procurement')
+                if seq:
+                    vals['name'] = seq
+                else:
+                    proj_id = vals.get('project_id')
+                    proj_name = self.env['ksg.sales.project'].browse(proj_id).name if proj_id else ''
+                    vals['name'] = f"BOQ/{proj_name}" if proj_name else 'BOQ/DRAFT'
+        return super().create(vals_list)
+
     def action_submit(self):
         self.ensure_one()
         if not self.boq_line_ids:
             raise UserError(_("Rincian barang pada BoQ tidak boleh kosong!"))
-        if self.name == _('New'):
-            self.name = self.env['ir.sequence'].next_by_code('ksg.operational.procurement') or f"REQ/{self.project_id.name}"
         self.write({'state': 'waiting_approval'})
 
     def action_approve(self):

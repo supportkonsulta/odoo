@@ -1,6 +1,5 @@
-from odoo import models, fields, api
+﻿from odoo import models, fields, api
 
-# Model penampung sementara karena belum dibuat di ksg_sales
 class KsgSalesWorker(models.Model):
     _name = 'ksg.sales.worker'
     _description = 'Master Data Tenaga Kerja'
@@ -29,3 +28,8 @@ class KsgOperationalAssignment(models.Model):
                 rec.status_aktif = False
             else:
                 rec.status_aktif = True
+
+    @api.model
+    def cron_update_worker_active_status(self):
+        assignments = self.search([])
+        assignments._compute_status_aktif()
