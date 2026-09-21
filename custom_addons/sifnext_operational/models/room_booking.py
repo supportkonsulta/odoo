@@ -30,9 +30,17 @@ class SifnextOperationalRoomBooking(models.Model):
         tracking=True,
     )
     
+    def _default_borrower_unit(self):
+        user = self.env.user
+        emp = getattr(user, "employee_id", False) or (getattr(user, "employee_ids", False) and user.employee_ids[0])
+        if emp and getattr(emp, "department_id", False) and emp.department_id:
+            return emp.department_id.name
+        return "Umum"
+
     borrower_unit = fields.Char(
         string="Unit/Divisi Peminjam",
         required=True,
+        default=_default_borrower_unit,
         tracking=True,
     )
 
