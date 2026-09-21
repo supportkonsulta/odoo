@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_ksg_sales_project_form_inherit_operational" model="ir.ui.view">
+        <field name="name">ksg.sales.project.form.inherit.operational</field>
+        <field name="model">ksg.sales.project</field>
+        <field name="inherit_id" ref="ksg_sales.view_ksg_sales_project_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Operasional" name="operasional_tab">
+                    <group>
+                        <group string="Status &amp; Biaya">
+                            <field name="total_biaya_operasional_plan"/>
+                            <field name="bapbast_ops_ready" widget="boolean_toggle"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Rencana Manpower">
+                            <field name="manpower_plan_ids">
+                                <list editable="bottom">
+                                    <field name="role"/>
+                                    <field name="jumlah"/>
+                                    <field name="estimasi_biaya_satuan"/>
+                                    <field name="total_biaya"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Rencana Perlengkapan">
+                            <field name="equipment_plan_ids">
+                                <list editable="bottom">
+                                    <field name="name"/>
+                                    <field name="jumlah"/>
+                                    <field name="estimasi_biaya_satuan"/>
+                                    <field name="total_biaya"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Rencana Alat &amp; Bahan">
+                            <field name="material_plan_ids">
+                                <list editable="bottom">
+                                    <field name="name"/>
+                                    <field name="spesifikasi"/>
+                                    <field name="jumlah"/>
+                                    <field name="satuan"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Tenaga Kerja Aktif (HC)">
+                            <field name="assignment_ids" readonly="1">
+                                <list>
+                                    <field name="worker_id"/>
+                                    <field name="tanggal_mulai_tugas"/>
+                                    <field name="tanggal_selesai_tugas"/>
+                                    <field name="status_aktif" widget="boolean_toggle"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Dokumen Pendukung Tagihan">
+                            <field name="billing_document_ids">
+                                <list editable="bottom">
+                                    <field name="jenis_dokumen"/>
+                                    <field name="file_name" invisible="1"/>
+                                    <field name="attachment_id" filename="file_name"/>
+                                    <field name="uploaded_by" readonly="1"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

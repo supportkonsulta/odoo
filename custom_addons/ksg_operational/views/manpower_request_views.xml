@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_manpower_request_tree" model="ir.ui.view">
+        <field name="name">ksg.operational.manpower.request.tree</field>
+        <field name="model">ksg.operational.manpower.request</field>
+        <field name="arch" type="xml">
+            <list string="Permohonan Manpower">
+                <field name="project_id"/>
+                <field name="kriteria"/>
+                <field name="jumlah_dibutuhkan"/>
+                <field name="requested_by"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_manpower_request_form" model="ir.ui.view">
+        <field name="name">ksg.operational.manpower.request.form</field>
+        <field name="model">ksg.operational.manpower.request</field>
+        <field name="arch" type="xml">
+            <form string="Permohonan Manpower">
+                <header>
+                    <button name="action_submit" string="Ajukan ke HC" type="object" class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_process" string="Proses (HC)" type="object" class="oe_highlight" groups="ksg_operational.group_operational_hc" invisible="state != 'submitted'"/>
+                    <button name="action_fulfill" string="Tandai Terpenuhi (HC)" type="object" class="btn-success" groups="ksg_operational.group_operational_hc" invisible="state != 'in_process'"/>
+                    <button name="action_reject" string="Tolak Permohonan" type="object" class="btn-danger" groups="ksg_operational.group_operational_hc" invisible="state not in ('submitted', 'in_process')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,in_process,fulfilled"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="project_id" readonly="state != 'draft'"/>
+                            <field name="kriteria" readonly="state != 'draft'"/>
+                            <field name="jumlah_dibutuhkan" readonly="state != 'draft'"/>
+                        </group>
+                        <group>
+                            <field name="requested_by" readonly="1"/>
+                            <field name="handled_by" readonly="1"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="catatan"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+</odoo>
