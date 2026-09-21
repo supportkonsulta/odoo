@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record id="ksg_sales_dashboard_main" model="ksg.sales.dashboard">
+        <field name="name">Dashboard Penjualan KSG</field>
+    </record>
+
+</odoo>

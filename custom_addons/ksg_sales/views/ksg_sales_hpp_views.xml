@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
 
-    <!-- LIST HPP -->
+    <!-- ====================================================== -->
+    <!-- HPP LIST -->
+    <!-- ====================================================== -->
 
     <record id="view_ksg_sales_hpp_list" model="ir.ui.view">
         <field name="name">ksg.sales.hpp.list</field>
@@ -10,12 +12,39 @@
 
             <list string="HPP">
 
-                <field name="name"/>
-                <field name="project_id"/>
-                <field name="rab_id"/>
-                <field name="tanggal_hpp"/>
-                <field name="total_hpp"/>
-                <field name="state"/>
+                <field
+                    name="name"
+                    string="Nomor HPP"
+                />
+
+                <field
+                    name="project_id"
+                    string="Proyek"
+                />
+
+                <field
+                    name="rab_id"
+                    string="RAB"
+                />
+
+                <field
+                    name="tanggal_hpp"
+                    string="Tanggal HPP"
+                />
+
+                <field
+                    name="total_hpp"
+                    string="Total HPP"
+                />
+
+                <field
+                    name="state"
+                    string="Status"
+                    widget="badge"
+                    decoration-success="state == 'approved'"
+                    decoration-warning="state == 'submitted'"
+                    decoration-muted="state == 'draft'"
+                />
 
             </list>
 
@@ -23,7 +52,9 @@
     </record>
 
 
-    <!-- FORM HPP -->
+    <!-- ====================================================== -->
+    <!-- HPP FORM -->
+    <!-- ====================================================== -->
 
     <record id="view_ksg_sales_hpp_form" model="ir.ui.view">
         <field name="name">ksg.sales.hpp.form</field>
@@ -32,7 +63,13 @@
 
             <form string="HPP">
 
+                <!-- ==================================================
+                     HEADER / WORKFLOW
+                ================================================== -->
+
                 <header>
+
+                    <!-- AJUKAN HPP -->
 
                     <button
                         name="action_submit"
@@ -41,6 +78,9 @@
                         class="btn-primary"
                         invisible="state != 'draft'"
                     />
+
+
+                    <!-- APPROVE HPP -->
 
                     <button
                         name="action_approve"
@@ -51,6 +91,9 @@
                         invisible="state != 'submitted'"
                     />
 
+
+                    <!-- STATUS -->
+
                     <field
                         name="state"
                         widget="statusbar"
@@ -59,11 +102,19 @@
 
                 </header>
 
+
                 <sheet>
+
+                    <!-- ==================================================
+                         JUDUL HPP
+                    ================================================== -->
 
                     <div class="oe_title">
 
-                        <label for="name"/>
+                        <label
+                            for="name"
+                            string="Nomor HPP"
+                        />
 
                         <h1>
 
@@ -77,37 +128,50 @@
                     </div>
 
 
+                    <!-- ==================================================
+                         INFORMASI HPP
+                    ================================================== -->
+
                     <group>
 
                         <group string="Informasi HPP">
 
                             <field
                                 name="project_id"
+                                string="Proyek"
                                 readonly="state == 'approved'"
                             />
 
                             <field
                                 name="rab_id"
+                                string="RAB"
                                 readonly="state == 'approved'"
                             />
 
                             <field
                                 name="tanggal_hpp"
+                                string="Tanggal HPP"
                                 readonly="state == 'approved'"
                             />
 
                         </group>
 
 
-                        <group string="Nilai">
+                        <!-- ==================================================
+                             NILAI HPP
+                        ================================================== -->
+
+                        <group string="Nilai HPP">
 
                             <field
                                 name="currency_id"
+                                string="Mata Uang"
                                 readonly="1"
                             />
 
                             <field
                                 name="total_hpp"
+                                string="Total HPP"
                                 readonly="1"
                             />
 
@@ -116,16 +180,24 @@
                     </group>
 
 
+                    <!-- ==================================================
+                         DESKRIPSI
+                    ================================================== -->
+
                     <group string="Deskripsi">
 
                         <field
                             name="deskripsi"
-                            placeholder="Deskripsi HPP..."
+                            placeholder="Tambahkan deskripsi HPP..."
                             readonly="state == 'approved'"
                         />
 
                     </group>
 
+
+                    <!-- ==================================================
+                         DETAIL HPP
+                    ================================================== -->
 
                     <notebook>
 
@@ -141,39 +213,48 @@
                                     <field
                                         name="sequence"
                                         widget="handle"
+                                        string=""
                                     />
 
                                     <field
                                         name="kategori"
+                                        string="Kategori"
                                     />
 
                                     <field
                                         name="uraian"
+                                        string="Uraian"
                                     />
 
                                     <field
                                         name="spesifikasi"
+                                        string="Spesifikasi"
                                     />
 
                                     <field
                                         name="satuan"
+                                        string="Satuan"
                                     />
 
                                     <field
                                         name="qty"
+                                        string="Qty"
                                     />
 
                                     <field
                                         name="harga_satuan"
+                                        string="Harga Satuan"
                                     />
 
                                     <field
                                         name="subtotal"
+                                        string="Subtotal"
                                         readonly="1"
                                     />
 
                                     <field
                                         name="keterangan"
+                                        string="Keterangan"
                                     />
 
                                 </list>
@@ -181,10 +262,15 @@
                             </field>
 
 
+                            <!-- ==================================================
+                                 TOTAL HPP
+                            ================================================== -->
+
                             <group class="oe_subtotal_footer oe_right">
 
                                 <field
                                     name="total_hpp"
+                                    string="Total HPP"
                                     readonly="1"
                                 />
 
@@ -197,6 +283,10 @@
                 </sheet>
 
 
+                <!-- ======================================================
+                     CHATTER
+                ====================================================== -->
+
                 <chatter/>
 
             </form>
@@ -205,7 +295,9 @@
     </record>
 
 
-    <!-- ACTION -->
+    <!-- ====================================================== -->
+    <!-- HPP ACTION -->
+    <!-- ====================================================== -->
 
     <record
         id="action_ksg_sales_hpp"
@@ -221,7 +313,9 @@
     </record>
 
 
-    <!-- MENU -->
+    <!-- ====================================================== -->
+    <!-- HPP MENU -->
+    <!-- ====================================================== -->
 
     <menuitem
         id="menu_ksg_sales_hpp"

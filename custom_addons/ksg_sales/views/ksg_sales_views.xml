@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- ROOT MENU -->
+    <menuitem
+        id="menu_ksg_sales_root"
+        name="Penjualan KSG"
+        sequence="10"
+    />
+
+    <!-- DASHBOARD -->
+    <menuitem
+        id="menu_ksg_sales_dashboard"
+        name="Dashboard"
+        parent="menu_ksg_sales_root"
+        action="action_ksg_sales_dashboard"
+        sequence="1"
+    />
+
+</odoo>

@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- =========================================================
+         KSG SALES DASHBOARD VIEW
+         ========================================================= -->
+
+    <record id="view_ksg_sales_dashboard_form" model="ir.ui.view">
+        <field name="name">ksg.sales.dashboard.form</field>
+        <field name="model">ksg.sales.dashboard</field>
+        <field name="arch" type="xml">
+            <form string="Dashboard Penjualan"
+                  create="0"
+                  edit="0"
+                  delete="0"
+                  duplicate="0">
+
+                <field name="currency_id" invisible="1"/>
+
+                <div class="ksg-dashboard">
+
+                    <!-- =================================================
+                         HEADER
+                         ================================================= -->
+                    <div class="ksg-dashboard-header">
+
+                        <div class="ksg-dashboard-header-main">
+                            <div class="ksg-dashboard-eyebrow">
+                                PENJUALAN KSG
+                            </div>
+
+                            <h1 class="ksg-dashboard-title">
+                                Dashboard Penjualan
+                            </h1>
+
+                            <p class="ksg-dashboard-subtitle">
+                                Ringkasan proyek, nilai kontrak, dan monitoring
+                                penagihan secara menyeluruh.
+                            </p>
+                        </div>
+
+                        <div class="ksg-dashboard-header-meta">
+                            <span class="ksg-live-dot"></span>
+                            <span>Data terkini</span>
+                        </div>
+
+                    </div>
+
+
+                    <!-- =================================================
+                         EXECUTIVE SUMMARY
+                         ================================================= -->
+                    <section class="ksg-dashboard-block ksg-summary-block">
+
+                        <div class="ksg-block-heading">
+                            <div>
+                                <h2>Ringkasan</h2>
+                                <p>Gambaran umum aktivitas penjualan KSG</p>
+                            </div>
+                        </div>
+
+                        <div class="ksg-summary-grid">
+
+                            <!-- Total Project -->
+                            <div class="ksg-summary-item">
+
+                                <div class="ksg-summary-label">
+                                    Total Proyek
+                                </div>
+
+                                <div class="ksg-summary-value">
+                                    <field name="total_project"/>
+                                </div>
+
+                                <div class="ksg-summary-note">
+                                    Seluruh proyek penjualan
+                                </div>
+
+                            </div>
+
+
+                            <!-- Total Contract -->
+                            <div class="ksg-summary-item">
+
+                                <div class="ksg-summary-label">
+                                    Total Nilai Kontrak
+                                </div>
+
+                                <div class="ksg-summary-value ksg-summary-money">
+                                    <field name="total_contract"
+                                           widget="monetary"
+                                           options="{'currency_field': 'currency_id'}"/>
+                                </div>
+
+                                <div class="ksg-summary-note">
+                                    Nilai kontrak terkini
+                                </div>
+
+                            </div>
+
+
+                            <!-- Remaining Contract -->
+                            <div class="ksg-summary-item ksg-summary-item-last">
+
+                                <div class="ksg-summary-label">
+                                    Sisa Nilai Kontrak
+                                </div>
+
+                                <div class="ksg-summary-value ksg-summary-money">
+                                    <field name="total_remaining_contract"
+                                           widget="monetary"
+                                           options="{'currency_field': 'currency_id'}"/>
+                                </div>
+
+                                <div class="ksg-summary-note">
+                                    Nilai kontrak yang masih tersisa
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </section>
+
+
+                    <!-- =================================================
+                         PROJECT STATUS
+                         ================================================= -->
+                    <section class="ksg-dashboard-block">
+
+                        <div class="ksg-block-heading">
+                            <div>
+                                <h2>Status Proyek</h2>
+                                <p>Kondisi proyek penjualan saat ini</p>
+                            </div>
+                        </div>
+
+                        <div class="ksg-status-panel">
+
+                            <!-- ACTIVE -->
+                            <div class="ksg-status-row ksg-status-active">
+
+                                <div class="ksg-status-name">
+                                    <span class="ksg-status-dot"></span>
+                                    <span>Proyek Aktif</span>
+                                </div>
+
+                                <div class="ksg-status-number">
+                                    <field name="project_active"/>
+                                </div>
+
+                                <div class="ksg-status-description">
+                                    Sedang berjalan
+                                </div>
+
+                            </div>
+
+
+                            <!-- COMPLETED -->
+                            <div class="ksg-status-row ksg-status-completed">
+
+                                <div class="ksg-status-name">
+                                    <span class="ksg-status-dot"></span>
+                                    <span>Proyek Selesai</span>
+                                </div>
+
+                                <div class="ksg-status-number">
+                                    <field name="project_completed"/>
+                                </div>
+
+                                <div class="ksg-status-description">
+                                    Telah diselesaikan
+                                </div>
+
+                            </div>
+
+
+                            <!-- CANCELLED -->
+                            <div class="ksg-status-row ksg-status-cancelled">
+
+                                <div class="ksg-status-name">
+                                    <span class="ksg-status-dot"></span>
+                                    <span>Proyek Batal</span>
+                                </div>
+
+                                <div class="ksg-status-number">
+                                    <field name="project_cancelled"/>
+                                </div>
+
+                                <div class="ksg-status-description">
+                                    Tidak dilanjutkan
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </section>
+
+
+                    <!-- =================================================
+                         BILLING MONITORING
+                         ================================================= -->
+                    <section class="ksg-dashboard-block">
+
+                        <div class="ksg-block-heading">
+                            <div>
+                                <h2>Monitoring Penagihan</h2>
+                                <p>Status termin dan proses penagihan proyek</p>
+                            </div>
+                        </div>
+
+                        <div class="ksg-billing-panel">
+
+                            <!-- UNBILLED -->
+                            <div class="ksg-billing-item">
+
+                                <div class="ksg-billing-top">
+                                    <span class="ksg-billing-indicator ksg-indicator-warning"></span>
+
+                                    <span class="ksg-billing-label">
+                                        Belum Ditagih
+                                    </span>
+                                </div>
+
+                                <div class="ksg-billing-number">
+                                    <field name="term_unbilled"/>
+                                </div>
+
+                                <div class="ksg-billing-description">
+                                    Termin menunggu proses penagihan
+                                </div>
+
+                            </div>
+
+
+                            <!-- DUE -->
+                            <div class="ksg-billing-item">
+
+                                <div class="ksg-billing-top">
+                                    <span class="ksg-billing-indicator ksg-indicator-danger"></span>
+
+                                    <span class="ksg-billing-label">
+                                        Jatuh Tempo
+                                    </span>
+                                </div>
+
+                                <div class="ksg-billing-number">
+                                    <field name="term_due"/>
+                                </div>
+
+                                <div class="ksg-billing-description">
+                                    Termin yang perlu segera ditindaklanjuti
+                                </div>
+
+                            </div>
+
+
+                            <!-- BILLED -->
+                            <div class="ksg-billing-item ksg-billing-item-last">
+
+                                <div class="ksg-billing-top">
+                                    <span class="ksg-billing-indicator ksg-indicator-success"></span>
+
+                                    <span class="ksg-billing-label">
+                                        Sudah Ditagih
+                                    </span>
+                                </div>
+
+                                <div class="ksg-billing-number">
+                                    <field name="term_billed"/>
+                                </div>
+
+                                <div class="ksg-billing-description">
+                                    Invoice telah dibuat
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </section>
+
+
+                    <!-- =================================================
+                         FOOTER INSIGHT
+                         ================================================= -->
+                    <div class="ksg-dashboard-footer">
+
+                        <div class="ksg-footer-line"></div>
+
+                        <div class="ksg-footer-content">
+                            <span class="ksg-footer-brand">
+                                KSG Sales
+                            </span>
+
+                            <span class="ksg-footer-separator">
+                                •
+                            </span>
+
+                            <span>
+                                Sales &amp; Project Management
+                            </span>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </form>
+        </field>
+    </record>
+
+
+    <!-- =========================================================
+         DASHBOARD ACTION
+         ========================================================= -->
+
+    <record id="action_ksg_sales_dashboard" model="ir.actions.act_window">
+        <field name="name">Dashboard Penjualan</field>
+        <field name="res_model">ksg.sales.dashboard</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_ksg_sales_dashboard_form"/>
+        <field name="res_id" ref="ksg_sales_dashboard_main"/>
+        <field name="target">current</field>
+    </record>
+
+
+    <!-- =========================================================
+         DASHBOARD MENU
+         ========================================================= -->
+
+    <menuitem id="menu_ksg_sales_dashboard"
+              name="Dashboard"
+              parent="menu_ksg_sales_root"
+              action="action_ksg_sales_dashboard"
+              sequence="1"/>
+
+</odoo>

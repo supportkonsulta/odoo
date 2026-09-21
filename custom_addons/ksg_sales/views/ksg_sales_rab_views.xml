@@ -12,11 +12,34 @@
 
             <list string="RAB">
 
-                <field name="name"/>
-                <field name="project_id"/>
-                <field name="tanggal_rab"/>
-                <field name="total_rab"/>
-                <field name="state"/>
+                <field
+                    name="name"
+                    string="Nomor RAB"
+                />
+
+                <field
+                    name="project_id"
+                    string="Proyek"
+                />
+
+                <field
+                    name="tanggal_rab"
+                    string="Tanggal RAB"
+                />
+
+                <field
+                    name="total_rab"
+                    string="Total RAB"
+                />
+
+                <field
+                    name="state"
+                    string="Status"
+                    widget="badge"
+                    decoration-success="state == 'approved'"
+                    decoration-warning="state == 'submitted'"
+                    decoration-muted="state == 'draft'"
+                />
 
             </list>
 
@@ -34,6 +57,10 @@
         <field name="arch" type="xml">
 
             <form string="RAB">
+
+                <!-- ==================================================
+                     HEADER / WORKFLOW
+                ================================================== -->
 
                 <header>
 
@@ -84,13 +111,16 @@
 
                 <sheet>
 
-                    <!-- ================================================== -->
-                    <!-- JUDUL -->
-                    <!-- ================================================== -->
+                    <!-- ==================================================
+                         JUDUL RAB
+                    ================================================== -->
 
                     <div class="oe_title">
 
-                        <label for="name"/>
+                        <label
+                            for="name"
+                            string="Nomor RAB"
+                        />
 
                         <h1>
 
@@ -104,9 +134,9 @@
                     </div>
 
 
-                    <!-- ================================================== -->
-                    <!-- INFORMASI RAB -->
-                    <!-- ================================================== -->
+                    <!-- ==================================================
+                         INFORMASI RAB
+                    ================================================== -->
 
                     <group>
 
@@ -114,26 +144,34 @@
 
                             <field
                                 name="project_id"
+                                string="Proyek"
                                 readonly="state == 'approved'"
                             />
 
                             <field
                                 name="tanggal_rab"
+                                string="Tanggal RAB"
                                 readonly="state == 'approved'"
                             />
 
                         </group>
 
 
-                        <group string="Nilai">
+                        <!-- ==================================================
+                             NILAI RAB
+                        ================================================== -->
+
+                        <group string="Nilai RAB">
 
                             <field
                                 name="currency_id"
+                                string="Mata Uang"
                                 readonly="1"
                             />
 
                             <field
                                 name="total_rab"
+                                string="Total RAB"
                                 readonly="1"
                             />
 
@@ -142,24 +180,24 @@
                     </group>
 
 
-                    <!-- ================================================== -->
-                    <!-- DESKRIPSI -->
-                    <!-- ================================================== -->
+                    <!-- ==================================================
+                         DESKRIPSI
+                    ================================================== -->
 
                     <group string="Deskripsi">
 
                         <field
                             name="deskripsi"
-                            placeholder="Deskripsi RAB..."
+                            placeholder="Tambahkan deskripsi RAB..."
                             readonly="state == 'approved'"
                         />
 
                     </group>
 
 
-                    <!-- ================================================== -->
-                    <!-- DETAIL RAB -->
-                    <!-- ================================================== -->
+                    <!-- ==================================================
+                         DETAIL RAB
+                    ================================================== -->
 
                     <notebook>
 
@@ -175,39 +213,48 @@
                                     <field
                                         name="sequence"
                                         widget="handle"
+                                        string=""
                                     />
 
                                     <field
                                         name="kategori"
+                                        string="Kategori"
                                     />
 
                                     <field
                                         name="uraian"
+                                        string="Uraian"
                                     />
 
                                     <field
                                         name="spesifikasi"
+                                        string="Spesifikasi"
                                     />
 
                                     <field
                                         name="satuan"
+                                        string="Satuan"
                                     />
 
                                     <field
                                         name="qty"
+                                        string="Qty"
                                     />
 
                                     <field
                                         name="harga_satuan"
+                                        string="Harga Satuan"
                                     />
 
                                     <field
                                         name="subtotal"
+                                        string="Subtotal"
                                         readonly="1"
                                     />
 
                                     <field
                                         name="keterangan"
+                                        string="Keterangan"
                                     />
 
                                 </list>
@@ -215,14 +262,15 @@
                             </field>
 
 
-                            <!-- ================================================== -->
-                            <!-- TOTAL -->
-                            <!-- ================================================== -->
+                            <!-- ==================================================
+                                 TOTAL
+                            ================================================== -->
 
                             <group class="oe_subtotal_footer oe_right">
 
                                 <field
                                     name="total_rab"
+                                    string="Total RAB"
                                     readonly="1"
                                 />
 
@@ -235,9 +283,9 @@
                 </sheet>
 
 
-                <!-- ====================================================== -->
-                <!-- CHATTER -->
-                <!-- ====================================================== -->
+                <!-- ======================================================
+                     CHATTER
+                ====================================================== -->
 
                 <chatter/>
 

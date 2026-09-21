@@ -17,3 +17,6 @@ access_ksg_sales_hpp_user,ksg.sales.hpp user,model_ksg_sales_hpp,ksg_sales.group
 access_ksg_sales_hpp_manager,ksg.sales.hpp manager,model_ksg_sales_hpp,ksg_sales.group_sales_manager,1,1,1,1
 access_ksg_sales_hpp_line_user,ksg.sales.hpp.line user,model_ksg_sales_hpp_line,ksg_sales.group_sales_user,1,1,1,0
 access_ksg_sales_hpp_line_manager,ksg.sales.hpp.line manager,model_ksg_sales_hpp_line,ksg_sales.group_sales_manager,1,1,1,1
+access_ksg_sales_dashboard_user,ksg.sales.dashboard user,model_ksg_sales_dashboard,ksg_sales.group_sales_user,1,1,1,1
+access_ksg_sales_dashboard_manager,ksg.sales.dashboard manager,model_ksg_sales_dashboard,ksg_sales.group_sales_manager,1,1,1,1
+access_ksg_sales_dashboard_internal,ksg.sales.dashboard internal user,model_ksg_sales_dashboard,base.group_user,1,1,1,1
