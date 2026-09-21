@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Cron: Cek keterlambatan Daily Report H+1 (FR-006A) -->
+        <record id="cron_late_report" model="ir.cron">
+            <field name="name">Engineering: Cek Keterlambatan Daily Report</field>
+            <field name="model_id" ref="model_ksg_engineering_daily_report"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_check_late_report()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <!-- Cron: Agregasi Weekly Report (FR-009, RULE-06) -->
+        <record id="cron_weekly_report" model="ir.cron">
+            <field name="name">Engineering: Generate Weekly Report</field>
+            <field name="model_id" ref="model_ksg_engineering_weekly_report"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_generate_weekly()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">weeks</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <!-- Cron: Agregasi Monthly Report (FR-009, RULE-06) -->
+        <record id="cron_monthly_report" model="ir.cron">
+            <field name="name">Engineering: Generate Monthly Report</field>
+            <field name="model_id" ref="model_ksg_engineering_monthly_report"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_generate_monthly()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">months</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <!-- Cron: Cek Kurva-S Alert (FR-010A) -->
+        <record id="cron_kurva_s_alert" model="ir.cron">
+            <field name="name">Engineering: Cek Variance Kurva-S</field>
+            <field name="model_id" ref="ksg_sales.model_ksg_sales_project"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_check_kurva_s_alert()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">weeks</field>
+            <field name="active" eval="True"/>
+        </record>
+    </data>
+</odoo>

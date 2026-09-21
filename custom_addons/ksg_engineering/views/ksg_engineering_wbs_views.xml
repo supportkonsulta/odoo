@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- ============================================================ -->
+    <!-- WBS Views (FR-003) -->
+    <!-- ============================================================ -->
+
+    <!-- Tree (hierarkis) -->
+    <record id="view_wbs_tree" model="ir.ui.view">
+        <field name="name">ksg.engineering.wbs.list</field>
+        <field name="model">ksg.engineering.wbs</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="project_id"/>
+                <field name="nama_pekerjaan"/>
+                <field name="parent_id"/>
+                <field name="nilai_pekerjaan"/>
+                <field name="bobot"/>
+                <field name="tanggal_mulai"/>
+                <field name="tanggal_selesai"/>
+                <field name="planned_progress_kumulatif"/>
+                <field name="actual_progress_kumulatif"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form -->
+    <record id="view_wbs_form" model="ir.ui.view">
+        <field name="name">ksg.engineering.wbs.form</field>
+        <field name="model">ksg.engineering.wbs</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group string="Identitas">
+                            <field name="project_id"/>
+                            <field name="parent_id" domain="[('project_id', '=', project_id)]"/>
+                            <field name="nama_pekerjaan"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group string="Nilai &amp; Bobot">
+                            <field name="nilai_pekerjaan"/>
+                            <field name="bobot" readonly="1"/>
+                            <field name="volume"/>
+                            <field name="satuan"/>
+                            <field name="durasi"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Periode">
+                            <field name="tanggal_mulai"/>
+                            <field name="tanggal_selesai"/>
+                            <field name="otorisasi_luar_periode"/>
+                            <field name="alasan_luar_periode"
+                                   invisible="not otorisasi_luar_periode"/>
+                        </group>
+                        <group string="Progress">
+                            <field name="planned_progress_mingguan" readonly="1"/>
+                            <field name="planned_progress_kumulatif" readonly="1"/>
+                            <field name="actual_progress_kumulatif" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Periode Minggu">
+                            <field name="periode_minggu_ids" widget="many2many_tags"
+                                   domain="[('project_id', '=', project_id)]"/>
+                        </page>
+                        <page string="Sub-Pekerjaan">
+                            <field name="child_ids" nolabel="1">
+                                <list>
+                                    <field name="nama_pekerjaan"/>
+                                    <field name="nilai_pekerjaan"/>
+                                    <field name="bobot"/>
+                                    <field name="tanggal_mulai"/>
+                                    <field name="tanggal_selesai"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+</odoo>

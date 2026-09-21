@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- ============================================================ -->
+    <!-- Actions (must be defined before menus that reference them) -->
+    <!-- ============================================================ -->
+
+    <!-- Dashboard (kanban project) -->
+    <record id="action_engineering_dashboard" model="ir.actions.act_window">
+        <field name="name">Dashboard Engineering</field>
+        <field name="res_model">ksg.sales.project</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="view_id" ref="view_engineering_dashboard_kanban"/>
+        <field name="domain">[('status', '=', 'aktif')]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Belum ada project aktif.
+            </p>
+        </field>
+    </record>
+
+    <!-- Projects (list/form) -->
+    <record id="action_engineering_projects" model="ir.actions.act_window">
+        <field name="name">Project Engineering</field>
+        <field name="res_model">ksg.sales.project</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('status', '=', 'aktif')]</field>
+    </record>
+
+    <!-- WBS -->
+    <record id="action_engineering_wbs" model="ir.actions.act_window">
+        <field name="name">WBS &amp; Master Schedule</field>
+        <field name="res_model">ksg.engineering.wbs</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- Daily Reports -->
+    <record id="action_engineering_daily_reports" model="ir.actions.act_window">
+        <field name="name">Daily Reports</field>
+        <field name="res_model">ksg.engineering.daily.report</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- Consolidations -->
+    <record id="action_engineering_consolidations" model="ir.actions.act_window">
+        <field name="name">Konsolidasi Laporan</field>
+        <field name="res_model">ksg.engineering.report.consolidation</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- Weekly Reports -->
+    <record id="action_engineering_weekly_reports" model="ir.actions.act_window">
+        <field name="name">Laporan Mingguan</field>
+        <field name="res_model">ksg.engineering.weekly.report</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- Monthly Reports -->
+    <record id="action_engineering_monthly_reports" model="ir.actions.act_window">
+        <field name="name">Laporan Bulanan</field>
+        <field name="res_model">ksg.engineering.monthly.report</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- BAP/BAST -->
+    <record id="action_engineering_bapbast" model="ir.actions.act_window">
+        <field name="name">BAP/BAST</field>
+        <field name="res_model">ksg.engineering.bapbast</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- Assignments -->
+    <record id="action_engineering_assignments" model="ir.actions.act_window">
+        <field name="name">Assignment Personel</field>
+        <field name="res_model">ksg.engineering.assignment</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- Schedule Weeks -->
+    <record id="action_engineering_schedule_weeks" model="ir.actions.act_window">
+        <field name="name">Kalender Minggu</field>
+        <field name="res_model">ksg.engineering.schedule.week</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- Root Menu -->
+    <!-- ============================================================ -->
+    <menuitem id="menu_engineering_root"
+              name="Engineering"
+              web_icon="ksg_engineering,static/description/icon.png"
+              sequence="40"/>
+
+    <!-- ============================================================ -->
+    <!-- Level 1 Menus -->
+    <!-- ============================================================ -->
+    <menuitem id="menu_engineering_dashboard"
+              name="Dashboard"
+              parent="menu_engineering_root"
+              action="action_engineering_dashboard"
+              sequence="10"/>
+
+    <menuitem id="menu_engineering_projects"
+              name="Projects"
+              parent="menu_engineering_root"
+              action="action_engineering_projects"
+              sequence="20"/>
+
+    <menuitem id="menu_engineering_wbs"
+              name="WBS &amp; Master Schedule"
+              parent="menu_engineering_root"
+              action="action_engineering_wbs"
+              sequence="30"/>
+
+    <menuitem id="menu_engineering_daily"
+              name="Daily Reports"
+              parent="menu_engineering_root"
+              action="action_engineering_daily_reports"
+              sequence="40"/>
+
+    <menuitem id="menu_engineering_consolidation"
+              name="Konsolidasi"
+              parent="menu_engineering_root"
+              action="action_engineering_consolidations"
+              sequence="50"/>
+
+    <menuitem id="menu_engineering_weekly"
+              name="Weekly Reports"
+              parent="menu_engineering_root"
+              action="action_engineering_weekly_reports"
+              sequence="60"/>
+
+    <menuitem id="menu_engineering_monthly"
+              name="Monthly Reports"
+              parent="menu_engineering_root"
+              action="action_engineering_monthly_reports"
+              sequence="70"/>
+
+    <menuitem id="menu_engineering_bapbast"
+              name="BAP/BAST"
+              parent="menu_engineering_root"
+              action="action_engineering_bapbast"
+              sequence="80"/>
+
+    <menuitem id="menu_engineering_assignment"
+              name="Assignment"
+              parent="menu_engineering_root"
+              action="action_engineering_assignments"
+              sequence="90"/>
+
+    <!-- Configuration submenu -->
+    <menuitem id="menu_engineering_config"
+              name="Konfigurasi"
+              parent="menu_engineering_root"
+              sequence="100"
+              groups="ksg_engineering.group_kepala_unit,base.group_system"/>
+
+    <menuitem id="menu_engineering_schedule_weeks"
+              name="Kalender Minggu"
+              parent="menu_engineering_config"
+              action="action_engineering_schedule_weeks"
+              sequence="10"/>
+</odoo>

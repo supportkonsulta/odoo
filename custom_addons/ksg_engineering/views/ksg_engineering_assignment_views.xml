@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- ============================================================ -->
+    <!-- Assignment Views (FR-012) -->
+    <!-- ============================================================ -->
+
+    <record id="view_assignment_tree" model="ir.ui.view">
+        <field name="name">ksg.engineering.assignment.list</field>
+        <field name="model">ksg.engineering.assignment</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="project_id"/>
+                <field name="user_id"/>
+                <field name="peran"/>
+                <field name="tanggal_mulai_tugas"/>
+                <field name="tanggal_selesai_tugas"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_assignment_form" model="ir.ui.view">
+        <field name="name">ksg.engineering.assignment.form</field>
+        <field name="model">ksg.engineering.assignment</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="project_id"/>
+                            <field name="user_id"/>
+                            <field name="peran"/>
+                        </group>
+                        <group>
+                            <field name="tanggal_mulai_tugas"/>
+                            <field name="tanggal_selesai_tugas"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+</odoo>

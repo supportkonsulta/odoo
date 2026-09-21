@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ksg_billing_invoice_user,ksg.billing.invoice user,model_ksg_billing_invoice,base.group_user,1,0,0,0

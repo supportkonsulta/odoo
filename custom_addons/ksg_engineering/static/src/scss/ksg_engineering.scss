@@ -1,0 +1,27 @@
+/* KSG Engineering Styles */
+
+.o_kanban_dashboard {
+    .o_kanban_card_header {
+        padding: 8px 12px;
+        border-bottom: 1px solid #e9ecef;
+        background-color: #f8f9fa;
+    }
+
+    .o_kanban_card_content {
+        padding: 8px 12px;
+
+        .badge {
+            margin-right: 4px;
+            font-size: 0.75em;
+        }
+    }
+}
+
+.o_kurva_s_widget {
+    padding: 16px;
+    min-height: 300px;
+
+    canvas {
+        width: 100% !important;
+    }
+}

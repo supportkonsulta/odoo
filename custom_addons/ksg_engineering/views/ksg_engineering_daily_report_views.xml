@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- ============================================================ -->
+    <!-- Daily Report Views (FR-006, FR-007) -->
+    <!-- ============================================================ -->
+
+    <!-- Tree -->
+    <record id="view_daily_report_tree" model="ir.ui.view">
+        <field name="name">ksg.engineering.daily.report.list</field>
+        <field name="model">ksg.engineering.daily.report</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="project_id"/>
+                <field name="tanggal"/>
+                <field name="pelaksana_id"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-success="state == 'submitted'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form -->
+    <record id="view_daily_report_form" model="ir.ui.view">
+        <field name="name">ksg.engineering.daily.report.form</field>
+        <field name="model">ksg.engineering.daily.report</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_submit" string="Submit"
+                            type="object" class="btn-primary"
+                            invisible="state != 'draft'"
+                            groups="ksg_engineering.group_pelaksana,ksg_engineering.group_engineer,ksg_engineering.group_pengawas"/>
+                    <button name="action_reset_draft" string="Reset ke Draft"
+                            type="object" class="btn-secondary"
+                            invisible="state != 'submitted'"
+                            groups="ksg_engineering.group_pengawas,ksg_engineering.group_supervisor"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,submitted"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="project_id"/>
+                            <field name="tanggal"/>
+                        </group>
+                        <group>
+                            <field name="pelaksana_id"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Detail Pekerjaan">
+                            <field name="line_ids" nolabel="1">
+                                <list editable="bottom">
+                                    <field name="wbs_id"
+                                           domain="[('project_id', '=', parent.project_id)]"/>
+                                    <field name="jam_mulai" widget="float_time"/>
+                                    <field name="jam_selesai" widget="float_time"/>
+                                    <field name="personel_ids" widget="many2many_tags"/>
+                                    <field name="progress"/>
+                                    <field name="deskripsi"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Evidence">
+                            <field name="line_ids" nolabel="1" mode="kanban">
+                                <kanban>
+                                    <field name="wbs_id"/>
+                                    <field name="evidence_ids"/>
+                                    <templates>
+                                        <t t-name="card">
+                                            <div>
+                                                <strong><field name="wbs_id"/></strong>
+                                                <field name="evidence_ids" widget="many2many_binary"/>
+                                            </div>
+                                        </t>
+                                    </templates>
+                                </kanban>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+</odoo>

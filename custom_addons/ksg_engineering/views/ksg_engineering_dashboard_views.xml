@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- ============================================================ -->
+    <!-- Dashboard Kanban (FR-001B, FR-002B) -->
+    <!-- ============================================================ -->
+
+    <record id="view_engineering_dashboard_kanban" model="ir.ui.view">
+        <field name="name">ksg.sales.project.engineering.kanban</field>
+        <field name="model">ksg.sales.project</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="status" class="o_kanban_dashboard">
+                <field name="kode_proyek"/>
+                <field name="nama_pekerjaan"/>
+                <field name="klien"/>
+                <field name="status"/>
+                <field name="working_permit_ok"/>
+                <field name="safety_induction_ok"/>
+                <field name="bapbast_approved"/>
+                <field name="kurva_s_planned"/>
+                <field name="kurva_s_actual"/>
+                <field name="kurva_s_variance"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="o_kanban_card_header">
+                            <strong><field name="kode_proyek"/></strong>
+                        </div>
+                        <div class="o_kanban_card_content">
+                            <div><field name="nama_pekerjaan"/></div>
+                            <div class="text-muted"><field name="klien"/></div>
+                            <div class="mt-2">
+                                <span t-if="record.working_permit_ok.raw_value"
+                                      class="badge text-bg-success">WP OK</span>
+                                <span t-else=""
+                                      class="badge text-bg-danger">WP Missing</span>
+                                <span t-if="record.safety_induction_ok.raw_value"
+                                      class="badge text-bg-success">SI OK</span>
+                                <span t-else=""
+                                      class="badge text-bg-danger">SI Missing</span>
+                                <span t-if="record.bapbast_approved.raw_value"
+                                      class="badge text-bg-primary">BAP/BAST</span>
+                            </div>
+                            <div class="mt-2">
+                                <small>Planned: <field name="kurva_s_planned"/>%</small>
+                                <small> | Actual: <field name="kurva_s_actual"/>%</small>
+                                <small> | Var: <field name="kurva_s_variance"/>%</small>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+</odoo>

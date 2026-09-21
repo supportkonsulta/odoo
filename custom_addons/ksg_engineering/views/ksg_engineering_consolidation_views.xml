@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- ============================================================ -->
+    <!-- Consolidation Views (FR-008, FR-008A) -->
+    <!-- ============================================================ -->
+
+    <!-- Tree -->
+    <record id="view_consolidation_tree" model="ir.ui.view">
+        <field name="name">ksg.engineering.report.consolidation.list</field>
+        <field name="model">ksg.engineering.report.consolidation</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="project_id"/>
+                <field name="pengawas_id"/>
+                <field name="periode_minggu_id"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-warning="state == 'waiting_approval'"
+                       decoration-success="state == 'approved'"
+                       decoration-danger="state == 'revisi'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form -->
+    <record id="view_consolidation_form" model="ir.ui.view">
+        <field name="name">ksg.engineering.report.consolidation.form</field>
+        <field name="model">ksg.engineering.report.consolidation</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_ajukan" string="Ajukan"
+                            type="object" class="btn-primary"
+                            invisible="state not in ('draft', 'revisi')"
+                            groups="ksg_engineering.group_pengawas"/>
+                    <button name="action_approve" string="Approve"
+                            type="object" class="btn-success"
+                            invisible="state != 'waiting_approval'"
+                            groups="ksg_engineering.group_supervisor"/>
+                    <button name="action_revisi" string="Revisi"
+                            type="object" class="btn-warning"
+                            invisible="state != 'waiting_approval'"
+                            groups="ksg_engineering.group_supervisor"/>
+                    <button name="action_reset_draft" string="Reset Draft"
+                            type="object" class="btn-secondary"
+                            invisible="state != 'revisi'"
+                            groups="ksg_engineering.group_pengawas"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,waiting_approval,approved"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="project_id"/>
+                            <field name="periode_minggu_id"/>
+                        </group>
+                        <group>
+                            <field name="pengawas_id"/>
+                        </group>
+                    </group>
+                    <group string="Catatan Revisi"
+                           invisible="state not in ('waiting_approval', 'revisi')">
+                        <field name="catatan_revisi" nolabel="1"
+                               placeholder="Wajib diisi sebelum meminta revisi..."/>
+                    </group>
+                    <notebook>
+                        <page string="Daily Reports">
+                            <field name="daily_report_ids" nolabel="1"
+                                   widget="many2many">
+                                <list>
+                                    <field name="project_id"/>
+                                    <field name="tanggal"/>
+                                    <field name="pelaksana_id"/>
+                                    <field name="state"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+</odoo>

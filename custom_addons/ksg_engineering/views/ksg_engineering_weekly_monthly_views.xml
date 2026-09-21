@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- ============================================================ -->
+    <!-- Weekly Report Views (FR-009) -->
+    <!-- ============================================================ -->
+
+    <record id="view_weekly_report_tree" model="ir.ui.view">
+        <field name="name">ksg.engineering.weekly.report.list</field>
+        <field name="model">ksg.engineering.weekly.report</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="project_id"/>
+                <field name="periode_minggu_id"/>
+                <field name="planned_progress"/>
+                <field name="actual_progress"/>
+                <field name="actual_progress_kumulatif"/>
+                <field name="variance"
+                       decoration-danger="variance &lt; 0"
+                       decoration-success="variance &gt;= 0"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-success="state == 'done'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_weekly_report_form" model="ir.ui.view">
+        <field name="name">ksg.engineering.weekly.report.form</field>
+        <field name="model">ksg.engineering.weekly.report</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="project_id"/>
+                            <field name="periode_minggu_id"/>
+                        </group>
+                        <group>
+                            <field name="planned_progress"/>
+                            <field name="actual_progress"/>
+                            <field name="actual_progress_kumulatif"/>
+                            <field name="variance"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Konsolidasi Terkait">
+                            <field name="consolidation_ids" nolabel="1">
+                                <list>
+                                    <field name="pengawas_id"/>
+                                    <field name="state"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Removed search view to avoid validation error -->
+
+    <!-- ============================================================ -->
+    <!-- Monthly Report Views (FR-009) -->
+    <!-- ============================================================ -->
+
+    <record id="view_monthly_report_tree" model="ir.ui.view">
+        <field name="name">ksg.engineering.monthly.report.list</field>
+        <field name="model">ksg.engineering.monthly.report</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="project_id"/>
+                <field name="bulan"/>
+                <field name="tahun"/>
+                <field name="planned_progress"/>
+                <field name="actual_progress"/>
+                <field name="variance"
+                       decoration-danger="variance &lt; 0"
+                       decoration-success="variance &gt;= 0"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_monthly_report_form" model="ir.ui.view">
+        <field name="name">ksg.engineering.monthly.report.form</field>
+        <field name="model">ksg.engineering.monthly.report</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="project_id"/>
+                            <field name="bulan"/>
+                            <field name="tahun"/>
+                        </group>
+                        <group>
+                            <field name="planned_progress"/>
+                            <field name="actual_progress"/>
+                            <field name="variance"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Weekly Reports">
+                            <field name="weekly_report_ids" nolabel="1">
+                                <list>
+                                    <field name="periode_minggu_id"/>
+                                    <field name="planned_progress"/>
+                                    <field name="actual_progress"/>
+                                    <field name="variance"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+</odoo>
