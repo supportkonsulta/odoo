@@ -19,6 +19,7 @@
 
                 <field name="name"/>
                 <field name="applicant_id"/>
+                <field name="borrower_unit"/>
                 <field name="vehicle_id"/>
                 <field name="destination"/>
                 <field name="start_datetime"/>
@@ -242,6 +243,10 @@
                         <group string="Informasi Pengajuan">
 
                             <field name="applicant_id"/>
+
+                            <field name="borrower_unit"
+                                   placeholder="Contoh: IT / Finance / GA / Operasional"
+                                   readonly="state != 'draft'"/>
 
                             <field name="vehicle_id"
                                    options="{'no_create': True}"

@@ -46,7 +46,8 @@
                         <input type="text"
                                class="form-control border-0 ps-1 bg-transparent"
                                t-att-placeholder="t('search.bs')"
-                               t-model="state.searchQuery" />
+                               t-att-value="state.searchQuery"
+                               t-on-input="onSearchInput" />
                     </div>
 
                     <!-- Unit Kerja Filter -->
@@ -57,9 +58,9 @@
                                     style="width: auto; cursor: pointer;"
                                     t-on-change="onUnitChange">
                                 <option value=""><t t-esc="t('filter.all_units')" /></option>
-                                <t t-foreach="state.data.units_list" t-as="u" t-key="u.id">
-                                    <option t-att-value="u.name" t-att-selected="state.selectedUnitName == u.name">
-                                        <t t-esc="u.name" />
+                                <t t-foreach="state.data.units_list" t-as="u" t-key="u">
+                                    <option t-att-value="u" t-att-selected="state.selectedUnitName == u or state.filters.unit_name == u">
+                                        <t t-esc="u" />
                                     </option>
                                 </t>
                             </select>
@@ -248,8 +249,8 @@
 
                                     <t t-if="state.unfolded.current_assets">
                                         <!-- Bank & Saldo Kas -->
-                                        <t t-if="state.data.assets.current_assets.bank_and_cash and state.data.assets.current_assets.bank_and_cash.lines and state.data.assets.current_assets.bank_and_cash.lines.length > 0">
-                                            <t t-foreach="state.data.assets.current_assets.bank_and_cash.lines" t-as="line" t-key="line.id">
+                                        <t t-if="state.data.assets.current_assets.bank_and_cash and state.data.assets.current_assets.bank_and_cash.lines and filterLines(state.data.assets.current_assets.bank_and_cash.lines).length > 0">
+                                            <t t-foreach="filterLines(state.data.assets.current_assets.bank_and_cash.lines)" t-as="line" t-key="line.id">
                                                 <tr class="o_report_line_row">
                                                     <td class="ps-4">
                                                         <div class="ms-5">
@@ -279,8 +280,8 @@
                                         </t>
 
                                         <!-- Piutang Usaha -->
-                                        <t t-if="state.data.assets.current_assets.receivables and state.data.assets.current_assets.receivables.lines and state.data.assets.current_assets.receivables.lines.length > 0">
-                                            <t t-foreach="state.data.assets.current_assets.receivables.lines" t-as="line" t-key="line.id">
+                                        <t t-if="state.data.assets.current_assets.receivables and state.data.assets.current_assets.receivables.lines and filterLines(state.data.assets.current_assets.receivables.lines).length > 0">
+                                            <t t-foreach="filterLines(state.data.assets.current_assets.receivables.lines)" t-as="line" t-key="line.id">
                                                 <tr class="o_report_line_row">
                                                     <td class="ps-4">
                                                         <div class="ms-5">
@@ -309,8 +310,8 @@
                                         </t>
 
                                         <!-- Biaya Dibayar Dimuka & Pajak -->
-                                        <t t-if="state.data.assets.current_assets.prepayments and state.data.assets.current_assets.prepayments.lines and state.data.assets.current_assets.prepayments.lines.length > 0">
-                                            <t t-foreach="state.data.assets.current_assets.prepayments.lines" t-as="line" t-key="line.id">
+                                        <t t-if="state.data.assets.current_assets.prepayments and state.data.assets.current_assets.prepayments.lines and filterLines(state.data.assets.current_assets.prepayments.lines).length > 0">
+                                            <t t-foreach="filterLines(state.data.assets.current_assets.prepayments.lines)" t-as="line" t-key="line.id">
                                                 <tr class="o_report_line_row">
                                                     <td class="ps-4">
                                                         <div class="ms-5">
@@ -339,8 +340,8 @@
                                         </t>
 
                                         <!-- Aset Lancar Lainnya -->
-                                        <t t-if="state.data.assets.current_assets.other_current_assets and state.data.assets.current_assets.other_current_assets.lines and state.data.assets.current_assets.other_current_assets.lines.length > 0">
-                                            <t t-foreach="state.data.assets.current_assets.other_current_assets.lines" t-as="line" t-key="line.id">
+                                        <t t-if="state.data.assets.current_assets.other_current_assets and state.data.assets.current_assets.other_current_assets.lines and filterLines(state.data.assets.current_assets.other_current_assets.lines).length > 0">
+                                            <t t-foreach="filterLines(state.data.assets.current_assets.other_current_assets.lines)" t-as="line" t-key="line.id">
                                                 <tr class="o_report_line_row">
                                                     <td class="ps-4">
                                                         <div class="ms-5">
@@ -390,8 +391,8 @@
                                     </t>
 
                                     <!-- 1.2 ASET TETAP & TIDAK LANCAR -->
-                                    <t t-if="state.data.assets.fixed_assets and state.data.assets.fixed_assets.lines and state.data.assets.fixed_assets.lines.length > 0">
-                                        <t t-foreach="state.data.assets.fixed_assets.lines" t-as="line" t-key="line.id">
+                                    <t t-if="state.data.assets.fixed_assets and state.data.assets.fixed_assets.lines and filterLines(state.data.assets.fixed_assets.lines).length > 0">
+                                        <t t-foreach="filterLines(state.data.assets.fixed_assets.lines)" t-as="line" t-key="line.id">
                                             <tr class="o_report_line_row">
                                                 <td class="ps-4">
                                                     <div class="ms-3">
@@ -419,8 +420,8 @@
                                         </t>
                                     </t>
 
-                                    <t t-if="state.data.assets.non_current_assets and state.data.assets.non_current_assets.lines and state.data.assets.non_current_assets.lines.length > 0">
-                                        <t t-foreach="state.data.assets.non_current_assets.lines" t-as="line" t-key="line.id">
+                                    <t t-if="state.data.assets.non_current_assets and state.data.assets.non_current_assets.lines and filterLines(state.data.assets.non_current_assets.lines).length > 0">
+                                        <t t-foreach="filterLines(state.data.assets.non_current_assets.lines)" t-as="line" t-key="line.id">
                                             <tr class="o_report_line_row">
                                                 <td class="ps-4">
                                                     <div class="ms-3">
@@ -502,8 +503,8 @@
 
                                 <t t-if="state.unfolded.liabilities">
                                     <!-- Hutang & Kewajiban Lines -->
-                                    <t t-if="state.data.liabilities.current_liabilities and state.data.liabilities.current_liabilities.payables and state.data.liabilities.current_liabilities.payables.lines and state.data.liabilities.current_liabilities.payables.lines.length > 0">
-                                        <t t-foreach="state.data.liabilities.current_liabilities.payables.lines" t-as="line" t-key="line.id">
+                                    <t t-if="state.data.liabilities.current_liabilities and state.data.liabilities.current_liabilities.payables and state.data.liabilities.current_liabilities.payables.lines and filterLines(state.data.liabilities.current_liabilities.payables.lines).length > 0">
+                                        <t t-foreach="filterLines(state.data.liabilities.current_liabilities.payables.lines)" t-as="line" t-key="line.id">
                                             <tr class="o_report_line_row">
                                                 <td class="ps-4">
                                                     <div class="ms-4">
@@ -579,8 +580,8 @@
 
                                 <t t-if="state.unfolded.equity">
                                     <!-- Ekuitas Langsung -->
-                                    <t t-if="state.data.equity.direct_equity and state.data.equity.direct_equity.lines and state.data.equity.direct_equity.lines.length > 0">
-                                        <t t-foreach="state.data.equity.direct_equity.lines" t-as="line" t-key="line.id">
+                                    <t t-if="state.data.equity.direct_equity and state.data.equity.direct_equity.lines and filterLines(state.data.equity.direct_equity.lines).length > 0">
+                                        <t t-foreach="filterLines(state.data.equity.direct_equity.lines)" t-as="line" t-key="line.id">
                                             <tr class="o_report_line_row">
                                                 <td class="ps-4">
                                                     <div class="ms-4">

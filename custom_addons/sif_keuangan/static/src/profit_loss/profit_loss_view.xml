@@ -46,7 +46,8 @@
                         <input type="text"
                                class="form-control border-0 ps-1 bg-transparent"
                                t-att-placeholder="t('search.pl')"
-                               t-model="state.searchQuery" />
+                               t-att-value="state.searchQuery"
+                               t-on-input="onSearchInput" />
                     </div>
 
                     <!-- Unit Kerja Filter -->
@@ -231,8 +232,8 @@
                                     </t>
                                 </tr>
 
-                                <t t-if="state.unfolded.revenue and state.data.sections.revenue.accounts">
-                                    <t t-foreach="state.data.sections.revenue.accounts" t-as="acc" t-key="acc.id">
+                                <t t-if="state.unfolded.revenue and state.data.sections.revenue.accounts and filterAccounts(state.data.sections.revenue.accounts).length > 0">
+                                    <t t-foreach="filterAccounts(state.data.sections.revenue.accounts)" t-as="acc" t-key="acc.id">
                                         <tr class="o_report_line_row">
                                             <td class="ps-4">
                                                 <div class="ms-4">
@@ -293,8 +294,8 @@
                                     </t>
                                 </tr>
 
-                                <t t-if="state.unfolded.costs_of_revenue and state.data.sections.costs_of_revenue.accounts">
-                                    <t t-foreach="state.data.sections.costs_of_revenue.accounts" t-as="acc" t-key="acc.id">
+                                <t t-if="state.unfolded.costs_of_revenue and state.data.sections.costs_of_revenue.accounts and filterAccounts(state.data.sections.costs_of_revenue.accounts).length > 0">
+                                    <t t-foreach="filterAccounts(state.data.sections.costs_of_revenue.accounts)" t-as="acc" t-key="acc.id">
                                         <tr class="o_report_line_row">
                                             <td class="ps-4">
                                                 <div class="ms-4">
@@ -382,8 +383,8 @@
                                     </t>
                                 </tr>
 
-                                <t t-if="state.unfolded.operating_expenses and state.data.sections.operating_expenses.accounts">
-                                    <t t-foreach="state.data.sections.operating_expenses.accounts" t-as="acc" t-key="acc.id">
+                                <t t-if="state.unfolded.operating_expenses and state.data.sections.operating_expenses.accounts and filterAccounts(state.data.sections.operating_expenses.accounts).length > 0">
+                                    <t t-foreach="filterAccounts(state.data.sections.operating_expenses.accounts)" t-as="acc" t-key="acc.id">
                                         <tr class="o_report_line_row">
                                             <td class="ps-4">
                                                 <div class="ms-4">
@@ -472,8 +473,8 @@
                                         </t>
                                     </tr>
 
-                                    <t t-if="state.unfolded.other_income">
-                                        <t t-foreach="state.data.sections.other_income.accounts" t-as="acc" t-key="acc.id">
+                                    <t t-if="state.unfolded.other_income and filterAccounts(state.data.sections.other_income.accounts).length > 0">
+                                        <t t-foreach="filterAccounts(state.data.sections.other_income.accounts)" t-as="acc" t-key="acc.id">
                                             <tr class="o_report_line_row">
                                                 <td class="ps-4">
                                                     <div class="ms-4">
@@ -536,8 +537,8 @@
                                         </t>
                                     </tr>
 
-                                    <t t-if="state.unfolded.other_expenses">
-                                        <t t-foreach="state.data.sections.other_expenses.accounts" t-as="acc" t-key="acc.id">
+                                    <t t-if="state.unfolded.other_expenses and filterAccounts(state.data.sections.other_expenses.accounts).length > 0">
+                                        <t t-foreach="filterAccounts(state.data.sections.other_expenses.accounts)" t-as="acc" t-key="acc.id">
                                             <tr class="o_report_line_row">
                                                 <td class="ps-4">
                                                     <div class="ms-4">
@@ -627,8 +628,8 @@
                                         </t>
                                     </tr>
 
-                                    <t t-if="state.unfolded.allocations">
-                                        <t t-foreach="state.data.sections.allocations.accounts" t-as="acc" t-key="acc.id">
+                                    <t t-if="state.unfolded.allocations and filterAccounts(state.data.sections.allocations.accounts).length > 0">
+                                        <t t-foreach="filterAccounts(state.data.sections.allocations.accounts)" t-as="acc" t-key="acc.id">
                                             <tr class="o_report_line_row">
                                                 <td class="ps-4">
                                                     <div class="ms-4">
