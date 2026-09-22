@@ -10,6 +10,8 @@ class KsgEngineeringDailyReportLine(models.Model):
     report_id = fields.Many2one(
         'ksg.engineering.daily.report', string='Daily Report',
         required=True, ondelete='cascade', index=True)
+    project_id = fields.Many2one(
+        related='report_id.project_id', store=True, readonly=True)
     jam_mulai = fields.Float(string='Jam Mulai')
     jam_selesai = fields.Float(string='Jam Selesai')
     personel_ids = fields.Many2many(

@@ -31,11 +31,11 @@
                     <button name="action_ajukan" string="Ajukan"
                             type="object" class="btn-primary"
                             invisible="state != 'draft'"
-                            groups="ksg_engineering.group_supervisor"/>
+                            groups="ksg_engineering.group_supervisor,base.group_system"/>
                     <button name="action_approve" string="Approve"
                             type="object" class="btn-success"
                             invisible="state != 'waiting_approval'"
-                            groups="ksg_engineering.group_kepala_unit"/>
+                            groups="ksg_engineering.group_kepala_unit,base.group_system"/>
                     <field name="state" widget="statusbar"
                            statusbar_visible="draft,waiting_approval,approved"/>
                 </header>
@@ -62,7 +62,7 @@
                     <!-- Signature widget saat approval -->
                     <group string="Tanda Tangan"
                            invisible="state != 'waiting_approval'"
-                           groups="ksg_engineering.group_kepala_unit">
+                           groups="ksg_engineering.group_kepala_unit,base.group_system">
                         <field name="signature_image" widget="signature"/>
                     </group>
                 </sheet>

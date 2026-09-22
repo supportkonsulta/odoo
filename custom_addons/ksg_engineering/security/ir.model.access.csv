@@ -60,3 +60,12 @@ access_checklist_eng_pengawas,ksg.sales.document.checklist eng pengawas,ksg_sale
 access_checklist_eng_supervisor,ksg.sales.document.checklist eng supervisor,ksg_sales.model_ksg_sales_document_checklist,ksg_engineering.group_supervisor,1,0,0,0
 access_checklist_eng_kepala_unit,ksg.sales.document.checklist eng kepala_unit,ksg_sales.model_ksg_sales_document_checklist,ksg_engineering.group_kepala_unit,1,0,0,0
 access_checklist_eng_penagihan,ksg.sales.document.checklist eng penagihan,ksg_sales.model_ksg_sales_document_checklist,ksg_engineering.group_penagihan,1,0,0,0
+access_wbs_system,ksg.engineering.wbs system,model_ksg_engineering_wbs,base.group_system,1,1,1,1
+access_daily_report_system,ksg.engineering.daily.report system,model_ksg_engineering_daily_report,base.group_system,1,1,1,1
+access_daily_line_system,ksg.engineering.daily.report.line system,model_ksg_engineering_daily_report_line,base.group_system,1,1,1,1
+access_consolidation_system,ksg.engineering.report.consolidation system,model_ksg_engineering_report_consolidation,base.group_system,1,1,1,1
+access_weekly_system,ksg.engineering.weekly.report system,model_ksg_engineering_weekly_report,base.group_system,1,1,1,1
+access_monthly_system,ksg.engineering.monthly.report system,model_ksg_engineering_monthly_report,base.group_system,1,1,1,1
+access_bapbast_system,ksg.engineering.bapbast system,model_ksg_engineering_bapbast,base.group_system,1,1,1,1
+access_assignment_system,ksg.engineering.assignment system,model_ksg_engineering_assignment,base.group_system,1,1,1,1
+access_schedule_week_system,ksg.engineering.schedule.week system,model_ksg_engineering_schedule_week,base.group_system,1,1,1,1

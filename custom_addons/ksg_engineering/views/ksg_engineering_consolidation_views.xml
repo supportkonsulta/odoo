@@ -32,19 +32,19 @@
                     <button name="action_ajukan" string="Ajukan"
                             type="object" class="btn-primary"
                             invisible="state not in ('draft', 'revisi')"
-                            groups="ksg_engineering.group_pengawas"/>
+                            groups="ksg_engineering.group_pengawas,base.group_system"/>
                     <button name="action_approve" string="Approve"
                             type="object" class="btn-success"
                             invisible="state != 'waiting_approval'"
-                            groups="ksg_engineering.group_supervisor"/>
+                            groups="ksg_engineering.group_supervisor,base.group_system"/>
                     <button name="action_revisi" string="Revisi"
                             type="object" class="btn-warning"
                             invisible="state != 'waiting_approval'"
-                            groups="ksg_engineering.group_supervisor"/>
+                            groups="ksg_engineering.group_supervisor,base.group_system"/>
                     <button name="action_reset_draft" string="Reset Draft"
                             type="object" class="btn-secondary"
                             invisible="state != 'revisi'"
-                            groups="ksg_engineering.group_pengawas"/>
+                            groups="ksg_engineering.group_pengawas,base.group_system"/>
                     <field name="state" widget="statusbar"
                            statusbar_visible="draft,waiting_approval,approved"/>
                 </header>

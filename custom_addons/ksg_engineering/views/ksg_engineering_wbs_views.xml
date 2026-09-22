@@ -49,9 +49,11 @@
                         <group string="Periode">
                             <field name="tanggal_mulai"/>
                             <field name="tanggal_selesai"/>
-                            <field name="otorisasi_luar_periode"/>
+                            <field name="otorisasi_luar_periode"
+                                   groups="ksg_engineering.group_kepala_unit,base.group_system"/>
                             <field name="alasan_luar_periode"
-                                   invisible="not otorisasi_luar_periode"/>
+                                   invisible="not otorisasi_luar_periode"
+                                   groups="ksg_engineering.group_kepala_unit,base.group_system"/>
                         </group>
                         <group string="Progress">
                             <field name="planned_progress_mingguan" readonly="1"/>

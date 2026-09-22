@@ -65,8 +65,7 @@ class KsgEngineeringWbs(models.Model):
 
     # Otorisasi luar periode (FR-004A)
     otorisasi_luar_periode = fields.Boolean(
-        string='Otorisasi Luar Periode',
-        groups='ksg_engineering.group_kepala_unit')
+        string='Otorisasi Luar Periode')
     alasan_luar_periode = fields.Text(string='Alasan Luar Periode')
 
     # ==================================================================

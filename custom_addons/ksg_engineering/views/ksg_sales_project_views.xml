@@ -54,7 +54,7 @@
                     <button name="action_generate_calendar_weeks"
                             string="Generate Kalender Minggu"
                             type="object" class="btn-primary"
-                            groups="ksg_engineering.group_engineer,ksg_engineering.group_kepala_unit"/>
+                            groups="ksg_engineering.group_engineer,ksg_engineering.group_kepala_unit,base.group_system"/>
                     <field name="schedule_week_ids" nolabel="1">
                         <list>
                             <field name="no_minggu"/>
