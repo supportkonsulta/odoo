@@ -1,0 +1,527 @@
+from unittest.mock import patch
+
+from odoo import _
+from odoo.tests import tagged
+from odoo.tests.common import TransactionCase
+
+from odoo.addons.presenly_saas.services.saas_client import PresenlySaasClient, SaasClientError
+
+EMPTY_PAGE = {'data': [], 'meta': {'total': 0, 'total_pages': 0}}
+
+
+def employee_row(**overrides):
+    row = {
+        'id': 5,
+        'nopeg': 'iksg-rangga',
+        'name': 'rangga',
+        'email': 'rangga@example.com',
+        'phone': '081234567890',
+        'is_active': True,
+        'bagian': 'Operasional',
+        'grup': 'Grup 1',
+        'address': 'Jl. Merdeka 10',
+        'birth_date': '1995-04-17',
+        'birth_place': 'Surabaya',
+        'can_approve': True,
+        'role': {'id': 3, 'name': 'Supervisor'},
+        'internal_company': {'id': 2, 'name': 'PT KONSULTA SEMEN GRESIK'},
+        'created_at': '2026-01-05T02:00:00.000Z',
+        'updated_at': '2026-09-20T02:00:00.000Z',
+    }
+    row.update(overrides)
+    return row
+
+
+@tagged('post_install', '-at_install')
+class TestPresenlyEmployeeSyncBase(TransactionCase):
+    """Dasar bersama: cermin pegawai bersih, dan `hr.employee` bersih."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.company = cls.env.company
+        cls.config = cls.env['presenly.saas.config']._get_or_create(cls.company)
+
+    def setUp(self):
+        super().setUp()
+        self.config.write({
+            'enabled': True, 'base_url': 'https://x', 'tenant_code': 'demo',
+            'api_key': 'k', 'retry_count': 0,
+        })
+        self.Mirror = self.env['presenly.saas.employee']
+        self.Hr = self.env['hr.employee']
+        # Keduanya dibersihkan, bukan hanya hr.employee. Data yang tertinggal
+        # dari percobaan sebelumnya pernah membuat tes ini gagal karena sebab
+        # yang tidak ada hubungannya dengan kode yang sedang diuji.
+        self.Mirror.search([]).unlink()
+        self.Hr.with_context(active_test=False).search([]).unlink()
+
+    def _tarik(self, rows):
+        """Tarik pegawai dengan jaringan dipalsukan di kedua arah.
+
+        Arah kirim juga dipalsukan, bukan hanya arah tarik: kalau tidak, satu
+        perubahan kecil di logika bisa membuat tes ini menghubungi server
+        sungguhan tanpa ada yang menyadarinya.
+        """
+        def fake_resource(resource, params=None):
+            if resource != 'employees':
+                return EMPTY_PAGE
+            return {'data': rows, 'meta': {'total': len(rows), 'total_pages': 1}}
+
+        def fake_update(nopeg, payload=None):
+            dikirim.append({'nopeg': nopeg, 'payload': payload})
+            return {'data': {'nopeg': nopeg, 'updated_at': '2026-09-21T03:00:00.000Z'}, 'meta': {}}
+
+        dikirim = []
+        with patch.object(PresenlySaasClient, 'get_resource', side_effect=fake_resource), \
+             patch.object(PresenlySaasClient, 'update_employee', side_effect=fake_update):
+            summary, error = self.config._pull_employees()
+        self.terkirim = dikirim
+        return summary, error
+
+    def _hr(self, nopeg):
+        return self.Hr.with_context(active_test=False).search(
+            [('presenly_nopeg', '=', nopeg)], limit=1
+        )
+
+
+@tagged('post_install', '-at_install')
+class TestPresenlyEmployeeMirror(TestPresenlyEmployeeSyncBase):
+    """Cermin menyimpan seluruh payload, termasuk yang tak punya rumah di Odoo."""
+
+    def test_memeta_seluruh_payload(self):
+        self._tarik([employee_row()])
+        row = self.Mirror.search([])
+
+        self.assertEqual(row.nopeg, 'iksg-rangga')
+        self.assertEqual(row.name, 'rangga')
+        self.assertEqual(row.email, 'rangga@example.com')
+        self.assertEqual(row.role_name, 'Supervisor')
+        self.assertEqual(row.internal_company_name, 'PT KONSULTA SEMEN GRESIK')
+        self.assertEqual(str(row.birth_date), '1995-04-17')
+
+    def test_kolom_tanpa_rumah_di_odoo_tetap_disimpan(self):
+        self._tarik([employee_row()])
+        row = self.Mirror.search([])
+
+        self.assertEqual(row.bagian, 'Operasional')
+        self.assertEqual(row.grup, 'Grup 1')
+        self.assertTrue(row.can_approve)
+
+    def test_menarik_dua_kali_tidak_menumpuk(self):
+        self._tarik([employee_row()])
+        self._tarik([employee_row(name='rangga diperbarui')])
+
+        self.assertEqual(self.Mirror.search_count([]), 1)
+        self.assertEqual(self.Mirror.search([]).name, 'rangga diperbarui')
+
+    def test_pegawai_yang_hilang_dari_server_tidak_dihapus(self):
+        self._tarik([employee_row()])
+        self._tarik([])
+
+        # Menghapus baris pegawai berdasarkan satu tarikan berisiko membuang
+        # data kepegawaian yang masih dipakai.
+        self.assertEqual(self.Mirror.search_count([]), 1)
+
+    def test_tanpa_nopeg_tidak_dibuatkan_pegawai_odoo(self):
+        summary, error = self._tarik([employee_row(nopeg=None)])
+
+        self.assertFalse(error)
+        self.assertEqual(self.Hr.with_context(active_test=False).search_count([]), 0)
+        self.assertEqual(len(summary['skipped']), 1)
+        self.assertEqual(self.Mirror.search([]).synced_state, 'no_nopeg')
+
+
+@tagged('post_install', '-at_install')
+class TestPresenlyEmployeeToHr(TestPresenlyEmployeeSyncBase):
+    """Penerapan ke `hr.employee`: hanya kolom yang ada di kedua sisi."""
+
+    def test_membuat_pegawai_baru(self):
+        summary, error = self._tarik([employee_row()])
+
+        self.assertFalse(error)
+        self.assertEqual(summary['created'], 1)
+        hr = self._hr('iksg-rangga')
+        self.assertTrue(hr)
+        self.assertEqual(hr.name, 'rangga')
+        self.assertEqual(hr.work_email, 'rangga@example.com')
+        self.assertEqual(hr.work_phone, '081234567890')
+        self.assertEqual(str(hr.birthday), '1995-04-17')
+        self.assertEqual(hr.place_of_birth, 'Surabaya')
+        self.assertEqual(hr.private_street, 'Jl. Merdeka 10')
+
+    def test_kolom_tanpa_padanan_tidak_ditulis_ke_hr(self):
+        self._tarik([employee_row()])
+        hr = self._hr('iksg-rangga')
+
+        # `bagian`, `grup`, dan `can_approve` tidak punya kolom di Odoo. Kalau
+        # suatu saat dipetakan, itu keputusan sadar dan tes ini yang menahannya.
+        self.assertFalse(hr.job_title)
+        self.assertFalse(hr.department_id)
+
+    def test_memperbarui_pegawai_yang_sudah_ada(self):
+        self._tarik([employee_row()])
+        summary, _error = self._tarik([employee_row(name='rangga baru', email='baru@example.com')])
+
+        self.assertEqual(summary['updated'], 1)
+        self.assertEqual(self.Hr.with_context(active_test=False).search_count([]), 1)
+        hr = self._hr('iksg-rangga')
+        self.assertEqual(hr.name, 'rangga baru')
+        self.assertEqual(hr.work_email, 'baru@example.com')
+
+    def test_tidak_menulis_bila_tidak_ada_yang_berubah(self):
+        self._tarik([employee_row()])
+        summary, _error = self._tarik([employee_row()])
+
+        self.assertEqual(summary['updated'], 0)
+        self.assertEqual(summary['unchanged'], 1)
+
+    def test_mencocokkan_pegawai_yang_sudah_ada_lewat_nopeg(self):
+        # Pegawai sudah ada di Odoo dengan data lain; harus dipakai, bukan
+        # dibuatkan yang baru.
+        ada = self.Hr.create({'name': 'nama lama di odoo', 'presenly_nopeg': 'iksg-rangga'})
+
+        summary, _error = self._tarik([employee_row()])
+
+        self.assertEqual(summary['created'], 0)
+        self.assertEqual(self.Hr.with_context(active_test=False).search_count([]), 1)
+        ada.invalidate_recordset()
+        self.assertEqual(ada.name, 'rangga')
+
+    def test_mencatat_jejak_sinkronisasi(self):
+        self._tarik([employee_row()])
+        hr = self._hr('iksg-rangga')
+
+        self.assertTrue(hr.presenly_synced_at)
+        self.assertEqual(
+            hr.presenly_source_updated_at,
+            self.Mirror.search([]).source_updated_at,
+        )
+
+    def test_menautkan_cermin_ke_pegawai_odoo(self):
+        self._tarik([employee_row()])
+        row = self.Mirror.search([])
+
+        self.assertEqual(row.hr_employee_id, self._hr('iksg-rangga'))
+        self.assertEqual(row.synced_state, 'linked')
+
+    def test_nopeg_ganda_tidak_dipilihkan_salah_satu(self):
+        self.Hr.create({'name': 'orang pertama', 'presenly_nopeg': 'iksg-rangga'})
+        self.Hr.create({'name': 'orang kedua', 'presenly_nopeg': 'iksg-rangga'})
+
+        summary, _error = self._tarik([employee_row()])
+
+        self.assertEqual(summary['created'], 0)
+        self.assertEqual(summary['updated'], 0)
+        # Dibandingkan lewat `_()` yang sama dengan modul, bukan teks Inggris
+        # langsung: tes tidak boleh bergantung pada bahasa pengguna. Di
+        # lingkungan tes `env.lang` kosong, jadi `self.env._()` akan
+        # mengembalikan teks sumber dan gagal di bahasa lain.
+        self.assertEqual(
+            summary['skipped'],
+            [_('%(name)s (nopeg %(nopeg)s): more than one Odoo employee carries '
+               'this nopeg, so none was touched.',
+               name='rangga', nopeg='iksg-rangga')],
+        )
+
+
+@tagged('post_install', '-at_install')
+class TestPresenlyEmployeeActive(TestPresenlyEmployeeSyncBase):
+    """Status aktif: satu aturan, dan satu pengecualian yang disengaja."""
+
+    def test_menonaktifkan_pegawai_tanpa_akun_pengguna(self):
+        self._tarik([employee_row()])
+        self._tarik([employee_row(is_active=False)])
+
+        hr = self._hr('iksg-rangga')
+        self.assertFalse(hr.active)
+
+    def test_menolak_menonaktifkan_pegawai_yang_punya_akun(self):
+        pengguna = self.env['res.users'].create({
+            'name': 'Rangga', 'login': 'rangga.uji',
+        })
+        self._tarik([employee_row()])
+        self._hr('iksg-rangga').write({'user_id': pengguna.id})
+
+        summary, _error = self._tarik([employee_row(is_active=False)])
+
+        # Menonaktifkan berarti mencabut akses orang itu tanpa peringatan di
+        # Odoo. Itu harus keputusan di Odoo, bukan efek samping tarikan.
+        self.assertTrue(self._hr('iksg-rangga').active)
+        self.assertEqual(len(summary['refused']), 1)
+
+    def test_pegawai_baru_yang_tidak_aktif_di_presenly(self):
+        # Dibuat dulu (selalu aktif), lalu aturan aktif diterapkan.
+        summary, _error = self._tarik([employee_row(is_active=False)])
+
+        self.assertEqual(summary['created'], 1)
+        self.assertFalse(self._hr('iksg-rangga').active)
+
+    def test_aktifkan_kembali(self):
+        self._tarik([employee_row(is_active=False)])
+        self._tarik([employee_row(is_active=True)])
+
+        self.assertTrue(self._hr('iksg-rangga').active)
+
+
+@tagged('post_install', '-at_install')
+class TestPresenlyEmployeePull(TestPresenlyEmployeeSyncBase):
+    """Penarikan lewat tombol: galat dilaporkan, bukan dilempar."""
+
+    def test_galat_koneksi_dikembalikan_sebagai_nilai(self):
+        failure = SaasClientError('down', code='NETWORK_ERROR')
+        with patch.object(PresenlySaasClient, 'get_resource', side_effect=failure):
+            summary, error = self.config._pull_employees()
+
+        self.assertTrue(error)
+        self.assertEqual(summary, {})
+        log = self.env['presenly.saas.sync.log'].search([], order='id desc', limit=1)
+        self.assertFalse(log.success)
+
+    def test_notifikasi_melaporkan_jumlah(self):
+        def fake_resource(resource, params=None):
+            return {'data': [employee_row()], 'meta': {'total': 1, 'total_pages': 1}}
+
+        with patch.object(PresenlySaasClient, 'get_resource', side_effect=fake_resource):
+            result = self.config.action_pull_employees()
+
+        self.assertEqual(result['tag'], 'display_notification')
+        self.assertEqual(result['params']['type'], 'success')
+        self.assertIn(_('Employee pull finished'), result['params']['title'])
+
+    def test_notifikasi_memperingatkan_yang_ditolak(self):
+        pengguna = self.env['res.users'].create({'name': 'R', 'login': 'r.uji'})
+        self._tarik([employee_row()])
+        self._hr('iksg-rangga').write({'user_id': pengguna.id})
+
+        def fake_resource(resource, params=None):
+            return {'data': [employee_row(is_active=False)], 'meta': {'total': 1, 'total_pages': 1}}
+
+        with patch.object(PresenlySaasClient, 'get_resource', side_effect=fake_resource):
+            result = self.config.action_pull_employees()
+
+        self.assertEqual(result['params']['type'], 'warning')
+        self.assertIn(
+            _('Needs a decision in Odoo:\n%s',
+              _('%(name)s: Presenly marks this employee inactive, but the Odoo '
+                'employee has a user account. Deactivate it in Odoo if that is '
+                'really intended.', name='rangga')),
+            result['params']['message'],
+        )
+
+    def test_terpasang_di_cron_sendiri(self):
+        # Sinkronisasi pegawai menyentuh hr.employee, jadi ia punya cron
+        # terpisah: kegagalannya tidak boleh menghentikan penarikan presensi,
+        # dan sebaliknya.
+        crons = self.env['ir.cron'].search([('name', '=', 'Presenly SaaS: Sync Employees')])
+        self.assertEqual(len(crons), 1)
+        self.assertIn('_cron_sync_employees_all', crons.code)
+
+    def test_cron_tidak_melempar_saat_galat(self):
+        failure = SaasClientError('down', code='NETWORK_ERROR')
+        with patch.object(PresenlySaasClient, 'get_resource', side_effect=failure):
+            self.assertTrue(self.env['presenly.saas.config']._cron_sync_employees_all())
+
+    def test_cron_melewati_koneksi_nonaktif(self):
+        self.config.write({'enabled': False})
+        with patch.object(PresenlySaasClient, 'get_resource') as panggil:
+            self.env['presenly.saas.config']._cron_sync_employees_all()
+        panggil.assert_not_called()
+
+
+@tagged('post_install', '-at_install')
+class TestPresenlyEmployeePush(TestPresenlyEmployeeSyncBase):
+    """Arah balik: suntingan di Odoo dikirim ke Presenly."""
+
+    def test_suntingan_odoo_dikirim_balik(self):
+        self._tarik([employee_row()])
+        hr = self._hr('iksg-rangga')
+        hr.write({'work_phone': '0899999999'})
+
+        summary, _error = self._tarik([employee_row()])
+
+        self.assertEqual(len(self.terkirim), 1)
+        self.assertEqual(self.terkirim[0]['nopeg'], 'iksg-rangga')
+        # Hanya kolom yang berubah yang dikirim. Mengirim seluruh objek akan
+        # menghapus kolom yang tidak dikirim di sisi server.
+        self.assertEqual(self.terkirim[0]['payload'], {'phone': '0899999999'})
+        self.assertEqual(summary['push']['pushed'], 1)
+
+    def test_tanpa_suntingan_tidak_mengirim_apa_pun(self):
+        self._tarik([employee_row()])
+        self.terkirim = []
+
+        summary, _error = self._tarik([employee_row()])
+
+        self.assertEqual(self.terkirim, [])
+        self.assertEqual(summary['push']['pushed'], 0)
+
+    def test_tanggal_lahir_tidak_memicu_kiriman_palsu(self):
+        # Snapshot disimpan sebagai JSON, dan JSON tidak mengenal tipe tanggal.
+        # Tanpa penyeragaman, setiap tarikan akan mengira tanggalnya berubah.
+        self._tarik([employee_row()])
+        self.terkirim = []
+
+        self._tarik([employee_row()])
+        self._tarik([employee_row()])
+
+        self.assertEqual(self.terkirim, [])
+
+    def test_is_active_tidak_pernah_dikirim_balik(self):
+        self._tarik([employee_row()])
+        hr = self._hr('iksg-rangga')
+        hr.write({'active': False})
+
+        self._tarik([employee_row()])
+
+        for kiriman in self.terkirim:
+            self.assertNotIn('is_active', kiriman['payload'])
+        # Status aktif dimiliki Presenly; menonaktifkan di Odoo tidak boleh
+        # mencabut akses pegawai di aplikasi Presenly.
+        self.assertIn('is_active', self.env['presenly.saas.employee']._fields)
+
+    def test_snapshot_diperbarui_setelah_kirim(self):
+        self._tarik([employee_row()])
+        hr = self._hr('iksg-rangga')
+        hr.write({'work_phone': '08111'})
+        self._tarik([employee_row()])
+        self.terkirim = []
+
+        # Kiriman pertama sudah memperbarui snapshot, jadi tarikan berikutnya
+        # tidak boleh mengirim ulang hal yang sama.
+        self._tarik([employee_row()])
+
+        self.assertEqual(self.terkirim, [])
+
+    def test_kegagalan_satu_pegawai_dilaporkan_dan_tidak_menghentikan_yang_lain(self):
+        self._tarik([employee_row(), employee_row(id=6, nopeg='iksg-yusril', name='yusril')])
+        for hr in self.env['hr.employee'].with_context(active_test=False).search([]):
+            hr.write({'work_phone': '08000'})
+
+        def fake_update(nopeg, payload=None):
+            if nopeg == 'iksg-rangga':
+                raise SaasClientError('ditolak', code='HTTP_ERROR', http_status=400)
+            return {'data': {'nopeg': nopeg, 'updated_at': '2026-09-21T03:00:00.000Z'}, 'meta': {}}
+
+        def fake_resource(resource, params=None):
+            return {'data': [employee_row(), employee_row(id=6, nopeg='iksg-yusril', name='yusril')],
+                    'meta': {'total': 2, 'total_pages': 1}}
+
+        with patch.object(PresenlySaasClient, 'get_resource', side_effect=fake_resource), \
+             patch.object(PresenlySaasClient, 'update_employee', side_effect=fake_update):
+            summary, error = self.config._pull_employees()
+
+        self.assertFalse(error)
+        self.assertEqual(summary['push']['pushed'], 1)
+        self.assertEqual(len(summary['push']['failed']), 1)
+        self.assertIn('iksg-rangga', summary['push']['failed'][0])
+
+    def test_pegawai_yang_sama_berubah_di_kedua_sisi(self):
+        self._tarik([employee_row()])
+        self.terkirim = []
+        hr = self._hr('iksg-rangga')
+        hr.write({'work_phone': '08777'})
+
+        # Presenly juga berubah: nopeg sama, `updated_at` baru, dan namanya beda.
+        summary, _error = self._tarik([
+            employee_row(name='rangga dari presenly', updated_at='2026-09-21T05:00:00.000Z'),
+        ])
+
+        # Tidak ada cara andal membandingkan jam dua server, jadi Presenly
+        # menang dan bentroknya dilaporkan — bukan diabaikan diam-diam.
+        self.assertEqual(len(summary['conflicts']), 1)
+        self.terkirim = []
+        self.assertEqual(self._hr('iksg-rangga').name, 'rangga dari presenly')
+
+
+@tagged('post_install', '-at_install')
+class TestPresenlyEmployeeTrigger(TestPresenlyEmployeeSyncBase):
+    """Kirim balik saat disimpan, bukan menunggu jadwal."""
+
+    def _pasang(self, terkirim):
+        def fake_update(nopeg, payload=None):
+            terkirim.append({'nopeg': nopeg, 'payload': payload})
+            return {'data': {'nopeg': nopeg, 'updated_at': '2026-09-21T03:00:00.000Z'}, 'meta': {}}
+
+        return patch.object(PresenlySaasClient, 'update_employee', side_effect=fake_update)
+
+    def _jalankan_tertunda(self):
+        """Jalankan pekerjaan pasca-commit secara manual.
+
+        Di dalam tes transaksinya tidak pernah commit, jadi antreannya tidak
+        pernah berjalan sendiri. Yang diuji di sini isi antrean itu.
+        """
+        self.env.cr.postcommit.run()
+
+    def test_menyimpan_pegawai_langsung_mengirim(self):
+        self._tarik([employee_row()])
+        hr = self._hr('iksg-rangga')
+        terkirim = []
+
+        with self._pasang(terkirim):
+            hr.write({'work_phone': '0899'})
+            self._jalankan_tertunda()
+
+        self.assertEqual(len(terkirim), 1)
+        self.assertEqual(terkirim[0]['payload'], {'phone': '0899'})
+
+    def test_menyimpan_kolom_yang_tidak_disinkronkan_tidak_mengirim(self):
+        self._tarik([employee_row()])
+        hr = self._hr('iksg-rangga')
+        terkirim = []
+
+        with self._pasang(terkirim):
+            hr.write({'job_title': 'Manajer'})
+            self._jalankan_tertunda()
+
+        self.assertEqual(terkirim, [])
+
+    def test_sinkronisasi_tidak_memicu_kiriman_berulang(self):
+        # Ini penjagaan terpenting: tarikan menulis ke model yang sama dengan
+        # yang dipakai pengguna, jadi tanpa penanda setiap tarikan akan
+        # mengirim balik nilai yang baru saja diterima dari Presenly.
+        self._tarik([employee_row()])
+        terkirim = []
+
+        with self._pasang(terkirim):
+            self._tarik([employee_row(name='berubah di presenly',
+                                      updated_at='2026-09-21T06:00:00.000Z')])
+            self._jalankan_tertunda()
+
+        self.assertEqual(terkirim, [])
+        self.assertEqual(self._hr('iksg-rangga').name, 'berubah di presenly')
+
+    def test_kegagalan_kirim_tidak_menggagalkan_penyimpanan(self):
+        self._tarik([employee_row()])
+        hr = self._hr('iksg-rangga')
+
+        def gagal(_nopeg, payload=None):
+            raise SaasClientError('down', code='NETWORK_ERROR')
+
+        with patch.object(PresenlySaasClient, 'update_employee', side_effect=gagal):
+            hr.write({'work_phone': '0877'})
+            self._jalankan_tertunda()   # tidak boleh melempar
+
+        self.assertEqual(hr.work_phone, '0877')
+
+    def test_pegawai_tanpa_nopeg_dilewati(self):
+        hr = self.Hr.create({'name': 'Tanpa Nopeg'})
+        terkirim = []
+
+        with self._pasang(terkirim):
+            hr.write({'work_phone': '0812'})
+            self._jalankan_tertunda()
+
+        self.assertEqual(terkirim, [])
+
+    def test_koneksi_nonaktif_tidak_mengirim(self):
+        self._tarik([employee_row()])
+        self.config.write({'enabled': False})
+        hr = self._hr('iksg-rangga')
+        terkirim = []
+
+        with self._pasang(terkirim):
+            hr.write({'work_phone': '0813'})
+            self._jalankan_tertunda()
+
+        self.assertEqual(terkirim, [])

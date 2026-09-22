@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
 from odoo.exceptions import UserError
+from odoo import _
 from odoo.tests import tagged
 from odoo.tests.common import TransactionCase
 
@@ -87,12 +88,15 @@ class TestPresenlySaasConfig(TransactionCase):
         self.assertEqual(subscription.seat_limit, 50)
         self.assertEqual(self.config.last_check_status, 'success')
 
-        logs = self.env['presenly.saas.sync.log'].search(
-            [('company_id', '=', self.company.id)]
-        )
+        # Disaring per endpoint, bukan hanya per company: satu penyegaran
+        # langganan hanya boleh menghasilkan SATU entri untuk endpoint ini, dan
+        # entri endpoint lain tidak boleh membuat tes ini gagal.
+        logs = self.env['presenly.saas.sync.log'].search([
+            ('company_id', '=', self.company.id),
+            ('endpoint', '=', '/api/external/v1/subscription'),
+        ])
         self.assertEqual(len(logs), 1)
         self.assertTrue(logs.success)
-        self.assertEqual(logs.endpoint, '/api/external/v1/subscription')
 
     def test_refresh_refuses_to_run_while_disabled(self):
         self.config.enabled = False
@@ -129,7 +133,10 @@ class TestPresenlySaasConfig(TransactionCase):
         # A remote failure is reported to the user, not raised: an exception
         # reaching the RPC layer would roll the diagnostics back with it.
         self.assertEqual(result['params']['type'], 'danger')
-        self.assertEqual(result['params']['title'], 'Refresh failed')
+        # Dibandingkan lewat `_()` yang sama dengan yang dipakai modul, bukan
+        # dengan teks Inggris langsung: tes tidak boleh bergantung pada bahasa
+        # pengguna, tetapi tetap harus gagal kalau judulnya ditulis langsung.
+        self.assertEqual(result['params']['title'], _('Refresh failed'))
 
     def test_failed_first_refresh_leaves_the_snapshot_unreachable(self):
         error = SaasClientError("Tidak dapat menghubungi server Presenly SaaS.", code="NETWORK_ERROR")

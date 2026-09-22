@@ -13,84 +13,97 @@
                      name="presenly_saas"
                      groups="presenly_saas.group_presenly_saas_manager">
 
-                    <block title="Koneksi" name="presenly_saas_connection">
-                        <setting string="Aktifkan Koneksi"
-                                 help="Saat nonaktif, modul tidak pernah memanggil server Presenly SaaS dan semua pemeriksaan langganan dilewati.">
+                    <block title="Connection" name="presenly_saas_connection">
+                        <setting string="Enable Connection"
+                                 help="When off, the module never calls the Presenly SaaS server and all subscription checks are skipped.">
                             <field name="presenly_saas_enabled"/>
                         </setting>
                         <setting string="Base URL"
-                                 help="Alamat server Presenly SaaS, misalnya https://presensi.example.com. Akhiran /api opsional.">
+                                 help="Origin of the Presenly SaaS server, for example https://presensi.example.com. The /api suffix is optional.">
                             <field name="presenly_saas_base_url" placeholder="https://presensi.example.com"/>
                         </setting>
-                        <setting string="Kode Tenant"
-                                 help="Penanda tenant di sisi SaaS, dikirim sebagai header X-Tenant-ID. Contoh: pelni.">
+                        <setting string="Tenant Code"
+                                 help="Tenant identifier on the SaaS side, sent as the X-Tenant-ID header. Example: pelni.">
                             <field name="presenly_saas_tenant_code" placeholder="pelni"/>
                         </setting>
-                        <setting string="Kunci API"
-                                 help="Dibuat di web Presenly pada menu Integrasi. Hanya ditampilkan sekali saat dibuat, dan hanya berlaku untuk tenant ini.">
+                        <setting string="API Key"
+                                 help="Created in the Presenly web app on the Integration page. Shown once at creation, and valid only for this tenant.">
                             <field name="presenly_saas_api_key" password="True"/>
                         </setting>
-                        <setting string="Lingkungan"
-                                 help="Hanya penanda, agar koneksi sandbox tidak tertukar dengan produksi saat penanganan masalah.">
+                        <setting string="Environment"
+                                 help="A label only, so a sandbox connection is never mistaken for production during support.">
                             <field name="presenly_saas_environment"/>
                         </setting>
                     </block>
 
-                    <block title="Keandalan" name="presenly_saas_reliability">
-                        <setting string="Batas Waktu"
-                                 help="Batas waktu satu permintaan ke server Presenly SaaS.">
+                    <block title="Reliability" name="presenly_saas_reliability">
+                        <setting string="Timeout"
+                                 help="Timeout for a single request to the Presenly SaaS server.">
                             <field name="presenly_saas_timeout_seconds" class="text-center o_input" style="width: 6ch;"/>
-                            <span> detik</span>
+                            <span> seconds</span>
                         </setting>
-                        <setting string="Percobaan Ulang"
-                                 help="Diulang untuk galat jaringan dan respons 5xx. Kegagalan autentikasi tidak pernah diulang.">
+                        <setting string="Retries"
+                                 help="Retried on network errors and 5xx responses. Authentication failures are never retried.">
                             <field name="presenly_saas_retry_count" class="text-center o_input" style="width: 6ch;"/>
-                            <span> kali</span>
+                            <span> times</span>
                         </setting>
                     </block>
 
-                    <block title="Kebijakan" name="presenly_saas_policy">
-                        <setting string="Mode Penegakan"
-                                 help="Nonaktif: status hanya terlihat di dashboard. Peringatan saja: ditambah banner di backend. Wajibkan: guard menaikkan galat untuk modul yang memanggilnya.">
+                    <block title="Scheduled Pull" name="presenly_saas_scheduled_pull">
+                        <setting string="Months Pulled by Cron"
+                                 help="How many months the daily pull covers, counting back from the current month. 2 means the current month and the one before it, so a shift that ends after midnight, or a correction filed the next day, is still captured.">
+                            <field name="presenly_saas_pull_months" class="text-center o_input" style="width: 6ch;"/>
+                            <span> months</span>
+                        </setting>
+                        <setting string="Retention"
+                                 help="Mirrored period data older than this is removed by the weekly cleanup. 0 keeps everything. Reference data is never removed: it has no period.">
+                            <field name="presenly_saas_retention_months" class="text-center o_input" style="width: 6ch;"/>
+                            <span> months</span>
+                        </setting>
+                    </block>
+
+                    <block title="Policy" name="presenly_saas_policy">
+                        <setting string="Enforcement Mode"
+                                 help="Off: the status is only shown on the dashboard. Warn only: adds a backend banner. Enforce: the guard raises an error for calling modules.">
                             <field name="presenly_saas_guard_mode" widget="radio"/>
                         </setting>
-                        <setting string="Masa Tenggang"
-                                 help="Berapa lama status cache masih dianggap wajar setelah sinkronisasi terakhir yang berhasil.">
+                        <setting string="Grace Period"
+                                 help="How long a cached status stays acceptable after the last successful sync.">
                             <field name="presenly_saas_grace_days" class="text-center o_input" style="width: 6ch;"/>
-                            <span> hari</span>
+                            <span> days</span>
                         </setting>
-                        <setting string="Tampilkan Banner"
-                                 help="Tampilkan banner peringatan di backend saat status langganan perlu perhatian.">
+                        <setting string="Show Banner"
+                                 help="Show a warning banner in the backend when the subscription status needs attention.">
                             <field name="presenly_saas_show_banner"/>
                         </setting>
                     </block>
 
-                    <block title="Diagnostik" name="presenly_saas_diagnostics">
-                        <setting string="Uji dan Segarkan"
-                                 help="Uji Koneksi memanggil server tanpa menulis log. Segarkan Langganan memanggil server lalu memperbarui snapshot dan log.">
+                    <block title="Diagnostics" name="presenly_saas_diagnostics">
+                        <setting string="Test and Refresh"
+                                 help="Test Connection calls the server without writing a log. Refresh Subscription calls the server and then updates the snapshot and the log.">
                             <div class="mt16">
                                 <button name="action_presenly_saas_test_connection"
                                         type="object"
-                                        string="Uji Koneksi"
+                                        string="Test Connection"
                                         class="btn-primary"/>
                                 <button name="action_presenly_saas_refresh_subscription"
                                         type="object"
-                                        string="Segarkan Langganan"/>
+                                        string="Refresh Subscription"/>
                             </div>
                             <div class="mt8">
                                 <button name="action_presenly_saas_open_subscription"
                                         type="object"
-                                        string="Buka Langganan"
+                                        string="Open Subscription"
                                         class="btn-link"
                                         icon="fa-arrow-right"/>
                                 <button name="%(action_presenly_saas_sync_log)d"
                                         type="action"
-                                        string="Buka Log Sinkronisasi"
+                                        string="Open Sync Log"
                                         class="btn-link"
                                         icon="fa-list"/>
                             </div>
                         </setting>
-                        <setting string="Hasil Pemeriksaan Terakhir">
+                        <setting string="Last Check Result">
                             <div class="o_row">
                                 <field name="presenly_saas_last_check_at" readonly="1"/>
                                 <field name="presenly_saas_last_check_status"
@@ -103,7 +116,7 @@
                                 <field name="presenly_saas_last_check_message"
                                        readonly="1"
                                        nolabel="1"
-                                       placeholder="Belum ada pemeriksaan. Gunakan Uji Koneksi."/>
+                                       placeholder="Not checked yet. Use Test Connection."/>
                             </div>
                         </setting>
                     </block>

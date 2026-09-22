@@ -3,7 +3,7 @@
 Rencana penerapan seluruh fitur absensi dan monitoring Presenly ke aplikasi Odoo
 `presenly_saas`, langkah demi langkah.
 
-**Status:** draft — belum dieksekusi di luar Fase 1
+**Status:** SELESAI — Fase 0 sampai 6 dikerjakan dan diuji.
 **Modul:** `custom_addons/presenly_saas`
 **Tenant uji:** `iksg` (satu-satunya tenant dengan data presensi)
 
@@ -30,10 +30,16 @@ Ada **tiga lapisan** API, dan hanya sebagian yang tersedia sekarang.
 |---|---|---|
 | `attendance-logs` | ✅ tersedia | **sudah** (Fase 1) |
 | `attendance-recap` | ✅ tersedia | **sudah** (Fase 1) |
-| `leaves`, `overtimes`, `corrections`, `shift-swaps`, `timesheets` | ⏳ direncanakan | belum bisa |
-| `schedules`, `placements`, `medical`, `sppd`, `dashboard` | ⏳ direncanakan | belum bisa |
+| `leaves`, `overtimes`, `corrections`, `shift-swaps` | ✅ tersedia | **sudah** (Fase 4) |
+| `timesheets` | ✅ tersedia | **sudah** (Fase 5) |
+| `schedules`, `placements`, `medical` | ✅ tersedia | **sudah** (lewat `/v1/{resource}`) |
+| `sppd`, `dashboard` | ⏳ direncanakan | belum ada |
 
 Katalog ini bisa dibaca sendiri dari Odoo lewat menu **Fitur Presenly**.
+
+> **CATATAN (19.0.1.5.0):** menu itu sudah dihapus. Endpoint katalognya
+> tidak dipakai modul ini — `has_feature()` bekerja dari data langganan,
+> bukan dari katalog — sehingga daftarnya selalu kosong.
 
 ### 2.2 `/v1/{resource}` — data per sumber daya, **26 tersedia sekarang**
 
@@ -83,17 +89,15 @@ ditarik, atau menunggu endpoint baru di server.
 
 ## 4. Fase, langkah demi langkah
 
-### Fase 0 — Persiapan (0,5 hari)
-
-**Sudah sebagian dikerjakan.**
+### Fase 0 — Persiapan (SELESAI)
 
 1. Kunci API tenant `iksg` sudah dibuat: `psk_b2af7a41…` (label "Odoo testing
    iksg"), dan sudah diuji: `/v1/subscription`, `/v1/presenly/features`,
    `/v1/presenly/attendance-logs` semua 200; header tenant lain → 403.
 2. Isi konfigurasi koneksi di Odoo dengan kunci itu.
-3. Pastikan menu **Fitur Presenly** menarik 11 fitur (2 tersedia, 9 direncanakan).
+3. ~~Pastikan menu **Fitur Presenly** menarik 11 fitur (2 tersedia, 9 direncanakan).~~ Menu dihapus di 19.0.1.5.0; katalognya dapat dibaca lewat `GET /v1/presenly/features` bila diperlukan.
 
-**Deliverable:** koneksi Odoo ↔ SaaS hidup untuk tenant `iksg`.
+**Deliverable:** koneksi Odoo ↔ SaaS hidup untuk tenant `iksg` — tercapai.
 
 ---
 
@@ -108,14 +112,14 @@ Log presensi dan rekap, cermin per periode.
 | Wizard **Tarik Data Presensi** | pilih bulan + tahun |
 | Batas 10 halaman + pemberitahuan terpotong | supaya cermin tak lengkap terlihat tak lengkap |
 
-**Yang perlu ditambahkan di fase ini (0,5 hari):**
+**Ditambahkan:**
 1. Uji ulang khusus dengan `iksg` (sebelumnya sudah, tapi pakai key global).
 2. Tambahkan tombol **Tarik** di header list view, supaya bisa dari halaman data,
    tidak hanya dari wizard.
 
 ---
 
-### Fase 2 — Master data pendukung absensi (1 hari)
+### Fase 2 — Master data pendukung absensi (SELESAI)
 
 Tujuan: data presensi punya konteks lengkap, tanpa merakit manual.
 
@@ -136,10 +140,17 @@ tanpa mengubah yang lain.
 
 ---
 
-### Fase 3 — Monitoring presensi (1,5 hari)
+### Fase 3 — Monitoring presensi (SELESAI)
 
-Karena server belum punya endpoint monitoring, agregat dihitung **lokal** dari
-cermin yang sudah ada.
+Agregat dihitung **lokal** dari cermin log, memakai view pivot dan graph bawaan
+Odoo. Tidak ada model agregat baru: cermin log sudah punya kolom yang
+dibutuhkan (`employee_name`, `location_name`, `tenant_client_name`,
+`shift_name`, `status`, `late_minutes`, `work_date`).
+
+**Ditambahkan:** menu **Monitoring Presensi** (pivot + graph + list dalam satu
+action), filter periode dan group by di search view, penarikan **rentang
+beberapa bulan** di wizard, dan **uji silang otomatis** terhadap rekap server —
+selisihnya diberitahukan, tidak diam-diam dianggap benar.
 
 1. Model `presenly.saas.monitoring.snapshot` (TransientModel cukup) yang
    menghitung dari cermin: kehadiran per pegawai, per lokasi, per status,
@@ -156,7 +167,7 @@ jadi rolling window dari Keputusan 3 mulai berlaku di sini.
 
 ---
 
-### Fase 4 — Pengajuan: cuti, lembur, izin, koreksi, tukar shift (2–3 hari)
+### Fase 4 — Pengajuan: cuti, lembur, izin, koreksi, tukar shift (SELESAI)
 
 Dua pilihan, dan keduanya sah:
 
@@ -179,7 +190,7 @@ diarahkan ulang tanpa mengubah view.
 
 ---
 
-### Fase 5 — Timesheet & proyek (1 hari)
+### Fase 5 — Timesheet & proyek (SELESAI)
 
 1. Resource: `/v1/timesheets`, `/v1/projects`, `/v1/placements`.
 2. Model cermin timesheet, menu **Timesheet**, filter per proyek dan periode.
@@ -187,7 +198,7 @@ diarahkan ulang tanpa mengubah view.
 
 ---
 
-### Fase 6 — Penutup & operasional (1 hari)
+### Fase 6 — Penutup & operasional (SELESAI)
 
 1. **Cron penarikan harian** untuk data yang berubah sering (log presensi),
    terpisah dari cron langganan yang sudah ada.
@@ -217,6 +228,32 @@ diarahkan ulang tanpa mengubah view.
 **Semua fase bisa dikerjakan tanpa mengubah server**, karena lapisan raw sudah
 lengkap. Endpoint `/v1/presenly/*` yang masih `planned` hanya akan membuat
 bentuk datanya lebih rapi, bukan membuka kemampuan baru.
+
+---
+
+## 5b. Keputusan yang masih terbuka: pegawai & modul HR native
+
+Sebelum modul jembatan dibuat, domain `employees` (dan `users`) belum dicerminkan sama sekali. Model cermin lain
+menyimpan `employee_name` dan `employee_nopeg` sebagai teks, jadi belum ada satu
+tempat yang bisa dijadikan acuan pegawai.
+
+Permintaannya: pegawai **terintegrasi dengan modul employee native Odoo**. Itu
+bertabrakan dengan batasan awal modul ini, jadi arahnya perlu dipilih dulu:
+
+| Pilihan | Apa yang terjadi | Konsekuensi |
+|---|---|---|
+| **A. Cermin sendiri** (keadaan sekarang) | `presenly.saas.employee` sebagai cermin biasa | Tanpa dependensi `hr`. Tetapi ada dua daftar pegawai kalau HR dipasang, dan tidak bisa dipakai modul HR lain |
+| **B. Modul jembatan terpisah** (disarankan) | `presenly_saas_hr` bergantung pada `presenly_saas` + `hr`. Field `hr_employee_id` di cermin, dicari lewat `nopeg` | Modul inti tetap tanpa `hr`; yang mau integrasi memasang jembatannya. Perlu memutuskan: jembatan hanya **mencocokkan**, atau juga **membuat/memperbarui** `hr.employee` |
+| **C. Tulis langsung ke `hr.employee`** | Modul inti menambah `depends: ['hr']` dan menulis ke model native | Paling terintegrasi, tetapi modul jadi ikut memiliki data kepegawaian: rawan menimpa data HR yang sudah ada, dan arah sinkronisasi jadi tidak jelas |
+
+**Sudah diputuskan dan dikerjakan.** Pegawai memakai `hr.employee` native, dua
+arah, dan **tidak** sampai `hr.attendance`/`hr.leave` — modul ini justru menolak
+keduanya karena absensi dan cuti dicerminkan dari Presenly.
+
+Keputusan itu diambil bersama pemilik produk, dan pekerjaannya berada di modul
+terpisah `presenly_saas_hr` supaya `presenly_saas` tidak memaksa pemasangan `hr`.
+Rincian pemetaan kolom dan aturan konfliknya:
+[`../presenly_saas_hr/PLAN_HR_SYNC.md`](../presenly_saas_hr/PLAN_HR_SYNC.md).
 
 ---
 

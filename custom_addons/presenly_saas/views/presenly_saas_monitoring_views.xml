@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Pivot: pegawai/lokasi di baris, bulan di kolom, menit terlambat sebagai
+         ukuran. "Count" disediakan Odoo otomatis, jadi jumlah sesi tidak perlu
+         kolom tambahan. -->
+    <record id="view_presenly_saas_attendance_log_pivot" model="ir.ui.view">
+        <field name="name">presenly.saas.attendance.log.pivot</field>
+        <field name="model">presenly.saas.attendance.log</field>
+        <field name="priority" eval="16"/>
+        <field name="arch" type="xml">
+            <pivot string="Attendance Monitoring" sample="1">
+                <field name="employee_name" type="row"/>
+                <field name="work_date" interval="month" type="col"/>
+                <!-- Ukuran yang menjawab pertanyaan, bukan sekadar hitungan
+                     baris: berapa sesi terlambat, berapa total menitnya,
+                     rata-rata jam masuk, dan total jam kerja. -->
+                <field name="late_session_count" type="measure"/>
+                <field name="late_minutes" type="measure"/>
+                <field name="check_in_hour" type="measure"/>
+                <field name="session_hours" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- Graph: tren harian per lokasi. -->
+    <record id="view_presenly_saas_attendance_log_graph" model="ir.ui.view">
+        <field name="name">presenly.saas.attendance.log.graph</field>
+        <field name="model">presenly.saas.attendance.log</field>
+        <field name="priority" eval="16"/>
+        <field name="arch" type="xml">
+            <graph string="Attendance Monitoring" type="bar" sample="1">
+                <field name="employee_name"/>
+                <field name="late_session_count" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- Satu action untuk tiga tampilan, supaya pengguna bisa berpindah antara
+         pivot, grafik, dan daftar tanpa membuka menu lain. -->
+    <!-- Grafik tren harian, terpisah dari grafik per pegawai. Dipilih lewat
+         tombol tampilan di dalam grafik, tanpa perlu mengubah view lagi. -->
+    <record id="view_presenly_saas_attendance_log_trend" model="ir.ui.view">
+        <field name="name">presenly.saas.attendance.log.trend</field>
+        <field name="model">presenly.saas.attendance.log</field>
+        <field name="priority" eval="20"/>
+        <field name="arch" type="xml">
+            <graph string="Daily Trend" type="line" sample="1">
+                <field name="work_date" interval="day"/>
+                <field name="late_session_count" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="action_presenly_saas_monitoring" model="ir.actions.act_window">
+        <field name="name">Attendance Monitoring</field>
+        <field name="res_model">presenly.saas.attendance.log</field>
+        <field name="view_mode">pivot,graph,list</field>
+        <field name="search_view_id" ref="view_presenly_saas_attendance_log_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Nothing to monitor yet</p>
+            <p>
+                Monitoring is computed from the mirrored attendance log. Pull the data first
+                through <b>Attendance Data → Pull Period Data</b>, then choose the
+                month range to fetch.
+            </p>
+        </field>
+    </record>
+
+</odoo>

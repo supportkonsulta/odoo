@@ -5,7 +5,19 @@
 **Platform:** Odoo 19.0
 **Depends:** `base`, `web`
 **Versi dokumen:** FINAL v4
-**Status:** F0-F6 SELESAI. Endpoint di `backend_presenly` sudah ada.
+**Status:** F0-F6 rencana INI selesai. Endpoint di `backend_presenly` sudah ada.
+
+> **Catatan cakupan.** Dokumen ini adalah rencana **Fase 1** (langganan, guard,
+> banner). Pekerjaan berikutnya punya dokumennya sendiri, dengan penomoran fase
+> yang berbeda:
+>
+> | Cakupan | Dokumen |
+> |---|---|
+> | Cermin presensi, referensi, pengajuan, timesheet, monitoring | `PLAN_ATTENDANCE_MONITORING.md` |
+> | Integrasi pegawai dengan `hr.employee` | `../presenly_saas_hr/PLAN_HR_SYNC.md` |
+>
+> Beberapa bagian di bawah sudah tidak sesuai kenyataan dan diberi keterangan
+> seperlunya. Yang berlaku sebagai acuan bentuk akhir adalah `README.md`.
 Lihat §16 untuk catatan as-built dan bukti verifikasi.
 
 Addon **standalone** yang menghubungkan instalasi Odoo ini dengan control plane
@@ -373,7 +385,11 @@ Bila `enabled = False`, semua mengembalikan lolos. Context key
 
 ## 7. Views, menu, banner
 
-### 7.1 Halaman Configuration (form penuh milik sendiri)
+### 7.1 Halaman Configuration (form penuh milik sendiri) — DIBATALKAN
+
+> **Tidak berlaku.** Keputusan ini dibalik di §1.2b: konfigurasi kini menumpang
+> blok di halaman Settings native (`base.res_config_settings_view_form`), supaya
+> hanya ada satu tempat mengubahnya. Isi di bawah disimpan sebagai riwayat.
 
 Form `presenly.saas.config` dengan tab:
 
@@ -441,6 +457,9 @@ Komponen OWL di `static/src/banner/`, terdaftar di `web.assets_backend`.
 | Cron                                | Interval | Isi                                                                          |
 | ----------------------------------- | -------- | ---------------------------------------------------------------------------- |
 | Presenly SaaS: Refresh Subscription | 1 hari   | loop config `enabled=True`; refresh; tulis sync log; bersihkan log > 90 hari |
+| Presenly SaaS: Pull Period Data     | 1 hari   | tarik presensi, pengajuan, dan timesheet untuk rentang bulan (Fase 6) |
+| Presenly SaaS: Clean Up Mirrored Data | 1 minggu | jendela bergulir (Fase 6) |
+| Presenly SaaS: Sync Employees *(modul jembatan)* | 1 hari | sinkronisasi pegawai dua arah |
 
 Aturan keras: kegagalan tarik **tidak** mengubah `status` menjadi `expired`.
 Status negatif hanya diambil dari respons SaaS yang benar-benar diterima.
@@ -495,9 +514,15 @@ paralel dengan F1.
    (tanpa `presenly`, `hr`, `hr_attendance`, `hr_holidays`, `mail`).
 2. Tidak ada file di `custom_addons/presenly` yang berubah (`git status`).
 3. Tidak ada `inherit_id` ke view native dan tidak ada `_inherit` ke model
-   bisnis native di seluruh isi addon.
+   bisnis native di seluruh isi **modul ini**. ~~di seluruh isi addon.~~
+   **Diperluas:** modul `presenly_saas_hr` sengaja mewarisi `hr.employee` dan
+   blok Settings native, atas keputusan pemilik produk. Batas itu berlaku untuk
+   modul ini, bukan untuk seluruh keluarga addon.
 4. Tidak ada model/tabel fitur dan tidak ada field `features` di mana pun.
-5. Menu **Presenly SaaS** tampil dengan logo Presenly, berisi 3 entri (§7.2).
+5. Menu **Presenly SaaS** tampil dengan logo Presenly. ~~Berisi 3 entri.~~
+   **Tidak berlaku:** sekarang 10 entri (§7.2 disimpan sebagai riwayat),
+   karena Fase 2–6 menambah menu. Yang dijaga tes: setiap menu punya action
+   atau anak, dan tidak ada nama yang kembar.
 6. Configuration menyimpan base URL, tenant code, API key; API key selalu
    masked.
 7. **Test Connection** menampilkan plan, status, tanggal berakhir, dan seat
@@ -547,9 +572,15 @@ paralel dengan F1.
 
 ## 16. Catatan as-built
 
+> **Dokumen ini hanya merekam Fase 1.** Isi di bawah tidak menyebut pekerjaan
+> berikutnya: cermin presensi, referensi, pengajuan, timesheet, monitoring,
+> jendela bergulir, integrasi `hr.employee`, dan webhook. Untuk gambaran bentuk
+> akhir, baca `README.md`; untuk riwayatnya, `PLAN_ATTENDANCE_MONITORING.md` dan
+> `../presenly_saas_hr/PLAN_HR_SYNC.md`.
+
 ### 16.1 Yang sudah dikerjakan
 
-F0 dan F1 sampai F6 selesai.
+F0 dan F1 sampai F6 selesai (cakupan dokumen ini).
 
 F0 (repo `Presenly/backend_presenly`):
 

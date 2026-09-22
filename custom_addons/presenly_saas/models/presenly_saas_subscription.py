@@ -101,7 +101,7 @@ class PresenlySaasSubscription(models.Model):
     # ----------------------------------------------------------------
     plan_name = fields.Char(string='Plan Name')
     plan_registered = fields.Boolean(
-        help='True bila kode paket terdaftar di katalog paket sisi SaaS.',
+        help='True when the plan code is registered in the SaaS-side plan catalog.',
     )
     # Daftar apa adanya dari server: [{code, label, group, included}].
     plan_features = fields.Json(string='Plan Features')

@@ -39,9 +39,17 @@ Settings (native Odoo)
 Presenly SaaS (menu aplikasi)
 ├── Subscription         status, profil perusahaan, paket & fitur
 ├── Data Presensi        cermin log presensi dari server SaaS
+├── Monitoring Presensi  pivot & grafik dari cermin log
 ├── Rekap Presensi       cermin rekap bulanan per pegawai
-├── Fitur Presenly       katalog endpoint yang disediakan server
+├── Timesheet            daftar, pivot, dan grafik timesheet
+├── Pengajuan            cuti, lembur, surat dokter, koreksi presensi,
+│                        tukar shift
+├── Referensi            lokasi kerja, shift, mode absen, hari libur,
+│                        setup hari kerja, proyek
 ├── Sync Log             jejak setiap panggilan ke server SaaS
+│
+│   Konfigurasi: Settings → Presenly SaaS (koneksi, keandalan, penarikan
+│   terjadwal, kebijakan, diagnostik)
 └── Configuration
     └── Settings         pintasan ke blok di Settings native
 ```
@@ -142,10 +150,10 @@ ditampilkan. Penjelasan lengkapnya ada di
 
 ### Kebijakan full access
 
-Tidak ada gating fitur per paket. Tidak ada tabel `plan_features`, tidak ada
-field `features` di respons, dan tidak ada menu Fitur.
-`presenly.saas.guard.has_feature()` selalu mengembalikan `True` supaya modul
-konsumen punya kontrak yang stabil bila gating ditambahkan di masa depan.
+Hak paket tidak memblokir apa pun dari sisi ini. `presenly.saas.guard.has_feature()`
+tetap dapat dipanggil modul konsumen dengan kontrak yang stabil, dan hasilnya
+konservatif: `False` hanya bila server menyatakan `included: false` untuk fitur
+itu (aturan lengkapnya di §7).
 
 ---
 
@@ -157,6 +165,7 @@ konsumen punya kontrak yang stabil bila gating ditambahkan di masa depan.
 | -------------- | ----------------------------------------------------------------------------------------- |
 | Koneksi        | `Aktifkan Koneksi`, `Base URL`, `Kode Tenant`, `Kunci API`, `Lingkungan`                   |
 | Keandalan      | `Batas Waktu`, `Percobaan Ulang`                                                           |
+| Penarikan Terjadwal | `Bulan yang Ditarik Cron`, `Penyimpanan (bulan)`                                      |
 | Kebijakan      | `Mode Penegakan`, `Masa Tenggang`, `Tampilkan Banner`                                      |
 | Diagnostik     | hasil pemeriksaan terakhir, tombol **Uji Koneksi**, **Segarkan Langganan**, **Buka Langganan**, **Buka Log Sinkronisasi** |
 
@@ -196,9 +205,22 @@ diagnostik yang baru saja ditulis ikut hilang.
 | Endpoint | Dipakai untuk | Sifat |
 |---|---|---|
 | `GET /v1/subscription` | status langganan, profil perusahaan, paket & fitur | tarikan penuh, mengganti snapshot |
-| `GET /v1/presenly/features` | katalog fitur eksternal | tarikan penuh, mengganti katalog |
 | `GET /v1/presenly/attendance-logs` | Data Presensi | berhalaman, cermin diganti per rentang tanggal |
 | `GET /v1/presenly/attendance-recap` | Rekap Presensi | cermin diganti per bulan |
+| `GET /v1/work-locations` | Referensi → Lokasi Kerja | cermin diganti seluruhnya |
+| `GET /v1/shifts` | Referensi → Shift | idem |
+| `GET /v1/attendance-modes` | Referensi → Mode Absen | idem |
+| `GET /v1/holidays` | Referensi → Hari Libur | idem |
+| `GET /v1/work-day-setups` | Referensi → Setup Hari Kerja | idem |
+| `GET /v1/projects` | Referensi → Proyek | idem |
+| `GET /v1/leaves` | Pengajuan → Cuti | berhalaman, cermin diganti per bulan |
+| `GET /v1/overtimes` | Pengajuan → Lembur | idem |
+| `GET /v1/medical-certificates` | Pengajuan → Surat Dokter | idem |
+| `GET /v1/attendance-corrections` | Pengajuan → Koreksi Presensi | idem |
+| `GET /v1/shift-swaps` | Pengajuan → Tukar Shift | idem |
+| `GET /v1/timesheets` | Timesheet | idem |
+| `GET /v1/projects` | Referensi → Proyek | cermin diganti seluruhnya |
+| `GET /v1/weekly-schedules`, `daily-schedules`, segmen-segmennya | belum dipakai Odoo | tersedia bila dibutuhkan |
 
 Semua memakai `X-API-Key` + `X-Tenant-ID` yang sama dengan pengaturan koneksi.
 
@@ -214,15 +236,135 @@ yang terambil dibandingkan dengan `meta.total` dari server dan selisihnya
 **diberitahukan** ke pengguna, supaya cermin yang terpotong tidak tampak seperti
 data yang lengkap.
 
-### Dua arti "fitur" yang sengaja dibedakan
+### Satu arti "fitur"
 
-| Istilah | Arti | Asal |
-|---|---|---|
-| **Fitur Presenly** (menu) | katalog **endpoint** yang disediakan server, status `available` atau `planned` | `GET /v1/presenly/features` |
-| **Paket & Fitur** (di Subscription) | **hak paket**: fitur apa yang boleh dipakai tenant menurut `plan_type` | `plan_features` pada respons langganan |
+Kata "fitur" di modul ini hanya berarti satu hal: **hak paket**, yaitu fitur apa
+yang boleh dipakai tenant menurut `plan_type`. Nilainya datang dari
+`plan_features` pada respons langganan dan tampil di halaman Subscription, lalu
+dipakai `presenly.saas.guard.has_feature()` (§7).
 
-Yang pertama menjawab "apa yang bisa ditarik", yang kedua "apa yang boleh
-dipakai". Menggabungkannya akan membuat dua pertanyaan berbeda terlihat sama.
+Sebelumnya ada istilah kedua: **katalog endpoint** dari
+`GET /v1/presenly/features`, yang menampilkan endpoint mana yang sudah
+`available` dan mana yang masih `planned`, beserta menu "Presenly Features" di
+Odoo. Katalog itu dihapus di versi 19.0.1.5.0 karena tidak dipakai: tidak satu
+pun tombol atau menu memicu penarikannya, sehingga daftarnya selalu kosong,
+sementara `has_feature()` bekerja dari data langganan, bukan dari katalog itu.
+Endpointnya tetap tersedia di sisi server bagi konsumen lain.
+
+---
+
+### Pengajuan: satu kosakata status, satu bentuk alur
+
+Lima jenis pengajuan dicerminkan dari `/v1/{resource}`: `leaves`, `overtimes`,
+`medical-certificates`, `attendance-corrections`, `shift-swaps`. Semuanya
+memakai kolom dan kosakata yang sama, karena perbedaan antar jenis adalah sumber
+kebingungan yang tidak perlu.
+
+**Dua kosakata status di sisi server.** Lembur memakai penanda lama `Y`/`N`/`T`
+(ya, tidak, tunggu); empat jenis lain memakai `pending`/`approved`/`rejected`.
+Keduanya dipetakan ke satu kosakata di Odoo:
+
+| Nilai dari Presenly | `status` di Odoo |
+| --- | --- |
+| `Y` | `approved` |
+| `N` | `rejected` |
+| `T` | `pending` (bukan `rejected`: `T` berarti "tunggu") |
+| `pending`, `approved`, `rejected` | apa adanya |
+
+Nilai aslinya **tidak dibuang**: tersimpan di `status_raw`. Nilai yang belum
+dikenal tidak ditebak — `status` dibiarkan kosong dan nilai aslinya tetap
+terlihat, bukan menjadi status yang kebetulan mirip. Tanpa pemetaan ini,
+penyaring `status = 'approved'` pada lembur tidak pernah cocok karena kolomnya
+berisi `Y`, dan itu tidak terlihat sebagai galat: hanya sebagai daftar yang
+selalu kosong.
+
+**Alur persetujuan berjenjang.** Payload pengajuan membawa blok `approval`:
+
+```json
+{
+  "has_workflow": true,
+  "status": "pending",
+  "current_level": 2,
+  "total_levels": 2,
+  "steps": [
+    {
+      "level": 1,
+      "status": "approved",
+      "expected": {"type": "direct_manager", "value": null, "user": null},
+      "acted_by": {"id": 9, "nopeg": "iksg-boss", "name": "boss"},
+      "acted_at": "2026-09-21T01:00:00.000Z",
+      "rejection_reason": null
+    },
+    {
+      "level": 2,
+      "status": "pending",
+      "expected": {"type": "role", "value": "hrd", "user": null},
+      "acted_by": null, "acted_at": null, "rejection_reason": null
+    }
+  ]
+}
+```
+
+Tiap level digabung dari dua sumber: `expected` dari konfigurasi alur (siapa
+yang **seharusnya** memutuskan) dan `acted_by` dari langkah yang sudah dijalani
+(siapa yang **sudah** memutuskan). Keduanya dipisah karena pengguna perlu tahu
+level mana yang belum bergerak, bukan hanya level mana yang sudah selesai.
+
+Approver bertipe `user` disimpan Presenly sebagai id pengguna, dan id itu tidak
+bisa dibaca manusia. Karena itu server mengirimnya sebagai orang
+(`{id, nopeg, name}`), dan `expected.value` dikosongkan. Aturan yang sama
+berlaku untuk `direct_manager`, yang tidak memakai nilai sama sekali.
+
+Di Odoo, tiap pengajuan menyimpan ringkasannya (`approval_has_workflow`,
+`approval_flow_status`, `approval_current_level`, `approval_total_levels`, dan
+`approval_waiting_for` = siapa yang sedang ditunggu) dan tiap levelnya sebagai
+baris anak di `presenly.saas.approval.step.<jenis>`, sehingga bisa disaring,
+dikelompokkan, dan dilihat per level.
+
+`acted_at` hanya diisi `action_at`, tanpa jatuh ke `updated_at`. Level yang
+masih menunggu belum dikerjakan siapa pun; mengisinya dengan waktu sentuh
+terakhir membuatnya terbaca seolah sudah diputus.
+
+Kalau jenis pengajuan belum punya alur di Presenly, bloknya disembunyikan di
+form — yang kosong tidak perlu terlihat seperti yang rusak.
+
+---
+
+## 4c. Penarikan terjadwal & jendela bergulir
+
+Dua cron, keduanya hanya bekerja pada koneksi yang **aktif dan bercentang
+`enabled`**:
+
+| Cron | Jadwal | Isi |
+| ---- | ------ | --- |
+| `Presenly SaaS: Refresh Subscription` | harian | memperbarui snapshot langganan |
+| `Presenly SaaS: Pull Period Data` | harian | menarik presensi + pengajuan |
+| `Presenly SaaS: Clean Up Mirrored Data` | mingguan | menghapus cermin yang sudah tua |
+
+Ketiganya dipisah dengan sengaja. Langganan yang tidak terjangkau tidak berarti
+presensi tidak bisa ditarik, dan sebaliknya; satu tenant yang gagal tidak pernah
+menghentikan tenant lain. Kegagalan dilaporkan ke log Odoo, bukan dilempar.
+
+**`Bulan yang Ditarik Cron`** = berapa bulan ke belakang yang dicakup penarikan
+harian, dihitung mundur dari bulan berjalan. Bawaannya 2, bukan 1: shift yang
+berakhir lewat tengah malam, atau koreksi presensi yang diajukan besoknya, masih
+masuk ke bulan berikutnya. Menarik hanya bulan berjalan akan melewatkannya.
+
+**`Penyimpanan (bulan)`** = jendela bergulir. Cermin berperiode yang lebih tua
+dari ini dihapus oleh pembersihan mingguan. `0` berarti simpan semuanya.
+
+Yang **tidak pernah** dihapus adalah cermin referensi (lokasi kerja, shift, mode
+absen, hari libur, setup hari kerja). Isinya keadaan terkini, bukan riwayat;
+menghapusnya berdasarkan umur justru membuang data yang masih berlaku.
+
+Rekap dibandingkan sebagai **nomor bulan berjalan** (`tahun * 12 + bulan`), bukan
+sebagai pasangan `(tahun, bulan)` yang diurut mentah. Alasannya: Desember 2025
+harus dianggap lebih tua dari Januari 2026, walaupun `12 > 1`.
+
+Wizard penarikan manual memberi tahu bila rentang yang diminta lebih tua dari
+jendela penyimpanan — data itu akan ditarik sekarang lalu dihapus lagi oleh
+pembersihan mingguan, dan lebih berguna diberitahukan daripada terlihat hilang
+tanpa sebab.
 
 ---
 
@@ -241,6 +383,24 @@ Retensi `Log Sinkronisasi` 90 hari, dipangkas oleh cron yang sama dengan
 penyegaran. Aturan yang sama berlaku untuk penarikan presensi: kegagalan
 **dikembalikan sebagai nilai**, bukan dilempar sebagai exception, supaya catatan
 audit yang baru ditulis tidak ikut ter-rollback.
+
+---
+
+## 5c. Integrasi pegawai ada di modul terpisah
+
+Pegawai **tidak** ditangani modul ini. Integrasi dengan `hr.employee` berada di
+modul `presenly_saas_hr`.
+
+Pemisahan itu disengaja, dan alasannya bukan kerapian semata:
+
+| | |
+|---|---|
+| Modul ini dipakai **semua** tenant | HR hanya sebagian |
+| Dependensi `hr` menarik `resource`, `resource_mail`, `phone_validation`, dan `mail` | Memaksanya di sini berarti setiap instalasi ikut memuatnya |
+| `hr` juga membawa penolakan `hr_attendance` dan `hr_holidays` | Tenant yang tidak memakai HR tidak perlu ikut dibatasi |
+
+Konsekuensi yang perlu diketahui: bila `presenly_saas_hr` dipasang, modul itu
+menolak `hr_attendance` dan `hr_holidays` — lihat README modul tersebut.
 
 ---
 
@@ -345,24 +505,189 @@ odoo-bin -d <db> -i presenly_saas \
   --stop-after-init --no-http
 ```
 
-110 kasus uji:
+304 kasus uji (modul inti + `presenly_saas_hr`):
 
 | Berkas                         | Cakupan                                                                                                  |
 | ------------------------------ | -------------------------------------------------------------------------------------------------------- |
 | `tests/test_saas_client.py`    | normalisasi URL, header, retry vs tidak retry, skema, redaksi kunci API                                  |
 | `tests/test_config.py`         | singleton per perusahaan, constraint, penyegaran, kegagalan tidak mengubah status, cron, pemangkasan log |
 | `tests/test_guard_contract.py` | seluruh matriks mode × status, grace, kontrak full access, payload banner                                |
+| `tests/test_res_config_settings.py` | blok Settings native, pintasan menu Configuration |                                                  
+| `tests/test_plan_features.py` | konsumsi paket & fitur, `has_feature()`, `missing_features()` |                                            
+| `tests/test_presenly_endpoints.py` | cermin presensi & rekap, paginasi, wizard |                                            
+| `tests/test_monitoring.py` | uji silang agregat vs rekap server, penarikan rentang bulan |                                                 
+| `tests/test_submissions.py` | pemetaan lima jenis pengajuan, ganti per rentang |
+| `tests/test_retention.py` | jendela bergulir, cron penarikan, setelan baru, peringatan wizard |
+| `tests/test_timesheets.py` | hitungan jam, pemetaan timesheet & proyek, penarikan |
+| `tests/test_approval.py` | kosakata status (Y/N/T vs pending/approved/rejected), pemetaan level alur, label penyetuju |
+| `tests/test_monitoring_fields.py` | field turunan monitoring (terlambat, jam masuk, jam sesi) dan kolom yang bisa dibaca di form |
+| `tests/test_acl_coverage.py` | setiap model punya baris ACL |
+| `tests/test_map_widget_registration.py` | skema props widget peta, `onError`, bentuk templat |
+| `tests/test_map_widget_options.py` | setiap field pendamping di `options` benar-benar ada di view |
+| `tests/test_i18n_file.py` | `id.po` terurai, tidak ada `msgstr` kosong, setiap entri punya `#. module:` |
+
+Model (`.py`) yang berubah menuntut server Odoo **dimulai ulang**; perubahan
+view, XML, dan `id.po` cukup `-u` lalu muat ulang browser. Perubahan JS/CSS juga
+menuntut mulai ulang — lihat bagian berikut.
+
+---
+
+---
+
+## 9b. Aset: kapan perubahan JS sampai ke browser
+
+Odoo menyimpan **isi** bundel aset di cache proses:
+
+```python
+tools.ormcache('bundle', 'css', 'js', ..., cache='assets')
+```
+
+Akibatnya penting dan sempat menyesatkan: mengubah berkas JS/CSS **tidak** cukup
+dengan memuat ulang browser, dan **tidak** cukup dengan `-u <modul>` dari proses
+lain. Selama server Odoo yang lama masih hidup, ia terus menyajikan bundel versi
+lamanya (`/web/assets/<versi>/web.assets_web.min.js`), sehingga perbaikan yang
+sudah ada di berkas terlihat seolah-olah tidak berpengaruh.
+
+Yang harus dilakukan:
+
+| Perubahan | Cukup begini |
+|---|---|
+| `.py` | mulai ulang server |
+| XML view, `id.po`, data | `-u <modul>` lalu muat ulang browser |
+| JS, CSS, templat OWL | mulai ulang server |
+| ingin memeriksa cepat sambil mengembangkan | jalankan server dengan `--dev=assets` |
+
+Cara memastikan versi bundel yang benar-benar diuji — bandingkan hash di URL
+`/web/assets/<hash>/web.assets_web.min.js` dengan yang dihitung proses baru:
+
+```python
+env['ir.qweb']._get_asset_bundle(
+    'web.assets_web', assets_params={'lang': 'en_US', 'debug': False}
+).get_version('js')
+```
+
+`--dev=assets` **tidak** mewakili produksi. Templat OWL yang lolos di mode dev
+bisa gagal di bundel ter-minify — lihat bagian berikut.
+
+---
+
+## 9d. Form presensi: aturan tata letaknya
+
+Form log presensi disusun dengan tiga aturan yang berlaku untuk view lain juga.
+
+**Yang dibandingkan diletakkan berdampingan, dengan susunan kolom yang sama.**
+Titik masuk dan titik keluar berada di satu baris — waktu, mode, jarak, putusan
+geofence — bukan tersebar di dua tempat yang harus digulir untuk dibandingkan.
+Dua peta juga berdampingan, bukan ditumpuk: ditumpuk, dua peta setinggi 240px
+membuat formnya dua kali lebih panjang daripada isinya.
+
+**Kolom tidak boleh menyisakan separuh halaman.** Kelompok dua kolom diisi
+seimbang (4 lawan 4, bukan 7 lawan 1), dan kelompok dengan jumlah field ganjil
+— seperti sumber data — dibagi lagi menjadi dua kolom di dalamnya. Satu sel
+kosong di baris terakhir tidak apa-apa; separuh halaman kosong tidak.
+
+**Angka mentah tidak ditampilkan di form.** `13587796.00` meter dan `250.00`
+meter adalah dua angka yang harus dibandingkan sendiri oleh pembacanya, padahal
+jawabannya satu kata:
+
+| Kolom | Isi di form |
+|---|---|
+| `check_in_distance_meters` (mentah) | tidak ditampilkan; tetap ada di daftar, pivot, dan ekspor |
+| `check_in_distance_text` | `13 588 km from the office, allowed 250 m` |
+| `check_in_radius_state` | badge `Outside` |
+| `late_minutes` (mentah) | `9h 31m late`, atau `On time` |
+| `session_hours` (mentah) | `8h 30m` |
+
+Fakta dan putusan dipisah karena keduanya menjawab pertanyaan berbeda: kalimat
+jarak menyebut angkanya, badge menyebut kesimpulannya. Badge-nya bisa disaring
+(`Outside Geofence`) dan dikelompokkan, dan itu sebabnya `check_in_radius_state`
+disimpan (`store=True`) — tanpa itu Odoo tidak bisa menjawab saringan tersebut.
+
+Pemisah ribuan memakai spasi, bukan titik atau koma: keduanya berarti hal
+berbeda di dua bahasa yang dipakai modul ini, jadi keduanya menyesatkan di salah
+satu bahasa. `m` dan `km` adalah satuan SI, jadi tidak perlu diterjemahkan.
+
+**Nilai yang tidak ada disembunyikan, nilai nol ditulis.** `Session Length`
+hilang dari form ketika memang tidak ada lama sesi yang bisa dihitung (check-out
+terlewat, atau shift lewat tengah malam) — baris kosong terbaca seperti tampilan
+yang rusak. Sebaliknya `Lateness` selalu ditulis, termasuk `On time`: baris
+kosong membuat pembaca menebak apakah artinya tepat waktu atau datanya tidak ada.
+
+### Dua mesin ekspresi yang berbeda
+
+Ini pernah menjatuhkan satu form penuh, jadi ditulis di sini:
+
+| Tempat | Mesin | Operator |
+|---|---|---|
+| `t-if`, `t-att-*`, `t-esc` di templat OWL | JavaScript | `&&`, `||`, `!` |
+| `invisible`, `readonly`, `required` di arch view | Python (server) | `and`, `or`, `not` |
+
+Salah satu di tempat yang lain tidak memunculkan galat yang menyebut barisnya:
+formnya mati dengan dialog **Oops!**, dan penyebabnya hanya terlihat setelah
+detail teknisnya dibuka (`Failed to compile template ... Unexpected identifier`).
+Karena itu syarat yang panjang dipindahkan ke getter di JavaScript, dan
+`tests/test_map_widget_registration.py` menolak operator Python di ekspresi
+templat.
+
+---
+
+## 9c. Widget peta: dua hal yang bukan pilihan gaya
+
+`static/src/map/presenly_map_field.*` menggambar peta Leaflet pada log presensi
+dan lokasi kerja.
+
+1. **Leaflet dimuat lewat `loadJS`/`loadCSS`, bukan lewat manifes aset.** Ketika
+   ikut dibundel Odoo, Leaflet versi UMD tidak lagi menerbitkan `window.L`.
+2. **Templatnya dangkal: satu `t-out` per elemen bersyarat, teks dirakit di
+   JavaScript.** Versi yang menaruh teks bercampur `<t t-out>` di dalam elemen
+   bersyarat menjatuhkan widget ini di bundel produksi dengan:
+
+   ```
+   OwlError: An error occured in the owl lifecycle
+   Cause: TypeError: this.child.mount is not a function   (VToggler.mount)
+   ```
+
+   Kegagalannya ikut menjatuhkan **seluruh form**, dan pesannya tidak menyebut
+   penyebabnya. Karena itu `legendOffice`, `legendPoint`, dan `missingFieldsText`
+   dirangkai di JavaScript, memakai `_t()` supaya tetap bisa diterjemahkan.
+
+`tests/test_map_widget_registration.py` menjaga kedua hal ini.
 
 ---
 
 ## 10. Bahasa
 
-String sumber ditulis dalam bahasa Inggris. `i18n/id.po` memuat terjemahan
-Indonesia lengkap (132 entri). Pengguna memilih bahasa lewat Preferences, dan
-keduanya tersedia sekaligus.
+String sumber ditulis dalam **bahasa Inggris**; terjemahan Indonesianya ada di
+`i18n/id.po` (513 entri). Pengguna memilih bahasa lewat Preferences, dan kedua
+bahasa tersedia sekaligus.
 
-Berkas `i18n/en.po` tidak dibuat karena string sumbernya sudah bahasa Inggris,
-sehingga tidak ada override yang dibutuhkan.
+Aturan yang dipakai:
+
+| Bagian | Bahasa |
+|---|---|
+| String yang terlihat pengguna (`.py`, `.xml`) | Inggris — supaya bisa diterjemahkan |
+| Terjemahan | `i18n/id.po` |
+| Komentar kode dan docstring | Indonesia — untuk tim, tidak pernah tampil |
+
+### Yang wajib diingat saat menambah string
+
+Bungkus setiap teks yang terlihat pengguna dengan `_()`. Ini pernah terlewat:
+pesan uji silang di Monitoring Presensi dibangun dari teks Indonesia yang
+langsung disambung, sehingga **tidak pernah bisa diterjemahkan** dan tetap
+berbahasa Indonesia walau Odoo dijalankan dalam bahasa Inggris.
+
+Di dalam tes, bandingkan teks terjemahan dengan `_()` yang sama seperti modul,
+**bukan** `self.env._()`. Alasannya nyata dan sudah terukur: di lingkungan tes
+`env.lang` bernilai kosong, jadi `self.env._()` mengembalikan teks sumber apa
+adanya, sementara `_()` mengikuti bahasa pengguna. Tes yang memakai
+`self.env._()` akan lulus di satu bahasa dan gagal di bahasa lain.
+
+`id.po` tidak memuat entri yang terjemahannya sama dengan sumbernya. Istilah yang
+memang sama di dua bahasa (`Latitude`, `Status`, `Tenant`, nama bulan seperti
+`April`) sengaja tidak punya entri: Odoo menampilkan teks sumbernya, dan itu sudah
+benar. Karena itu jumlah entri selalu lebih kecil dari jumlah string sumber.
+
+Berkas `i18n/en.po` tidak dibuat karena string sumbernya sudah bahasa Inggris.
 
 Regenerasi berkas terjemahan setelah mengubah string:
 
@@ -386,14 +711,16 @@ odoo-bin --addons-path=odoo/addons,addons,custom_addons \
 presenly_saas/
 ├── data/           parameter awal, cron
 ├── i18n/id.po      terjemahan Indonesia
+├── migrations/     pemetaan data saat naik versi
 ├── models/         config, subscription, sync log, guard, fitur eksternal,
-│                   cermin presensi & rekap
+│                   cermin presensi, rekap, referensi, pengajuan & timesheet,
+│                   kosakata status dan alur persetujuan berjenjang
 ├── security/       group, ACL, record rule multi-company
 ├── services/       klien HTTP (tanpa dependensi Odoo, mudah diuji)
-├── static/         ikon + komponen OWL banner
-├── tests/          110 kasus uji
+├── static/         ikon + komponen OWL banner dan peta
+├── tests/          304 kasus uji
 ├── views/          form, list, search, menu
-└── wizard/         pemilih periode penarikan presensi
+└── wizard/         pemilih periode penarikan (presensi + pengajuan)
 ```
 
 ---
@@ -412,4 +739,7 @@ presenly_saas/
 | `i18n/en.po` tidak dibuat                | String sumber sudah bahasa Inggris                                                 |
 | Presensi ditarik ke model cermin sendiri | Tidak menyentuh `hr.attendance`; dapat pencarian, filter, dan ekspor bawaan Odoo |
 | Cermin diganti per periode               | Tabel tidak tumbuh tanpa batas dan data basi tidak tercampur                       |
-| Katalog fitur eksternal dipisah dari hak paket | Dua pertanyaan berbeda: "apa yang bisa ditarik" vs "apa yang boleh dipakai"  |
+| Status pengajuan diseragamkan di Odoo, bukan di API | API mencerminkan nama kolom server; pemetaan dua kosakata diletakkan di tempat keduanya bertemu, dan nilai aslinya tetap disimpan |
+| Level alur digabung dari konfigurasi dan langkah nyata | `expected` menjawab "siapa yang seharusnya", `acted_by` menjawab "siapa yang sudah"; memisahkannya membuat level yang belum bergerak tetap terlihat |
+| `acted_at` tidak jatuh ke `updated_at` | Level yang masih menunggu belum dikerjakan siapa pun; mengisinya membuatnya terbaca seolah sudah diputus |
+| Kelima pengajuan memakai model langkah sendiri | Satu One2many yang benar per jenis lebih terbaca daripada kunci polimorfik, dan hak aksesnya tetap eksplisit |

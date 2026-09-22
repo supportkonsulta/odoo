@@ -51,105 +51,6 @@ def recap_row(**overrides):
 
 
 @tagged('post_install', '-at_install')
-class TestPresenlyExternalFeature(TransactionCase):
-    """Katalog fitur eksternal: cermin, bukan arsip."""
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.company = cls.env.company
-        cls.config = cls.env['presenly.saas.config']._get_or_create(cls.company)
-        cls.Feature = cls.env['presenly.saas.external.feature']
-
-    def setUp(self):
-        super().setUp()
-        self.Feature.search([]).unlink()
-
-    def test_sync_creates_and_maps_status(self):
-        self.Feature._sync_from_payload(self.config, [
-            {'feature': 'attendance-logs', 'path': '/v1/presenly/attendance-logs',
-             'status': 'available', 'web_page': 'x', 'description': 'Log presensi'},
-            {'feature': 'leaves', 'path': '/v1/presenly/leaves',
-             'status': 'planned', 'description': 'Cuti'},
-        ])
-
-        available = self.Feature.search([('status', '=', 'available')])
-        self.assertEqual(available.code, 'attendance-logs')
-        self.assertEqual(len(self.Feature.search([])), 2)
-
-    def test_status_yang_tidak_dikenal_dianggap_planned(self):
-        # Hanya 'available' yang membuka pintu; nilai aneh tidak boleh
-        # membuat fitur tampak siap dipakai.
-        self.Feature._sync_from_payload(self.config, [
-            {'feature': 'aneh', 'path': '/x', 'status': 'whatever'},
-        ])
-        self.assertEqual(self.Feature.search([]).status, 'planned')
-
-    def test_sync_replaces_so_removed_features_disappear(self):
-        self.Feature._sync_from_payload(self.config, [
-            {'feature': 'a', 'path': '/a', 'status': 'available'},
-            {'feature': 'b', 'path': '/b', 'status': 'available'},
-        ])
-        self.Feature._sync_from_payload(self.config, [
-            {'feature': 'a', 'path': '/a', 'status': 'available'},
-        ])
-        self.assertEqual(self.Feature.search([]).mapped('code'), ['a'])
-
-    def test_sync_ignores_malformed_and_duplicate_entries(self):
-        self.Feature._sync_from_payload(self.config, [
-            {'feature': 'a', 'path': '/a', 'status': 'available'},
-            {'feature': 'a', 'path': '/a-lagi', 'status': 'available'},
-            {'path': '/tanpa-kode', 'status': 'available'},
-            'bukan dict',
-            None,
-        ])
-        self.assertEqual(len(self.Feature.search([])), 1)
-        self.assertEqual(self.Feature.search([]).path, '/a')
-
-    # ------------------------------------------------------------------
-    # Penarikan
-    # ------------------------------------------------------------------
-    def test_pull_features_menulis_cermin_dan_log(self):
-        self.config.write({'enabled': True, 'base_url': 'https://x', 'tenant_code': 'demo',
-                           'api_key': 'k', 'retry_count': 0})
-        envelope = {'data': [
-            {'feature': 'attendance-logs', 'path': '/v1/presenly/attendance-logs',
-             'status': 'available', 'description': 'Log presensi'},
-        ], 'meta': {'count': 1, 'schema_version': '1.0.0'}}
-
-        with patch.object(PresenlySaasClient, 'get_presenly_features', return_value=envelope):
-            result = self.config.action_pull_external_features()
-
-        self.assertEqual(result['params']['type'], 'success')
-        self.assertEqual(len(self.Feature.search([])), 1)
-        log = self.env['presenly.saas.sync.log'].search(
-            [('company_id', '=', self.company.id)], order='id desc', limit=1)
-        self.assertTrue(log.success)
-        self.assertEqual(log.endpoint, '/api/external/v1/presenly/features')
-
-    def test_pull_menolak_koneksi_yang_nonaktif(self):
-        self.config.write({'enabled': False})
-        with self.assertRaises(UserError):
-            self.config.action_pull_external_features()
-
-    def test_pull_mencatat_kegagalan(self):
-        self.config.write({'enabled': True, 'base_url': 'https://x', 'tenant_code': 'demo',
-                           'api_key': 'k', 'retry_count': 0})
-        error = SaasClientError('Tidak dapat menghubungi server Presenly SaaS.',
-                                code='NETWORK_ERROR')
-        with patch.object(PresenlySaasClient, 'get_presenly_features', side_effect=error):
-            result = self.config.action_pull_external_features()
-
-        # Dilaporkan sebagai notifikasi, bukan exception, supaya catatan audit
-        # tidak ikut ter-rollback bersama exception yang naik ke layer RPC.
-        self.assertEqual(result['params']['type'], 'danger')
-        log = self.env['presenly.saas.sync.log'].search(
-            [('company_id', '=', self.company.id)], order='id desc', limit=1)
-        self.assertFalse(log.success)
-        self.assertEqual(log.endpoint, '/api/external/v1/presenly/features')
-
-
-@tagged('post_install', '-at_install')
 class TestPresenlyAttendanceMirror(TransactionCase):
     """Cermin log dan rekap presensi."""
 
@@ -336,7 +237,8 @@ class TestPresenlyPullWizard(TransactionCase):
         empty = {'data': [], 'meta': {'total': 0, 'schema_version': '1.0.0'}}
 
         with patch.object(PresenlySaasClient, 'get_attendance_logs', return_value=empty), \
-             patch.object(PresenlySaasClient, 'get_attendance_recap', return_value=empty):
+             patch.object(PresenlySaasClient, 'get_attendance_recap', return_value=empty), \
+             patch.object(PresenlySaasClient, 'get_resource', return_value=empty):
             result = wizard.action_pull()
 
         self.assertEqual(result['tag'], 'display_notification')

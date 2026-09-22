@@ -2,6 +2,8 @@ import logging
 from calendar import monthrange
 from datetime import date
 
+from dateutil.relativedelta import relativedelta
+
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
@@ -17,6 +19,34 @@ FEATURES_PATH = "/api/external/v1/presenly/features"
 ATTENDANCE_LOGS_PATH = "/api/external/v1/presenly/attendance-logs"
 ATTENDANCE_RECAP_PATH = "/api/external/v1/presenly/attendance-recap"
 
+# Pengajuan berperiode yang ikut ditarik bersama presensi. Setiap entri adalah
+# (resource di API, model cermin). Semuanya punya kolom tanggal, jadi
+# penarikannya mengganti per rentang, bukan mengganti seluruh isi.
+# Cermin berperiode beserta kolom tanggalnya. Hanya model di daftar ini yang
+# ikut dibersihkan oleh jendela bergulir. Cermin referensi (lokasi kerja, shift,
+# mode absen, hari libur, setup hari kerja) tidak punya periode, jadi tidak
+# pernah dihapus: isinya keadaan terkini, bukan riwayat.
+PERIOD_MIRRORS = [
+    ('presenly.saas.attendance.log', 'work_date'),
+    ('presenly.saas.leave', 'leave_date'),
+    ('presenly.saas.overtime', 'overtime_date'),
+    ('presenly.saas.medical.certificate', 'certificate_date'),
+    ('presenly.saas.attendance.correction', 'date'),
+    ('presenly.saas.shift.swap', 'requester_date'),
+    ('presenly.saas.timesheet', 'date'),
+]
+
+# Data berperiode yang ditarik bersama presensi, selain log dan rekap.
+# Semuanya punya kolom tanggal, jadi penarikannya mengganti per rentang.
+PERIOD_DATASETS = [
+    ('leaves', 'presenly.saas.leave'),
+    ('overtimes', 'presenly.saas.overtime'),
+    ('medical-certificates', 'presenly.saas.medical.certificate'),
+    ('attendance-corrections', 'presenly.saas.attendance.correction'),
+    ('shift-swaps', 'presenly.saas.shift.swap'),
+    ('timesheets', 'presenly.saas.timesheet'),
+]
+
 # Batas halaman saat menarik daftar berhalaman. Bukan pengaman teknis, tapi
 # pengaman operasional: satu tombol tidak boleh menarik ratusan ribu baris dan
 # mengunci worker. Kalau batasnya tersentuh, itu diberitahukan ke pengguna.
@@ -30,6 +60,7 @@ REFERENCE_MIRRORS = (
     ('attendance-modes', 'presenly.saas.attendance.mode'),
     ('holidays', 'presenly.saas.holiday'),
     ('work-day-setups', 'presenly.saas.work.day.setup'),
+    ('projects', 'presenly.saas.project'),
 )
 
 MANAGER_GROUP = 'presenly_saas.group_presenly_saas_manager'
@@ -136,9 +167,33 @@ class PresenlySaasConfig(models.Model):
     )
     last_check_message = fields.Text(string='Last Check Result', readonly=True)
 
+    pull_months = fields.Integer(
+        string='Months Pulled by Cron',
+        default=2,
+        help='How many months the daily pull covers, counting back from the '
+             'current month. 2 means the current month and the one before it, '
+             'so a shift that ends after midnight, or a correction filed the '
+             'next day, is still captured.',
+    )
+    retention_months = fields.Integer(
+        string='Retention (months)',
+        default=12,
+        help='Mirrored period data older than this is removed by the weekly '
+             'cleanup. 0 keeps everything. Reference data is never removed: it '
+             'has no period.',
+    )
+
     _company_uniq = models.Constraint(
         'unique(company_id)',
         'Only one Presenly SaaS connection is allowed per company.',
+    )
+    _pull_months_at_least_one = models.Constraint(
+        'CHECK(pull_months >= 1)',
+        'At least one month must be pulled.',
+    )
+    _retention_not_negative = models.Constraint(
+        'CHECK(retention_months >= 0)',
+        'Retention cannot be negative.',
     )
 
     # ------------------------------------------------------------------
@@ -264,31 +319,16 @@ class PresenlySaasConfig(models.Model):
     # ------------------------------------------------------------------
     # Aksi tarik data (dipakai dari menu)
     # ------------------------------------------------------------------
-    def action_pull_external_features(self):
-        """Segarkan katalog fitur eksternal."""
-        self.ensure_one()
-        self._ensure_manager()
-        features, error = self._pull_features()
-        if error:
-            return self._notify('danger', _('Gagal menarik katalog fitur'), error)
-        return self._notify(
-            'success',
-            _('Katalog fitur diperbarui'),
-            _('%(count)s fitur, %(available)s tersedia.',
-              count=len(features),
-              available=len(features.filtered(lambda f: f.status == 'available'))),
-        )
-
     def action_pull_reference_data(self):
         """Segarkan seluruh cermin data referensi."""
         self.ensure_one()
         self._ensure_manager()
         summary, error = self._pull_reference_data()
         if error:
-            return self._notify('danger', _('Gagal menarik data referensi'), error)
+            return self._notify('danger', _('Failed to pull reference data'), error)
         return self._notify(
             'success',
-            _('Data referensi diperbarui'),
+            _('Reference data updated'),
             '\n'.join(
                 '%s: %s' % (resource, count)
                 for resource, count in sorted(summary.items())
@@ -307,7 +347,7 @@ class PresenlySaasConfig(models.Model):
         })
         return {
             'type': 'ir.actions.act_window',
-            'name': _('Tarik Data Presensi'),
+            'name': _('Pull Period Data'),
             'res_model': 'presenly.saas.pull.wizard',
             'res_id': wizard.id,
             'view_mode': 'form',
@@ -331,30 +371,6 @@ class PresenlySaasConfig(models.Model):
             timeout=self.timeout_seconds or 10,
             retry_count=self.retry_count,
         )
-
-    def _pull_features(self):
-        """Tarik katalog fitur eksternal. Mengembalikan ``(features, error)``.
-
-        Kegagalan dikembalikan sebagai nilai, bukan dilempar, dengan alasan yang
-        sama seperti `_fetch_and_store`: exception yang naik ke layer RPC membuat
-        Odoo me-rollback transaksi, sehingga catatan audit yang baru ditulis ikut
-        hilang.
-        """
-        self.ensure_one()
-        self._require_enabled()
-        started = fields.Datetime.now()
-        try:
-            envelope = self._client().get_presenly_features()
-        except SaasClientError as exc:
-            error = redact(exc, self.api_key)
-            self._log_pull(FEATURES_PATH, False, exc, started)
-            return self.env['presenly.saas.external.feature'], error
-
-        features = self.env['presenly.saas.external.feature']._sync_from_payload(
-            self, envelope.get('data') or []
-        )
-        self._log_pull(FEATURES_PATH, True, None, started)
-        return features, False
 
     def _pull_reference_data(self):
         """Tarik seluruh resource referensi. Mengembalikan ``(summary, error)``."""
@@ -382,6 +398,100 @@ class PresenlySaasConfig(models.Model):
             self._log_pull('/v1/%s' % resource, True, None, started)
 
         return summary, False
+
+    def _crosscheck_attendance(self, month, year):
+        """Bandingkan agregat cermin log dengan cermin rekap untuk bulan yang sama.
+
+        Keduanya berasal dari server, tetapi dihitung oleh service yang berbeda.
+        Kalau angkanya berbeda, salah satu tidak lengkap, dan itu harus terlihat
+        bukan diam-diam dianggap benar.
+        """
+        self.ensure_one()
+        first_day = date(year, month, 1)
+        last_day = date(year, month, monthrange(year, month)[1])
+
+        logs = self.env['presenly.saas.attendance.log'].search([
+            ('company_id', '=', self.company_id.id),
+            ('work_date', '>=', first_day),
+            ('work_date', '<=', last_day),
+        ])
+        recap = self.env['presenly.saas.attendance.recap'].search([
+            ('company_id', '=', self.company_id.id),
+            ('month', '=', month),
+            ('year', '=', year),
+        ])
+
+        def key_of(record):
+            return record.employee_nopeg or 'id:%s' % record.user_id
+
+        local = {}
+        for log in logs:
+            bucket = local.setdefault(key_of(log), [0, 0])
+            bucket[0] += 1
+            bucket[1] += log.late_minutes
+
+        server = {
+            key_of(row): [row.attendance_count, row.total_late_minutes]
+            for row in recap
+        }
+
+        mismatches = []
+        for key in sorted(set(local) | set(server)):
+            local_pair = local.get(key, [0, 0])
+            server_pair = server.get(key, [0, 0])
+            if local_pair != server_pair:
+                mismatches.append(_(
+                    '%(key)s: the mirrored log has %(lcount)s sessions/'
+                    '%(llate)s minutes, the server recap has %(scount)s sessions/'
+                    '%(slate)s minutes',
+                    key=key,
+                    lcount=local_pair[0], llate=local_pair[1],
+                    scount=server_pair[0], slate=server_pair[1],
+                ))
+        return mismatches
+
+    def _pull_period_range(self, end_month, end_year, months_back=1):
+        """Tarik beberapa bulan ke belakang, berakhir di bulan yang dipilih.
+
+        Satu bulan berisi presensi (log + rekap) dan lima jenis pengajuan.
+        Mengembalikan ``(summary, error)`` dengan total gabungan, daftar bulan
+        yang terpotong, dan daftar ketidakcocokan uji silang.
+        """
+        self.ensure_one()
+        self._require_enabled()
+
+        months = max(1, int(months_back or 1))
+        end = date(int(end_year), int(end_month), 1)
+
+        total = {'logs': 0, 'recap': 0, 'months': 0, 'datasets': {}}
+        truncated = []
+        mismatches = []
+        periods = []
+
+        for offset in range(months - 1, -1, -1):
+            current = end - relativedelta(months=offset)
+            summary, error = self._pull_attendance(current.month, current.year)
+            if error:
+                return total, error
+            total['logs'] += summary['logs']
+            total['recap'] += summary['recap']
+            truncated.extend(summary['truncated'])
+
+            datasets, error = self._pull_period_datasets(current.month, current.year)
+            if error:
+                return total, error
+            for resource, count in datasets['rows'].items():
+                total['datasets'][resource] = total['datasets'].get(resource, 0) + count
+            truncated.extend(datasets['truncated'])
+
+            total['months'] += 1
+            periods.append(summary['period'])
+            mismatches.extend(self._crosscheck_attendance(current.month, current.year))
+
+        total['periods'] = periods
+        total['truncated'] = truncated
+        total['mismatches'] = mismatches
+        return total, False
 
     def _pull_attendance(self, month, year):
         """Tarik log dan rekap presensi untuk satu bulan.
@@ -421,8 +531,8 @@ class PresenlySaasConfig(models.Model):
         total = int(meta.get('total') or 0)
         if total and len(rows) < total:
             summary['truncated'].append(
-                _('Log presensi: %(fetched)s dari %(total)s baris terambil '
-                  '(batas %(pages)s halaman).',
+                _('Attendance log: %(fetched)s of %(total)s rows fetched '
+                  '(%(pages)s page limit).',
                   fetched=len(rows), total=total, pages=MAX_PULL_PAGES)
             )
 
@@ -441,6 +551,60 @@ class PresenlySaasConfig(models.Model):
         recap_model._replace_scope(self.company_id, month, year)
         summary['recap'] = recap_model._upsert_rows(self.company_id, envelope.get('data') or [])
         self._log_pull(ATTENDANCE_RECAP_PATH, True, None, started)
+
+        return summary, False
+
+    def _pull_period_datasets(self, month, year):
+        """Tarik pengajuan dan timesheet untuk satu bulan.
+
+        Kalau satu jenis gagal, penarikan bulan itu berhenti dan galatnya
+        dikembalikan. Jenis yang sudah tersimpan tetap tersimpan, dan yang
+        belum tidak diklaim berhasil.
+        """
+        self.ensure_one()
+        self._require_enabled()
+        first_day = date(year, month, 1)
+        last_day = date(year, month, monthrange(year, month)[1])
+
+        summary = {
+            'period': '%02d/%s' % (month, year),
+            'rows': {},
+            'truncated': [],
+        }
+
+        client = self._client()
+        for resource, model_name in PERIOD_DATASETS:
+            started = fields.Datetime.now()
+            path = '/api/external/v1/%s' % resource
+            params = {
+                'since': fields.Date.to_string(first_day),
+                'until': fields.Date.to_string(last_day),
+                'limit': 500,
+            }
+            try:
+                rows, meta, _pages = self._fetch_pages(
+                    lambda page_params, _client=client, _resource=resource:
+                        _client.get_resource(_resource, page_params),
+                    params,
+                )
+            except SaasClientError as exc:
+                error = redact(exc, self.api_key)
+                self._log_pull(path, False, exc, started)
+                return summary, error
+
+            model = self.env[model_name]
+            model._mirror_replace_range(self.company_id, rows, first_day, last_day)
+            summary['rows'][resource] = len(rows)
+            self._log_pull(path, True, None, started)
+
+            total = int(meta.get('total') or 0)
+            if total and len(rows) < total:
+                summary['truncated'].append(
+                    _('%(resource)s: %(fetched)s of %(total)s rows fetched '
+                      '(%(pages)s page limit).',
+                      resource=resource, fetched=len(rows), total=total,
+                      pages=MAX_PULL_PAGES)
+                )
 
         return summary, False
 
@@ -540,6 +704,98 @@ class PresenlySaasConfig(models.Model):
     # ------------------------------------------------------------------
     # Cron
     # ------------------------------------------------------------------
+    def _retention_cutoff(self):
+        """Tanggal paling tua yang masih disimpan. False berarti simpan semua."""
+        self.ensure_one()
+        months = int(self.retention_months or 0)
+        if months <= 0:
+            return False
+        return fields.Date.context_today(self) - relativedelta(months=months)
+
+    def _prune_mirrors(self):
+        """Hapus cermin berperiode yang lebih tua dari jendela bergulir.
+
+        Mengembalikan jumlah baris yang dihapus per model, supaya pemanggilnya
+        bisa melaporkan apa yang benar-benar terjadi, bukan sekadar "selesai".
+
+        Cermin referensi tidak disentuh: isinya keadaan terkini, bukan riwayat,
+        jadi menghapusnya berdasarkan umur justru menghilangkan data yang masih
+        berlaku.
+        """
+        self.ensure_one()
+        cutoff = self._retention_cutoff()
+        if not cutoff:
+            return {}
+
+        removed = {}
+        for model_name, date_field in PERIOD_MIRRORS:
+            old_rows = self.env[model_name].sudo().search([
+                ('company_id', '=', self.company_id.id),
+                (date_field, '<', cutoff),
+            ])
+            if old_rows:
+                removed[model_name] = len(old_rows)
+                old_rows.unlink()
+
+        # Rekap tidak punya kolom tanggal: periodenya adalah pasangan
+        # (bulan, tahun). Dibandingkan sebagai nomor bulan berjalan supaya
+        # Desember 2025 < Januari 2026.
+        batas = cutoff.year * 12 + cutoff.month
+        recap = self.env['presenly.saas.attendance.recap'].sudo().search([
+            ('company_id', '=', self.company_id.id),
+        ]).filtered(lambda row: row.year * 12 + row.month < batas)
+        if recap:
+            removed['presenly.saas.attendance.recap'] = len(recap)
+            recap.unlink()
+
+        return removed
+
+    def _cron_pull_periods_all(self):
+        """Tarik presensi dan pengajuan terbaru untuk setiap koneksi aktif.
+
+        Terpisah dari cron langganan: langganan cukup diperiksa sekali sehari
+        juga, tetapi kegagalannya tidak boleh menghentikan penarikan data, dan
+        sebaliknya. Satu tenant yang gagal tidak pernah menghentikan tenant lain.
+        """
+        configs = self.sudo().search([('enabled', '=', True), ('active', '=', True)])
+        today = fields.Date.context_today(self)
+        for config in configs:
+            months = max(1, int(config.pull_months or 1))
+            try:
+                _summary, error = config._pull_period_range(today.month, today.year, months)
+            except UserError as exc:      # masalah konfigurasi, bukan galat jarak jauh
+                error = str(exc)
+            if error:
+                _logger.warning(
+                    "Presenly SaaS: period pull failed for company %s: %s",
+                    config.company_id.display_name,
+                    error,
+                )
+        self.env['presenly.saas.sync.log']._prune()
+        return True
+
+    @api.model
+    def _cron_prune_mirrors_all(self):
+        """Jalankan pembersihan jendela bergulir untuk setiap koneksi aktif."""
+        configs = self.sudo().search([('enabled', '=', True), ('active', '=', True)])
+        for config in configs:
+            try:
+                removed = config._prune_mirrors()
+            except UserError as exc:
+                _logger.warning(
+                    "Presenly SaaS: mirror cleanup failed for company %s: %s",
+                    config.company_id.display_name,
+                    exc,
+                )
+                continue
+            if removed:
+                _logger.info(
+                    "Presenly SaaS: removed %s mirrored rows for company %s",
+                    sum(removed.values()),
+                    config.company_id.display_name,
+                )
+        return True
+
     @api.model
     def _cron_refresh_all(self):
         """Refresh every enabled connection. Never raises for one tenant."""

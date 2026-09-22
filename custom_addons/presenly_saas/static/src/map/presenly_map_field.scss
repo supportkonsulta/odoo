@@ -1,0 +1,82 @@
+.o_presenly_map_wrapper {
+    width: 100%;
+
+    .o_presenly_map_actions {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        margin-bottom: 6px;
+    }
+
+    .o_presenly_map {
+        width: 100%;
+        height: 300px;
+        border: 1px solid var(--border-color, #dee2e6);
+        border-radius: 4px;
+        // Leaflet menghitung ukurannya dari kontainer, jadi tingginya harus pasti.
+        z-index: 0;
+    }
+
+    // Mode ringkas: dipakai saat satu form memuat lebih dari satu peta, mis. titik
+    // masuk dan titik keluar. Dua peta setinggi 300px ditumpuk membuat formnya
+    // dua kali lebih panjang daripada isinya.
+    &.o_presenly_map_compact .o_presenly_map {
+        height: 240px;
+    }
+
+    .o_presenly_map_empty {
+        padding: 24px 12px;
+        border: 1px dashed var(--border-color, #dee2e6);
+        border-radius: 4px;
+        text-align: center;
+    }
+
+    .o_presenly_legend {
+        margin-top: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .o_presenly_legend_item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .o_presenly_dot {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        border: 1px solid rgba(0, 0, 0, 0.25);
+        flex: 0 0 auto;
+    }
+
+    /* Warna penanda peta. Ditulis sebagai kelas, bukan gaya sebaris, supaya
+       legenda dan penanda tidak bisa berbeda warna. */
+    .o_presenly_dot_office {
+        background: #0d6efd;
+    }
+
+    .o_presenly_dot_point {
+        background: #714b67;
+    }
+}
+
+// Penanda Leaflet kita sendiri, supaya kantor dan titik presensi bisa dibedakan
+// warnanya dan tidak bergantung pada gambar bawaan Leaflet.
+.o_presenly_pin {
+    background: transparent;
+    border: 0;
+
+    span {
+        display: block;
+        width: 14px;
+        height: 14px;
+        margin: 2px;
+        border-radius: 50%;
+        border: 2px solid #fff;
+        box-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+    }
+}

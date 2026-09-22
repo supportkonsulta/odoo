@@ -5,26 +5,29 @@
         <field name="name">presenly.saas.pull.wizard.form</field>
         <field name="model">presenly.saas.pull.wizard</field>
         <field name="arch" type="xml">
-            <form string="Tarik Data Presensi">
+            <form string="Pull Period Data">
                 <group>
-                    <group string="Periode">
+                    <group string="Period">
                         <field name="month"/>
                         <field name="year"/>
+                        <field name="months_back"/>
                     </group>
-                    <group string="Koneksi">
+                    <group string="Connection">
                         <field name="config_id" readonly="1"/>
                     </group>
                 </group>
                 <div class="text-muted">
-                    Log presensi dan rekap untuk periode ini akan <b>menggantikan</b> data
-                    yang sudah ada pada bulan yang sama. Bulan lain tidak tersentuh.
+                    The attendance log and the recap for this period will <b>replace</b> the
+                    existing data for the same month. Other months are left untouched.
+                    When it finishes, the result is cross-checked against the server
+                    recap, and any difference is reported.
                 </div>
                 <footer>
                     <button name="action_pull"
                             type="object"
-                            string="Tarik Sekarang"
+                            string="Pull Now"
                             class="btn-primary"/>
-                    <button string="Batal" special="cancel" class="btn-secondary"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary"/>
                 </footer>
             </form>
         </field>

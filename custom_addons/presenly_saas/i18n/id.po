@@ -1,13 +1,13 @@
 # Translation of Odoo Server.
 # This file contains the translation of the following modules:
-#	* presenly_saas
+# 	* presenly_saas
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 19.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-21 10:36+0000\n"
-"PO-Revision-Date: 2026-09-21 17:36+0000\n"
+"POT-Creation-Date: 2026-09-22 04:47+0000\n"
+"PO-Revision-Date: 2026-09-22 11:49+0000\n"
 "Last-Translator: Presenly <support@presenly.id>\n"
 "Language-Team: Indonesian\n"
 "Language: id\n"
@@ -16,144 +16,225 @@ msgstr ""
 "Content-Transfer-Encoding: \n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
+#. module: presenly_saas
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_pull_wizard__months_back
+msgid ""
+"1 means only the selected month. 3 means that month and the two before it, "
+"to fill the monitoring mirror."
+msgstr ""
+"1 berarti hanya bulan yang dipilih. 3 berarti bulan itu dan dua bulan "
+"sebelumnya, untuk mengisi cermin monitoring."
 
 #. module: presenly_saas
-#. odoo-python
-#: code:addons/presenly_saas/models/presenly_saas_config.py:0
-msgid "%(count)s fitur, %(available)s tersedia."
-msgstr "%(count)s fitur, %(available)s tersedia."
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_attendance_log__late_session_count
+msgid ""
+"1 when the session was late, 0 otherwise. Summed in pivot and graph views to"
+" count late sessions."
+msgstr ""
+"Bernilai 1 bila sesinya terlambat, 0 bila tidak. Dijumlahkan di pivot dan "
+"grafik untuk menghitung jumlah sesi terlambat."
 
 #. module: presenly_saas
 #: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
-msgid "<span> detik</span>"
-msgstr "<span> detik</span>"
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
-msgid "<span> hari</span>"
+msgid "<span> days</span>"
 msgstr "<span> hari</span>"
 
 #. module: presenly_saas
 #: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
-msgid "<span> kali</span>"
+msgid "<span> months</span>"
+msgstr "<span> bulan</span>"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid "<span> seconds</span>"
+msgstr "<span> detik</span>"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid "<span> times</span>"
 msgstr "<span> kali</span>"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_config_form
+msgid ""
+"A failed check never changes the stored subscription status.\n"
+"                                Only a real answer from the SaaS server can."
+msgstr ""
+"Pemeriksaan yang gagal tidak pernah mengubah status langganan\n"
+"                                yang tersimpan. Hanya jawaban nyata dari server SaaS yang bisa."
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid ""
+"A label only, so a sandbox connection is never mistaken for production "
+"during support."
+msgstr ""
+"Hanya penanda, agar koneksi sandbox tidak tertukar dengan produksi saat "
+"penanganan masalah."
+
+#. module: presenly_saas
+#: model:ir.model.constraint,message:presenly_saas.constraint_presenly_saas_attendance_correction_mirror_company_ext_06e3db32
+#: model:ir.model.constraint,message:presenly_saas.constraint_presenly_saas_attendance_mode_mirror_company_external_uniq
+#: model:ir.model.constraint,message:presenly_saas.constraint_presenly_saas_employee_mirror_company_external_uniq
+#: model:ir.model.constraint,message:presenly_saas.constraint_presenly_saas_holiday_mirror_company_external_uniq
+#: model:ir.model.constraint,message:presenly_saas.constraint_presenly_saas_leave_mirror_company_external_uniq
+#: model:ir.model.constraint,message:presenly_saas.constraint_presenly_saas_medical_certificate_mirror_company_external_uniq
+#: model:ir.model.constraint,message:presenly_saas.constraint_presenly_saas_mirror_mixin_mirror_company_external_uniq
+#: model:ir.model.constraint,message:presenly_saas.constraint_presenly_saas_overtime_mirror_company_external_uniq
+#: model:ir.model.constraint,message:presenly_saas.constraint_presenly_saas_project_mirror_company_external_uniq
+#: model:ir.model.constraint,message:presenly_saas.constraint_presenly_saas_shift_mirror_company_external_uniq
+#: model:ir.model.constraint,message:presenly_saas.constraint_presenly_saas_shift_swap_mirror_company_external_uniq
+#: model:ir.model.constraint,message:presenly_saas.constraint_presenly_saas_timesheet_mirror_company_external_uniq
+#: model:ir.model.constraint,message:presenly_saas.constraint_presenly_saas_work_day_setup_mirror_company_external_uniq
+#: model:ir.model.constraint,message:presenly_saas.constraint_presenly_saas_work_location_mirror_company_external_uniq
+msgid "A row may only be mirrored once per company."
+msgstr "Satu baris hanya boleh tercermin sekali per perusahaan."
+
+#. module: presenly_saas
+#: model:ir.model.constraint,message:presenly_saas.constraint_presenly_saas_attendance_log_company_external_uniq
+msgid "A session may only be mirrored once per company."
+msgstr "Satu sesi hanya boleh tercermin sekali per company."
 
 #. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_config__api_key
 #: model:ir.model.fields,field_description:presenly_saas.field_res_config_settings__presenly_saas_api_key
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
 msgid "API Key"
 msgstr "Kunci API"
 
 #. module: presenly_saas
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_attendance_log__status__alpha
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_search
+msgid "Absence"
+msgstr "Alpha"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_recap__absent_count
+msgid "Absent Count"
+msgstr "Jumlah Alpha"
+
+#. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_config__active
 #: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_subscription__status__active
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_work_location_search
 msgid "Active"
 msgstr "Aktif"
 
 #. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_recap_search
-msgid "Ada Alpha"
-msgstr "Ada Alpha"
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_location__address
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_work_location_form
+msgid "Address"
+msgstr "Alamat"
 
 #. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_leave__leave_address
+msgid "Address During Leave"
+msgstr "Alamat Selama Cuti"
+
+#. module: presenly_saas
+#: model:ir.model.constraint,message:presenly_saas.constraint_presenly_saas_attendance_recap_company_period_user_uniq
+msgid "An employee may only appear once per month per company."
+msgstr "Satu pegawai hanya boleh muncul sekali per bulan per company."
+
+#. module: presenly_saas
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_leave__status__approved
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_timesheet__status__approved
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_correction_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_leave_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_overtime_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_shift_swap_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_timesheet_search
+msgid "Approved"
+msgstr "Disetujui"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_leave__approved_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_medical_certificate__approved_at
+msgid "Approved At"
+msgstr "Disetujui Pada"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_leave__approver_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_medical_certificate__approver_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_overtime__approver_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift_swap__approver_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_timesheet__approver_name
+msgid "Approver"
+msgstr "Penyetuju"
+
+#. module: presenly_saas
+#: model:ir.model.constraint,message:presenly_saas.constraint_presenly_saas_config_pull_months_at_least_one
+msgid "At least one month must be pulled."
+msgstr "Minimal satu bulan harus ditarik."
+
+#. module: presenly_saas
+#: model:ir.ui.menu,name:presenly_saas.menu_presenly_saas_attendance
+msgid "Attendance"
+msgstr "Presensi"
+
+#. module: presenly_saas
+#: model:ir.actions.act_window,name:presenly_saas.action_presenly_saas_attendance_correction
+#: model:ir.ui.menu,name:presenly_saas.menu_presenly_saas_attendance_correction
+msgid "Attendance Corrections"
+msgstr "Koreksi Presensi"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_recap__attendance_count
+msgid "Attendance Count"
+msgstr "Jumlah Kehadiran"
+
+#. module: presenly_saas
+#: model:ir.actions.act_window,name:presenly_saas.action_presenly_saas_attendance_log
+#: model:ir.ui.menu,name:presenly_saas.menu_presenly_saas_attendance_log
+msgid "Attendance Data"
+msgstr "Data Presensi"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__date
+msgid "Attendance Date"
+msgstr "Tanggal Presensi"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_list
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_search
+msgid "Attendance Log"
+msgstr "Log Presensi"
+
+#. module: presenly_saas
+#: model:ir.actions.act_window,name:presenly_saas.action_presenly_saas_attendance_mode
+#: model:ir.ui.menu,name:presenly_saas.menu_presenly_saas_attendance_mode
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_mode_list
+msgid "Attendance Mode"
+msgstr "Mode Absen"
+
+#. module: presenly_saas
+#: model:ir.actions.act_window,name:presenly_saas.action_presenly_saas_monitoring
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_graph
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_pivot
+msgid "Attendance Monitoring"
+msgstr "Monitoring Presensi"
+
+#. module: presenly_saas
+#: model:ir.actions.act_window,name:presenly_saas.action_presenly_saas_attendance_recap
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_recap_list
 #: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_recap_search
-msgid "Ada Keterlambatan"
-msgstr "Ada Keterlambatan"
+msgid "Attendance Recap"
+msgstr "Rekap Presensi"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_location__attendance_type
+msgid "Attendance Type"
+msgstr "Tipe Absen"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_day_setup__aug
+msgid "Aug"
+msgstr "Agu"
 
 #. module: presenly_saas
 #: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_pull_wizard__month__8
-msgid "Agustus"
+msgid "August"
 msgstr "Agustus"
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
-msgid "Aktifkan Koneksi"
-msgstr "Aktifkan Koneksi"
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
-msgid "Alamat server Presenly SaaS, misalnya https://presensi.example.com. Akhiran /api opsional."
-msgstr "Alamat server Presenly SaaS, misalnya https://presensi.example.com. Akhiran /api opsional."
-
-#. module: presenly_saas
-#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_attendance_log__status__alpha
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_search
-msgid "Alpha"
-msgstr "Alpha"
-
-#. module: presenly_saas
-#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_pull_wizard__month__4
-msgid "April"
-msgstr "April"
-
-#. module: presenly_saas
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_config__base_url
-#: model:ir.model.fields,field_description:presenly_saas.field_res_config_settings__presenly_saas_base_url
-#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
-msgid "Base URL"
-msgstr "Base URL"
-
-#. module: presenly_saas
-#. odoo-python
-#: code:addons/presenly_saas/models/presenly_saas_config.py:0
-msgid "Base URL must start with http:// or https:// (got %s)."
-msgstr "Base URL harus diawali http:// atau https:// (diterima: %s)."
-
-#. module: presenly_saas
-#. odoo-python
-#: code:addons/presenly_saas/models/presenly_saas_config.py:0
-msgid "Base URL, Tenant Code and API Key must be filled in before contacting the Presenly SaaS server."
-msgstr "Base URL, Kode Tenant, dan Kunci API harus diisi sebelum menghubungi server Presenly SaaS."
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_pull_wizard_form
-msgid "Batal"
-msgstr "Batal"
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
-msgid "Batas Waktu"
-msgstr "Batas Waktu"
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
-msgid "Batas waktu satu permintaan ke server Presenly SaaS."
-msgstr "Batas waktu satu permintaan ke server Presenly SaaS."
-
-#. module: presenly_saas
-#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_sync_log
-msgid "Belum ada entri sinkronisasi"
-msgstr "Belum ada entri sinkronisasi"
-
-#. module: presenly_saas
-#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_attendance_log
-msgid "Belum ada log presensi"
-msgstr "Belum ada log presensi"
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
-msgid "Belum ada pemeriksaan. Gunakan Uji Koneksi."
-msgstr "Belum ada pemeriksaan. Gunakan Uji Koneksi."
-
-#. module: presenly_saas
-#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_attendance_recap
-msgid "Belum ada rekap presensi"
-msgstr "Belum ada rekap presensi"
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
-msgid "Berapa lama status cache masih dianggap wajar setelah sinkronisasi terakhir yang berhasil."
-msgstr "Berapa lama status cache masih dianggap wajar setelah sinkronisasi terakhir yang berhasil."
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
-msgid "Buka Langganan"
-msgstr "Buka Langganan"
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
-msgid "Buka Log Sinkronisasi"
-msgstr "Buka Log Sinkronisasi"
 
 #. module: presenly_saas
 #: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_subscription__state_source__cached
@@ -161,14 +242,19 @@ msgid "Cached"
 msgstr "Cache"
 
 #. module: presenly_saas
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__check_in_allowed_radius_meters
-msgid "Check In Allowed Radius Meters"
-msgstr "Radius Diizinkan Masuk (meter)"
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_pull_wizard_form
+msgid "Cancel"
+msgstr "Batal"
 
 #. module: presenly_saas
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__check_in_distance_meters
-msgid "Check In Distance Meters"
-msgstr "Jarak Masuk (meter)"
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_medical_certificate__certificate_date
+msgid "Certificate Date"
+msgstr "Tanggal Surat"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_medical_certificate__dc_number
+msgid "Certificate Number"
+msgstr "Nomor Surat"
 
 #. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__check_in_latitude
@@ -191,16 +277,6 @@ msgid "Check In Time"
 msgstr "Waktu Masuk"
 
 #. module: presenly_saas
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__check_out_allowed_radius_meters
-msgid "Check Out Allowed Radius Meters"
-msgstr "Radius Diizinkan Keluar (meter)"
-
-#. module: presenly_saas
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__check_out_distance_meters
-msgid "Check Out Distance Meters"
-msgstr "Jarak Keluar (meter)"
-
-#. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__check_out_latitude
 msgid "Check Out Latitude"
 msgstr "Lintang Keluar"
@@ -221,17 +297,66 @@ msgid "Check Out Time"
 msgstr "Waktu Keluar"
 
 #. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_form
+msgid "Check-in"
+msgstr "Masuk"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__check_in_hour
+msgid "Check-in Hour"
+msgstr "Jam Masuk"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_form
+msgid "Check-in Location"
+msgstr "Lokasi Masuk"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__check_in_mode_name
+msgid "Check-in Mode"
+msgstr "Mode Masuk"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_form
+msgid "Check-out"
+msgstr "Keluar"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_form
+msgid "Check-out Location"
+msgstr "Lokasi Keluar"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__check_out_mode_name
+msgid "Check-out Mode"
+msgstr "Mode Keluar"
+
+#. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_subscription__client_name
 msgid "Client Name"
 msgstr "Nama Klien"
 
 #. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__company_id
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__company_id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_mode__company_id
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_recap__company_id
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_config__company_id
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_external_feature__company_id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_holiday__company_id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_leave__company_id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_medical_certificate__company_id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_mirror_mixin__company_id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_overtime__company_id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_project__company_id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift__company_id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift_swap__company_id
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_subscription__company_id
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_sync_log__company_id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_timesheet__company_id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_day_setup__company_id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_location__company_id
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_subscription_form
 #: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_sync_log_search
 msgid "Company"
 msgstr "Perusahaan"
@@ -258,7 +383,9 @@ msgid "Configure the Presenly SaaS connection and read the API key."
 msgstr "Mengatur koneksi Presenly SaaS dan membaca kunci API."
 
 #. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
 #: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_config_form
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_pull_wizard_form
 msgid "Connection"
 msgstr "Koneksi"
 
@@ -269,38 +396,108 @@ msgid "Connection Enabled"
 msgstr "Koneksi Aktif"
 
 #. module: presenly_saas
-#. odoo-python
-#: code:addons/presenly_saas/models/presenly_saas_config.py:0
-msgid "Connection failed"
-msgstr "Koneksi gagal"
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_subscription_form
+msgid "Contact"
+msgstr "Kontak"
 
 #. module: presenly_saas
-#. odoo-python
-#: code:addons/presenly_saas/models/presenly_saas_config.py:0
-msgid "Connection ok"
-msgstr "Koneksi berhasil"
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift_swap__target_name
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_shift_swap_search
+msgid "Counterpart"
+msgstr "Sasaran"
 
 #. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift_swap__target_date
+msgid "Counterpart Date"
+msgstr "Tanggal Sasaran"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift_swap__target_nopeg
+msgid "Counterpart Nopeg"
+msgstr "Nopeg Sasaran"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift_swap__target_shift_name
+msgid "Counterpart Shift"
+msgstr "Shift Sasaran"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__create_uid
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__create_uid
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_mode__create_uid
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_recap__create_uid
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_config__create_uid
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_external_feature__create_uid
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_holiday__create_uid
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_leave__create_uid
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_medical_certificate__create_uid
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_overtime__create_uid
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_project__create_uid
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_pull_wizard__create_uid
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift__create_uid
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift_swap__create_uid
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_subscription__create_uid
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_sync_log__create_uid
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_timesheet__create_uid
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_day_setup__create_uid
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_location__create_uid
 msgid "Created by"
 msgstr "Dibuat oleh"
 
 #. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid ""
+"Created in the Presenly web app on the Integration page. Shown once at "
+"creation, and valid only for this tenant."
+msgstr ""
+"Dibuat di web Presenly pada menu Integrasi. Hanya ditampilkan sekali saat "
+"dibuat, dan hanya berlaku untuk tenant ini."
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__create_date
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__create_date
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_mode__create_date
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_recap__create_date
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_config__create_date
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_external_feature__create_date
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_holiday__create_date
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_leave__create_date
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_medical_certificate__create_date
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_overtime__create_date
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_project__create_date
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_pull_wizard__create_date
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift__create_date
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift_swap__create_date
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_subscription__create_date
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_sync_log__create_date
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_timesheet__create_date
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_day_setup__create_date
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_location__create_date
 msgid "Created on"
 msgstr "Dibuat pada"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__source_created_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__source_created_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_mode__source_created_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_holiday__source_created_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_leave__source_created_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_medical_certificate__source_created_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_mirror_mixin__source_created_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_overtime__source_created_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_project__source_created_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift__source_created_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift_swap__source_created_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_timesheet__source_created_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_day_setup__source_created_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_location__source_created_at
+msgid "Created on SaaS"
+msgstr "Dibuat di SaaS"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_config_form
+msgid "Credentials"
+msgstr "Kredensial"
 
 #. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_subscription__current_period_end
@@ -308,17 +505,31 @@ msgid "Current Period End"
 msgstr "Akhir Periode Berjalan"
 
 #. module: presenly_saas
-#: model:ir.actions.act_window,name:presenly_saas.action_presenly_saas_attendance_log
-#: model:ir.ui.menu,name:presenly_saas.menu_presenly_saas_attendance_log
-msgid "Data Presensi"
-msgstr "Data Presensi"
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_trend
+msgid "Daily Trend"
+msgstr "Tren Harian"
 
 #. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_subscription_form
-msgid "Data ini disalin dari profil perusahaan di sisi Presenly SaaS dan\n                                hanya bisa diubah di sana. Angka\n                                <strong>Jumlah Pegawai</strong> adalah yang dinyatakan klien,\n                                berbeda dari <strong>Kursi Terpakai</strong> yang memang dihitung\n"
-"                                dari akun aktif."
-msgstr "Data ini disalin dari profil perusahaan di sisi Presenly SaaS dan\n                                hanya bisa diubah di sana. Angka\n                                <strong>Jumlah Pegawai</strong> adalah yang dinyatakan klien,\n                                berbeda dari <strong>Kursi Terpakai</strong> yang memang dihitung\n"
-"                                dari akun aktif."
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_form
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_leave_form
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_timesheet_form
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_work_location_form
+msgid "Data Source"
+msgstr "Asal Data"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_holiday__date
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_timesheet__date
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_holiday_search
+msgid "Date"
+msgstr "Tanggal"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_overtime__day_type
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_overtime_search
+msgid "Day Type"
+msgstr "Jenis Hari"
 
 #. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_subscription__days_remaining
@@ -326,70 +537,73 @@ msgid "Days Remaining"
 msgstr "Sisa Hari"
 
 #. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_day_setup__dec
+msgid "Dec"
+msgstr "Des"
+
+#. module: presenly_saas
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_pull_wizard__month__12
+msgid "December"
+msgstr "Desember"
+
+#. module: presenly_saas
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_timesheet__hours
+msgid ""
+"Derived in Odoo from Start Time and End Time. The Presenly server sends no "
+"duration column, so this number is not an official server value. It is 0 "
+"when either time is missing, or when the shift ends before it starts (an "
+"overnight shift)."
+msgstr ""
+"Dihitung Odoo dari Jam Mulai dan Jam Selesai. Server Presenly tidak mengirim"
+" kolom durasi, jadi angka ini bukan nilai resmi server. Bernilai 0 bila "
+"salah satu jam kosong, atau bila shift selesai sebelum mulai (shift lewat "
+"tengah malam)."
+
+#. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_external_feature__description
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_project__description
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_timesheet__description
 msgid "Description"
 msgstr "Deskripsi"
 
 #. module: presenly_saas
-#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_pull_wizard__month__12
-msgid "Desember"
-msgstr "Desember"
-
-#. module: presenly_saas
 #: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
 #: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_config_form
-msgid "Diagnostik"
+msgid "Diagnostics"
 msgstr "Diagnostik"
 
 #. module: presenly_saas
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__source_created_at
-msgid "Dibuat di SaaS"
-msgstr "Dibuat di SaaS"
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
-msgid "Dibuat di web Presenly pada menu Integrasi. Hanya ditampilkan sekali saat dibuat, dan hanya berlaku untuk tenant ini."
-msgstr "Dibuat di web Presenly pada menu Integrasi. Hanya ditampilkan sekali saat dibuat, dan hanya berlaku untuk tenant ini."
-
-#. module: presenly_saas
-#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_external_feature__status__planned
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_external_feature_search
-msgid "Direncanakan"
-msgstr "Direncanakan"
-
-#. module: presenly_saas
-#. odoo-javascript
-#: code:addons/presenly_saas/static/src/banner/presenly_saas_banner.js:0
-msgid "Dismiss subscription notice"
-msgstr "Tutup pemberitahuan langganan"
-
-#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__display_name
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__display_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_mode__display_name
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_recap__display_name
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_config__display_name
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_external_feature__display_name
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_guard__display_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_holiday__display_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_leave__display_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_medical_certificate__display_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_mirror_mixin__display_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_overtime__display_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_project__display_name
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_pull_wizard__display_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift__display_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift_swap__display_name
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_subscription__display_name
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_sync_log__display_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_timesheet__display_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_day_setup__display_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_location__display_name
 #: model:ir.model.fields,field_description:presenly_saas.field_res_config_settings__display_name
 msgid "Display Name"
 msgstr "Nama Tampilan"
 
 #. module: presenly_saas
 #: model:ir.model.fields,help:presenly_saas.field_presenly_saas_config__show_banner
-msgid "Display the subscription banner in the backend when the status needs attention."
+msgid ""
+"Display the subscription banner in the backend when the status needs "
+"attention."
 msgstr "Tampilkan banner langganan di backend saat status perlu perhatian."
-
-#. module: presenly_saas
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__source_updated_at
-msgid "Diubah di SaaS"
-msgstr "Diubah di SaaS"
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
-msgid "Diulang untuk galat jaringan dan respons 5xx. Kegagalan autentikasi tidak pernah diulang."
-msgstr "Diulang untuk galat jaringan dan respons 5xx. Kegagalan autentikasi tidak pernah diulang."
 
 #. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_sync_log__duration_ms
@@ -397,9 +611,50 @@ msgid "Duration (ms)"
 msgstr "Durasi (ms)"
 
 #. module: presenly_saas
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_sync_log__endpoint
-msgid "Endpoint"
-msgstr "Endpoint"
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__employee_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__employee_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_recap__employee_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_leave__employee_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_medical_certificate__employee_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_overtime__employee_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_timesheet__employee_name
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_correction_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_recap_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_leave_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_medical_certificate_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_overtime_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_timesheet_search
+msgid "Employee"
+msgstr "Karyawan"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__user_id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_recap__user_id
+msgid "Employee ID (SaaS)"
+msgstr "ID Pegawai (SaaS)"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid "Enable Connection"
+msgstr "Aktifkan Koneksi"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_pull_wizard__month
+msgid "End Month"
+msgstr "Bulan Akhir"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_overtime__end_time
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift__end_time
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_timesheet__end_time
+msgid "End Time"
+msgstr "Jam Selesai"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_pull_wizard__year
+msgid "End Year"
+msgstr "Tahun Akhir"
 
 #. module: presenly_saas
 #: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_config__guard_mode__enforce
@@ -413,8 +668,14 @@ msgid "Enforcement"
 msgstr "Penegakan"
 
 #. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid "Enforcement Mode"
+msgstr "Mode Penegakan"
+
+#. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_config__environment
 #: model:ir.model.fields,field_description:presenly_saas.field_res_config_settings__presenly_saas_environment
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
 msgid "Environment"
 msgstr "Lingkungan"
 
@@ -422,6 +683,15 @@ msgstr "Lingkungan"
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_sync_log__error_message
 msgid "Error Message"
 msgstr "Pesan Galat"
+
+#. module: presenly_saas
+#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_sync_log
+msgid ""
+"Every call to the Presenly SaaS server is recorded here along with its result,\n"
+"                so a failed refresh can be traced without reading the server log."
+msgstr ""
+"Setiap panggilan ke server Presenly SaaS dicatat di sini beserta hasilnya,\n"
+"                sehingga kegagalan penyegaran bisa ditelusuri tanpa membaca log server."
 
 #. module: presenly_saas
 #: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_subscription__status__expired
@@ -436,14 +706,14 @@ msgid "Failed"
 msgstr "Gagal"
 
 #. module: presenly_saas
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_external_feature__code
-msgid "Feature"
-msgstr "Fitur"
-
-#. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_subscription__feature_count
 msgid "Feature Count"
 msgstr "Jumlah Fitur"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_subscription_form
+msgid "Feature Details"
+msgstr "Rincian Fitur"
 
 #. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_subscription__features_summary
@@ -451,8 +721,13 @@ msgid "Features"
 msgstr "Fitur"
 
 #. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_subscription_form
+msgid "Features Not Included"
+msgstr "Fitur Tidak Termasuk"
+
+#. module: presenly_saas
 #: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_pull_wizard__month__2
-msgid "Februari"
+msgid "February"
 msgstr "Februari"
 
 #. module: presenly_saas
@@ -463,34 +738,22 @@ msgid "Fetched At"
 msgstr "Diambil Pada"
 
 #. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_external_feature_list
-msgid "Fitur"
-msgstr "Fitur"
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_leave__end_date
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_medical_certificate__end_date
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_attendance_log__status__closed
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_search
+msgid "Finished"
+msgstr "Selesai"
 
 #. module: presenly_saas
-#: model:ir.actions.act_window,name:presenly_saas.action_presenly_saas_external_feature
-#: model:ir.ui.menu,name:presenly_saas.menu_presenly_saas_external_feature
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_external_feature_list
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_external_feature_search
-msgid "Fitur Presenly"
-msgstr "Fitur Presenly"
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_work_location_form
+msgid "Geofence"
+msgstr "Batas Area"
 
 #. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_subscription_form
-msgid "Fitur Tidak Termasuk"
-msgstr "Fitur Tidak Termasuk"
-
-#. module: presenly_saas
-#. odoo-python
-#: code:addons/presenly_saas/wizard/presenly_saas_pull_wizard.py:0
-msgid "Gagal menarik data presensi"
-msgstr "Gagal menarik data presensi"
-
-#. module: presenly_saas
-#. odoo-python
-#: code:addons/presenly_saas/models/presenly_saas_config.py:0
-msgid "Gagal menarik katalog fitur"
-msgstr "Gagal menarik katalog fitur"
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid "Grace Period"
+msgstr "Masa Tenggang"
 
 #. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_config__grace_days
@@ -504,88 +767,80 @@ msgid "Grace Until"
 msgstr "Tenggang Hingga"
 
 #. module: presenly_saas
-#. odoo-python
-#: code:addons/presenly_saas/models/presenly_saas_config.py:0
-msgid "Grace period cannot be negative."
-msgstr "Masa tenggang tidak boleh negatif."
-
-#. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_config__guard_mode
 #: model:ir.model.fields,field_description:presenly_saas.field_res_config_settings__presenly_saas_guard_mode
 msgid "Guard Mode"
 msgstr "Mode Penegakan"
 
 #. module: presenly_saas
-#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_attendance_log
-msgid "Gunakan tombol <b>Tarik Data Presensi</b> untuk menarik log dan rekap\n"
-"                dari server Presenly SaaS untuk satu bulan."
-msgstr "Gunakan tombol <b>Tarik Data Presensi</b> untuk menarik log dan rekap\n"
-"                dari server Presenly SaaS untuk satu bulan."
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_recap_search
+msgid "Has Absence"
+msgstr "Ada Alpha"
 
 #. module: presenly_saas
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_external_feature__web_page
-msgid "Halaman Web"
-msgstr "Halaman Web"
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_recap_search
+msgid "Has Lateness"
+msgstr "Ada Keterlambatan"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_project__has_timesheet
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_project_search
+msgid "Has Timesheet"
+msgstr "Ada Timesheet"
+
+#. module: presenly_saas
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_attendance_log__check_in_hour
+msgid ""
+"Hour of day the employee checked in, as a decimal, e.g. 7.5 for 07:30. "
+"Averaged in pivot and graph views."
+msgstr ""
+"Jam berapa pegawai masuk, dalam desimal, misalnya 7,5 untuk 07:30. Dirata-"
+"ratakan di pivot dan grafik."
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_timesheet__hours
+msgid "Hours"
+msgstr "Jam"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_pull_wizard__months_back
+msgid "How Many Months Back"
+msgstr "Berapa Bulan ke Belakang"
 
 #. module: presenly_saas
 #: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
-msgid "Hanya penanda, agar koneksi sandbox tidak tertukar dengan produksi saat penanganan masalah."
-msgstr "Hanya penanda, agar koneksi sandbox tidak tertukar dengan produksi saat penanganan masalah."
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
-msgid "Hasil Pemeriksaan Terakhir"
-msgstr "Hasil Pemeriksaan Terakhir"
+msgid ""
+"How long a cached status stays acceptable after the last successful sync."
+msgstr ""
+"Berapa lama status cache masih dianggap wajar setelah sinkronisasi terakhir "
+"yang berhasil."
 
 #. module: presenly_saas
 #: model:ir.model.fields,help:presenly_saas.field_presenly_saas_config__grace_days
-msgid "How long a cached status stays acceptable after the last successful sync. A network failure never blocks on its own."
-msgstr "Berapa lama status cache masih dianggap wajar setelah sinkronisasi terakhir yang berhasil. Kegagalan jaringan tidak pernah memblokir dengan sendirinya."
+msgid ""
+"How long a cached status stays acceptable after the last successful sync. A "
+"network failure never blocks on its own."
+msgstr ""
+"Berapa lama status cache masih dianggap wajar setelah sinkronisasi terakhir "
+"yang berhasil. Kegagalan jaringan tidak pernah memblokir dengan sendirinya."
+
+#. module: presenly_saas
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_config__pull_months
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid ""
+"How many months the daily pull covers, counting back from the current month."
+" 2 means the current month and the one before it, so a shift that ends after"
+" midnight, or a correction filed the next day, is still captured."
+msgstr ""
+"Berapa bulan yang dicakup penarikan harian, dihitung mundur dari bulan "
+"berjalan. 2 berarti bulan ini dan bulan sebelumnya, supaya shift yang "
+"berakhir lewat tengah malam, atau koreksi yang diajukan besoknya, tetap ikut"
+" tertarik."
 
 #. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_sync_log__http_status
 msgid "Http Status"
 msgstr "Status HTTP"
-
-#. module: presenly_saas
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__id
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_recap__id
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_config__id
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_external_feature__id
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_guard__id
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_pull_wizard__id
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_subscription__id
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_sync_log__id
-#: model:ir.model.fields,field_description:presenly_saas.field_res_config_settings__id
-msgid "ID"
-msgstr "ID"
-
-#. module: presenly_saas
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__location_id
-msgid "ID Lokasi (SaaS)"
-msgstr "ID Lokasi (SaaS)"
-
-#. module: presenly_saas
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__user_id
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_recap__user_id
-msgid "ID Pegawai (SaaS)"
-msgstr "ID Pegawai (SaaS)"
-
-#. module: presenly_saas
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__external_id
-msgid "ID Sesi"
-msgstr "ID Sesi"
-
-#. module: presenly_saas
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__shift_id
-msgid "ID Shift (SaaS)"
-msgstr "ID Shift (SaaS)"
-
-#. module: presenly_saas
-#. odoo-python
-#: code:addons/presenly_saas/models/presenly_saas_subscription.py:0
-msgid "Included"
-msgstr "Termasuk"
 
 #. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_subscription__included_feature_codes
@@ -598,105 +853,59 @@ msgid "Included Feature Count"
 msgstr "Jumlah Fitur Termasuk"
 
 #. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__tenant_client_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_project__internal_company_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_location__internal_company_name
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_project_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_work_location_search
+msgid "Internal Company"
+msgstr "Perusahaan Internal"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_project__internal_company_id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_location__internal_company_id
+msgid "Internal Company ID"
+msgstr "ID Perusahaan Internal"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_location__is_active
+msgid "Is Active"
+msgstr "Aktif"
+
+#. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_subscription__is_trial
 msgid "Is Trial"
 msgstr "Sedang Masa Uji"
 
 #. module: presenly_saas
 #: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_pull_wizard__month__1
-msgid "Januari"
+msgid "January"
 msgstr "Januari"
 
 #. module: presenly_saas
 #: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_pull_wizard__month__7
-msgid "Juli"
+msgid "July"
 msgstr "Juli"
 
 #. module: presenly_saas
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_recap__absent_count
-msgid "Jumlah Alpha"
-msgstr "Jumlah Alpha"
-
-#. module: presenly_saas
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_recap__attendance_count
-msgid "Jumlah Kehadiran"
-msgstr "Jumlah Kehadiran"
-
-#. module: presenly_saas
 #: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_pull_wizard__month__6
-msgid "Juni"
+msgid "June"
 msgstr "Juni"
 
 #. module: presenly_saas
-#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_external_feature
-msgid "Katalog fitur belum ditarik"
-msgstr "Katalog fitur belum ditarik"
-
-#. module: presenly_saas
-#. odoo-python
-#: code:addons/presenly_saas/models/presenly_saas_config.py:0
-msgid "Katalog fitur diperbarui"
-msgstr "Katalog fitur diperbarui"
-
-#. module: presenly_saas
-#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_external_feature
-msgid "Katalog ini berisi fitur yang disediakan server Presenly SaaS beserta\n"
-"                statusnya. Gunakan tombol <b>Segarkan Katalog</b> untuk menariknya."
-msgstr "Katalog ini berisi fitur yang disediakan server Presenly SaaS beserta\n"
-"                statusnya. Gunakan tombol <b>Segarkan Katalog</b> untuk menariknya."
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
-msgid "Keandalan"
-msgstr "Keandalan"
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_config_form
-msgid "Kebijakan"
-msgstr "Kebijakan"
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
-msgid "Kode Tenant"
-msgstr "Kode Tenant"
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_config_form
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_pull_wizard_form
-msgid "Koneksi"
-msgstr "Koneksi"
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_subscription_form
-msgid "Kontak"
-msgstr "Kontak"
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_config_form
-msgid "Kredensial"
-msgstr "Kredensial"
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
-msgid "Kunci API"
-msgstr "Kunci API"
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_subscription_form
-msgid "Kursi"
-msgstr "Kursi"
-
-#. module: presenly_saas
 #: model:ir.model.fields,help:presenly_saas.field_presenly_saas_config__environment
-msgid "Label only. It is recorded so a sandbox connection is never mistaken for a production one during support."
-msgstr "Hanya penanda. Dicatat agar koneksi sandbox tidak pernah tertukar dengan produksi saat penanganan masalah."
+msgid ""
+"Label only. It is recorded so a sandbox connection is never mistaken for a "
+"production one during support."
+msgstr ""
+"Hanya penanda. Dicatat agar koneksi sandbox tidak pernah tertukar dengan "
+"produksi saat penanganan masalah."
 
 #. module: presenly_saas
 #: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_subscription_form
-msgid "Langganan"
-msgstr "Langganan"
+msgid "Last"
+msgstr "Terakhir"
 
 #. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_config__last_check_at
@@ -708,6 +917,7 @@ msgstr "Pemeriksaan Terakhir"
 #. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_config__last_check_message
 #: model:ir.model.fields,field_description:presenly_saas.field_res_config_settings__presenly_saas_last_check_message
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
 msgid "Last Check Result"
 msgstr "Hasil Pemeriksaan Terakhir"
 
@@ -718,36 +928,123 @@ msgid "Last Check Status"
 msgstr "Status Pemeriksaan Terakhir"
 
 #. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__fetched_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_mode__fetched_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_holiday__fetched_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_leave__fetched_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_medical_certificate__fetched_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_mirror_mixin__fetched_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_overtime__fetched_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_project__fetched_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift__fetched_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift_swap__fetched_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_timesheet__fetched_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_day_setup__fetched_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_location__fetched_at
+msgid "Last Pulled"
+msgstr "Terakhir Ditarik"
+
+#. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_subscription__last_sync_at
 msgid "Last Sync At"
 msgstr "Sinkronisasi Terakhir"
 
 #. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__write_uid
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__write_uid
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_mode__write_uid
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_recap__write_uid
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_config__write_uid
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_external_feature__write_uid
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_holiday__write_uid
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_leave__write_uid
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_medical_certificate__write_uid
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_overtime__write_uid
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_project__write_uid
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_pull_wizard__write_uid
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift__write_uid
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift_swap__write_uid
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_subscription__write_uid
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_sync_log__write_uid
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_timesheet__write_uid
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_day_setup__write_uid
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_location__write_uid
 msgid "Last Updated by"
 msgstr "Terakhir Diubah oleh"
 
 #. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__write_date
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__write_date
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_mode__write_date
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_recap__write_date
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_config__write_date
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_external_feature__write_date
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_holiday__write_date
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_leave__write_date
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_medical_certificate__write_date
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_overtime__write_date
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_project__write_date
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_pull_wizard__write_date
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift__write_date
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift_swap__write_date
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_subscription__write_date
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_sync_log__write_date
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_timesheet__write_date
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_day_setup__write_date
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_location__write_date
 msgid "Last Updated on"
 msgstr "Terakhir Diubah pada"
 
 #. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
-msgid "Lingkungan"
-msgstr "Lingkungan"
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__is_late
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_list
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_search
+msgid "Late"
+msgstr "Terlambat"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__late_minutes
+msgid "Late (minutes)"
+msgstr "Terlambat (menit)"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__late_session_count
+msgid "Late Sessions"
+msgstr "Sesi Terlambat"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift__late_index
+msgid "Lateness Index"
+msgstr "Indeks Keterlambatan"
+
+#. module: presenly_saas
+#: model:ir.ui.menu,name:presenly_saas.menu_presenly_saas_leave
+msgid "Leave"
+msgstr "Cuti"
+
+#. module: presenly_saas
+#: model:ir.actions.act_window,name:presenly_saas.action_presenly_saas_leave
+msgid "Leave Requests"
+msgstr "Pengajuan Cuti"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_leave__leave_type_name
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_leave_search
+msgid "Leave Type"
+msgstr "Jenis Cuti"
+
+#. module: presenly_saas
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_attendance_log__session_hours
+msgid ""
+"Length of the session, from check-in to check-out. Counted as 0 when either "
+"time is missing, when the shift ends before it starts (an overnight shift), "
+"or when the two are more than 24 hours apart — that last case means a check-"
+"out was missed, and counting it would inflate every total it appears in."
+msgstr ""
+"Lama sesi, dari jam masuk sampai jam keluar. Bernilai 0 bila salah satu jam "
+"kosong, bila shift selesai sebelum mulai (shift lewat tengah malam), atau "
+"bila keduanya berjarak lebih dari 24 jam — yang terakhir berarti jam keluar "
+"terlewat, dan menjumlahkannya akan menggelembungkan total."
 
 #. module: presenly_saas
 #: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_subscription__state_source__live
@@ -755,35 +1052,28 @@ msgid "Live"
 msgstr "Terkini"
 
 #. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_list
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_search
-msgid "Log Presensi"
-msgstr "Log Presensi"
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_pull_wizard_form
-msgid "Log presensi dan rekap untuk periode ini akan <b>menggantikan</b> data\n"
-"                    yang sudah ada pada bulan yang sama. Bulan lain tidak tersentuh."
-msgstr "Log presensi dan rekap untuk periode ini akan <b>menggantikan</b> data\n"
-"                    yang sudah ada pada bulan yang sama. Bulan lain tidak tersentuh."
-
-#. module: presenly_saas
-#. odoo-python
-#: code:addons/presenly_saas/models/presenly_saas_config.py:0
-msgid "Log presensi: %(fetched)s dari %(total)s baris terambil (batas %(pages)s halaman)."
-msgstr "Log presensi: %(fetched)s dari %(total)s baris terambil (batas %(pages)s halaman)."
-
-#. module: presenly_saas
-#. odoo-python
-#: code:addons/presenly_saas/wizard/presenly_saas_pull_wizard.py:0
-msgid "Log presensi: %(logs)s baris. Rekap: %(recap)s baris."
-msgstr "Log presensi: %(logs)s baris. Rekap: %(recap)s baris."
-
-#. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__location_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_holiday__location_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift__location_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_day_setup__location_name
 #: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_search
-msgid "Lokasi"
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_holiday_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_shift_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_work_location_form
+msgid "Location"
 msgstr "Lokasi"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_holiday__location_id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift__location_id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_day_setup__location_id
+msgid "Location ID"
+msgstr "ID Lokasi"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__location_id
+msgid "Location ID (SaaS)"
+msgstr "ID Lokasi (SaaS)"
 
 #. module: presenly_saas
 #: model:res.groups,name:presenly_saas.group_presenly_saas_manager
@@ -791,24 +1081,51 @@ msgid "Manager"
 msgstr "Manajer"
 
 #. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__manager_approver_name
+msgid "Manager Approver"
+msgstr "Penyetuju Manajer"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_timesheet__comment
+msgid "Manager Comment"
+msgstr "Komentar Manajer"
+
+#. module: presenly_saas
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_timesheet__rating
+msgid "Manager rating, 1.0 to 5.0."
+msgstr "Penilaian manajer, 1,0 sampai 5,0."
+
+#. module: presenly_saas
 #: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_pull_wizard__month__3
-msgid "Maret"
+msgid "March"
 msgstr "Maret"
 
 #. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_subscription_form
-msgid "Masa Berlaku"
-msgstr "Masa Berlaku"
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
-msgid "Masa Tenggang"
-msgstr "Masa Tenggang"
-
-#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_day_setup__may
 #: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_pull_wizard__month__5
-msgid "Mei"
+msgid "May"
 msgstr "Mei"
+
+#. module: presenly_saas
+#: model:ir.actions.act_window,name:presenly_saas.action_presenly_saas_medical_certificate
+msgid "Medical Certificate Requests"
+msgstr "Surat Keterangan Dokter"
+
+#. module: presenly_saas
+#: model:ir.ui.menu,name:presenly_saas.menu_presenly_saas_medical_certificate
+msgid "Medical Certificates"
+msgstr "Surat Dokter"
+
+#. module: presenly_saas
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_config__retention_months
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid ""
+"Mirrored period data older than this is removed by the weekly cleanup. 0 "
+"keeps everything. Reference data is never removed: it has no period."
+msgstr ""
+"Data cermin berperiode yang lebih tua dari ini dihapus oleh pembersihan "
+"mingguan. 0 menyimpan semuanya. Data referensi tidak pernah dihapus: ia "
+"tidak punya periode."
 
 #. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_subscription__missing_feature_codes
@@ -816,58 +1133,143 @@ msgid "Missing Feature Codes"
 msgstr "Kode Fitur Tidak Termasuk"
 
 #. module: presenly_saas
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__check_out_mode_name
-msgid "Mode Keluar"
-msgstr "Mode Keluar"
+#: model:ir.ui.menu,name:presenly_saas.menu_presenly_saas_monitoring
+msgid "Monitoring"
+msgstr "Pemantauan"
 
 #. module: presenly_saas
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__check_in_mode_name
-msgid "Mode Masuk"
-msgstr "Mode Masuk"
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
-msgid "Mode Penegakan"
-msgstr "Mode Penegakan"
+#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_monitoring
+msgid ""
+"Monitoring is computed from the mirrored attendance log. Pull the data first\n"
+"                through <b>Attendance Data → Pull Period Data</b>, then choose the\n"
+"                month range to fetch."
+msgstr ""
+"Monitoring dihitung dari cermin log presensi. Tarik datanya lebih dulu\n"
+"                lewat <b>Data Presensi → Tarik Data Periode</b>, lalu pilih rentang\n"
+"                bulan yang ingin ditarik."
 
 #. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_recap__month
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_pull_wizard__month
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_correction_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_leave_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_medical_certificate_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_overtime_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_shift_swap_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_timesheet_search
 msgid "Month"
 msgstr "Bulan"
 
 #. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_config__pull_months
+#: model:ir.model.fields,field_description:presenly_saas.field_res_config_settings__presenly_saas_pull_months
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid "Months Pulled by Cron"
+msgstr "Bulan yang Ditarik Cron"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_mode__name
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_config__name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_holiday__name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_location__name
 msgid "Name"
 msgstr "Nama"
 
 #. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
-msgid "Nonaktif: status hanya terlihat di dashboard. Peringatan saja: ditambah banner di backend. Wajibkan: guard menaikkan galat untuk modul yang memanggilnya."
-msgstr "Nonaktif: status hanya terlihat di dashboard. Peringatan saja: ditambah banner di backend. Wajibkan: guard menaikkan galat untuk modul yang memanggilnya."
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_project_search
+msgid "No Timesheet"
+msgstr "Tidak Ada Timesheet"
 
 #. module: presenly_saas
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__employee_nopeg
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_recap__employee_nopeg
-msgid "Nopeg"
-msgstr "Nopeg"
+#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_attendance_correction
+msgid "No attendance corrections mirrored yet"
+msgstr "Belum ada koreksi presensi tercermin"
+
+#. module: presenly_saas
+#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_attendance_log
+msgid "No attendance logs yet"
+msgstr "Belum ada log presensi"
+
+#. module: presenly_saas
+#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_attendance_recap
+msgid "No attendance recaps yet"
+msgstr "Belum ada rekap presensi"
 
 #. module: presenly_saas
 #. odoo-javascript
-#: code:addons/presenly_saas/static/src/banner/presenly_saas_banner.js:0
-msgid "Not confirmed by the Presenly SaaS server since %s. Last reported status: %s."
-msgstr "Belum dikonfirmasi server Presenly SaaS sejak %s. Status terakhir yang dilaporkan: %s."
+#: code:addons/presenly_saas/static/src/map/presenly_map_field.xml:0
+msgid "No coordinates were recorded for this entry."
+msgstr "Tidak ada koordinat yang tercatat untuk entri ini."
 
 #. module: presenly_saas
-#. odoo-python
-#: code:addons/presenly_saas/models/presenly_saas_subscription.py:0
-msgid "Not included"
-msgstr "Tidak Termasuk"
+#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_leave
+msgid "No leave requests mirrored yet"
+msgstr "Belum ada pengajuan cuti tercermin"
 
 #. module: presenly_saas
-#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_pull_wizard__month__11
-msgid "November"
-msgstr "November"
+#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_medical_certificate
+msgid "No medical certificates mirrored yet"
+msgstr "Belum ada surat dokter tercermin"
+
+#. module: presenly_saas
+#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_overtime
+msgid "No overtime requests mirrored yet"
+msgstr "Belum ada pengajuan lembur tercermin"
+
+#. module: presenly_saas
+#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_project
+msgid "No projects mirrored yet"
+msgstr "Belum ada proyek tercermin"
+
+#. module: presenly_saas
+#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_shift_swap
+msgid "No shift swaps mirrored yet"
+msgstr "Belum ada tukar shift tercermin"
+
+#. module: presenly_saas
+#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_sync_log
+msgid "No sync entries yet"
+msgstr "Belum ada entri sinkronisasi"
+
+#. module: presenly_saas
+#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_timesheet
+msgid "No timesheets mirrored yet"
+msgstr "Belum ada timesheet tercermin"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_timesheet_search
+msgid "Not Rated Yet"
+msgstr "Belum Dinilai"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid "Not checked yet. Use Test Connection."
+msgstr "Belum ada pemeriksaan. Gunakan Uji Koneksi."
+
+#. module: presenly_saas
+#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_monitoring
+msgid "Nothing to monitor yet"
+msgstr "Belum ada data untuk dimonitor"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_leave__total_days
+msgid "Number of Days"
+msgstr "Jumlah Hari"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_overtime__total_hours
+msgid "Number of Hours"
+msgstr "Jumlah Jam"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_day_setup__oct
+msgid "Oct"
+msgstr "Okt"
+
+#. module: presenly_saas
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_pull_wizard__month__10
+msgid "October"
+msgstr "Oktober"
 
 #. module: presenly_saas
 #: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_config__guard_mode__off
@@ -877,21 +1279,29 @@ msgstr "Nonaktif"
 
 #. module: presenly_saas
 #: model:ir.model.fields,help:presenly_saas.field_presenly_saas_config__guard_mode
-msgid "Off: status is visible on the dashboard only.\nWarn only: the dashboard plus a warning banner in the backend.\n"
+msgid ""
+"Off: status is visible on the dashboard only.\n"
+"Warn only: the dashboard plus a warning banner in the backend.\n"
 "Enforce: the banner plus presenly.saas.guard.check() raising for the modules that call it."
-msgstr "Nonaktif: status hanya terlihat di dashboard.\nPeringatan saja: dashboard ditambah banner peringatan di backend.\n"
+msgstr ""
+"Nonaktif: status hanya terlihat di dashboard.\n"
+"Peringatan saja: dashboard ditambah banner peringatan di backend.\n"
 "Wajibkan: banner ditambah presenly.saas.guard.check() yang menaikkan galat untuk modul yang memanggilnya."
 
 #. module: presenly_saas
-#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_pull_wizard__month__10
-msgid "Oktober"
-msgstr "Oktober"
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid ""
+"Off: the status is only shown on the dashboard. Warn only: adds a backend "
+"banner. Enforce: the guard raises an error for calling modules."
+msgstr ""
+"Nonaktif: status hanya terlihat di dashboard. Peringatan saja: ditambah "
+"banner di backend. Wajibkan: guard menaikkan galat untuk modul yang "
+"memanggilnya."
 
 #. module: presenly_saas
-#. odoo-python
-#: code:addons/presenly_saas/models/presenly_saas_config.py:0
-msgid "Only Presenly SaaS managers can perform this action."
-msgstr "Hanya manajer Presenly SaaS yang boleh menjalankan aksi ini."
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_search
+msgid "On Time"
+msgstr "Tepat Waktu"
 
 #. module: presenly_saas
 #: model:ir.model.constraint,message:presenly_saas.constraint_presenly_saas_config_company_uniq
@@ -904,100 +1314,96 @@ msgid "Only one subscription snapshot is stored per company."
 msgstr "Hanya satu snapshot langganan yang disimpan per perusahaan."
 
 #. module: presenly_saas
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_attendance_log__status__open
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_search
+msgid "Open"
+msgstr "Terbuka"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid "Open Subscription"
+msgstr "Buka Langganan"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid "Open Sync Log"
+msgstr "Buka Log Sinkronisasi"
+
+#. module: presenly_saas
 #. odoo-javascript
-#: code:addons/presenly_saas/static/src/banner/presenly_saas_banner.js:0
-msgid "Open subscription"
-msgstr "Buka langganan"
+#: code:addons/presenly_saas/static/src/map/presenly_map_field.xml:0
+msgid "Open in OpenStreetMap"
+msgstr "Buka di OpenStreetMap"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid ""
+"Origin of the Presenly SaaS server, for example "
+"https://presensi.example.com. The /api suffix is optional."
+msgstr ""
+"Alamat server Presenly SaaS, misalnya https://presensi.example.com. Akhiran "
+"/api opsional."
 
 #. module: presenly_saas
 #: model:ir.model.fields,help:presenly_saas.field_presenly_saas_config__base_url
-msgid "Origin of the Presenly SaaS server, for example https://presensi.konsultasg.com. The /api suffix is optional."
-msgstr "Alamat server Presenly SaaS, misalnya https://presensi.konsultasg.com. Akhiran /api bersifat opsional."
+msgid ""
+"Origin of the Presenly SaaS server, for example "
+"https://presensi.konsultasg.com. The /api suffix is optional."
+msgstr ""
+"Alamat server Presenly SaaS, misalnya https://presensi.konsultasg.com. "
+"Akhiran /api bersifat opsional."
 
 #. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_subscription_form
-msgid "Paket"
-msgstr "Paket"
+#: model:ir.ui.menu,name:presenly_saas.menu_presenly_saas_overtime
+msgid "Overtime"
+msgstr "Lembur"
 
 #. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_subscription_form
-msgid "Paket & Fitur"
-msgstr "Paket & Fitur"
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_overtime__overtime_date
+msgid "Overtime Date"
+msgstr "Tanggal Lembur"
 
 #. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_subscription_form
-msgid "Paket ini belum terdaftar di katalog paket sisi SaaS, jadi\n                                seluruh fitur ditampilkan sebagai termasuk. Nama dan batasnya\n"
-"                                perlu ditinjau di sana."
-msgstr "Paket ini belum terdaftar di katalog paket sisi SaaS, jadi\n                                seluruh fitur ditampilkan sebagai termasuk. Nama dan batasnya\n"
-"                                perlu ditinjau di sana."
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_overtime__overtime_pay
+msgid "Overtime Pay"
+msgstr "Upah Lembur"
 
 #. module: presenly_saas
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_external_feature__path
-msgid "Path"
-msgstr "Path"
+#: model:ir.actions.act_window,name:presenly_saas.action_presenly_saas_overtime
+msgid "Overtime Requests"
+msgstr "Pengajuan Lembur"
 
 #. module: presenly_saas
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__raw_payload
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_recap__raw_payload
-msgid "Payload Mentah"
-msgstr "Payload Mentah"
-
-#. module: presenly_saas
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__employee_name
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_recap__employee_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__is_overtime
 #: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_search
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_recap_search
-msgid "Pegawai"
-msgstr "Pegawai"
+msgid "Overtime Session"
+msgstr "Sesi Lembur"
 
 #. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_config_form
-msgid "Pemeriksaan yang gagal tidak pernah mengubah status langganan\n"
-"                                yang tersimpan. Hanya jawaban nyata dari server SaaS yang bisa."
-msgstr "Pemeriksaan yang gagal tidak pernah mengubah status langganan\n"
-"                                yang tersimpan. Hanya jawaban nyata dari server SaaS yang bisa."
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
-msgid "Penanda tenant di sisi SaaS, dikirim sebagai header X-Tenant-ID. Contoh: pelni."
-msgstr "Penanda tenant di sisi SaaS, dikirim sebagai header X-Tenant-ID. Contoh: pelni."
-
-#. module: presenly_saas
-#. odoo-python
-#: code:addons/presenly_saas/wizard/presenly_saas_pull_wizard.py:0
-msgid "Penarikan selesai untuk %s"
-msgstr "Penarikan selesai untuk %s"
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_subscription_form
-msgid "Pengaturan"
-msgstr "Pengaturan"
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
-msgid "Percobaan Ulang"
-msgstr "Percobaan Ulang"
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_leave__status__pending
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_correction_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_leave_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_overtime_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_shift_swap_search
+msgid "Pending"
+msgstr "Menunggu"
 
 #. module: presenly_saas
 #: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_recap_search
 #: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_pull_wizard_form
-msgid "Periode"
+msgid "Period"
 msgstr "Periode"
 
 #. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_subscription_form
-msgid "Perusahaan"
-msgstr "Perusahaan"
-
-#. module: presenly_saas
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__tenant_client_name
-msgid "Perusahaan Internal"
-msgstr "Perusahaan Internal"
-
-#. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_subscription__plan_type
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_subscription_form
 msgid "Plan"
 msgstr "Paket"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_subscription_form
+msgid "Plan & Features"
+msgstr "Paket & Fitur"
 
 #. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_subscription__plan_features
@@ -1015,9 +1421,25 @@ msgid "Plan Registered"
 msgstr "Paket Terdaftar"
 
 #. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_config_form
+msgid "Policy"
+msgstr "Kebijakan"
+
+#. module: presenly_saas
+#: model:ir.model,name:presenly_saas.model_presenly_saas_attendance_correction
+msgid "Presenly Attendance Correction (mirror)"
+msgstr "Presenly Koreksi Presensi (cermin)"
+
+#. module: presenly_saas
 #: model:ir.model,name:presenly_saas.model_presenly_saas_attendance_log
 msgid "Presenly Attendance Log (mirror)"
 msgstr "Log Presensi Presenly (cermin)"
+
+#. module: presenly_saas
+#: model:ir.model,name:presenly_saas.model_presenly_saas_attendance_mode
+msgid "Presenly Attendance Mode (mirror)"
+msgstr "Presenly Attendance Mode (cermin)"
 
 #. module: presenly_saas
 #: model:ir.model,name:presenly_saas.model_presenly_saas_attendance_recap
@@ -1025,21 +1447,29 @@ msgid "Presenly Attendance Recap (mirror)"
 msgstr "Rekap Presensi Presenly (cermin)"
 
 #. module: presenly_saas
-#: model:ir.model,name:presenly_saas.model_presenly_saas_external_feature
-msgid "Presenly External Feature Catalog"
-msgstr "Katalog Fitur Eksternal Presenly"
+#: model:ir.model,name:presenly_saas.model_presenly_saas_holiday
+msgid "Presenly Holiday (mirror)"
+msgstr "Presenly Holiday (cermin)"
 
 #. module: presenly_saas
-#. odoo-javascript
-#. odoo-python
-#: code:addons/presenly_saas/models/presenly_saas_config.py:0
-#: code:addons/presenly_saas/static/src/banner/presenly_saas_banner.xml:0
-#: model:ir.ui.menu,name:presenly_saas.menu_presenly_saas_root
-#: model:res.groups.privilege,name:presenly_saas.res_groups_privilege_presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_config_form
-msgid "Presenly SaaS"
-msgstr "Presenly SaaS"
+#: model:ir.model,name:presenly_saas.model_presenly_saas_leave
+msgid "Presenly Leave Request (mirror)"
+msgstr "Presenly Pengajuan Cuti (cermin)"
+
+#. module: presenly_saas
+#: model:ir.model,name:presenly_saas.model_presenly_saas_medical_certificate
+msgid "Presenly Medical Certificate (mirror)"
+msgstr "Presenly Surat Keterangan Dokter (cermin)"
+
+#. module: presenly_saas
+#: model:ir.model,name:presenly_saas.model_presenly_saas_overtime
+msgid "Presenly Overtime Request (mirror)"
+msgstr "Presenly Pengajuan Lembur (cermin)"
+
+#. module: presenly_saas
+#: model:ir.model,name:presenly_saas.model_presenly_saas_project
+msgid "Presenly Project (mirror)"
+msgstr "Presenly Proyek (cermin)"
 
 #. module: presenly_saas
 #. odoo-python
@@ -1049,16 +1479,6 @@ msgstr "Presenly SaaS"
 #: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_config_form
 msgid "Presenly SaaS Connection"
 msgstr "Koneksi Presenly SaaS"
-
-#. module: presenly_saas
-#: model:ir.model,name:presenly_saas.model_presenly_saas_guard
-msgid "Presenly SaaS Guard"
-msgstr "Presenly SaaS Guard"
-
-#. module: presenly_saas
-#: model:ir.model,name:presenly_saas.model_presenly_saas_pull_wizard
-msgid "Presenly SaaS Pull Attendance"
-msgstr "Penarikan Presensi Presenly SaaS"
 
 #. module: presenly_saas
 #. odoo-python
@@ -1074,15 +1494,44 @@ msgid "Presenly SaaS Sync Log"
 msgstr "Log Sinkronisasi Presenly SaaS"
 
 #. module: presenly_saas
-#. odoo-python
-#: code:addons/presenly_saas/models/presenly_saas_guard.py:0
-msgid "Presenly SaaS subscription is not active (status: %(status)s). Renew the subscription, or ask a Presenly SaaS manager to review the connection settings."
-msgstr "Langganan Presenly SaaS tidak aktif (status: %(status)s). Perpanjang langganan, atau minta manajer Presenly SaaS meninjau pengaturan koneksi."
+#: model:ir.actions.server,name:presenly_saas.ir_cron_presenly_saas_prune_mirrors_ir_actions_server
+msgid "Presenly SaaS: Clean Up Mirrored Data"
+msgstr "Presenly SaaS: Bersihkan Data Cermin"
+
+#. module: presenly_saas
+#: model:ir.actions.server,name:presenly_saas.ir_cron_presenly_saas_pull_period_ir_actions_server
+msgid "Presenly SaaS: Pull Period Data"
+msgstr "Presenly SaaS: Tarik Data Periode"
 
 #. module: presenly_saas
 #: model:ir.actions.server,name:presenly_saas.ir_cron_presenly_saas_refresh_ir_actions_server
 msgid "Presenly SaaS: Refresh Subscription"
 msgstr "Presenly SaaS: Segarkan Langganan"
+
+#. module: presenly_saas
+#: model:ir.model,name:presenly_saas.model_presenly_saas_shift
+msgid "Presenly Shift (mirror)"
+msgstr "Presenly Shift (cermin)"
+
+#. module: presenly_saas
+#: model:ir.model,name:presenly_saas.model_presenly_saas_shift_swap
+msgid "Presenly Shift Swap (mirror)"
+msgstr "Presenly Tukar Shift (cermin)"
+
+#. module: presenly_saas
+#: model:ir.model,name:presenly_saas.model_presenly_saas_timesheet
+msgid "Presenly Timesheet (mirror)"
+msgstr "Presenly Timesheet (cermin)"
+
+#. module: presenly_saas
+#: model:ir.model,name:presenly_saas.model_presenly_saas_work_day_setup
+msgid "Presenly Work Day Setup (mirror)"
+msgstr "Presenly Work Day Setup (cermin)"
+
+#. module: presenly_saas
+#: model:ir.model,name:presenly_saas.model_presenly_saas_work_location
+msgid "Presenly Work Location (mirror)"
+msgstr "Presenly Work Location (cermin)"
 
 #. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_subscription__price_per_user
@@ -1097,35 +1546,225 @@ msgstr "Produksi"
 
 #. module: presenly_saas
 #: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_subscription_form
-msgid "Profil"
+msgid "Profile"
 msgstr "Profil"
 
 #. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__project_name
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_recap__project_name
-msgid "Proyek"
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_location__project_name
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_timesheet_search
+msgid "Project"
 msgstr "Proyek"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_project__project_code
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_timesheet__project_code
+msgid "Project Code"
+msgstr "Kode Proyek"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_location__project_id
+msgid "Project ID"
+msgstr "ID Proyek"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_project__project_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_timesheet__project_name
+msgid "Project Name"
+msgstr "Nama Proyek"
+
+#. module: presenly_saas
+#: model:ir.actions.act_window,name:presenly_saas.action_presenly_saas_project
+#: model:ir.ui.menu,name:presenly_saas.menu_presenly_saas_project
+msgid "Projects"
+msgstr "Proyek"
+
+#. module: presenly_saas
+#: model:ir.actions.act_window,name:presenly_saas.action_presenly_saas_holiday
+#: model:ir.ui.menu,name:presenly_saas.menu_presenly_saas_holiday
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_holiday_list
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_holiday_search
+msgid "Public Holidays"
+msgstr "Hari Libur"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_pull_wizard_form
+msgid "Pull Now"
+msgstr "Tarik Sekarang"
 
 #. module: presenly_saas
 #. odoo-python
 #: code:addons/presenly_saas/models/presenly_saas_config.py:0
-msgid "Refresh failed"
-msgstr "Penyegaran gagal"
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_pull_wizard_form
+msgid "Pull Period Data"
+msgstr "Tarik Data Periode"
 
 #. module: presenly_saas
-#: model:ir.actions.act_window,name:presenly_saas.action_presenly_saas_attendance_recap
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_leave__purpose
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_overtime__purpose
+msgid "Purpose"
+msgstr "Keperluan"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_timesheet_search
+msgid "Rated"
+msgstr "Sudah Dinilai"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__raw_payload
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__raw_payload
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_mode__raw_payload
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_recap__raw_payload
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_holiday__raw_payload
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_leave__raw_payload
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_medical_certificate__raw_payload
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_mirror_mixin__raw_payload
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_overtime__raw_payload
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_project__raw_payload
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift__raw_payload
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift_swap__raw_payload
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_timesheet__raw_payload
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_day_setup__raw_payload
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_location__raw_payload
+msgid "Raw Payload"
+msgstr "Payload Mentah"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__reason
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_medical_certificate__reason
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift_swap__reason
+msgid "Reason"
+msgstr "Alasan"
+
+#. module: presenly_saas
 #: model:ir.ui.menu,name:presenly_saas.menu_presenly_saas_attendance_recap
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_recap_list
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_recap_search
-msgid "Rekap Presensi"
-msgstr "Rekap Presensi"
+msgid "Recap"
+msgstr "Rekap"
 
 #. module: presenly_saas
-#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_attendance_recap
-msgid "Rekap ditarik bersama log presensi melalui tombol\n"
-"                <b>Tarik Data Presensi</b>."
-msgstr "Rekap ditarik bersama log presensi melalui tombol\n"
-"                <b>Tarik Data Presensi</b>."
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__original_check_in_time
+msgid "Recorded Check-in"
+msgstr "Masuk Tercatat"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__original_check_out_time
+msgid "Recorded Check-out"
+msgstr "Keluar Tercatat"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__original_shift_name
+msgid "Recorded Shift"
+msgstr "Shift Tercatat"
+
+#. module: presenly_saas
+#: model:ir.ui.menu,name:presenly_saas.menu_presenly_saas_reference
+msgid "Reference"
+msgstr "Referensi"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_subscription_form
+msgid "Refresh Now"
+msgstr "Segarkan Sekarang"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_subscription_form
+msgid "Refresh Reference"
+msgstr "Segarkan Referensi"
+
+#. module: presenly_saas
+#: model:ir.actions.server,name:presenly_saas.action_presenly_saas_pull_reference
+msgid "Refresh Reference Data"
+msgstr "Segarkan Data Referensi"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid "Refresh Subscription"
+msgstr "Segarkan Langganan"
+
+#. module: presenly_saas
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_leave__status__rejected
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_timesheet__status__rejected
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_correction_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_leave_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_shift_swap_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_timesheet_search
+msgid "Rejected"
+msgstr "Ditolak"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__rejected_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift_swap__rejected_at
+msgid "Rejected At"
+msgstr "Ditolak Pada"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__rejecter_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift_swap__rejecter_name
+msgid "Rejected By"
+msgstr "Penolak"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__rejection_reason
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift_swap__rejection_reason
+msgid "Rejection Reason"
+msgstr "Alasan Penolakan"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid "Reliability"
+msgstr "Keandalan"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_leave__leave_date
+msgid "Request Date"
+msgstr "Tanggal Pengajuan"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_leave__reference_number
+msgid "Request Number"
+msgstr "Nomor Pengajuan"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__requested_check_in_time
+msgid "Requested Check-in"
+msgstr "Masuk Diminta"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__requested_check_out_time
+msgid "Requested Check-out"
+msgstr "Keluar Diminta"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__shift_name
+msgid "Requested Shift"
+msgstr "Shift Diminta"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift_swap__requester_name
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_shift_swap_search
+msgid "Requester"
+msgstr "Pemohon"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift_swap__requester_date
+msgid "Requester Date"
+msgstr "Tanggal Pemohon"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift_swap__requester_nopeg
+msgid "Requester Nopeg"
+msgstr "Nopeg Pemohon"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift_swap__requester_shift_name
+msgid "Requester Shift"
+msgstr "Shift Pemohon"
+
+#. module: presenly_saas
+#: model:ir.ui.menu,name:presenly_saas.menu_presenly_saas_submission
+msgid "Requests"
+msgstr "Pengajuan"
 
 #. module: presenly_saas
 #: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_sync_log_search
@@ -1133,67 +1772,78 @@ msgid "Result"
 msgstr "Hasil"
 
 #. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid "Retention"
+msgstr "Penyimpanan"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_config__retention_months
+#: model:ir.model.fields,field_description:presenly_saas.field_res_config_settings__presenly_saas_retention_months
+msgid "Retention (months)"
+msgstr "Penyimpanan (bulan)"
+
+#. module: presenly_saas
+#: model:ir.model.constraint,message:presenly_saas.constraint_presenly_saas_config_retention_not_negative
+msgid "Retention cannot be negative."
+msgstr "Penyimpanan tidak boleh negatif."
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid ""
+"Retried on network errors and 5xx responses. Authentication failures are "
+"never retried."
+msgstr ""
+"Diulang untuk galat jaringan dan respons 5xx. Kegagalan autentikasi tidak "
+"pernah diulang."
+
+#. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_config__retry_count
 #: model:ir.model.fields,field_description:presenly_saas.field_res_config_settings__presenly_saas_retry_count
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
 msgid "Retries"
 msgstr "Percobaan Ulang"
 
 #. module: presenly_saas
-#. odoo-python
-#: code:addons/presenly_saas/models/presenly_saas_config.py:0
-msgid "Retries cannot be negative."
-msgstr "Percobaan ulang tidak boleh negatif."
-
-#. module: presenly_saas
 #: model:ir.model.fields,help:presenly_saas.field_presenly_saas_config__retry_count
-msgid "Retries on network errors and 5xx responses. Authentication failures are never retried."
-msgstr "Percobaan ulang untuk galat jaringan dan respons 5xx. Kegagalan autentikasi tidak pernah diulang."
+msgid ""
+"Retries on network errors and 5xx responses. Authentication failures are "
+"never retried."
+msgstr ""
+"Percobaan ulang untuk galat jaringan dan respons 5xx. Kegagalan autentikasi "
+"tidak pernah diulang."
 
 #. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_subscription_form
-msgid "Rincian Fitur"
-msgstr "Rincian Fitur"
+#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_attendance_correction
+#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_medical_certificate
+#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_overtime
+#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_shift_swap
+msgid "Run <b>Pull Period Data</b> to fill it."
+msgstr "Jalankan <b>Tarik Data Periode</b> untuk mengisi."
+
+#. module: presenly_saas
+#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_timesheet
+msgid ""
+"Run <b>Pull Period Data</b> to fill it. The <b>Hours</b> column is\n"
+"               derived in Odoo from the start and end times, not sent by the server."
+msgstr ""
+"Jalankan <b>Tarik Data Periode</b> untuk mengisi. Kolom <b>Jam</b>\n"
+"               dihitung Odoo dari jam mulai dan jam selesai, bukan kiriman server."
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_project__grup
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_project_search
+msgid "SIK Group"
+msgstr "Grup SIK"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_project__pk
+msgid "SIK PK"
+msgstr "PK SIK"
 
 #. module: presenly_saas
 #: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
-msgid "Saat nonaktif, modul tidak pernah memanggil server Presenly SaaS dan semua pemeriksaan langganan dilewati."
-msgstr "Saat nonaktif, modul tidak pernah memanggil server Presenly SaaS dan semua pemeriksaan langganan dilewati."
-
-#. module: presenly_saas
-#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_config__environment__sandbox
-#: model:ir.model.fields.selection,name:presenly_saas.selection__res_config_settings__presenly_saas_environment__sandbox
-msgid "Sandbox"
-msgstr "Sandbox"
-
-#. module: presenly_saas
-#: model:ir.model.constraint,message:presenly_saas.constraint_presenly_saas_external_feature_company_code_uniq
-msgid "Satu kode fitur hanya boleh muncul sekali per company."
-msgstr "Satu kode fitur hanya boleh muncul sekali per company."
-
-#. module: presenly_saas
-#: model:ir.model.constraint,message:presenly_saas.constraint_presenly_saas_attendance_recap_company_period_user_uniq
-msgid "Satu pegawai hanya boleh muncul sekali per bulan per company."
-msgstr "Satu pegawai hanya boleh muncul sekali per bulan per company."
-
-#. module: presenly_saas
-#: model:ir.model.constraint,message:presenly_saas.constraint_presenly_saas_attendance_log_company_external_uniq
-msgid "Satu sesi hanya boleh tercermin sekali per company."
-msgstr "Satu sesi hanya boleh tercermin sekali per company."
-
-#. module: presenly_saas
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__schedule_id
-msgid "Schedule"
-msgstr "Jadwal"
-
-#. module: presenly_saas
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__schedule_segment_id
-msgid "Schedule Segment"
-msgstr "Segmen Jadwal"
-
-#. module: presenly_saas
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__schedule_source
-msgid "Schedule Source"
-msgstr "Sumber Jadwal"
+msgid "Scheduled Pull"
+msgstr "Penarikan Terjadwal"
 
 #. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_subscription__schema_version
@@ -1216,45 +1866,21 @@ msgid "Seat Usage Percent"
 msgstr "Persentase Pemakaian Kursi"
 
 #. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_subscription_form
+msgid "Seats"
+msgstr "Kursi"
+
+#. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_subscription__seats_used
 msgid "Seats Used"
 msgstr "Kursi Terpakai"
 
 #. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
-msgid "Segarkan Langganan"
-msgstr "Segarkan Langganan"
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_subscription_form
-msgid "Segarkan Sekarang"
-msgstr "Segarkan Sekarang"
-
-#. module: presenly_saas
-#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_attendance_log__status__closed
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_search
-msgid "Selesai"
-msgstr "Selesai"
-
-#. module: presenly_saas
 #: model:ir.model.fields,help:presenly_saas.field_presenly_saas_config__api_key
 msgid "Sent as the X-API-Key header. Only managers can read or change it."
-msgstr "Dikirim sebagai header X-API-Key. Hanya manajer yang bisa membaca atau mengubahnya."
-
-#. module: presenly_saas
-#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_pull_wizard__month__9
-msgid "September"
-msgstr "September"
-
-#. module: presenly_saas
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_external_feature__sequence
-msgid "Sequence"
-msgstr "Urutan"
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_config_form
-msgid "Server"
-msgstr "Server"
+msgstr ""
+"Dikirim sebagai header X-API-Key. Hanya manajer yang bisa membaca atau "
+"mengubahnya."
 
 #. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_subscription__server_time
@@ -1262,10 +1888,19 @@ msgid "Server Time"
 msgstr "Waktu Server"
 
 #. module: presenly_saas
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__is_overtime
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_search
-msgid "Sesi Lembur"
-msgstr "Sesi Lembur"
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_form
+msgid "Session"
+msgstr "Sesi"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__session_hours
+msgid "Session Hours"
+msgstr "Lama Sesi"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__external_id
+msgid "Session ID"
+msgstr "ID Sesi"
 
 #. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__session_key
@@ -1273,40 +1908,56 @@ msgid "Session Key"
 msgstr "Kunci Sesi"
 
 #. module: presenly_saas
-#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_sync_log
-msgid "Setiap panggilan ke server Presenly SaaS dicatat di sini beserta hasilnya,\n"
-"                sehingga kegagalan penyegaran bisa ditelusuri tanpa membaca log server."
-msgstr "Setiap panggilan ke server Presenly SaaS dicatat di sini beserta hasilnya,\n"
-"                sehingga kegagalan penyegaran bisa ditelusuri tanpa membaca log server."
-
-#. module: presenly_saas
 #: model:ir.actions.act_window,name:presenly_saas.action_presenly_saas_settings
 #: model:ir.ui.menu,name:presenly_saas.menu_presenly_saas_settings
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_subscription_form
 msgid "Settings"
 msgstr "Pengaturan"
 
 #. module: presenly_saas
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__shift_name
-msgid "Shift"
-msgstr "Shift"
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__shift_id
+msgid "Shift ID (SaaS)"
+msgstr "ID Shift (SaaS)"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift__shift_name
+msgid "Shift Name"
+msgstr "Nama Shift"
+
+#. module: presenly_saas
+#: model:ir.actions.act_window,name:presenly_saas.action_presenly_saas_shift_swap
+#: model:ir.ui.menu,name:presenly_saas.menu_presenly_saas_shift_swap
+msgid "Shift Swaps"
+msgstr "Tukar Shift"
 
 #. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_config__show_banner
 #: model:ir.model.fields,field_description:presenly_saas.field_res_config_settings__presenly_saas_show_banner
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
 msgid "Show Banner"
 msgstr "Tampilkan Banner"
 
 #. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_subscription_form
-msgid "Sinkronisasi"
-msgstr "Sinkronisasi"
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid ""
+"Show a warning banner in the backend when the subscription status needs "
+"attention."
+msgstr ""
+"Tampilkan banner peringatan di backend saat status langganan perlu "
+"perhatian."
 
 #. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_subscription_form
-msgid "Snapshot ini belum dikonfirmasi baru. Status yang tampil adalah\n                                jawaban terakhir yang benar-benar dikirim server SaaS, dan tidak\n"
-"                                pernah diturunkan menjadi kedaluwarsa oleh penyegaran yang gagal."
-msgstr "Snapshot ini belum dikonfirmasi baru. Status yang tampil adalah\n                                jawaban terakhir yang benar-benar dikirim server SaaS, dan tidak\n"
-"                                pernah diturunkan menjadi kedaluwarsa oleh penyegaran yang gagal."
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_leave__start_date
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_medical_certificate__start_date
+msgid "Start"
+msgstr "Mulai"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_overtime__start_time
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift__start_time
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_timesheet__start_time
+msgid "Start Time"
+msgstr "Jam Mulai"
 
 #. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_subscription__state_source
@@ -1314,30 +1965,22 @@ msgid "State Source"
 msgstr "Sumber Status"
 
 #. module: presenly_saas
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__status
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_external_feature__status
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_subscription__status
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_external_feature_search
-msgid "Status"
-msgstr "Status"
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_project__sub_code
+msgid "Sub Code"
+msgstr "Sub Kode"
+
+#. module: presenly_saas
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_timesheet__status__submitted
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_timesheet_search
+msgid "Submitted"
+msgstr "Diajukan"
 
 #. module: presenly_saas
 #: model:ir.actions.server,name:presenly_saas.action_presenly_saas_open_subscription
 #: model:ir.ui.menu,name:presenly_saas.menu_presenly_saas_subscription
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_subscription_form
 msgid "Subscription"
 msgstr "Langganan"
-
-#. module: presenly_saas
-#. odoo-python
-#: code:addons/presenly_saas/models/presenly_saas_config.py:0
-msgid "Subscription refreshed"
-msgstr "Langganan disegarkan"
-
-#. module: presenly_saas
-#. odoo-javascript
-#: code:addons/presenly_saas/static/src/banner/presenly_saas_banner.js:0
-msgid "Subscription renews in %s day(s)."
-msgstr "Langganan diperpanjang dalam %s hari."
 
 #. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_sync_log__success
@@ -1352,6 +1995,11 @@ msgid "Suspended"
 msgstr "Ditangguhkan"
 
 #. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_subscription_form
+msgid "Sync"
+msgstr "Sinkronisasi"
+
+#. module: presenly_saas
 #: model:ir.actions.act_window,name:presenly_saas.action_presenly_saas_sync_log
 #: model:ir.ui.menu,name:presenly_saas.menu_presenly_saas_sync_log
 #: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_sync_log_list
@@ -1360,46 +2008,14 @@ msgid "Sync Log"
 msgstr "Log Sinkronisasi"
 
 #. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
-msgid "Tampilkan Banner"
-msgstr "Tampilkan Banner"
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
-msgid "Tampilkan banner peringatan di backend saat status langganan perlu perhatian."
-msgstr "Tampilkan banner peringatan di backend saat status langganan perlu perhatian."
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_search
-msgid "Tanggal"
-msgstr "Tanggal"
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_search
-msgid "Tanggal Kerja"
-msgstr "Tanggal Kerja"
-
-#. module: presenly_saas
-#. odoo-python
-#: code:addons/presenly_saas/models/presenly_saas_config.py:0
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_pull_wizard_form
-msgid "Tarik Data Presensi"
-msgstr "Tarik Data Presensi"
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_pull_wizard_form
-msgid "Tarik Sekarang"
-msgstr "Tarik Sekarang"
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__tl_approver_name
+msgid "Team Lead Approver"
+msgstr "Penyetuju TL"
 
 #. module: presenly_saas
 #: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_subscription_form
-msgid "Teknis"
+msgid "Technical"
 msgstr "Teknis"
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_subscription_form
-msgid "Tenant"
-msgstr "Tenant"
 
 #. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_subscription__tenant_business_sector
@@ -1410,6 +2026,7 @@ msgstr "Sektor Bisnis Tenant"
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_config__tenant_code
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_subscription__tenant_code
 #: model:ir.model.fields,field_description:presenly_saas.field_res_config_settings__presenly_saas_tenant_code
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
 msgid "Tenant Code"
 msgstr "Kode Tenant"
 
@@ -1440,71 +2057,118 @@ msgstr "WhatsApp Tenant"
 
 #. module: presenly_saas
 #: model:ir.model.fields,help:presenly_saas.field_presenly_saas_config__tenant_code
-msgid "Tenant identifier on the SaaS side, sent as the X-Tenant-ID header. Example: pelni."
-msgstr "Penanda tenant di sisi SaaS, dikirim sebagai header X-Tenant-ID. Contoh: pelni."
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid ""
+"Tenant identifier on the SaaS side, sent as the X-Tenant-ID header. Example:"
+" pelni."
+msgstr ""
+"Penanda tenant di sisi SaaS, dikirim sebagai header X-Tenant-ID. Contoh: "
+"pelni."
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid "Test Connection"
+msgstr "Uji Koneksi"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid ""
+"Test Connection calls the server without writing a log. Refresh Subscription"
+" calls the server and then updates the snapshot and the log."
+msgstr ""
+"Uji Koneksi memanggil server tanpa menulis log. Segarkan Langganan memanggil"
+" server lalu memperbarui snapshot dan log."
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid "Test and Refresh"
+msgstr "Uji dan Segarkan"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_pull_wizard_form
+msgid ""
+"The attendance log and the recap for this period will <b>replace</b> the\n"
+"                    existing data for the same month. Other months are left untouched.\n"
+"                    When it finishes, the result is cross-checked against the server\n"
+"                    recap, and any difference is reported."
+msgstr ""
+"Log presensi dan rekap untuk periode ini akan <b>menggantikan</b> data\n"
+"                    yang sudah ada pada bulan yang sama. Bulan lain tidak tersentuh.\n"
+"                    Setelah selesai, hasilnya diuji silang dengan rekap server, dan\n"
+"                    selisihnya diberitahukan."
+
+#. module: presenly_saas
+#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_attendance_recap
+msgid ""
+"The recap is fetched together with the attendance log through the\n"
+"                <b>Pull Period Data</b> button."
+msgstr ""
+"Rekap ditarik bersama log presensi melalui tombol\n"
+"                <b>Tarik Data Periode</b>."
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_correction_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_leave_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_medical_certificate_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_overtime_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_shift_swap_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_timesheet_search
+msgid "This Month"
+msgstr "Bulan Ini"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_correction_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_leave_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_medical_certificate_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_overtime_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_shift_swap_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_timesheet_search
+msgid "This Year"
+msgstr "Tahun Ini"
 
 #. module: presenly_saas
 #: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_subscription_form
-msgid "Terakhir"
-msgstr "Terakhir"
+msgid ""
+"This data is copied from the company profile on the Presenly SaaS side and\n"
+"                                can only be changed there. The\n"
+"                                <strong>Employee Count</strong> is the figure the client declares,\n"
+"                                unlike <strong>Seats Used</strong>, which is counted from\n"
+"                                active accounts."
+msgstr ""
+"Data ini disalin dari profil perusahaan di sisi Presenly SaaS dan\n"
+"                                hanya bisa diubah di sana. Angka\n"
+"                                <strong>Jumlah Pegawai</strong> adalah yang dinyatakan klien,\n"
+"                                berbeda dari <strong>Kursi Terpakai</strong> yang memang dihitung\n"
+"                                dari akun aktif."
 
 #. module: presenly_saas
-#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_attendance_log__status__open
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_search
-msgid "Terbuka"
-msgstr "Terbuka"
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_subscription_form
+msgid ""
+"This plan is not registered in the SaaS-side plan catalog yet, so every\n"
+"                                feature is shown as included. Its name and limits\n"
+"                                need to be reviewed there."
+msgstr ""
+"Paket ini belum terdaftar di katalog paket sisi SaaS, jadi\n"
+"                                seluruh fitur ditampilkan sebagai termasuk. Nama dan batasnya\n"
+"                                perlu ditinjau di sana."
 
 #. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_search
-msgid "Terlambat"
-msgstr "Terlambat"
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_subscription_form
+msgid ""
+"This snapshot has not been confirmed recently. The status shown is the last\n"
+"                                answer actually sent by the SaaS server, and is never lowered to\n"
+"                                expired by a failed refresh."
+msgstr ""
+"Snapshot ini belum dikonfirmasi baru. Status yang tampil adalah\n"
+"                                jawaban terakhir yang benar-benar dikirim server SaaS, dan tidak\n"
+"                                pernah diturunkan menjadi kedaluwarsa oleh penyegaran yang gagal."
 
 #. module: presenly_saas
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__late_minutes
-msgid "Terlambat (menit)"
-msgstr "Terlambat (menit)"
-
-#. module: presenly_saas
-#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_external_feature__status__available
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_external_feature_search
-msgid "Tersedia"
-msgstr "Tersedia"
-
-#. module: presenly_saas
-#. odoo-python
-#: code:addons/presenly_saas/models/presenly_saas_config.py:0
-msgid "The Presenly SaaS connection is disabled."
-msgstr "Koneksi Presenly SaaS sedang nonaktif."
-
-#. module: presenly_saas
-#. odoo-python
-#: code:addons/presenly_saas/models/presenly_saas_config.py:0
-msgid "The Presenly SaaS server answered."
-msgstr "Server Presenly SaaS merespons."
-
-#. module: presenly_saas
-#. odoo-javascript
-#: code:addons/presenly_saas/static/src/banner/presenly_saas_banner.js:0
-msgid "The Presenly SaaS server has never confirmed this subscription."
-msgstr "Server Presenly SaaS belum pernah mengonfirmasi langganan ini."
-
-#. module: presenly_saas
-#. odoo-python
-#: code:addons/presenly_saas/models/presenly_saas_config.py:0
-msgid "The subscription snapshot is up to date."
-msgstr "Snapshot langganan sudah yang terbaru."
-
-#. module: presenly_saas
-#. odoo-python
-#: code:addons/presenly_saas/models/presenly_saas_subscription.py:0
-msgid "This snapshot has no connection record to refresh from."
-msgstr "Snapshot ini tidak punya catatan koneksi untuk disegarkan."
-
-#. module: presenly_saas
-#. odoo-javascript
-#: code:addons/presenly_saas/static/src/banner/presenly_saas_banner.js:0
-msgid "This subscription is %s."
-msgstr "Langganan ini %s."
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid "Timeout"
+msgstr "Batas Waktu"
 
 #. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_config__timeout_seconds
@@ -1513,30 +2177,66 @@ msgid "Timeout (seconds)"
 msgstr "Batas Waktu (detik)"
 
 #. module: presenly_saas
-#. odoo-python
-#: code:addons/presenly_saas/models/presenly_saas_config.py:0
-msgid "Timeout must be greater than zero."
-msgstr "Batas waktu harus lebih besar dari nol."
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid "Timeout for a single request to the Presenly SaaS server."
+msgstr "Batas waktu satu permintaan ke server Presenly SaaS."
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_location__timezone
+msgid "Timezone"
+msgstr "Zona Waktu"
 
 #. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_recap__total_late_minutes
-msgid "Total Terlambat (menit)"
+msgid "Total Late (minutes)"
 msgstr "Total Terlambat (menit)"
 
 #. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_day_setup__total_days
+msgid "Total Working Days"
+msgstr "Total Hari Kerja"
+
+#. module: presenly_saas
 #: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_recap_list
-msgid "Total alpha"
+msgid "Total absent"
 msgstr "Total alpha"
 
 #. module: presenly_saas
 #: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_recap_list
-msgid "Total kehadiran"
+msgid "Total attendance"
 msgstr "Total kehadiran"
 
 #. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_leave_list
+msgid "Total days"
+msgstr "Total hari"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_list
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_overtime_list
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_timesheet_list
+msgid "Total hours"
+msgstr "Total jam"
+
+#. module: presenly_saas
 #: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_recap_list
-msgid "Total terlambat"
+msgid "Total late"
 msgstr "Total terlambat"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_list
+msgid "Total minutes late"
+msgstr "Total menit terlambat"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_overtime_list
+msgid "Total pay"
+msgstr "Total upah"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_work_day_setup_list
+msgid "Total working days"
+msgstr "Total hari kerja"
 
 #. module: presenly_saas
 #: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_subscription__status__trial
@@ -1549,30 +2249,15 @@ msgid "Trial Ends At"
 msgstr "Masa Uji Berakhir"
 
 #. module: presenly_saas
-#. odoo-javascript
-#: code:addons/presenly_saas/static/src/banner/presenly_saas_banner.js:0
-msgid "Trial ends in %s day(s)."
-msgstr "Masa uji berakhir dalam %s hari."
-
-#. module: presenly_saas
 #: model:ir.model.fields,help:presenly_saas.field_presenly_saas_subscription__plan_registered
-msgid "True bila kode paket terdaftar di katalog paket sisi SaaS."
+msgid "True when the plan code is registered in the SaaS-side plan catalog."
 msgstr "True bila kode paket terdaftar di katalog paket sisi SaaS."
 
 #. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
-msgid "Uji Koneksi"
-msgstr "Uji Koneksi"
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
-msgid "Uji Koneksi memanggil server tanpa menulis log. Segarkan Langganan memanggil server lalu memperbarui snapshot dan log."
-msgstr "Uji Koneksi memanggil server tanpa menulis log. Segarkan Langganan memanggil server lalu memperbarui snapshot dan log."
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
-msgid "Uji dan Segarkan"
-msgstr "Uji dan Segarkan"
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_holiday__holiday_type
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_holiday_search
+msgid "Type"
+msgstr "Tipe"
 
 #. module: presenly_saas
 #: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_subscription__status__unknown
@@ -1590,6 +2275,48 @@ msgid "Unreachable"
 msgstr "Tidak Terjangkau"
 
 #. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__source_updated_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__source_updated_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_mode__source_updated_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_holiday__source_updated_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_leave__source_updated_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_medical_certificate__source_updated_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_mirror_mixin__source_updated_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_overtime__source_updated_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_project__source_updated_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift__source_updated_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift_swap__source_updated_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_timesheet__source_updated_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_day_setup__source_updated_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_location__source_updated_at
+msgid "Updated on SaaS"
+msgstr "Diubah di SaaS"
+
+#. module: presenly_saas
+#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_attendance_log
+msgid ""
+"Use <b>Pull Period Data</b> to fetch the log, the recap, and the requests\n"
+"                from the Presenly SaaS server for a single month."
+msgstr ""
+"Gunakan tombol <b>Tarik Data Periode</b> untuk menarik log, rekap, dan pengajuan\n"
+"                dari server Presenly SaaS untuk satu bulan."
+
+#. module: presenly_saas
+#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_leave
+#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_project
+msgid ""
+"Use <b>Refresh Reference</b> on the Subscription page, or pull\n"
+"               a specific period through <b>Pull Period Data</b>."
+msgstr ""
+"Jalankan <b>Segarkan Referensi</b> di menu Langganan, atau tarik\n"
+"               periode tertentu lewat <b>Tarik Data Periode</b>."
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_subscription_form
+msgid "Validity Period"
+msgstr "Masa Berlaku"
+
+#. module: presenly_saas
 #: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_config__guard_mode__warn
 #: model:ir.model.fields.selection,name:presenly_saas.selection__res_config_settings__presenly_saas_guard_mode__warn
 msgid "Warn only"
@@ -1602,20 +2329,569 @@ msgid "When"
 msgstr "Waktu"
 
 #. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid ""
+"When off, the module never calls the Presenly SaaS server and all "
+"subscription checks are skipped."
+msgstr ""
+"Saat nonaktif, modul tidak pernah memanggil server Presenly SaaS dan semua "
+"pemeriksaan langganan dilewati."
+
+#. module: presenly_saas
 #: model:ir.model.fields,help:presenly_saas.field_presenly_saas_config__enabled
-msgid "When off, the module never calls the SaaS server and every subscription check is skipped."
-msgstr "Saat nonaktif, modul tidak pernah memanggil server SaaS dan semua pemeriksaan langganan dilewati."
+msgid ""
+"When off, the module never calls the SaaS server and every subscription "
+"check is skipped."
+msgstr ""
+"Saat nonaktif, modul tidak pernah memanggil server SaaS dan semua "
+"pemeriksaan langganan dilewati."
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_overtime__within_radius
+msgid "Within Radius"
+msgstr "Dalam Radius"
 
 #. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__work_date
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_search
 msgid "Work Date"
 msgstr "Tanggal Kerja"
 
 #. module: presenly_saas
+#: model:ir.actions.act_window,name:presenly_saas.action_presenly_saas_work_day_setup
+#: model:ir.ui.menu,name:presenly_saas.menu_presenly_saas_work_day_setup
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_work_day_setup_list
+msgid "Work Day Setup"
+msgstr "Setup Hari Kerja"
+
+#. module: presenly_saas
+#: model:ir.actions.act_window,name:presenly_saas.action_presenly_saas_work_location
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_leave__location_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_medical_certificate__location_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_overtime__location_name
+#: model:ir.ui.menu,name:presenly_saas.menu_presenly_saas_work_location
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_work_location_list
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_work_location_search
+msgid "Work Location"
+msgstr "Lokasi Kerja"
+
+#. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_recap__year
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_pull_wizard__year
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_day_setup__year
 msgid "Year"
 msgstr "Tahun"
+
+#. module: presenly_saas
+msgid ""
+"%(key)s: the mirrored log has %(lcount)s sessions/%(llate)s minutes, the "
+"server recap has %(scount)s sessions/%(slate)s minutes"
+msgstr ""
+"%(key)s: cermin log %(lcount)s sesi/%(llate)s menit, rekap server %(scount)s"
+" sesi/%(slate)s menit"
+
+#. module: presenly_saas
+msgid ""
+"%(months)s months: %(logs)s attendance log rows, %(recap)s recap rows, "
+"%(datasets)s requests and timesheet rows."
+msgstr ""
+"%(months)s bulan: log presensi %(logs)s baris, rekap %(recap)s baris, "
+"pengajuan & timesheet %(datasets)s baris."
+
+#. module: presenly_saas
+msgid ""
+"%(resource)s: %(fetched)s of %(total)s rows fetched (%(pages)s page limit)."
+msgstr ""
+"%(resource)s: %(fetched)s dari %(total)s baris terambil (batas %(pages)s "
+"halaman)."
+
+#. module: presenly_saas
+msgid ""
+"Attendance log: %(fetched)s of %(total)s rows fetched (%(pages)s page "
+"limit)."
+msgstr ""
+"Log presensi: %(fetched)s dari %(total)s baris terambil (batas %(pages)s "
+"halaman)."
+
+#. module: presenly_saas
+msgid "Base URL must start with http:// or https:// (got %s)."
+msgstr "Base URL harus diawali http:// atau https:// (diterima: %s)."
+
+#. module: presenly_saas
+msgid ""
+"Base URL, Tenant Code and API Key must be filled in before contacting the "
+"Presenly SaaS server."
+msgstr ""
+"Base URL, Kode Tenant, dan Kunci API harus diisi sebelum menghubungi server "
+"Presenly SaaS."
+
+#. module: presenly_saas
+msgid "Connection failed"
+msgstr "Koneksi gagal"
+
+#. module: presenly_saas
+msgid "Connection ok"
+msgstr "Koneksi berhasil"
+
+#. module: presenly_saas
+msgid ""
+"Cross-check against the server recap does not match:\n"
+"%s"
+msgstr ""
+"Uji silang dengan rekap server tidak cocok:\n"
+"%s"
+
+#. module: presenly_saas
+msgid "Dismiss subscription notice"
+msgstr "Tutup pemberitahuan langganan"
+
+#. module: presenly_saas
+msgid "Failed to pull period data"
+msgstr "Gagal menarik data periode"
+
+#. module: presenly_saas
+msgid "Failed to pull reference data"
+msgstr "Gagal menarik data referensi"
+
+#. module: presenly_saas
+msgid "Grace period cannot be negative."
+msgstr "Masa tenggang tidak boleh negatif."
+
+#. module: presenly_saas
+msgid "Included"
+msgstr "Termasuk"
+
+#. module: presenly_saas
+msgid "Not included"
+msgstr "Tidak termasuk"
+
+#. module: presenly_saas
+msgid ""
+"Not confirmed by the Presenly SaaS server since %s. Last reported status: "
+"%s."
+msgstr ""
+"Belum dikonfirmasi server Presenly SaaS sejak %s. Status terakhir yang "
+"dilaporkan: %s."
+
+#. module: presenly_saas
+msgid "Only Presenly SaaS managers can perform this action."
+msgstr "Hanya manajer Presenly SaaS yang boleh menjalankan tindakan ini."
+
+#. module: presenly_saas
+msgid "Open subscription"
+msgstr "Buka langganan"
+
+#. module: presenly_saas
+msgid ""
+"Part of this range is older than the retention window (%(months)s months). "
+"The weekly cleanup will remove it again; raise Retention in Settings to keep"
+" it."
+msgstr ""
+"Sebagian rentang ini lebih tua dari jendela penyimpanan (%(months)s bulan). "
+"Pembersihan mingguan akan menghapusnya lagi; naikkan Penyimpanan di Settings"
+" untuk menyimpannya."
+
+#. module: presenly_saas
+msgid ""
+"Presenly SaaS subscription is not active (status: %(status)s). Renew the "
+"subscription, or ask a Presenly SaaS manager to review the connection "
+"settings."
+msgstr ""
+"Langganan Presenly SaaS tidak aktif (status: %(status)s). Perpanjang "
+"langganannya, atau minta manajer Presenly SaaS memeriksa pengaturan "
+"koneksinya."
+
+#. module: presenly_saas
+msgid "Pull finished: %s"
+msgstr "Penarikan selesai: %s"
+
+#. module: presenly_saas
+msgid "Reference data updated"
+msgstr "Data referensi diperbarui"
+
+#. module: presenly_saas
+msgid "Refresh failed"
+msgstr "Penyegaran gagal"
+
+#. module: presenly_saas
+msgid "Retries cannot be negative."
+msgstr "Percobaan ulang tidak boleh negatif."
+
+#. module: presenly_saas
+msgid "Subscription refreshed"
+msgstr "Langganan disegarkan"
+
+#. module: presenly_saas
+msgid "Subscription renews in %s day(s)."
+msgstr "Langganan diperpanjang dalam %s hari."
+
+#. module: presenly_saas
+msgid "The Presenly SaaS connection is disabled."
+msgstr "Koneksi Presenly SaaS dimatikan."
+
+#. module: presenly_saas
+msgid "The Presenly SaaS server answered."
+msgstr "Server Presenly SaaS menjawab."
+
+#. module: presenly_saas
+msgid "The Presenly SaaS server has never confirmed this subscription."
+msgstr "Server Presenly SaaS belum pernah mengonfirmasi langganan ini."
+
+#. module: presenly_saas
+msgid "The number of months must be at least 1."
+msgstr "Jumlah bulan minimal 1."
+
+#. module: presenly_saas
+msgid "The subscription snapshot is up to date."
+msgstr "Snapshot langganan sudah terbaru."
+
+#. module: presenly_saas
+msgid "This snapshot has no connection record to refresh from."
+msgstr "Snapshot ini tidak punya record koneksi untuk disegarkan."
+
+#. module: presenly_saas
+msgid "This subscription is %s."
+msgstr "Langganan ini %s."
+
+#. module: presenly_saas
+msgid "Timeout must be greater than zero."
+msgstr "Batas waktu harus lebih dari nol."
+
+#. module: presenly_saas
+msgid "Trial ends in %s day(s)."
+msgstr "Masa percobaan berakhir dalam %s hari."
+
+#. module: presenly_saas
+#. odoo-javascript
+#: code:addons/presenly_saas/static/src/map/presenly_map_field.js:0
+msgid " · allowed radius %s m"
+msgstr " · radius izin %s m"
+
+#. module: presenly_saas
+#. odoo-javascript
+#: code:addons/presenly_saas/static/src/map/presenly_map_field.js:0
+msgid "%s (at the office location)"
+msgstr "%s (di lokasi kantor)"
+
+#. module: presenly_saas
+#. odoo-javascript
+#: code:addons/presenly_saas/static/src/map/presenly_map_field.xml:0
+msgid ""
+". Those fields are named in the widget options but are not in this view, so "
+"Odoo never loads them. Add them as hidden fields, e.g. <field "
+"name=\"check_in_longitude\" invisible=\"1\"/>."
+msgstr ". Field itu disebut di opsi widget tapi tidak ada di view ini, jadi Odoo\n"
+"tidak pernah memuatnya. Tambahkan sebagai field tersembunyi, mis.\n"
+"<field name=\"check_in_longitude\" invisible=\"1\"/>."
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_form
+msgid "<span> · </span>"
+msgstr "<span> · </span>"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_day_setup__apr
+msgid "Apr"
+msgstr "Apr"
+
+#. module: presenly_saas
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_pull_wizard__month__4
+msgid "April"
+msgstr "April"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_config__base_url
+#: model:ir.model.fields,field_description:presenly_saas.field_res_config_settings__presenly_saas_base_url
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid "Base URL"
+msgstr "URL Dasar"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_timesheet__category
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_timesheet_search
+msgid "Category"
+msgstr "Kategori"
+
+#. module: presenly_saas
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_timesheet__status__draft
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_timesheet_search
+msgid "Draft"
+msgstr "Draf"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_sync_log__endpoint
+msgid "Endpoint"
+msgstr "Endpoint"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_day_setup__feb
+msgid "Feb"
+msgstr "Feb"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_mode__id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_recap__id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_config__id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_external_feature__id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_guard__id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_holiday__id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_leave__id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_medical_certificate__id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_mirror_mixin__id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_overtime__id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_project__id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_pull_wizard__id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift__id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift_swap__id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_subscription__id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_sync_log__id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_timesheet__id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_day_setup__id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_location__id
+#: model:ir.model.fields,field_description:presenly_saas.field_res_config_settings__id
+msgid "ID"
+msgstr "ID"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_day_setup__jan
+msgid "Jan"
+msgstr "Jan"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_day_setup__jul
+msgid "Jul"
+msgstr "Jul"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_day_setup__jun
+msgid "Jun"
+msgstr "Jun"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_location__latitude
+msgid "Latitude"
+msgstr "Lintang"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_location__longitude
+msgid "Longitude"
+msgstr "Bujur"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_day_setup__mar
+msgid "Mar"
+msgstr "Mar"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__employee_nopeg
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__employee_nopeg
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_recap__employee_nopeg
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_leave__employee_nopeg
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_medical_certificate__employee_nopeg
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_overtime__employee_nopeg
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_timesheet__employee_nopeg
+msgid "Nopeg"
+msgstr "Nopeg"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_day_setup__nov
+msgid "Nov"
+msgstr "Nov"
+
+#. module: presenly_saas
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_pull_wizard__month__11
+msgid "November"
+msgstr "November"
+
+#. module: presenly_saas
+#. odoo-javascript
+#: code:addons/presenly_saas/static/src/map/presenly_map_field.xml:0
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__work_location_id
+msgid "Office"
+msgstr "Kantor"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__office_latitude
+msgid "Office Latitude"
+msgstr "Lintang Kantor"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__office_longitude
+msgid "Office Longitude"
+msgstr "Bujur Kantor"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__office_radius_meters
+msgid "Office Radius Meters"
+msgstr "Radius Kantor (m)"
+
+#. module: presenly_saas
+#. odoo-javascript
+#: code:addons/presenly_saas/static/src/map/presenly_map_field.js:0
+msgid "Office%s%s"
+msgstr "Kantor%s%s"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__external_id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_mode__external_id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_holiday__external_id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_leave__external_id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_medical_certificate__external_id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_mirror_mixin__external_id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_overtime__external_id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_project__external_id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift__external_id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift_swap__external_id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_timesheet__external_id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_day_setup__external_id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_location__external_id
+msgid "Presenly Row ID"
+msgstr "ID Baris Presenly"
+
+#. module: presenly_saas
+#. odoo-javascript
+#. odoo-python
+#: code:addons/presenly_saas/models/presenly_saas_config.py:0
+#: code:addons/presenly_saas/static/src/banner/presenly_saas_banner.xml:0
+#: model:ir.ui.menu,name:presenly_saas.menu_presenly_saas_root
+#: model:res.groups.privilege,name:presenly_saas.res_groups_privilege_presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_config_form
+msgid "Presenly SaaS"
+msgstr "Presenly SaaS"
+
+#. module: presenly_saas
+#: model:ir.model,name:presenly_saas.model_presenly_saas_guard
+msgid "Presenly SaaS Guard"
+msgstr "Penjaga Presenly SaaS"
+
+#. module: presenly_saas
+#: model:ir.model,name:presenly_saas.model_presenly_saas_mirror_mixin
+msgid "Presenly SaaS Mirror Mixin"
+msgstr "Mixin Cermin Presenly SaaS"
+
+#. module: presenly_saas
+#: model:ir.model,name:presenly_saas.model_presenly_saas_pull_wizard
+msgid "Presenly SaaS Pull Period"
+msgstr "Periode Tarik Presenly SaaS"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_location__radius_meters
+msgid "Radius (m)"
+msgstr "Radius (m)"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_timesheet__rating
+msgid "Rating"
+msgstr "Penilaian"
+
+#. module: presenly_saas
+#. odoo-javascript
+#: code:addons/presenly_saas/static/src/map/presenly_map_field.xml:0
+msgid "Reset view"
+msgstr "Kembalikan tampilan"
+
+#. module: presenly_saas
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_attendance_correction__external_id
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_attendance_mode__external_id
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_holiday__external_id
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_leave__external_id
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_medical_certificate__external_id
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_mirror_mixin__external_id
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_overtime__external_id
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_project__external_id
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_shift__external_id
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_shift_swap__external_id
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_timesheet__external_id
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_work_day_setup__external_id
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_work_location__external_id
+msgid ""
+"Row id on the Presenly side. Used by the sync to match records. Not shown in"
+" any view: for a user it is a number that cannot be used for anything."
+msgstr "ID baris di sisi Presenly. Dipakai sinkronisasi untuk mencocokkan\n"
+"catatan. Tidak ditampilkan di view mana pun: bagi pengguna ini hanya\n"
+"angka yang tidak bisa dipakai untuk apa pun."
+
+#. module: presenly_saas
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_config__environment__sandbox
+#: model:ir.model.fields.selection,name:presenly_saas.selection__res_config_settings__presenly_saas_environment__sandbox
+msgid "Sandbox"
+msgstr "Sandbox"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_day_setup__sep
+msgid "Sep"
+msgstr "Sep"
+
+#. module: presenly_saas
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_pull_wizard__month__9
+msgid "September"
+msgstr "September"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_config_form
+msgid "Server"
+msgstr "Server"
+
+#. module: presenly_saas
+#: model:ir.actions.act_window,name:presenly_saas.action_presenly_saas_shift
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__shift_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_timesheet__shift_name
+#: model:ir.ui.menu,name:presenly_saas.menu_presenly_saas_shift
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_shift_list
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_shift_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_timesheet_search
+msgid "Shift"
+msgstr "Shift"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__status
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__status
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_external_feature__status
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_leave__status
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_medical_certificate__status
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift_swap__status
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_subscription__status
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_timesheet__status
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_correction_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_external_feature_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_leave_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_medical_certificate_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_overtime_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_shift_swap_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_timesheet_search
+msgid "Status"
+msgstr "Status"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_subscription_form
+msgid "Tenant"
+msgstr "Tenant"
+
+#. module: presenly_saas
+#. odoo-javascript
+#: code:addons/presenly_saas/static/src/map/presenly_map_field.xml:0
+msgid ""
+"The office location is not mirrored yet, so its position and radius cannot be\n"
+"                shown. Run"
+msgstr "Lokasi kantor belum dicerminkan, jadi posisi dan radiusnya belum bisa\n"
+"ditampilkan. Jalankan "
+
+#. module: presenly_saas
+#. odoo-javascript
+#: code:addons/presenly_saas/static/src/map/presenly_map_field.xml:0
+msgid "This map cannot read:"
+msgstr "Peta ini tidak bisa membaca:"
+
+#. module: presenly_saas
+#: model:ir.actions.act_window,name:presenly_saas.action_presenly_saas_timesheet
+#: model:ir.ui.menu,name:presenly_saas.menu_presenly_saas_timesheet
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_timesheet_graph
+msgid "Timesheet"
+msgstr "Timesheet"
 
 #. module: presenly_saas
 #: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
@@ -1623,6 +2899,543 @@ msgid "https://presensi.example.com"
 msgstr "https://presensi.example.com"
 
 #. module: presenly_saas
+#. odoo-javascript
+#: code:addons/presenly_saas/static/src/map/presenly_map_field.xml:0
+msgid ""
+"map tile(s) could not be loaded. This Odoo may not have internet access to "
+"tile.openstreetmap.org."
+msgstr " ubin peta gagal dimuat. Odoo ini mungkin tidak punya akses internet ke\n"
+"tile.openstreetmap.org."
+
+#. module: presenly_saas
+#. odoo-javascript
+#: code:addons/presenly_saas/static/src/map/presenly_map_field.xml:0
+msgid "on the Subscription page."
+msgstr "di halaman Langganan."
+
+#. module: presenly_saas
 #: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
 msgid "pelni"
 msgstr "pelni"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_correction_form
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_leave_form
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_medical_certificate_form
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_overtime_form
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_shift_swap_form
+msgid "Approval"
+msgstr "Persetujuan"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_correction_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_leave_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_medical_certificate_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_overtime_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_shift_swap_search
+msgid "Approval Flow"
+msgstr "Alur Persetujuan"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__approval_flow_status
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_leave__approval_flow_status
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_medical_certificate__approval_flow_status
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_overtime__approval_flow_status
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift_swap__approval_flow_status
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_submission_mixin__approval_flow_status
+msgid "Approval Flow Status"
+msgstr "Status Alur Persetujuan"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__approval_step_ids
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_leave__approval_step_ids
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_medical_certificate__approval_step_ids
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_overtime__approval_step_ids
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift_swap__approval_step_ids
+msgid "Approval Steps"
+msgstr "Langkah Persetujuan"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_attendance_correction__approver_value
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_leave__approver_value
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_medical_certificate__approver_value
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_mixin__approver_value
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_overtime__approver_value
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_shift_swap__approver_value
+msgid "Approver Reference"
+msgstr "Rujukan Penyetuju"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_attendance_correction__approver_type
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_leave__approver_type
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_medical_certificate__approver_type
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_mixin__approver_type
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_overtime__approver_type
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_shift_swap__approver_type
+msgid "Approver Type"
+msgstr "Jenis Penyetuju"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_attendance_correction__correction_id
+msgid "Attendance Correction"
+msgstr "Koreksi Presensi"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_correction_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_leave_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_medical_certificate_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_overtime_search
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_shift_swap_search
+msgid "Awaiting Level"
+msgstr "Level yang Ditunggu"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__approval_current_level
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_leave__approval_current_level
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_medical_certificate__approval_current_level
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_overtime__approval_current_level
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift_swap__approval_current_level
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_submission_mixin__approval_current_level
+msgid "Current Level"
+msgstr "Level Sekarang"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_attendance_correction__acted_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_leave__acted_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_medical_certificate__acted_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_mixin__acted_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_overtime__acted_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_shift_swap__acted_at
+msgid "Decided At"
+msgstr "Diputuskan Pada"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_attendance_correction__acted_by_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_leave__acted_by_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_medical_certificate__acted_by_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_mixin__acted_by_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_overtime__acted_by_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_shift_swap__acted_by_name
+msgid "Decided By"
+msgstr "Diputuskan Oleh"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_attendance_correction__acted_by_nopeg
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_leave__acted_by_nopeg
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_medical_certificate__acted_by_nopeg
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_mixin__acted_by_nopeg
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_overtime__acted_by_nopeg
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_shift_swap__acted_by_nopeg
+msgid "Decided By Nopeg"
+msgstr "Nopeg Pemutus"
+
+#. module: presenly_saas
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_attendance_correction__status
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_leave__status
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_medical_certificate__status
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_overtime__status
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_shift_swap__status
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_submission_mixin__status
+msgid ""
+"Decision status, in this module's vocabulary. Presenly sends overtime with "
+"an older Y/N/T vocabulary; it is mapped here so the same filters work on "
+"every request type."
+msgstr "Status keputusan, dalam kosakata modul ini. Presenly mengirim lembur dengan\n"
+"kosakata lama Y/N/T; nilainya dipetakan di sini supaya penyaring yang sama\n"
+"berlaku untuk semua jenis pengajuan."
+
+#. module: presenly_saas
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_approval_step_attendance_correction__approver_type__direct_manager
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_approval_step_leave__approver_type__direct_manager
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_approval_step_medical_certificate__approver_type__direct_manager
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_approval_step_mixin__approver_type__direct_manager
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_approval_step_overtime__approver_type__direct_manager
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_approval_step_shift_swap__approver_type__direct_manager
+msgid "Direct Manager"
+msgstr "Atasan Langsung"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_attendance_correction__approver_label
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_leave__approver_label
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_medical_certificate__approver_label
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_mixin__approver_label
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_overtime__approver_label
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_shift_swap__approver_label
+msgid "Expected Approver"
+msgstr "Penyetuju yang Diharapkan"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_attendance_correction__expected_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_leave__expected_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_medical_certificate__expected_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_mixin__expected_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_overtime__expected_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_shift_swap__expected_name
+msgid "Expected Approver Name"
+msgstr "Nama Penyetuju yang Diharapkan"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_attendance_correction__expected_nopeg
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_leave__expected_nopeg
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_medical_certificate__expected_nopeg
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_mixin__expected_nopeg
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_overtime__expected_nopeg
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_shift_swap__expected_nopeg
+msgid "Expected Approver Nopeg"
+msgstr "Nopeg Penyetuju yang Diharapkan"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__approval_has_workflow
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_leave__approval_has_workflow
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_medical_certificate__approval_has_workflow
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_overtime__approval_has_workflow
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift_swap__approval_has_workflow
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_submission_mixin__approval_has_workflow
+msgid "Has Approval Flow"
+msgstr "Punya Alur Persetujuan"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_leave__leave_id
+msgid "Leave Request"
+msgstr "Pengajuan Cuti"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_attendance_correction__level
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_leave__level
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_medical_certificate__level
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_mixin__level
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_overtime__level
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_shift_swap__level
+msgid "Level"
+msgstr "Level"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_medical_certificate__certificate_id
+msgid "Medical Certificate"
+msgstr "Surat Keterangan Dokter"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_overtime__overtime_id
+msgid "Overtime Request"
+msgstr "Pengajuan Lembur"
+
+#. module: presenly_saas
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_approval_step_attendance_correction__approver_type__permission
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_approval_step_leave__approver_type__permission
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_approval_step_medical_certificate__approver_type__permission
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_approval_step_mixin__approver_type__permission
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_approval_step_overtime__approver_type__permission
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_approval_step_shift_swap__approver_type__permission
+msgid "Permission"
+msgstr "Izin Akses"
+
+#. module: presenly_saas
+#. odoo-python
+#: code:addons/presenly_saas/models/presenly_saas_approval.py:0
+msgid "Permission %s"
+msgstr "Izin akses %s"
+
+#. module: presenly_saas
+#: model:ir.model,name:presenly_saas.model_presenly_saas_approval_step_attendance_correction
+msgid "Presenly Attendance Correction Approval Step (mirror)"
+msgstr "Langkah Persetujuan Koreksi Presensi (cermin)"
+
+#. module: presenly_saas
+#: model:ir.model,name:presenly_saas.model_presenly_saas_approval_step_leave
+msgid "Presenly Leave Approval Step (mirror)"
+msgstr "Langkah Persetujuan Cuti (cermin)"
+
+#. module: presenly_saas
+#: model:ir.model,name:presenly_saas.model_presenly_saas_approval_step_medical_certificate
+msgid "Presenly Medical Certificate Approval Step (mirror)"
+msgstr "Langkah Persetujuan Surat Dokter (cermin)"
+
+#. module: presenly_saas
+#: model:ir.model,name:presenly_saas.model_presenly_saas_approval_step_overtime
+msgid "Presenly Overtime Approval Step (mirror)"
+msgstr "Langkah Persetujuan Lembur (cermin)"
+
+#. module: presenly_saas
+#: model:ir.model,name:presenly_saas.model_presenly_saas_approval_step_mixin
+msgid "Presenly SaaS Approval Step Mixin"
+msgstr "Mixin Langkah Persetujuan Presenly SaaS"
+
+#. module: presenly_saas
+#: model:ir.model,name:presenly_saas.model_presenly_saas_submission_mixin
+msgid "Presenly SaaS Submission Mixin"
+msgstr "Mixin Pengajuan Presenly SaaS"
+
+#. module: presenly_saas
+#: model:ir.model,name:presenly_saas.model_presenly_saas_approval_step_shift_swap
+msgid "Presenly Shift Swap Approval Step (mirror)"
+msgstr "Langkah Persetujuan Tukar Shift (cermin)"
+
+#. module: presenly_saas
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_approval_step_attendance_correction__approver_type__role
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_approval_step_leave__approver_type__role
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_approval_step_medical_certificate__approver_type__role
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_approval_step_mixin__approver_type__role
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_approval_step_overtime__approver_type__role
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_approval_step_shift_swap__approver_type__role
+msgid "Role"
+msgstr "Peran"
+
+#. module: presenly_saas
+#. odoo-python
+#: code:addons/presenly_saas/models/presenly_saas_approval.py:0
+msgid "Role %s"
+msgstr "Peran %s"
+
+#. module: presenly_saas
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_approval_step_attendance_correction__approver_value
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_approval_step_leave__approver_value
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_approval_step_medical_certificate__approver_value
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_approval_step_mixin__approver_value
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_approval_step_overtime__approver_value
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_approval_step_shift_swap__approver_value
+msgid ""
+"Role or permission name. Empty for the other approver types: a selected user"
+" is named by their own field, and a direct manager needs no reference at "
+"all."
+msgstr "Nama peran atau izin akses. Kosong untuk jenis penyetuju lain: pengguna\n"
+"terpilih dinamai oleh fieldnya sendiri, dan atasan langsung tidak perlu\n"
+"rujukan sama sekali."
+
+#. module: presenly_saas
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_approval_step_attendance_correction__approver_type__user
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_approval_step_leave__approver_type__user
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_approval_step_medical_certificate__approver_type__user
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_approval_step_mixin__approver_type__user
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_approval_step_overtime__approver_type__user
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_approval_step_shift_swap__approver_type__user
+msgid "Selected User"
+msgstr "Pengguna Terpilih"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_shift_swap__swap_id
+msgid "Shift Swap Request"
+msgstr "Pengajuan Tukar Shift"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__status_raw
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_leave__status_raw
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_medical_certificate__status_raw
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_overtime__status_raw
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift_swap__status_raw
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_submission_mixin__status_raw
+msgid "Status on SaaS"
+msgstr "Status di SaaS"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_attendance_correction__step_status
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_leave__step_status
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_medical_certificate__step_status
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_mixin__step_status
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_overtime__step_status
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_approval_step_shift_swap__step_status
+msgid "Step Status"
+msgstr "Status Langkah"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__approval_total_levels
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_leave__approval_total_levels
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_medical_certificate__approval_total_levels
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_overtime__approval_total_levels
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift_swap__approval_total_levels
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_submission_mixin__approval_total_levels
+msgid "Total Levels"
+msgstr "Jumlah Level"
+
+#. module: presenly_saas
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_attendance_correction__approval_has_workflow
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_leave__approval_has_workflow
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_medical_certificate__approval_has_workflow
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_overtime__approval_has_workflow
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_shift_swap__approval_has_workflow
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_submission_mixin__approval_has_workflow
+msgid ""
+"True when Presenly has an approval flow for this request. False means no "
+"flow is configured for its type, so there are no levels to show."
+msgstr "True kalau Presenly punya alur persetujuan untuk pengajuan ini. False berarti\n"
+"jenisnya belum punya alur, jadi tidak ada level yang bisa ditampilkan."
+
+#. module: presenly_saas
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_attendance_correction__status_raw
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_leave__status_raw
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_medical_certificate__status_raw
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_overtime__status_raw
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_shift_swap__status_raw
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_submission_mixin__status_raw
+msgid ""
+"Value exactly as sent by Presenly, kept so a status this module does not "
+"recognise stays visible instead of silently becoming an empty status."
+msgstr "Nilai apa adanya seperti dikirim Presenly, disimpan supaya status yang belum\n"
+"dikenal modul ini tetap terlihat, bukan diam-diam menjadi status kosong."
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__approval_waiting_for
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_leave__approval_waiting_for
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_medical_certificate__approval_waiting_for
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_overtime__approval_waiting_for
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift_swap__approval_waiting_for
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_submission_mixin__approval_waiting_for
+msgid "Waiting For"
+msgstr "Menunggu"
+
+#. module: presenly_saas
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_attendance_correction__approval_waiting_for
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_leave__approval_waiting_for
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_medical_certificate__approval_waiting_for
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_overtime__approval_waiting_for
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_shift_swap__approval_waiting_for
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_submission_mixin__approval_waiting_for
+msgid "Who is expected to decide the level this request sits at now."
+msgstr "Siapa yang diharapkan memutuskan level yang sedang berjalan sekarang."
+
+#. module: presenly_saas
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_approval_step_attendance_correction__approver_type
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_approval_step_leave__approver_type
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_approval_step_medical_certificate__approver_type
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_approval_step_mixin__approver_type
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_approval_step_overtime__approver_type
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_approval_step_shift_swap__approver_type
+msgid "Who is expected to decide this level, as configured in Presenly."
+msgstr "Siapa yang diharapkan memutuskan level ini, sesuai konfigurasi di Presenly."
+
+
+#. module: presenly_saas
+#. odoo-python
+#: code:addons/presenly_saas/models/presenly_saas_attendance_log.py:0
+msgid "%d min late"
+msgstr "%d menit terlambat"
+
+#. module: presenly_saas
+#. odoo-python
+#: code:addons/presenly_saas/models/presenly_saas_attendance_log.py:0
+msgid "%dh %dm"
+msgstr "%dj %dm"
+
+#. module: presenly_saas
+#. odoo-python
+#: code:addons/presenly_saas/models/presenly_saas_attendance_log.py:0
+msgid "%dh %dm late"
+msgstr "%dj %dm terlambat"
+
+#. module: presenly_saas
+#. odoo-python
+#: code:addons/presenly_saas/models/presenly_saas_attendance_log.py:0
+msgid "%s from the office"
+msgstr "%s dari kantor"
+
+#. module: presenly_saas
+#. odoo-python
+#: code:addons/presenly_saas/models/presenly_saas_attendance_log.py:0
+msgid "%s from the office, allowed %s"
+msgstr "%s dari kantor, batas %s"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__check_in_distance_text
+msgid "Check-in Distance"
+msgstr "Jarak Masuk"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__check_in_distance_meters
+msgid "Check-in Distance (m)"
+msgstr "Jarak Masuk (m)"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__check_in_radius_state
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_search
+msgid "Check-in Geofence"
+msgstr "Geofence Masuk"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__check_in_allowed_radius_meters
+msgid "Check-in Radius (m)"
+msgstr "Radius Masuk (m)"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__check_out_distance_text
+msgid "Check-out Distance"
+msgstr "Jarak Keluar"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__check_out_distance_meters
+msgid "Check-out Distance (m)"
+msgstr "Jarak Keluar (m)"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__check_out_radius_state
+msgid "Check-out Geofence"
+msgstr "Geofence Keluar"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__check_out_allowed_radius_meters
+msgid "Check-out Radius (m)"
+msgstr "Radius Keluar (m)"
+
+#. module: presenly_saas
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_attendance_log__check_in_distance_text
+msgid ""
+"Distance from the office and the allowed radius, in units a person reads. "
+"Both numbers are the server's own; only the unit and the rounding are chosen"
+" here."
+msgstr "Jarak dari kantor dan radius yang diizinkan, dalam satuan yang dibaca orang.\n"
+"Kedua angkanya milik server; hanya satuannya dan pembulatannya yang dipilih di sini."
+
+#. module: presenly_saas
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_attendance_log__check_in_radius_state__inside
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_attendance_log__check_out_radius_state__inside
+msgid "Inside"
+msgstr "Di dalam"
+
+#. module: presenly_saas
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_attendance_log__check_in_radius_state
+msgid ""
+"Inside when the check-in point falls within the allowed radius. Unknown when"
+" either number is missing — being unknown is not the same as being outside."
+msgstr "Di dalam kalau titik masuknya jatuh di dalam radius yang diizinkan. Tidak diketahui\n"
+"kalau salah satu angkanya tidak ada — tidak diketahui bukan berarti di luar."
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__late_text
+msgid "Lateness"
+msgstr "Keterlambatan"
+
+#. module: presenly_saas
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_attendance_log__late_text
+msgid ""
+"Lateness as hours and minutes. The raw minute count stays in its own column "
+"for sums and pivots."
+msgstr "Keterlambatan dalam jam dan menit. Jumlah menit mentahnya tetap ada di kolomnya\n"
+"sendiri untuk penjumlahan dan pivot."
+
+#. module: presenly_saas
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_attendance_log__session_text
+msgid ""
+"Length of the session as hours and minutes. The raw hour count stays in its "
+"own column for sums and pivots."
+msgstr "Lama sesi dalam jam dan menit. Jumlah jam mentahnya tetap ada di kolomnya sendiri\n"
+"untuk penjumlahan dan pivot."
+
+#. module: presenly_saas
+#. odoo-python
+#: code:addons/presenly_saas/models/presenly_saas_attendance_log.py:0
+msgid "On time"
+msgstr "Tepat waktu"
+
+#. module: presenly_saas
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_attendance_log__check_in_radius_state__outside
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_attendance_log__check_out_radius_state__outside
+msgid "Outside"
+msgstr "Di luar"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_search
+msgid "Outside Geofence"
+msgstr "Di Luar Geofence"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__session_text
+msgid "Session Length"
+msgstr "Lama Sesi"

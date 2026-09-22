@@ -35,13 +35,13 @@
                     </group>
 
                     <notebook>
-                        <page string="Koneksi" name="connection">
+                        <page string="Connection" name="connection">
                             <group>
                                 <group string="Server">
                                     <field name="environment"/>
                                     <field name="base_url"/>
                                 </group>
-                                <group string="Kredensial">
+                                <group string="Credentials">
                                     <field name="tenant_code"/>
                                     <field name="api_key" password="True"/>
                                     <field name="timeout_seconds"/>
@@ -50,7 +50,7 @@
                             </group>
                         </page>
 
-                        <page string="Kebijakan" name="policy">
+                        <page string="Policy" name="policy">
                             <group>
                                 <group string="Enforcement">
                                     <field name="guard_mode"/>
@@ -61,13 +61,13 @@
                             </group>
                         </page>
 
-                        <page string="Diagnostik" name="diagnostics">
+                        <page string="Diagnostics" name="diagnostics">
                             <group>
                                 <field name="last_check_message" nolabel="1" colspan="2"/>
                             </group>
                             <div class="text-muted">
-                                Pemeriksaan yang gagal tidak pernah mengubah status langganan
-                                yang tersimpan. Hanya jawaban nyata dari server SaaS yang bisa.
+                                A failed check never changes the stored subscription status.
+                                Only a real answer from the SaaS server can.
                             </div>
                         </page>
                     </notebook>

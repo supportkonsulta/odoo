@@ -56,7 +56,7 @@ class TestPresenlySaasClient(BaseCase):
     # ------------------------------------------------------------------
     def test_get_subscription_returns_the_data_object(self):
         body = {"success": True, "data": {"status": "active", "schema_version": "1.0.0"}}
-        with patch("requests.get", return_value=make_response(200, body)) as get:
+        with patch("requests.request", return_value=make_response(200, body)) as get:
             data = self.client.get_subscription()
         self.assertEqual(data["status"], "active")
         self.assertTrue(get.call_args.kwargs["verify"])
@@ -66,7 +66,7 @@ class TestPresenlySaasClient(BaseCase):
     # ------------------------------------------------------------------
     def test_unauthorized_is_not_retried(self):
         body = {"success": False, "message": "Invalid or missing API Key"}
-        with patch("requests.get", return_value=make_response(401, body)) as get:
+        with patch("requests.request", return_value=make_response(401, body)) as get:
             with self.assertRaises(SaasClientError) as ctx:
                 self.client.get_subscription()
         self.assertEqual(ctx.exception.code, "UNAUTHORIZED")
@@ -74,7 +74,7 @@ class TestPresenlySaasClient(BaseCase):
 
     def test_server_error_is_retried_then_raised(self):
         body = {"success": False, "message": "boom"}
-        with patch("requests.get", return_value=make_response(503, body)) as get:
+        with patch("requests.request", return_value=make_response(503, body)) as get:
             with patch("time.sleep"):
                 with self.assertRaises(SaasClientError) as ctx:
                     self.client.get_subscription()
@@ -84,34 +84,34 @@ class TestPresenlySaasClient(BaseCase):
     def test_server_error_recovers_on_a_later_attempt(self):
         body = {"success": True, "data": {"status": "trial", "schema_version": "1.0.0"}}
         responses = [make_response(503, {}), make_response(200, body)]
-        with patch("requests.get", side_effect=responses):
+        with patch("requests.request", side_effect=responses):
             with patch("time.sleep"):
                 data = self.client.get_subscription()
         self.assertEqual(data["status"], "trial")
 
     def test_network_error_is_reported_as_such(self):
-        with patch("requests.get", side_effect=requests.ConnectionError("refused")):
+        with patch("requests.request", side_effect=requests.ConnectionError("refused")):
             with patch("time.sleep"):
                 with self.assertRaises(SaasClientError) as ctx:
                     self.client.get_subscription()
         self.assertEqual(ctx.exception.code, "NETWORK_ERROR")
 
     def test_unparsable_body_is_rejected(self):
-        with patch("requests.get", return_value=make_response(200, raise_json=True)):
+        with patch("requests.request", return_value=make_response(200, raise_json=True)):
             with self.assertRaises(SaasClientError) as ctx:
                 self.client.get_subscription()
         self.assertEqual(ctx.exception.code, "BAD_PAYLOAD")
 
     def test_unsupported_schema_version_is_rejected(self):
         body = {"success": True, "data": {"schema_version": "99.0.0"}}
-        with patch("requests.get", return_value=make_response(200, body)):
+        with patch("requests.request", return_value=make_response(200, body)):
             with self.assertRaises(SaasClientError) as ctx:
                 self.client.get_subscription()
         self.assertEqual(ctx.exception.code, "UNSUPPORTED_SCHEMA")
 
     def test_missing_schema_version_is_accepted(self):
         body = {"success": True, "data": {"status": "active"}}
-        with patch("requests.get", return_value=make_response(200, body)):
+        with patch("requests.request", return_value=make_response(200, body)):
             data = self.client.get_subscription()
         self.assertEqual(data["status"], "active")
 
@@ -120,7 +120,7 @@ class TestPresenlySaasClient(BaseCase):
     # ------------------------------------------------------------------
     def test_api_key_never_appears_in_the_error_message(self):
         with patch(
-            "requests.get",
+            "requests.request",
             side_effect=requests.ConnectionError(f"failed to reach {API_KEY}"),
         ):
             with patch("time.sleep"):

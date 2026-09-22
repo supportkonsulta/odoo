@@ -227,18 +227,34 @@ class TestPresenlySaasMenuStructure(TransactionCase):
     """Struktur menu: operasional di aplikasi, konfigurasi di Settings native."""
 
     def test_root_menu_holds_operations_and_references(self):
+        """Nama menu di sini adalah teks SUMBER (Inggris).
+
+        Terjemahan Indonesianya ada di `i18n/id.po`, jadi menguji nama sumber
+        berarti menguji struktur menu, bukan bahasanya.
+        """
         root = self.env.ref('presenly_saas.menu_presenly_saas_root')
+        nama = root.child_id.mapped('name')
+        for diharapkan in (
+            'Attendance', 'Configuration', 'Reference',
+            'Requests', 'Subscription', 'Sync Log', 'Timesheet',
+        ):
+            self.assertIn(diharapkan, nama)
+        self.assertEqual(len(nama), len(set(nama)), 'ada menu kembar: %s' % nama)
+        # Katalog endpoint dari `/v1/presenly/features` dibuang di 19.0.1.5.0:
+        # tidak ada yang memicu penarikannya, jadi menunya selalu kosong.
+        self.assertNotIn('Presenly Features', nama)
+
+    def test_menu_presensi_dikelompokkan_jadi_satu(self):
+        # Tiga menu terpisah di akar membuat pengguna menebak di mana data,
+        # ringkasan, dan rekapnya berada, padahal ketiganya satu pokok.
+        root = self.env.ref('presenly_saas.menu_presenly_saas_root')
+        self.assertNotIn('Attendance Data', root.child_id.mapped('name'))
+
+        presensi = self.env.ref('presenly_saas.menu_presenly_saas_attendance')
+        self.assertEqual(presensi.parent_id, root)
         self.assertEqual(
-            sorted(root.child_id.mapped('name')),
-            [
-                'Configuration',
-                'Data Presensi',
-                'Fitur Presenly',
-                'Referensi',
-                'Rekap Presensi',
-                'Subscription',
-                'Sync Log',
-            ],
+            presensi.child_id.sorted(lambda m: m.sequence).mapped('name'),
+            ['Attendance Data', 'Monitoring', 'Recap'],
         )
 
     def test_setiap_menu_membuka_action_atau_punya_anak(self):
@@ -252,12 +268,18 @@ class TestPresenlySaasMenuStructure(TransactionCase):
                 'Menu %s tidak punya action dan tidak punya anak.' % menu.name,
             )
 
-    def test_menu_referensi_berisi_lima_resource(self):
+    def test_menu_referensi_berisi_resource_inti(self):
         reference = self.env.ref('presenly_saas.menu_presenly_saas_reference')
-        self.assertEqual(
-            sorted(reference.child_id.mapped('name')),
-            ['Hari Libur', 'Lokasi Kerja', 'Mode Absen', 'Setup Hari Kerja', 'Shift'],
-        )
+        nama = reference.child_id.mapped('name')
+        # Diperiksa sebagai isi, bukan sebagai daftar yang harus sama persis:
+        # modul lain boleh menambah menu di sini, dan itu bukan kegagalan modul
+        # ini. Yang perlu dijaga adalah menunya ada dan tidak kembar.
+        for diharapkan in (
+            'Attendance Mode', 'Projects', 'Public Holidays',
+            'Shift', 'Work Day Setup', 'Work Location',
+        ):
+            self.assertIn(diharapkan, nama)
+        self.assertEqual(len(nama), len(set(nama)), 'ada menu kembar: %s' % nama)
 
     def test_configuration_holds_a_single_settings_shortcut(self):
         configuration = self.env.ref('presenly_saas.menu_presenly_saas_configuration')

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Tombolnya diletakkan sebelum field status, yaitu tepat setelah tombol
+         referensi milik modul inti.
+
+         Sengaja TIDAK mencocokkan `//button[@name='%(action_... )d']`: pada
+         arch yang tersimpan, rujukan action itu sudah menjadi id numerik,
+         sehingga XPath seperti itu tidak pernah cocok dan warisannya diam-diam
+         tidak terpasang. -->
+    <record id="view_presenly_saas_subscription_form_hr" model="ir.ui.view">
+        <field name="name">presenly.saas.subscription.form.hr</field>
+        <field name="model">presenly.saas.subscription</field>
+        <field name="inherit_id" ref="presenly_saas.view_presenly_saas_subscription_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='state_source']" position="before">
+                <button name="%(action_presenly_saas_pull_employees)d"
+                        type="action"
+                        string="Pull Employees"
+                        groups="presenly_saas.group_presenly_saas_manager"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

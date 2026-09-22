@@ -12,7 +12,7 @@ class PresenlySaasWorkLocation(models.Model):
 
     _name = 'presenly.saas.work.location'
     _inherit = ['presenly.saas.mirror.mixin']
-    _description = 'Presenly Work Location (cermin)'
+    _description = 'Presenly Work Location (mirror)'
     _order = 'name'
 
     _mirror_resource = 'work-locations'
@@ -23,13 +23,13 @@ class PresenlySaasWorkLocation(models.Model):
     longitude = fields.Float(digits=(10, 7))
     radius_meters = fields.Integer(string='Radius (m)')
     timezone = fields.Char()
-    attendance_type = fields.Char(string='Tipe Absen')
+    attendance_type = fields.Char(string='Attendance Type')
     is_active = fields.Boolean()
 
-    internal_company_id = fields.Integer(string='ID Perusahaan Internal')
-    internal_company_name = fields.Char(string='Perusahaan Internal')
-    project_id = fields.Integer(string='ID Proyek')
-    project_name = fields.Char(string='Proyek')
+    internal_company_id = fields.Integer(string='Internal Company ID')
+    internal_company_name = fields.Char(string='Internal Company')
+    project_id = fields.Integer(string='Project ID')
+    project_name = fields.Char(string='Project')
 
     @api.depends('name')
     def _compute_display_name(self):
@@ -69,19 +69,19 @@ class PresenlySaasShift(models.Model):
 
     _name = 'presenly.saas.shift'
     _inherit = ['presenly.saas.mirror.mixin']
-    _description = 'Presenly Shift (cermin)'
+    _description = 'Presenly Shift (mirror)'
     _order = 'shift_name'
 
     _mirror_resource = 'shifts'
 
     shift_name = fields.Char(required=True)
     # Jam dikirim sebagai teks "07:30:00", apa adanya dari server.
-    start_time = fields.Char(string='Jam Mulai')
-    end_time = fields.Char(string='Jam Selesai')
-    late_index = fields.Integer(string='Indeks Keterlambatan')
+    start_time = fields.Char(string='Start Time')
+    end_time = fields.Char(string='End Time')
+    late_index = fields.Integer(string='Lateness Index')
 
-    location_id = fields.Integer(string='ID Lokasi')
-    location_name = fields.Char(string='Lokasi')
+    location_id = fields.Integer(string='Location ID')
+    location_name = fields.Char(string='Location')
 
     @api.depends('shift_name', 'location_name')
     def _compute_display_name(self):
@@ -118,7 +118,7 @@ class PresenlySaasAttendanceMode(models.Model):
 
     _name = 'presenly.saas.attendance.mode'
     _inherit = ['presenly.saas.mirror.mixin']
-    _description = 'Presenly Attendance Mode (cermin)'
+    _description = 'Presenly Attendance Mode (mirror)'
     _order = 'name'
 
     _mirror_resource = 'attendance-modes'
@@ -150,17 +150,17 @@ class PresenlySaasHoliday(models.Model):
 
     _name = 'presenly.saas.holiday'
     _inherit = ['presenly.saas.mirror.mixin']
-    _description = 'Presenly Holiday (cermin)'
+    _description = 'Presenly Holiday (mirror)'
     _order = 'date desc'
 
     _mirror_resource = 'holidays'
 
     date = fields.Date(required=True)
     name = fields.Char(required=True)
-    holiday_type = fields.Char(string='Tipe')
+    holiday_type = fields.Char(string='Type')
 
-    location_id = fields.Integer(string='ID Lokasi')
-    location_name = fields.Char(string='Lokasi')
+    location_id = fields.Integer(string='Location ID')
+    location_name = fields.Char(string='Location')
 
     @api.depends('name', 'date')
     def _compute_display_name(self):
@@ -192,7 +192,7 @@ class PresenlySaasWorkDaySetup(models.Model):
 
     _name = 'presenly.saas.work.day.setup'
     _inherit = ['presenly.saas.mirror.mixin']
-    _description = 'Presenly Work Day Setup (cermin)'
+    _description = 'Presenly Work Day Setup (mirror)'
     _order = 'year desc, location_name'
 
     _mirror_resource = 'work-day-setups'
@@ -202,18 +202,18 @@ class PresenlySaasWorkDaySetup(models.Model):
     feb = fields.Integer(string='Feb')
     mar = fields.Integer(string='Mar')
     apr = fields.Integer(string='Apr')
-    may = fields.Integer(string='Mei')
+    may = fields.Integer(string='May')
     jun = fields.Integer(string='Jun')
     jul = fields.Integer(string='Jul')
-    aug = fields.Integer(string='Agu')
+    aug = fields.Integer(string='Aug')
     sep = fields.Integer(string='Sep')
-    oct = fields.Integer(string='Okt')
+    oct = fields.Integer(string='Oct')
     nov = fields.Integer(string='Nov')
-    dec = fields.Integer(string='Des')
-    total_days = fields.Integer(string='Total Hari Kerja')
+    dec = fields.Integer(string='Dec')
+    total_days = fields.Integer(string='Total Working Days')
 
-    location_id = fields.Integer(string='ID Lokasi')
-    location_name = fields.Char(string='Lokasi')
+    location_id = fields.Integer(string='Location ID')
+    location_name = fields.Char(string='Location')
 
     @api.depends('year', 'location_name')
     def _compute_display_name(self):

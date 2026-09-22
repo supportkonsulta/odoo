@@ -9,20 +9,20 @@
                 <header>
                     <button name="action_refresh"
                             type="object"
-                            string="Segarkan Sekarang"
+                            string="Refresh Now"
                             class="btn-primary"
                             groups="presenly_saas.group_presenly_saas_manager"/>
                     <!-- Konfigurasi ada di halaman Settings native; tombol ini
                          hanya mengantar ke sana, bukan membuka form kedua. -->
                     <button name="%(action_presenly_saas_settings)d"
                             type="action"
-                            string="Pengaturan"
+                            string="Settings"
                             groups="presenly_saas.group_presenly_saas_manager"/>
                     <!-- Server action, bukan method di model ini: penarikan
                          referensi dikerjakan oleh `presenly.saas.config`. -->
                     <button name="%(action_presenly_saas_pull_reference)d"
                             type="action"
-                            string="Segarkan Referensi"
+                            string="Refresh Reference"
                             groups="presenly_saas.group_presenly_saas_manager"/>
                     <field name="state_source" widget="badge"
                            decoration-success="state_source == 'live'"
@@ -38,7 +38,7 @@
                     </div>
 
                     <group>
-                        <group string="Langganan">
+                        <group string="Subscription">
                             <field name="status" widget="badge"
                                    decoration-success="status == 'active'"
                                    decoration-info="status == 'trial'"
@@ -57,12 +57,12 @@
                     </group>
 
                     <group>
-                        <group string="Masa Berlaku">
+                        <group string="Validity Period">
                             <field name="trial_ends_at" invisible="not is_trial"/>
                             <field name="current_period_end"/>
                             <field name="grace_until"/>
                         </group>
-                        <group string="Kursi">
+                        <group string="Seats">
                             <field name="seats_used"/>
                             <field name="seat_limit"/>
                             <field name="seat_usage_percent" widget="progressbar" nolabel="1"/>
@@ -70,13 +70,13 @@
                     </group>
 
                     <notebook>
-                        <page string="Perusahaan" name="company">
+                        <page string="Company" name="company">
                             <group>
-                                <group string="Kontak">
+                                <group string="Contact">
                                     <field name="tenant_email" widget="email"/>
                                     <field name="tenant_whatsapp"/>
                                 </group>
-                                <group string="Profil">
+                                <group string="Profile">
                                     <field name="tenant_business_sector"/>
                                     <field name="tenant_reference"/>
                                     <field name="tenant_employee_count"/>
@@ -84,50 +84,50 @@
                                 </group>
                             </group>
                             <div class="text-muted">
-                                Data ini disalin dari profil perusahaan di sisi Presenly SaaS dan
-                                hanya bisa diubah di sana. Angka
-                                <strong>Jumlah Pegawai</strong> adalah yang dinyatakan klien,
-                                berbeda dari <strong>Kursi Terpakai</strong> yang memang dihitung
-                                dari akun aktif.
+                                This data is copied from the company profile on the Presenly SaaS side and
+                                can only be changed there. The
+                                <strong>Employee Count</strong> is the figure the client declares,
+                                unlike <strong>Seats Used</strong>, which is counted from
+                                active accounts.
                             </div>
                         </page>
 
-                        <page string="Paket &amp; Fitur" name="features">
+                        <page string="Plan &amp; Features" name="features">
                             <group>
-                                <group string="Paket">
+                                <group string="Plan">
                                     <field name="plan_registered"/>
                                     <field name="feature_count"/>
                                     <field name="included_feature_count"/>
                                 </group>
-                                <group string="Fitur Tidak Termasuk"
+                                <group string="Features Not Included"
                                        invisible="not missing_feature_codes">
                                     <field name="missing_feature_codes" colspan="2" nolabel="1"/>
                                 </group>
                             </group>
-                            <separator string="Rincian Fitur"/>
+                            <separator string="Feature Details"/>
                             <field name="features_summary" nolabel="1" readonly="1"/>
                             <div class="text-muted" invisible="plan_registered">
-                                Paket ini belum terdaftar di katalog paket sisi SaaS, jadi
-                                seluruh fitur ditampilkan sebagai termasuk. Nama dan batasnya
-                                perlu ditinjau di sana.
+                                This plan is not registered in the SaaS-side plan catalog yet, so every
+                                feature is shown as included. Its name and limits
+                                need to be reviewed there.
                             </div>
                         </page>
 
-                        <page string="Sinkronisasi" name="sync">
+                        <page string="Sync" name="sync">
                             <group>
-                                <group string="Terakhir">
+                                <group string="Last">
                                     <field name="last_sync_at"/>
                                     <field name="server_time"/>
                                 </group>
-                                <group string="Teknis">
+                                <group string="Technical">
                                     <field name="schema_version"/>
                                     <field name="config_id"/>
                                 </group>
                             </group>
                             <div class="text-muted" invisible="state_source == 'live'">
-                                Snapshot ini belum dikonfirmasi baru. Status yang tampil adalah
-                                jawaban terakhir yang benar-benar dikirim server SaaS, dan tidak
-                                pernah diturunkan menjadi kedaluwarsa oleh penyegaran yang gagal.
+                                This snapshot has not been confirmed recently. The status shown is the last
+                                answer actually sent by the SaaS server, and is never lowered to
+                                expired by a failed refresh.
                             </div>
                         </page>
                     </notebook>

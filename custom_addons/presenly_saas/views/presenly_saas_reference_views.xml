@@ -7,7 +7,7 @@
         <field name="name">presenly.saas.work.location.list</field>
         <field name="model">presenly.saas.work.location</field>
         <field name="arch" type="xml">
-            <list string="Lokasi Kerja" create="false" edit="false" delete="false">
+            <list string="Work Location" create="false" edit="false" delete="false">
                 <field name="name"/>
                 <field name="internal_company_name"/>
                 <field name="attendance_type"/>
@@ -21,16 +21,69 @@
         </field>
     </record>
 
+    <record id="view_presenly_saas_work_location_form" model="ir.ui.view">
+        <field name="name">presenly.saas.work.location.form</field>
+        <field name="model">presenly.saas.work.location</field>
+        <field name="arch" type="xml">
+            <form create="false" edit="false" delete="false">
+                <sheet>
+                    <div class="oe_title">
+                        <h2>
+                            <field name="name" class="oe_inline"/>
+                            <field name="is_active" widget="boolean_toggle" class="ms-2"/>
+                        </h2>
+                        <div class="text-muted">
+                            <field name="internal_company_name" class="oe_inline"/>
+                        </div>
+                    </div>
+
+                    <group>
+                        <group string="Geofence">
+                            <field name="attendance_type"/>
+                            <field name="radius_meters"/>
+                            <field name="timezone"/>
+                            <field name="project_name"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                        <group string="Address">
+                            <field name="address"/>
+                        </group>
+                    </group>
+
+                    <!-- Pusat lokasi dan radius yang diizinkan. Lingkaran pada
+                         peta memakai radius yang sama dengan yang dikirim
+                         server, jadi tidak ada angka kedua yang perlu ditebak. -->
+                    <group string="Location">
+                        <!-- Wajib ada di arch; lihat catatan di form presensi. -->
+                        <field name="longitude" invisible="1"/>
+                        <!-- Tanpa `office_lat_field`, widget memperlakukan titik
+                             ini sebagai kantornya — memang itu isinya. -->
+                        <field name="latitude" widget="presenly_map" nolabel="1"
+                               options="{'lon_field': 'longitude',
+                                         'radius_field': 'radius_meters',
+                                         'label_field': 'name',
+                                         'person_field': 'internal_company_name',
+                                         'point_label': 'Office location'}"/>
+                    </group>
+
+                    <group string="Data Source">
+                        <field name="fetched_at"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
     <record id="view_presenly_saas_work_location_search" model="ir.ui.view">
         <field name="name">presenly.saas.work.location.search</field>
         <field name="model">presenly.saas.work.location</field>
         <field name="arch" type="xml">
-            <search string="Lokasi Kerja">
+            <search string="Work Location">
                 <field name="name"/>
                 <field name="internal_company_name"/>
-                <filter name="active" string="Aktif" domain="[('is_active', '=', True)]"/>
+                <filter name="active" string="Active" domain="[('is_active', '=', True)]"/>
                 <group>
-                    <filter name="group_company" string="Perusahaan Internal"
+                    <filter name="group_company" string="Internal Company"
                             context="{'group_by': 'internal_company_name'}"/>
                 </group>
             </search>
@@ -38,9 +91,9 @@
     </record>
 
     <record id="action_presenly_saas_work_location" model="ir.actions.act_window">
-        <field name="name">Lokasi Kerja</field>
+        <field name="name">Work Location</field>
         <field name="res_model">presenly.saas.work.location</field>
-        <field name="view_mode">list</field>
+        <field name="view_mode">list,form</field>
     </record>
 
     <!-- Shift =========================================================== -->
@@ -69,7 +122,7 @@
                 <field name="shift_name"/>
                 <field name="location_name"/>
                 <group>
-                    <filter name="group_location" string="Lokasi"
+                    <filter name="group_location" string="Location"
                             context="{'group_by': 'location_name'}"/>
                 </group>
             </search>
@@ -88,7 +141,7 @@
         <field name="name">presenly.saas.attendance.mode.list</field>
         <field name="model">presenly.saas.attendance.mode</field>
         <field name="arch" type="xml">
-            <list string="Mode Absen" create="false" edit="false" delete="false">
+            <list string="Attendance Mode" create="false" edit="false" delete="false">
                 <field name="name"/>
                 <field name="fetched_at" optional="hide"/>
             </list>
@@ -96,7 +149,7 @@
     </record>
 
     <record id="action_presenly_saas_attendance_mode" model="ir.actions.act_window">
-        <field name="name">Mode Absen</field>
+        <field name="name">Attendance Mode</field>
         <field name="res_model">presenly.saas.attendance.mode</field>
         <field name="view_mode">list</field>
     </record>
@@ -107,7 +160,7 @@
         <field name="name">presenly.saas.holiday.list</field>
         <field name="model">presenly.saas.holiday</field>
         <field name="arch" type="xml">
-            <list string="Hari Libur" create="false" edit="false" delete="false">
+            <list string="Public Holidays" create="false" edit="false" delete="false">
                 <field name="date"/>
                 <field name="name"/>
                 <field name="holiday_type"/>
@@ -122,13 +175,13 @@
         <field name="name">presenly.saas.holiday.search</field>
         <field name="model">presenly.saas.holiday</field>
         <field name="arch" type="xml">
-            <search string="Hari Libur">
+            <search string="Public Holidays">
                 <field name="name"/>
                 <field name="location_name"/>
-                <filter name="date" string="Tanggal" date="date"/>
+                <filter name="date" string="Date" date="date"/>
                 <group>
-                    <filter name="group_type" string="Tipe" context="{'group_by': 'holiday_type'}"/>
-                    <filter name="group_location" string="Lokasi"
+                    <filter name="group_type" string="Type" context="{'group_by': 'holiday_type'}"/>
+                    <filter name="group_location" string="Location"
                             context="{'group_by': 'location_name'}"/>
                 </group>
             </search>
@@ -136,7 +189,7 @@
     </record>
 
     <record id="action_presenly_saas_holiday" model="ir.actions.act_window">
-        <field name="name">Hari Libur</field>
+        <field name="name">Public Holidays</field>
         <field name="res_model">presenly.saas.holiday</field>
         <field name="view_mode">list</field>
     </record>
@@ -147,10 +200,10 @@
         <field name="name">presenly.saas.work.day.setup.list</field>
         <field name="model">presenly.saas.work.day.setup</field>
         <field name="arch" type="xml">
-            <list string="Setup Hari Kerja" create="false" edit="false" delete="false">
+            <list string="Work Day Setup" create="false" edit="false" delete="false">
                 <field name="year"/>
                 <field name="location_name"/>
-                <field name="total_days" sum="Total hari kerja"/>
+                <field name="total_days" sum="Total working days"/>
                 <field name="jan" optional="show"/>
                 <field name="feb" optional="hide"/>
                 <field name="mar" optional="hide"/>
@@ -169,7 +222,7 @@
     </record>
 
     <record id="action_presenly_saas_work_day_setup" model="ir.actions.act_window">
-        <field name="name">Setup Hari Kerja</field>
+        <field name="name">Work Day Setup</field>
         <field name="res_model">presenly.saas.work.day.setup</field>
         <field name="view_mode">list</field>
     </record>

@@ -100,6 +100,22 @@ class ResConfigSettings(models.TransientModel):
     )
 
     # ------------------------------------------------------------------
+    # Penarikan terjadwal & jendela bergulir
+    # ------------------------------------------------------------------
+    presenly_saas_pull_months = fields.Integer(
+        string='Months Pulled by Cron',
+        compute='_compute_presenly_saas',
+        inverse='_inverse_presenly_saas_pull_months',
+        groups=MANAGER_GROUP,
+    )
+    presenly_saas_retention_months = fields.Integer(
+        string='Retention (months)',
+        compute='_compute_presenly_saas',
+        inverse='_inverse_presenly_saas_retention_months',
+        groups=MANAGER_GROUP,
+    )
+
+    # ------------------------------------------------------------------
     # Diagnostik: hanya dibaca, tidak pernah ditulis dari sini
     # ------------------------------------------------------------------
     presenly_saas_last_check_at = fields.Datetime(
@@ -149,6 +165,7 @@ class ResConfigSettings(models.TransientModel):
         config_fields = [
             'enabled', 'environment', 'base_url', 'tenant_code', 'api_key',
             'timeout_seconds', 'retry_count', 'guard_mode', 'grace_days', 'show_banner',
+            'pull_months', 'retention_months',
         ]
 
         for settings in self:
@@ -175,6 +192,8 @@ class ResConfigSettings(models.TransientModel):
             settings.presenly_saas_guard_mode = values.get('guard_mode', 'warn')
             settings.presenly_saas_grace_days = values.get('grace_days', 7)
             settings.presenly_saas_show_banner = values.get('show_banner', True)
+            settings.presenly_saas_pull_months = values.get('pull_months', 2)
+            settings.presenly_saas_retention_months = values.get('retention_months', 12)
 
     def _write_presenly_saas_config(self, values):
         """Tulis field yang diberikan ke konfigurasi company pada baris ini.
@@ -212,6 +231,16 @@ class ResConfigSettings(models.TransientModel):
 
     def _inverse_presenly_saas_retry_count(self):
         self._write_presenly_saas_config({'retry_count': self.presenly_saas_retry_count})
+
+    def _inverse_presenly_saas_pull_months(self):
+        self._write_presenly_saas_config(
+            {'pull_months': max(1, self.presenly_saas_pull_months or 1)}
+        )
+
+    def _inverse_presenly_saas_retention_months(self):
+        self._write_presenly_saas_config(
+            {'retention_months': max(0, self.presenly_saas_retention_months or 0)}
+        )
 
     def _inverse_presenly_saas_guard_mode(self):
         self._write_presenly_saas_config({'guard_mode': self.presenly_saas_guard_mode})

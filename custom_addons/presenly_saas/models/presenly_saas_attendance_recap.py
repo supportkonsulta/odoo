@@ -23,24 +23,27 @@ class PresenlySaasAttendanceRecap(models.Model):
         ondelete='cascade',
         index=True,
     )
-    user_id = fields.Integer(string='ID Pegawai (SaaS)', required=True, index=True)
-    employee_name = fields.Char(string='Pegawai')
+    user_id = fields.Integer(
+        string='Employee ID (SaaS)', required=True, index=True,
+        aggregator=False,
+    )
+    employee_name = fields.Char(string='Employee')
     employee_nopeg = fields.Char(string='Nopeg')
-    project_name = fields.Char(string='Proyek')
+    project_name = fields.Char(string='Project')
 
     month = fields.Integer(required=True)
     year = fields.Integer(required=True)
 
-    attendance_count = fields.Integer(string='Jumlah Kehadiran')
-    total_late_minutes = fields.Integer(string='Total Terlambat (menit)')
-    absent_count = fields.Integer(string='Jumlah Alpha')
+    attendance_count = fields.Integer(string='Attendance Count')
+    total_late_minutes = fields.Integer(string='Total Late (minutes)')
+    absent_count = fields.Integer(string='Absent Count')
 
     fetched_at = fields.Datetime(readonly=True, index=True)
-    raw_payload = fields.Json(string='Payload Mentah')
+    raw_payload = fields.Json(string='Raw Payload')
 
     _company_period_user_uniq = models.Constraint(
         'unique(company_id, year, month, user_id)',
-        'Satu pegawai hanya boleh muncul sekali per bulan per company.',
+        'An employee may only appear once per month per company.',
     )
 
     @api.depends('employee_name', 'month', 'year')

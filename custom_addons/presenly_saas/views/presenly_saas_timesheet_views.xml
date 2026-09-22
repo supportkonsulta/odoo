@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Timesheet: satu-satunya tempat di modul ini yang menampilkan angka yang
+         dihitung Odoo sendiri (`Hours`), bukan angka kiriman server. Kolom itu
+         diberi keterangan di modelnya, dan di sini dipakai sebagai ukuran pivot
+         supaya bisa dibaca per pegawai dan per proyek. -->
+
+    <record id="view_presenly_saas_timesheet_list" model="ir.ui.view">
+        <field name="name">presenly.saas.timesheet.list</field>
+        <field name="model">presenly.saas.timesheet</field>
+        <field name="arch" type="xml">
+            <list create="false" edit="false" delete="false" default_order="date desc">
+                <field name="date"/>
+                <field name="employee_name"/>
+                <field name="project_name"/>
+                <field name="project_code" optional="hide"/>
+                <field name="category"/>
+                <field name="start_time"/>
+                <field name="end_time"/>
+                <field name="hours" sum="Total hours"/>
+                <field name="rating" optional="hide"/>
+                <field name="shift_name" optional="hide"/>
+                <field name="status" widget="badge" decoration-success="status == 'approved'"
+                       decoration-info="status == 'submitted'"
+                       decoration-danger="status == 'rejected'"/>
+                <field name="approver_name" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_presenly_saas_timesheet_search" model="ir.ui.view">
+        <field name="name">presenly.saas.timesheet.search</field>
+        <field name="model">presenly.saas.timesheet</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="employee_name"/>
+                <field name="employee_nopeg"/>
+                <field name="project_name"/>
+                <field name="project_code"/>
+                <field name="category"/>
+                <separator/>
+                <filter name="approved" string="Approved" domain="[('status', '=', 'approved')]"/>
+                <filter name="submitted" string="Submitted" domain="[('status', '=', 'submitted')]"/>
+                <filter name="rejected" string="Rejected" domain="[('status', '=', 'rejected')]"/>
+                <filter name="draft" string="Draft" domain="[('status', '=', 'draft')]"/>
+                <separator/>
+                <filter name="rated" string="Rated" domain="[('rating', '&gt;', 0)]"/>
+                <filter name="unrated" string="Not Rated Yet" domain="[('rating', '=', 0)]"/>
+                <separator/>
+                <filter name="this_month" string="This Month"
+                        domain="[('date', '&gt;=', (context_today()).replace(day=1).strftime('%Y-%m-%d'))]"/>
+                <filter name="this_year" string="This Year"
+                        domain="[('date', '&gt;=', (context_today()).replace(month=1, day=1).strftime('%Y-%m-%d'))]"/>
+                <separator/>
+                <group>
+                    <filter name="group_employee" string="Employee"
+                            context="{'group_by': 'employee_name'}"/>
+                    <filter name="group_project" string="Project"
+                            context="{'group_by': 'project_name'}"/>
+                    <filter name="group_category" string="Category"
+                            context="{'group_by': 'category'}"/>
+                    <filter name="group_status" string="Status"
+                            context="{'group_by': 'status'}"/>
+                    <filter name="group_shift" string="Shift"
+                            context="{'group_by': 'shift_name'}"/>
+                    <filter name="group_month" string="Month"
+                            context="{'group_by': 'date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_presenly_saas_timesheet_pivot" model="ir.ui.view">
+        <field name="name">presenly.saas.timesheet.pivot</field>
+        <field name="model">presenly.saas.timesheet</field>
+        <field name="arch" type="xml">
+            <pivot>
+                <field name="employee_name" type="row"/>
+                <field name="date" interval="month" type="col"/>
+                <field name="hours" type="measure"/>
+                <field name="rating" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_presenly_saas_timesheet_graph" model="ir.ui.view">
+        <field name="name">presenly.saas.timesheet.graph</field>
+        <field name="model">presenly.saas.timesheet</field>
+        <field name="arch" type="xml">
+            <graph type="bar" string="Timesheet">
+                <field name="project_name"/>
+                <field name="hours" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_presenly_saas_timesheet_form" model="ir.ui.view">
+        <field name="name">presenly.saas.timesheet.form</field>
+        <field name="model">presenly.saas.timesheet</field>
+        <field name="arch" type="xml">
+            <form create="false" edit="false" delete="false">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="date"/>
+                            <field name="employee_name"/>
+                            <field name="employee_nopeg"/>
+                            <field name="project_name"/>
+                            <field name="project_code"/>
+                            <field name="category"/>
+                        </group>
+                        <group>
+                            <field name="status" widget="badge"/>
+                            <field name="start_time"/>
+                            <field name="end_time"/>
+                            <field name="hours"/>
+                            <field name="shift_name"/>
+                            <field name="rating"/>
+                            <field name="approver_name"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="description"/>
+                        <field name="comment"/>
+                    </group>
+                    <group string="Data Source" colspan="2">
+                        <field name="fetched_at"/>
+                        <field name="source_updated_at"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_presenly_saas_timesheet" model="ir.actions.act_window">
+        <field name="name">Timesheet</field>
+        <field name="res_model">presenly.saas.timesheet</field>
+        <field name="view_mode">list,pivot,graph,form</field>
+        <field name="search_view_id" ref="view_presenly_saas_timesheet_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No timesheets mirrored yet</p>
+            <p>Run <b>Pull Period Data</b> to fill it. The <b>Hours</b> column is
+               derived in Odoo from the start and end times, not sent by the server.</p>
+        </field>
+    </record>
+
+    <record id="view_presenly_saas_project_list" model="ir.ui.view">
+        <field name="name">presenly.saas.project.list</field>
+        <field name="model">presenly.saas.project</field>
+        <field name="arch" type="xml">
+            <list create="false" edit="false" delete="false" default_order="project_code">
+                <field name="project_code"/>
+                <field name="project_name"/>
+                <field name="sub_code" optional="hide"/>
+                <field name="internal_company_name"/>
+                <field name="grup" optional="hide"/>
+                <field name="pk" optional="hide"/>
+                <field name="has_timesheet"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_presenly_saas_project_search" model="ir.ui.view">
+        <field name="name">presenly.saas.project.search</field>
+        <field name="model">presenly.saas.project</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="project_code"/>
+                <field name="project_name"/>
+                <field name="internal_company_name"/>
+                <filter name="with_timesheet" string="Has Timesheet"
+                        domain="[('has_timesheet', '=', True)]"/>
+                <filter name="without_timesheet" string="No Timesheet"
+                        domain="[('has_timesheet', '=', False)]"/>
+                <separator/>
+                <group>
+                    <filter name="group_internal_company" string="Internal Company"
+                            context="{'group_by': 'internal_company_name'}"/>
+                    <filter name="group_grup" string="SIK Group"
+                            context="{'group_by': 'grup'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_presenly_saas_project" model="ir.actions.act_window">
+        <field name="name">Projects</field>
+        <field name="res_model">presenly.saas.project</field>
+        <field name="view_mode">list</field>
+        <field name="search_view_id" ref="view_presenly_saas_project_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No projects mirrored yet</p>
+            <p>Use <b>Refresh Reference</b> on the Subscription page, or pull
+               a specific period through <b>Pull Period Data</b>.</p>
+        </field>
+    </record>
+
+</odoo>

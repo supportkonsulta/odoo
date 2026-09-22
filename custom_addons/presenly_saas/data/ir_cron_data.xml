@@ -17,6 +17,34 @@
             <field name="user_id" ref="base.user_root"/>
         </record>
 
+        <!-- Penarikan data terpisah dari pemeriksaan langganan. Keduanya
+             harian, tetapi kegagalan salah satu tidak boleh menghentikan yang
+             lain: langganan yang tidak terjangkau tidak berarti presensi tidak
+             bisa ditarik. -->
+        <record id="ir_cron_presenly_saas_pull_period" model="ir.cron">
+            <field name="name">Presenly SaaS: Pull Period Data</field>
+            <field name="model_id" ref="model_presenly_saas_config"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_pull_periods_all()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="user_id" ref="base.user_root"/>
+        </record>
+
+
+        <!-- Pembersihan mingguan, bukan harian: jendela bergulir dihitung dalam
+             bulan, jadi menjalankannya tiap hari hanya mengulang pekerjaan yang
+             sama tanpa menghapus apa pun. -->
+        <record id="ir_cron_presenly_saas_prune_mirrors" model="ir.cron">
+            <field name="name">Presenly SaaS: Clean Up Mirrored Data</field>
+            <field name="model_id" ref="model_presenly_saas_config"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_prune_mirrors_all()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">weeks</field>
+            <field name="user_id" ref="base.user_root"/>
+        </record>
+
     </data>
 
 </odoo>

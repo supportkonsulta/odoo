@@ -1,6 +1,6 @@
 {
     'name': 'Presenly SaaS',
-    'version': '19.0.1.2.0',
+    'version': '19.0.1.6.0',
     'category': 'Productivity',
     'summary': 'Langganan Presenly SaaS untuk instalasi Odoo ini',
     'description': """
@@ -18,11 +18,22 @@ Menghubungkan instalasi Odoo ini dengan control plane SaaS Presenly.
 - Menyediakan ``presenly.saas.guard`` sebagai API Python bagi modul lain yang
   ingin menegakkan kebijakan langganan.
 
-Modul ini tidak mengubah addon ``presenly`` maupun mewarisi model dan view
-native Odoo. Kebijakan produk: full access, tanpa gating fitur per paket.
+Modul ini tidak mengubah addon ``presenly``, dan tidak mewarisi model native
+apa pun.
+
+Integrasi pegawai dengan ``hr.employee`` berada di modul terpisah
+``presenly_saas_hr``. Pemisahan itu disengaja: modul langganan ini dipakai semua
+tenant, sedangkan HR hanya sebagian. Memaksa ``hr`` di sini berarti ikut
+memasang ``resource``, ``mail``, dan ``phone_validation`` pada setiap instalasi.
+
+Kebijakan produk: full access, tanpa gating fitur per paket.
     """,
     'author': 'Presenly',
     'license': 'LGPL-3',
+    # Sengaja tanpa dependensi `hr`. Integrasi pegawai berada di modul
+    # terpisah `presenly_saas_hr`, supaya modul langganan ini tidak memaksa
+    # pemasangan HR — beserta `resource`, `mail`, dan `phone_validation` yang
+    # ikut terbawa — pada instalasi yang tidak membutuhkannya.
     'depends': ['base', 'web'],
     'data': [
         'security/presenly_saas_security.xml',
@@ -31,9 +42,11 @@ native Odoo. Kebijakan produk: full access, tanpa gating fitur per paket.
         'data/ir_cron_data.xml',
         'views/presenly_saas_config_views.xml',
         'views/presenly_saas_sync_log_views.xml',
-        'views/presenly_saas_external_feature_views.xml',
         'views/presenly_saas_reference_views.xml',
         'views/presenly_saas_attendance_views.xml',
+        'views/presenly_saas_monitoring_views.xml',
+        'views/presenly_saas_submission_views.xml',
+        'views/presenly_saas_timesheet_views.xml',
         'wizard/presenly_saas_pull_wizard_views.xml',
         # Menu root didefinisikan di sini. Setiap berkas yang menambah menu
         # harus dimuat SETELAHNYA, kalau tidak `parent="menu_presenly_saas_root"`
@@ -47,6 +60,13 @@ native Odoo. Kebijakan produk: full access, tanpa gating fitur per paket.
     ],
     'assets': {
         'web.assets_backend': [
+            # Leaflet TIDAK didaftarkan di sini. Pustaka itu UMD dan menetapkan
+            # `window.L` saat dijalankan; kalau digabung sebagai aset, penetapan
+            # itu tidak sampai ke halaman dan petanya tampil kosong tanpa pesan.
+            # Widget memuatnya sendiri lewat `loadJS` saat dibutuhkan.
+            'presenly_saas/static/src/map/presenly_map_field.js',
+            'presenly_saas/static/src/map/presenly_map_field.xml',
+            'presenly_saas/static/src/map/presenly_map_field.scss',
             'presenly_saas/static/src/banner/presenly_saas_banner.js',
             'presenly_saas/static/src/banner/presenly_saas_banner.xml',
             'presenly_saas/static/src/banner/presenly_saas_banner.scss',

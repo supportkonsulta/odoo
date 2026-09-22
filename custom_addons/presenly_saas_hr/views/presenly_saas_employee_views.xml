@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Pegawai: cermin apa adanya dari Presenly. Data kepegawaian yang
+         sesungguhnya ada di `hr.employee`; halaman ini untuk memeriksa apa yang
+         dikirim server, termasuk kolom yang tidak punya rumah di Odoo. -->
+
+    <record id="action_presenly_saas_pull_employees" model="ir.actions.server">
+        <field name="name">Pull Employees</field>
+        <field name="model_id" ref="presenly_saas.model_presenly_saas_config"/>
+        <field name="state">code</field>
+        <field name="code">
+config = env['presenly.saas.config']._get_or_create()
+action = config.action_pull_employees()
+        </field>
+        <field name="group_ids" eval="[(4, ref('presenly_saas.group_presenly_saas_manager'))]"/>
+    </record>
+
+    <record id="action_presenly_saas_register_webhook" model="ir.actions.server">
+        <field name="name">Register This Odoo</field>
+        <field name="model_id" ref="presenly_saas.model_presenly_saas_config"/>
+        <field name="state">code</field>
+        <field name="code">
+config = env['presenly.saas.config']._get_or_create()
+action = config.action_register_webhook()
+        </field>
+        <field name="group_ids" eval="[(4, ref('presenly_saas.group_presenly_saas_manager'))]"/>
+    </record>
+
+    <record id="action_presenly_saas_unregister_webhook" model="ir.actions.server">
+        <field name="name">Stop Notifications</field>
+        <field name="model_id" ref="presenly_saas.model_presenly_saas_config"/>
+        <field name="state">code</field>
+        <field name="code">
+config = env['presenly.saas.config']._get_or_create()
+action = config.action_unregister_webhook()
+        </field>
+        <field name="group_ids" eval="[(4, ref('presenly_saas.group_presenly_saas_manager'))]"/>
+    </record>
+
+    <record id="view_presenly_saas_employee_list" model="ir.ui.view">
+        <field name="name">presenly.saas.employee.list</field>
+        <field name="model">presenly.saas.employee</field>
+        <field name="arch" type="xml">
+            <list create="false" edit="false" delete="false" default_order="name">
+                <field name="nopeg"/>
+                <field name="name"/>
+                <field name="email" optional="show"/>
+                <field name="phone" optional="hide"/>
+                <field name="bagian" optional="show"/>
+                <field name="role_name" optional="hide"/>
+                <field name="internal_company_name" optional="hide"/>
+                <field name="is_active"/>
+                <field name="hr_employee_id" optional="show"/>
+                <field name="synced_state" widget="badge"
+                       decoration-success="synced_state == 'linked'"
+                       decoration-warning="synced_state == 'unlinked'"
+                       decoration-danger="synced_state == 'no_nopeg'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_presenly_saas_employee_search" model="ir.ui.view">
+        <field name="name">presenly.saas.employee.search</field>
+        <field name="model">presenly.saas.employee</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="nopeg"/>
+                <field name="email"/>
+                <field name="bagian"/>
+                <separator/>
+                <filter name="active" string="Active in Presenly"
+                        domain="[('is_active', '=', True)]"/>
+                <filter name="inactive" string="Inactive in Presenly"
+                        domain="[('is_active', '=', False)]"/>
+                <separator/>
+                <filter name="linked" string="Linked to an Odoo Employee"
+                        domain="[('hr_employee_id', '!=', False)]"/>
+                <filter name="unlinked" string="Not Linked Yet"
+                        domain="[('hr_employee_id', '=', False)]"/>
+                <filter name="no_nopeg" string="No Nopeg"
+                        domain="[('nopeg', '=', False)]"/>
+                <separator/>
+                <group>
+                    <filter name="group_bagian" string="Section"
+                            context="{'group_by': 'bagian'}"/>
+                    <filter name="group_internal_company" string="Internal Company"
+                            context="{'group_by': 'internal_company_name'}"/>
+                    <filter name="group_role" string="Role"
+                            context="{'group_by': 'role_name'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_presenly_saas_employee_form" model="ir.ui.view">
+        <field name="name">presenly.saas.employee.form</field>
+        <field name="model">presenly.saas.employee</field>
+        <field name="arch" type="xml">
+            <form create="false" edit="false" delete="false">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="nopeg"/>
+                            <field name="name"/>
+                            <field name="email"/>
+                            <field name="phone"/>
+                            <field name="is_active"/>
+                        </group>
+                        <group>
+                            <field name="hr_employee_id"/>
+                            <field name="synced_state" widget="badge"/>
+                            <field name="role_name"/>
+                            <field name="internal_company_name"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="address"/>
+                    </group>
+                    <group>
+                        <group string="No Home in Odoo">
+                            <field name="bagian"/>
+                            <field name="grup"/>
+                            <field name="birth_date"/>
+                            <field name="birth_place"/>
+                            <field name="can_approve"/>
+                        </group>
+                        <group string="PII (only with include_pii)">
+                            <field name="no_npwp"/>
+                            <field name="no_rekening"/>
+                            <field name="no_bpjs"/>
+                            <field name="no_bpjs_kes"/>
+                        </group>
+                    </group>
+                    <group string="Data Source" colspan="2">
+                        <field name="external_id"/>
+                        <field name="fetched_at"/>
+                        <field name="source_updated_at"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_presenly_saas_employee" model="ir.actions.act_window">
+        <field name="name">Employees (mirror)</field>
+        <field name="res_model">presenly.saas.employee</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_presenly_saas_employee_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No employees mirrored yet</p>
+            <p>Use <b>Pull Employees</b> on the Subscription page. The real employee
+               records live in the Employees app; this page shows what Presenly sent,
+               including the columns that have no home in Odoo.</p>
+        </field>
+    </record>
+
+</odoo>

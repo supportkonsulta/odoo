@@ -11,6 +11,7 @@ a log line or an exception message.
 
 import logging
 import time
+from urllib.parse import quote
 
 import requests
 
@@ -87,10 +88,6 @@ class PresenlySaasClient:
         """Return the ``data`` object of the subscription endpoint."""
         return self.get_envelope("/v1/subscription")["data"]
 
-    def get_presenly_features(self):
-        """Katalog fitur Presenly beserta status ketersediaannya."""
-        return self.get_envelope("/v1/presenly/features")
-
     def get_attendance_logs(self, params=None):
         """Log presensi sesi. Mengembalikan ``{"data": [...], "meta": {...}}``."""
         return self.get_envelope("/v1/presenly/attendance-logs", params)
@@ -112,10 +109,43 @@ class PresenlySaasClient:
         """
         return self._get(path, params)
 
+    def create_employee(self, payload):
+        """Buat pegawai di Presenly. Mengembalikan amplop respons."""
+        return self._request('POST', '/v1/employees', body=payload)
+
+    def update_employee(self, nopeg, payload):
+        """Perbarui sebagian kolom pegawai. Hanya kolom yang dikirim yang ditulis."""
+        return self._request('PATCH', '/v1/employees/%s' % quote(nopeg, safe=''), body=payload)
+
+    def register_webhook(self, payload):
+        """Daftarkan alamat penerima webhook milik instalasi ini."""
+        return self._request('PUT', '/v1/webhooks', body=payload)
+
+    def unregister_webhook(self):
+        """Matikan pengiriman webhook ke instalasi ini, tanpa menghapus riwayatnya."""
+        return self._request('DELETE', '/v1/webhooks')
+
+    def get_webhook_deliveries(self, params=None):
+        """Riwayat pengiriman di sisi server, untuk memeriksa kesehatan tujuan."""
+        return self._request('GET', '/v1/webhooks/deliveries', params=params)
+
+    def get_employee_write_contract(self):
+        """Kolom pegawai yang boleh ditulis dari luar, menurut server."""
+        return self._request('GET', '/v1/employees/writable-fields')['data']
+
     # ------------------------------------------------------------------
     # Internals
     # ------------------------------------------------------------------
     def _get(self, path, params=None):
+        return self._request('GET', path, params=params)
+
+    def _request(self, method, path, params=None, body=None):
+        """Satu implementasi percobaan ulang untuk semua metode.
+
+        Percobaan ulang **tidak** dilakukan untuk galat 4xx: permintaan yang
+        ditolak karena datanya salah akan ditolak lagi, dan mengulanginya hanya
+        memperlambat tanpa mengubah hasil.
+        """
         url = self._endpoint(path)
         attempts = self.retry_count + 1
 
@@ -123,10 +153,12 @@ class PresenlySaasClient:
             last_attempt = attempt + 1 >= attempts
             started = time.monotonic()
             try:
-                response = requests.get(
+                response = requests.request(
+                    method,
                     url,
-                    headers=self._headers(),
+                    headers=dict(self._headers(), **({'Content-Type': 'application/json'} if body is not None else {})),
                     params=self._clean_params(params),
+                    json=body,
                     timeout=self.timeout,
                     verify=True,
                 )
