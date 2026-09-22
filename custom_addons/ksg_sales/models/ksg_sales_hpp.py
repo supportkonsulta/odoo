@@ -8,6 +8,14 @@ class KsgSalesHpp(models.Model):
     _inherit = ["mail.thread", "mail.activity.mixin"]
     _order = "id desc"
 
+    _sql_constraints = [
+        (
+            "ksg_sales_hpp_name_unique",
+            "unique(name)",
+            "Nomor HPP harus unik.",
+        ),
+    ]
+
     name = fields.Char(
         string="No. HPP",
         required=True,
@@ -87,6 +95,7 @@ class KsgSalesHpp(models.Model):
                     self.env["ir.sequence"].next_by_code("ksg.sales.hpp")
                     or "New"
                 )
+
         return super().create(vals_list)
 
     @api.onchange("rab_id")
