@@ -5,16 +5,8 @@
     <menuitem
         id="menu_ksg_sales_root"
         name="Penjualan KSG"
-        sequence="10"
-    />
-
-    <!-- DASHBOARD -->
-    <menuitem
-        id="menu_ksg_sales_dashboard"
-        name="Dashboard"
-        parent="menu_ksg_sales_root"
         action="action_ksg_sales_dashboard"
-        sequence="1"
+        sequence="10"
     />
 
 </odoo>

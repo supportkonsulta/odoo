@@ -325,15 +325,4 @@
         <field name="target">current</field>
     </record>
 
-
-    <!-- =========================================================
-         DASHBOARD MENU
-         ========================================================= -->
-
-    <menuitem id="menu_ksg_sales_dashboard"
-              name="Dashboard"
-              parent="menu_ksg_sales_root"
-              action="action_ksg_sales_dashboard"
-              sequence="1"/>
-
 </odoo>
