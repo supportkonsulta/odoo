@@ -177,15 +177,36 @@
                     <notebook>
 
                         <!-- =================================================
-                             CHECKLIST
+                            CHECKLIST DOKUMEN ENGINEERING
                         ================================================== -->
 
-                        <page string="Checklist Dokumen Engineering">
+                        <page string="Checklist Dokumen">
 
-                            <field
-                                name="checklist_dokumen_ids"
-                                widget="many2many_tags"
-                            />
+                            <div class="oe_title">
+                                <h2>Checklist Dokumen Engineering</h2>
+                                <p class="text-muted">
+                                    Daftar dokumen yang diperlukan untuk proyek ini.
+                                </p>
+                            </div>
+
+                            <field name="checklist_dokumen_ids">
+                                <list editable="bottom">
+                                    <field
+                                        name="checklist_id"
+                                        string="Dokumen"
+                                    />
+
+                                    <field
+                                        name="state"
+                                        string="Status"
+                                    />
+
+                                    <field
+                                        name="note"
+                                        string="Keterangan"
+                                    />
+                                </list>
+                            </field>
 
                         </page>
 

@@ -20,3 +20,5 @@ access_ksg_sales_hpp_line_manager,ksg.sales.hpp.line manager,model_ksg_sales_hpp
 access_ksg_sales_dashboard_user,ksg.sales.dashboard user,model_ksg_sales_dashboard,ksg_sales.group_sales_user,1,1,1,1
 access_ksg_sales_dashboard_manager,ksg.sales.dashboard manager,model_ksg_sales_dashboard,ksg_sales.group_sales_manager,1,1,1,1
 access_ksg_sales_dashboard_internal,ksg.sales.dashboard internal user,model_ksg_sales_dashboard,base.group_user,1,1,1,1
+access_ksg_sales_project_checklist_user,ksg.sales.project.checklist user,model_ksg_sales_project_checklist,ksg_sales.group_sales_user,1,1,1,1
+access_ksg_sales_project_checklist_manager,ksg.sales.project.checklist manager,model_ksg_sales_project_checklist,ksg_sales.group_sales_manager,1,1,1,1

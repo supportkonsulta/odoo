@@ -170,13 +170,10 @@ class KsgSalesProject(models.Model):
     # CHECKLIST ENGINEERING
     # =========================================================
 
-    checklist_dokumen_ids = fields.Many2many(
-        comodel_name="ksg.sales.document.checklist",
-        relation="ksg_sales_project_checklist_rel",
-        column1="project_id",
-        column2="checklist_id",
+    checklist_dokumen_ids = fields.One2many(
+        comodel_name="ksg.sales.project.checklist",
+        inverse_name="project_id",
         string="Checklist Dokumen Engineering",
-        required=True,
     )
 
     # =========================================================
@@ -226,12 +223,17 @@ class KsgSalesProject(models.Model):
 
     @api.onchange("kategori")
     def _onchange_kategori(self):
-        if self.kategori:
-            self.checklist_dokumen_ids = (
-                self.kategori.default_checklist_ids
-            )
-        else:
+        if not self.kategori:
             self.checklist_dokumen_ids = [(5, 0, 0)]
+            return
+
+        self.checklist_dokumen_ids = [
+            (0, 0, {
+                "checklist_id": checklist.id,
+                "state": "not_available",
+            })
+            for checklist in self.kategori.default_checklist_ids
+        ]
 
     # =========================================================
     # COMPUTE NILAI KONTRAK TERKINI
