@@ -148,7 +148,6 @@ class CustomPayrollGenerateWizard(models.TransientModel):
             (s.employee_id.id, s.work_location_id.id)
             for s in self.payroll_batch_id.slip_ids
         }
-        created = 0
         for line in self.preview_line_ids:
             pair = (line.employee_id.id, line.work_location_id.id)
             if self.skip_existing and (line.will_skip or pair in existing_pairs):
@@ -167,14 +166,7 @@ class CustomPayrollGenerateWizard(models.TransientModel):
                 auto_populate_bpjs=self.auto_populate_bpjs,
             )
             existing_pairs.add(pair)
-            created += 1
-        return {
-            'type': 'ir.actions.act_window',
-            'name': _('Generated Payslips (%d)') % created,
-            'res_model': 'custom.payroll.slip',
-            'view_mode': 'list,form',
-            'domain': [('payroll_batch_id', '=', self.payroll_batch_id.id)],
-        }
+        return {'type': 'ir.actions.act_window_close'}
 
 
 class CustomPayrollGenerateWizardPreview(models.TransientModel):
