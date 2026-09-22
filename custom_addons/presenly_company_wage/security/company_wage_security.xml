@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Multi-company rule: wage records follow the company of their work location. -->
+    <record id="rule_hr_employee_company_wage_multi_company" model="ir.rule">
+        <field name="name">Employee Company Wage Multi Company</field>
+        <field name="model_id" ref="model_hr_employee_company_wage"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        <field name="global" eval="True"/>
+    </record>
+</odoo>
