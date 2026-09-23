@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- ============================================================ -->
+    <!-- Daily Report Views -->
+    <!-- ============================================================ -->
+
+    <!-- List -->
+    <record id="view_daily_report_tree" model="ir.ui.view">
+        <field name="name">ksg.engineering.daily.report.list</field>
+        <field name="model">ksg.engineering.daily.report</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="project_id"/>
+                <field name="tanggal"/>
+                <field name="pelaksana_id" string="Pelaksana"/>
+                <field name="state" string="Status" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-success="state == 'submitted'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form -->
+    <record id="view_daily_report_form" model="ir.ui.view">
+        <field name="name">ksg.engineering.daily.report.form</field>
+        <field name="model">ksg.engineering.daily.report</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_submit" string="Submit Laporan"
+                            type="object" class="btn-primary"
+                            invisible="state != 'draft'"
+                            groups="ksg_engineering.group_pelaksana,ksg_engineering.group_engineer,ksg_engineering.group_pengawas,base.group_system"/>
+                    <button name="action_reset_draft" string="Batalkan Submit"
+                            type="object" class="btn-secondary"
+                            invisible="state != 'submitted'"
+                            groups="ksg_engineering.group_pengawas,ksg_engineering.group_supervisor,base.group_system"
+                            confirm="Laporan akan dikembalikan ke Draft. Lanjutkan?"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,submitted"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box"/>
+                    <group>
+                        <group string="Informasi Laporan">
+                            <field name="project_id"
+                                   readonly="state == 'submitted'"
+                                   options="{'no_create': 1}"/>
+                            <field name="tanggal"
+                                   readonly="state == 'submitted'"/>
+                        </group>
+                        <group string="Pelaksana">
+                            <field name="pelaksana_id"
+                                   readonly="state == 'submitted'"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Detail Pekerjaan Hari Ini">
+                            <div class="text-muted mb-2" invisible="state == 'submitted'">
+                                Isi pekerjaan yang dikerjakan hari ini. Pilih item WBS, masukkan jam dan progress.
+                            </div>
+                            <field name="line_ids" nolabel="1"
+                                   readonly="state == 'submitted'">
+                                <list editable="bottom">
+                                    <field name="project_id" column_invisible="1"/>
+                                    <field name="wbs_id" string="Pekerjaan (WBS)"
+                                           domain="[('project_id', '=', project_id)]"
+                                           options="{'no_create': 1}"/>
+                                    <field name="jam_mulai" widget="float_time" string="Jam Mulai"/>
+                                    <field name="jam_selesai" widget="float_time" string="Jam Selesai"/>
+                                    <field name="progress" string="Progress (%)"/>
+                                    <field name="deskripsi" string="Keterangan"/>
+                                    <field name="personel_ids" widget="many2many_tags"
+                                           string="Pekerja" optional="show"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Bukti Foto / Evidence">
+                            <div class="text-muted mb-2">
+                                Upload foto bukti pekerjaan untuk setiap item.
+                            </div>
+                            <field name="line_ids" nolabel="1" mode="kanban"
+                                   readonly="state == 'submitted'">
+                                <kanban>
+                                    <field name="wbs_id"/>
+                                    <field name="evidence_ids"/>
+                                    <templates>
+                                        <t t-name="card">
+                                            <div>
+                                                <strong><field name="wbs_id"/></strong>
+                                                <field name="evidence_ids" widget="many2many_binary"/>
+                                            </div>
+                                        </t>
+                                    </templates>
+                                </kanban>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+</odoo>

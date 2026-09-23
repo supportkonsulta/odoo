@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Ambang variance Kurva-S (%) -->
+        <record id="config_variance_threshold" model="ir.config_parameter">
+            <field name="key">ksg_engineering.variance_threshold</field>
+            <field name="value">-5.0</field>
+        </record>
+
+        <!-- SLA keterlambatan Daily Report (hari) -->
+        <record id="config_late_report_sla" model="ir.config_parameter">
+            <field name="key">ksg_engineering.late_report_sla_days</field>
+            <field name="value">1</field>
+        </record>
+
+        <!-- SLA approval Supervisor (hari) -->
+        <record id="config_approval_sla" model="ir.config_parameter">
+            <field name="key">ksg_engineering.approval_sla_days</field>
+            <field name="value">2</field>
+        </record>
+    </data>
+</odoo>

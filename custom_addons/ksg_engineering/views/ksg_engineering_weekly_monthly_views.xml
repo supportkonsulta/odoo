@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- ============================================================ -->
+    <!-- Weekly Report Views -->
+    <!-- ============================================================ -->
+
+    <record id="view_weekly_report_tree" model="ir.ui.view">
+        <field name="name">ksg.engineering.weekly.report.list</field>
+        <field name="model">ksg.engineering.weekly.report</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="project_id"/>
+                <field name="periode_minggu_id" string="Minggu"/>
+                <field name="planned_progress" string="Rencana (%)"/>
+                <field name="actual_progress" string="Realisasi (%)"/>
+                <field name="actual_progress_kumulatif" string="Kumulatif (%)"/>
+                <field name="variance" string="Selisih (%)"
+                       decoration-danger="variance &lt; 0"
+                       decoration-success="variance &gt;= 0"/>
+                <field name="state" string="Status" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-success="state == 'done'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_weekly_report_form" model="ir.ui.view">
+        <field name="name">ksg.engineering.weekly.report.form</field>
+        <field name="model">ksg.engineering.weekly.report</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group string="Informasi">
+                            <field name="project_id"/>
+                            <field name="periode_minggu_id" string="Periode Minggu"/>
+                        </group>
+                        <group string="Progress">
+                            <field name="planned_progress" string="Rencana (%)"/>
+                            <field name="actual_progress" string="Realisasi (%)"/>
+                            <field name="actual_progress_kumulatif" string="Kumulatif (%)"/>
+                            <field name="variance" string="Selisih (%)"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Konsolidasi Terkait">
+                            <field name="consolidation_ids" nolabel="1">
+                                <list>
+                                    <field name="pengawas_id" string="Pengawas"/>
+                                    <field name="state" string="Status" widget="badge"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- Monthly Report Views -->
+    <!-- ============================================================ -->
+
+    <record id="view_monthly_report_tree" model="ir.ui.view">
+        <field name="name">ksg.engineering.monthly.report.list</field>
+        <field name="model">ksg.engineering.monthly.report</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="project_id"/>
+                <field name="bulan" string="Bulan"/>
+                <field name="tahun" string="Tahun"/>
+                <field name="planned_progress" string="Rencana (%)"/>
+                <field name="actual_progress" string="Realisasi (%)"/>
+                <field name="variance" string="Selisih (%)"
+                       decoration-danger="variance &lt; 0"
+                       decoration-success="variance &gt;= 0"/>
+                <field name="state" string="Status" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_monthly_report_form" model="ir.ui.view">
+        <field name="name">ksg.engineering.monthly.report.form</field>
+        <field name="model">ksg.engineering.monthly.report</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group string="Informasi">
+                            <field name="project_id"/>
+                            <field name="bulan"/>
+                            <field name="tahun"/>
+                        </group>
+                        <group string="Progress">
+                            <field name="planned_progress" string="Rencana (%)"/>
+                            <field name="actual_progress" string="Realisasi (%)"/>
+                            <field name="variance" string="Selisih (%)"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Laporan Mingguan Terkait">
+                            <field name="weekly_report_ids" nolabel="1">
+                                <list>
+                                    <field name="periode_minggu_id" string="Minggu"/>
+                                    <field name="planned_progress" string="Rencana (%)"/>
+                                    <field name="actual_progress" string="Realisasi (%)"/>
+                                    <field name="variance" string="Selisih (%)"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+</odoo>

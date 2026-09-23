@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Activity: Keterlambatan Daily Report (FR-006A) -->
+        <record id="activity_late_report" model="mail.activity.type">
+            <field name="name">Keterlambatan Daily Report</field>
+            <field name="summary">Daily Report belum disubmit</field>
+            
+            <field name="delay_count">1</field>
+            <field name="delay_unit">days</field>
+            <field name="icon">fa-exclamation-triangle</field>
+        </record>
+
+        <!-- Activity: Menunggu Approval Konsolidasi (FR-008A) -->
+        <record id="activity_pending_approval" model="mail.activity.type">
+            <field name="name">Menunggu Approval Konsolidasi</field>
+            <field name="summary">Konsolidasi menunggu persetujuan</field>
+            
+            <field name="delay_count">2</field>
+            <field name="delay_unit">days</field>
+            <field name="icon">fa-check-circle</field>
+        </record>
+
+        <!-- Activity: Peringatan Keterlambatan Kurva-S (FR-010A) -->
+        <record id="activity_kurva_s_alert" model="mail.activity.type">
+            <field name="name">Peringatan Keterlambatan Kurva-S</field>
+            <field name="summary">Variance Kurva-S melewati ambang</field>
+            
+            <field name="delay_count">7</field>
+            <field name="delay_unit">days</field>
+            <field name="icon">fa-line-chart</field>
+        </record>
+
+        <!-- Activity: Menunggu Approval BAP/BAST (FR-014) -->
+        <record id="activity_bapbast_approval" model="mail.activity.type">
+            <field name="name">Menunggu Approval BAP/BAST</field>
+            <field name="summary">BAP/BAST menunggu persetujuan</field>
+            
+            <field name="delay_count">3</field>
+            <field name="delay_unit">days</field>
+            <field name="icon">fa-file-text</field>
+        </record>
+    </data>
+</odoo>

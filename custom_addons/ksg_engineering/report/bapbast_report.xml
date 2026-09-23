@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- ============================================================ -->
+    <!-- BAP/BAST Report Action + Template -->
+    <!-- ============================================================ -->
+
+    <record id="action_report_bapbast" model="ir.actions.report">
+        <field name="name">Cetak BAP/BAST</field>
+        <field name="model">ksg.engineering.bapbast</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ksg_engineering.report_bapbast_document</field>
+        <field name="report_file">ksg_engineering.report_bapbast_document</field>
+        <field name="binding_model_id" ref="model_ksg_engineering_bapbast"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_bapbast_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2 class="text-center">BERITA ACARA PEMBAYARAN / SERAH TERIMA</h2>
+                        <h3 class="text-center"><t t-esc="doc.name"/></h3>
+
+                        <table class="table table-bordered mt-4">
+                            <tr>
+                                <td style="width:30%"><strong>Project</strong></td>
+                                <td><t t-esc="doc.project_id.kode_proyek"/> - <t t-esc="doc.project_id.nama_pekerjaan"/></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Klien</strong></td>
+                                <td><t t-esc="doc.project_id.klien.name"/></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Periode</strong></td>
+                                <td><t t-esc="doc.periode"/></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Status</strong></td>
+                                <td><t t-esc="doc.state"/></td>
+                            </tr>
+                            <tr t-if="doc.progress_ref_id">
+                                <td><strong>Referensi Weekly Report</strong></td>
+                                <td>
+                                    Minggu <t t-esc="doc.progress_ref_id.periode_minggu_id.no_minggu"/>
+                                    — Planned: <t t-esc="doc.progress_ref_id.planned_progress"/>%
+                                    | Actual: <t t-esc="doc.progress_ref_id.actual_progress"/>%
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- Progress detail from consolidation -->
+                        <t t-if="doc.progress_ref_id and doc.progress_ref_id.consolidation_ids">
+                            <h4 class="mt-4">Detail Progress</h4>
+                            <table class="table table-sm table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Tanggal</th>
+                                        <th>Pelaksana</th>
+                                        <th>Item WBS</th>
+                                        <th>Progress (%)</th>
+                                        <th>Deskripsi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="doc.progress_ref_id.consolidation_ids" t-as="cons">
+                                        <t t-foreach="cons.daily_report_ids" t-as="dr">
+                                            <t t-foreach="dr.line_ids" t-as="line">
+                                                <tr>
+                                                    <td><t t-esc="dr.tanggal"/></td>
+                                                    <td><t t-esc="dr.pelaksana_id.name"/></td>
+                                                    <td><t t-esc="line.wbs_id.nama_pekerjaan"/></td>
+                                                    <td><t t-esc="line.progress"/></td>
+                                                    <td><t t-esc="line.deskripsi"/></td>
+                                                </tr>
+                                            </t>
+                                        </t>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </t>
+
+                        <!-- Approval info -->
+                        <div class="mt-4" t-if="doc.state == 'approved'">
+                            <h4>Persetujuan</h4>
+                            <table class="table table-bordered">
+                                <tr>
+                                    <td style="width:30%"><strong>Disetujui Oleh</strong></td>
+                                    <td><t t-esc="doc.approver_id.name"/></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Tanggal Disetujui</strong></td>
+                                    <td><t t-esc="doc.tanggal_approve" t-options='{"widget": "datetime"}'/></td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <!-- Digital signature -->
+                        <div class="mt-4 text-center" t-if="doc.signature_image">
+                            <p><strong>Tanda Tangan Digital</strong></p>
+                            <img t-att-src="image_data_uri(doc.signature_image)"
+                                 style="max-width: 300px;"/>
+                        </div>
+
+                        <!-- Audit trail footer -->
+                        <div class="mt-4 text-muted" style="font-size: 0.8em;">
+                            <p>Dokumen ini digenerate secara otomatis oleh sistem ERP KSG Engineering.</p>
+                            <p>Dibuat: <t t-esc="doc.create_date" t-options='{"widget": "datetime"}'/></p>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

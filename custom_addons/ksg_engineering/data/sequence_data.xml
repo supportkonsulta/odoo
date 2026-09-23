@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="seq_bapbast" model="ir.sequence">
+            <field name="name">KSG Engineering BAP/BAST</field>
+            <field name="code">ksg.engineering.bapbast</field>
+            <field name="prefix">BAPBAST/%(year)s/</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
+    </data>
+</odoo>

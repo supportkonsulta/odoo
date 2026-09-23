@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- ============================================================ -->
+    <!-- Consolidation Views -->
+    <!-- ============================================================ -->
+
+    <record id="view_consolidation_tree" model="ir.ui.view">
+        <field name="name">ksg.engineering.report.consolidation.list</field>
+        <field name="model">ksg.engineering.report.consolidation</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="project_id"/>
+                <field name="pengawas_id" string="Pengawas"/>
+                <field name="periode_minggu_id" string="Minggu"/>
+                <field name="state" string="Status" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-warning="state == 'waiting_approval'"
+                       decoration-success="state == 'approved'"
+                       decoration-danger="state == 'revisi'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_consolidation_form" model="ir.ui.view">
+        <field name="name">ksg.engineering.report.consolidation.form</field>
+        <field name="model">ksg.engineering.report.consolidation</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_ajukan" string="Ajukan ke Supervisor"
+                            type="object" class="btn-primary"
+                            invisible="state not in ('draft', 'revisi')"
+                            groups="ksg_engineering.group_pengawas,base.group_system"/>
+                    <button name="action_approve" string="Setujui"
+                            type="object" class="btn-success"
+                            invisible="state != 'waiting_approval'"
+                            groups="ksg_engineering.group_supervisor,base.group_system"/>
+                    <button name="action_revisi" string="Minta Revisi"
+                            type="object" class="btn-warning"
+                            invisible="state != 'waiting_approval'"
+                            groups="ksg_engineering.group_supervisor,base.group_system"/>
+                    <button name="action_reset_draft" string="Reset Draft"
+                            type="object" class="btn-secondary"
+                            invisible="state != 'revisi'"
+                            groups="ksg_engineering.group_pengawas,base.group_system"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,waiting_approval,approved"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="project_id"
+                                   readonly="state not in ('draft', 'revisi')"/>
+                            <field name="periode_minggu_id" string="Periode Minggu"
+                                   domain="[('project_id', '=', project_id)]"
+                                   readonly="state not in ('draft', 'revisi')"/>
+                        </group>
+                        <group>
+                            <field name="pengawas_id"
+                                   readonly="state not in ('draft', 'revisi')"/>
+                        </group>
+                    </group>
+                    <group string="Catatan Revisi dari Supervisor"
+                           invisible="state not in ('waiting_approval', 'revisi')">
+                        <field name="catatan_revisi" nolabel="1"
+                               placeholder="Supervisor wajib mengisi alasan revisi di sini..."/>
+                    </group>
+                    <notebook>
+                        <page string="Daily Reports yang Dikonsolidasi">
+                            <div class="text-muted mb-2"
+                                 invisible="state not in ('draft', 'revisi')">
+                                Pilih daily reports yang sudah disubmit untuk dikonsolidasi.
+                            </div>
+                            <field name="daily_report_ids" nolabel="1"
+                                   widget="many2many"
+                                   domain="[('project_id', '=', project_id), ('state', '=', 'submitted')]"
+                                   readonly="state not in ('draft', 'revisi')">
+                                <list>
+                                    <field name="tanggal"/>
+                                    <field name="pelaksana_id" string="Pelaksana"/>
+                                    <field name="state" string="Status" widget="badge"
+                                           decoration-success="state == 'submitted'"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+</odoo>
