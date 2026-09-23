@@ -6,4 +6,3 @@ from . import res_config_settings_hr
 from . import presenly_saas_placement
 from . import presenly_saas_reconciliation_hr
 from . import presenly_saas_approval_hr
-from . import presenly_saas_approver_accounts
