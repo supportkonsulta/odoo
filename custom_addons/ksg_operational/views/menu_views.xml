@@ -1,0 +1,56 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Menu Utama Aplikasi Operasional -->
+    <menuitem id="menu_ksg_operational_root"
+              name="Operasional"
+              web_icon="ksg_operational,static/description/icon.png"
+              sequence="25"/>
+
+    <!-- 1. Kategori Sumber Daya Lapangan -->
+    <menuitem id="menu_ops_manpower_category"
+              name="Tenaga Kerja"
+              parent="menu_ksg_operational_root"
+              sequence="10"/>
+
+    <menuitem id="menu_ksg_operational_manpower_request"
+              name="Permohonan Manpower (ke HC)"
+              parent="menu_ops_manpower_category"
+              action="action_ksg_operational_manpower_request"
+              sequence="10"/>
+
+    <menuitem id="menu_ksg_operational_assignment_menu"
+              name="Penugasan Pekerja Aktif"
+              parent="menu_ops_manpower_category"
+              action="action_ksg_operational_assignment"
+              sequence="20"/>
+
+    <!-- 2. Kategori Logistik & Pengadaan -->
+    <menuitem id="menu_ops_logistics_category"
+              name="Pengadaan"
+              parent="menu_ksg_operational_root"
+              sequence="20"/>
+
+    <menuitem id="menu_ksg_operational_procurement"
+              name="Pengadaan &amp; BoQ"
+              parent="menu_ops_logistics_category"
+              action="action_ksg_operational_procurement"
+              sequence="10"/>
+
+    <!-- 3. Kategori Monitoring & Laporan -->
+    <menuitem id="menu_ops_monitoring_category"
+              name="Monitoring &amp; Laporan"
+              parent="menu_ksg_operational_root"
+              sequence="30"/>
+
+    <menuitem id="menu_ksg_operational_attendance"
+              name="Presensi Lapangan (SIDAC / Presenly)"
+              parent="menu_ops_monitoring_category"
+              action="action_ksg_operational_attendance"
+              sequence="10"/>
+
+    <menuitem id="menu_ksg_operational_monthly_report_menu"
+              name="Laporan Bulanan Proyek"
+              parent="menu_ops_monitoring_category"
+              action="action_ksg_operational_monthly_report"
+              sequence="20"/>
+</odoo>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Role User Operasional -->
+    <record id="group_operational_user" model="res.groups">
+        <field name="name">Petugas Operasional</field>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <!-- Role HC (Pengelola Tunggal Assignment & Worker) -->
+    <record id="group_operational_hc" model="res.groups">
+        <field name="name">HC Operator (Operasional)</field>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <!-- Role Direktur (Approver Pengadaan BoQ) -->
+    <record id="group_operational_direktur" model="res.groups">
+        <field name="name">Direktur Operasional</field>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <!-- Berikan ketiga role ini otomatis ke akun Administrator -->
+    <record id="base.user_admin" model="res.users">
+        <field name="groups_id" eval="[
+            (4, ref('group_operational_user')),
+            (4, ref('group_operational_hc')),
+            (4, ref('group_operational_direktur'))
+        ]"/>
+    </record>
+</odoo>

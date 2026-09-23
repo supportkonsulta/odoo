@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Sequence Pengadaan BoQ -->
+        <record id="seq_operational_procurement" model="ir.sequence">
+            <field name="name">Nomor Pengadaan BoQ Operasional</field>
+            <field name="code">ksg.operational.procurement</field>
+            <field name="prefix">BOQ/%(year)s/%(month)s/</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <!-- Sequence Upload Presensi Lapangan -->
+        <record id="seq_operational_attendance_report" model="ir.sequence">
+            <field name="name">Nomor Rekap Presensi</field>
+            <field name="code">ksg.operational.attendance.report</field>
+            <field name="prefix">ATT/%(year)s/%(month)s/</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <!-- Sequence Laporan Bulanan -->
+        <record id="seq_operational_monthly_report" model="ir.sequence">
+            <field name="name">Nomor Laporan Bulanan Operasional</field>
+            <field name="code">ksg.operational.monthly.report</field>
+            <field name="prefix">OPS/REP/%(year)s/%(month)s/</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
+    </data>
+</odoo>

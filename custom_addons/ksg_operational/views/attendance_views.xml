@@ -1,0 +1,84 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Form View Presensi -->
+    <record id="view_ksg_operational_attendance_form" model="ir.ui.view">
+        <field name="name">ksg.operational.attendance.report.form</field>
+        <field name="model">ksg.operational.attendance.report</field>
+        <field name="arch" type="xml">
+            <form string="Rekap Presensi Lapangan">
+                <header>
+                    <button name="action_verify" type="object" string="Verifikasi &amp; Sync ke Tagihan" class="oe_highlight" invisible="state != 'draft'" icon="fa-check-circle"/>
+                    <button name="action_reject" type="object" string="Tolak Data" class="btn-danger" invisible="state != 'draft'" icon="fa-times-circle"/>
+                    <button name="action_reset_draft" type="object" string="Setel ke Draft" invisible="state == 'draft'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,verified"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" string="Nomor Rekap Presensi"/>
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Informasi Proyek &amp; Periode">
+                            <field name="project_id" readonly="state == 'verified'"/>
+                            <field name="sumber_aplikasi" widget="radio" options="{'horizontal': true}" readonly="state == 'verified'"/>
+                            <label for="periode_bulan" string="Periode Absensi"/>
+                            <div class="d-flex align-items-baseline">
+                                <field name="periode_bulan" class="me-2" style="width: 130px;" readonly="state == 'verified'"/>
+                                <field name="periode_tahun" placeholder="Tahun" style="width: 80px;" readonly="state == 'verified'"/>
+                            </div>
+                        </group>
+                        <group string="Lampiran File &amp; Akumulasi">
+                            <field name="file_name" invisible="1"/>
+                            <field name="file_laporan" filename="file_name" widget="binary" readonly="state == 'verified'"/>
+                            <field name="total_pekerja_hadir" readonly="state == 'verified'"/>
+                            <field name="total_jam_lembur" widget="float_time" readonly="state == 'verified'"/>
+                            <field name="uploaded_by"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Catatan Operasional / Alasan Penolakan" name="catatan">
+                            <field name="catatan" placeholder="Tuliskan keterangan validasi kehadiran atau rincian jika file ditolak..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- List View Presensi -->
+    <record id="view_ksg_operational_attendance_list" model="ir.ui.view">
+        <field name="name">ksg.operational.attendance.report.list</field>
+        <field name="model">ksg.operational.attendance.report</field>
+        <field name="arch" type="xml">
+            <list string="Rekap Presensi Lapangan" decoration-success="state == 'verified'" decoration-muted="state == 'rejected'">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="sumber_aplikasi" widget="badge"/>
+                <field name="periode_bulan"/>
+                <field name="periode_tahun"/>
+                <field name="total_pekerja_hadir"/>
+                <field name="total_jam_lembur"/>
+                <field name="file_name"/>
+                <field name="state" widget="badge" 
+                       decoration-info="state == 'draft'" 
+                       decoration-success="state == 'verified'" 
+                       decoration-danger="state == 'rejected'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_ksg_operational_attendance" model="ir.actions.act_window">
+        <field name="name">Presensi Lapangan</field>
+        <field name="res_model">ksg.operational.attendance.report</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Belum ada rekap presensi lapangan yang diunggah.
+            </p>
+            <p>
+                Unggah berkas rekapitulasi kehadiran dari SIDAC atau Presenly Mobile di sini.
+            </p>
+        </field>
+    </record>
+</odoo>

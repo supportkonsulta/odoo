@@ -1,0 +1,28 @@
+{
+    'name': 'KSG Operational',
+    'version': '19.0.1.0.0',
+    'category': 'Operations',
+    'summary': 'Manajemen Operasional, Perencanaan Proyek, Manpower, BoQ, dan Dokumen Penagihan KSG',
+    'author': 'Tim ERP KSG',
+    'license': 'LGPL-3',
+    'depends': [
+        'base',
+        'mail',
+        'ksg_sales',
+    ],
+    'data': [
+        'security/operational_security.xml',
+        'security/ir.model.access.csv',
+        'data/ir_sequence_data.xml',
+        'data/ir_cron_data.xml',
+        'views/project_views.xml',
+        'views/manpower_request_views.xml',
+        'views/procurement_views.xml',
+        'views/attendance_views.xml',
+        'views/monthly_report_views.xml',
+        'views/operational_assignment_views.xml',
+        'views/menu_views.xml',
+    ],
+    'installable': True,
+    'application': True,
+}

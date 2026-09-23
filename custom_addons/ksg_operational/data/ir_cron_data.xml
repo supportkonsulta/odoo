@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Cron Pembaruan Status Pekerja Selesai Kontrak -->
+        <record id="cron_update_worker_active_status" model="ir.cron">
+            <field name="name">Operasional: Pembaruan Status Aktif Tenaga Kerja</field>
+            <field name="model_id" ref="model_ksg_operational_assignment"/>
+            <field name="state">code</field>
+            <field name="code">model.cron_update_worker_active_status()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="active" eval="True"/>
+        </record>
+    </data>
+</odoo>

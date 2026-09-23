@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Form View Permohonan Manpower -->
+    <record id="view_ksg_operational_manpower_request_form" model="ir.ui.view">
+        <field name="name">ksg.operational.manpower.request.form</field>
+        <field name="model">ksg.operational.manpower.request</field>
+        <field name="arch" type="xml">
+            <form string="Permohonan Tenaga Kerja (HC)">
+                <header>
+                    <button name="action_submit" type="object" string="Ajukan ke HC" class="oe_highlight" invisible="state != 'draft'" icon="fa-paper-plane"/>
+                    <button name="action_process" type="object" string="Proses Permohonan" class="btn-primary" invisible="state != 'submitted'" icon="fa-cogs"/>
+                    <button name="action_fulfill" type="object" string="Tandai Terpenuhi" class="btn-success" invisible="state != 'in_process'" icon="fa-check-circle"/>
+                    <button name="action_reject" type="object" string="Tolak Permohonan" class="btn-danger" invisible="state not in ['submitted', 'in_process']" icon="fa-times-circle"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,in_process,fulfilled"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="kriteria" string="Kriteria / Peran Posisi"/>
+                        <h1><field name="kriteria" placeholder="Contoh: Project Manager, Teknisi Listrik" readonly="state in ['fulfilled', 'rejected']"/></h1>
+                    </div>
+                    <group>
+                        <group string="Kebutuhan Proyek">
+                            <field name="project_id" readonly="state in ['fulfilled', 'rejected']"/>
+                            <field name="jumlah_dibutuhkan" readonly="state in ['fulfilled', 'rejected']"/>
+                        </group>
+                        <group string="PIC &amp; Penanganan HC">
+                            <field name="requested_by" readonly="1"/>
+                            <field name="handled_by" readonly="1"/>
+                            <field name="create_date" string="Diajukan Pada" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Catatan Lapangan &amp; Kualifikasi" name="catatan">
+                            <field name="catatan" placeholder="Tuliskan catatan teknis ke tim HC, sertifikasi yang dicari, atau alasan penolakan..." readonly="state in ['fulfilled', 'rejected']"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- List View Permohonan Manpower -->
+    <record id="view_ksg_operational_manpower_request_list" model="ir.ui.view">
+        <field name="name">ksg.operational.manpower.request.list</field>
+        <field name="model">ksg.operational.manpower.request</field>
+        <field name="arch" type="xml">
+            <list string="Permohonan Tenaga Kerja (HC)" decoration-success="state == 'fulfilled'" decoration-warning="state in ['submitted', 'in_process']" decoration-muted="state == 'rejected'">
+                <field name="project_id"/>
+                <field name="kriteria"/>
+                <field name="jumlah_dibutuhkan"/>
+                <field name="requested_by"/>
+                <field name="handled_by"/>
+                <field name="create_date" string="Tanggal Pengajuan"/>
+                <field name="state" widget="badge" 
+                       decoration-info="state == 'draft'" 
+                       decoration-warning="state in ['submitted', 'in_process']" 
+                       decoration-success="state == 'fulfilled'" 
+                       decoration-danger="state == 'rejected'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Action Window Permohonan Manpower -->
+    <record id="action_ksg_operational_manpower_request" model="ir.actions.act_window">
+        <field name="name">Permohonan Manpower (ke HC)</field>
+        <field name="res_model">ksg.operational.manpower.request</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Belum ada permohonan tenaga kerja.
+            </p>
+            <p>
+                Draf permohonan akan terbuat otomatis saat mengisi Rencana Manpower pada Proyek Penjualan.
+            </p>
+        </field>
+    </record>
+</odoo>
