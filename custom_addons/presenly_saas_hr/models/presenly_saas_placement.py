@@ -111,7 +111,7 @@ class PresenlySaasConfig(models.Model):
 
         ringkasan = {'applied': 0, 'unchanged': 0, 'skipped': dilewati,
                      'unknown_employee': 0, 'unknown_company': 0,
-                     'unknown_location': 0}
+                     'unknown_location': 0, 'conflicts': []}
         for nopeg, (_mulai, row) in terpilih.items():
             mirror = Mirror.search([('nopeg', '=', nopeg)], limit=1)
             hr = mirror.hr_employee_id
@@ -142,13 +142,51 @@ class PresenlySaasConfig(models.Model):
 
             if hr.presenly_saas_config_id != self:
                 nilai['presenly_saas_config_id'] = self.id
+
+            # Bentrok: nilainya sudah diubah orang di Odoo sejak pemeriksaan
+            # terakhir, dan Presenly sekarang mengirim nilai lain. Yang di Odoo
+            # akan tertimpa, jadi dilaporkan — sama seperti kolom bersama di
+            # sinkronisasi pegawai. Tanpa ini, suntingan lokasi kerja atau
+            # perusahaan hilang tanpa satu pun catatan.
+            snapshot = hr.presenly_synced_values or {}
+            for kolom, kunci in (
+                ('company_id', 'placement_company_id'),
+                ('work_location_id', 'placement_work_location_id'),
+            ):
+                if kolom not in nilai:
+                    continue
+                dasar = snapshot.get(kunci)
+                sekarang = hr[kolom].id or False
+                if dasar and sekarang and dasar != sekarang:
+                    ringkasan['conflicts'].append(
+                        _('%(name)s (nopeg %(nopeg)s): %(field)s was changed in Odoo '
+                          'and is being replaced by the placement value.',
+                          name=hr.name or nopeg, nopeg=nopeg, field=kolom)
+                    )
+
             berubah = {k: v for k, v in nilai.items() if hr[k].id != v}
             if berubah:
-                hr.with_context(presenly_skip_push=True).write(berubah)
+                # Nilai yang baru diterapkan dicatat, supaya pemeriksaan berikutnya
+                # bisa membedakan "diubah orang" dari "memang belum pernah diisi".
+                snapshot_baru = dict(
+                    snapshot,
+                    placement_company_id=nilai.get('company_id', hr.company_id.id),
+                    placement_work_location_id=nilai.get(
+                        'work_location_id', hr.work_location_id.id or False
+                    ),
+                )
+                hr.with_context(presenly_skip_push=True).write(
+                    dict(berubah, presenly_synced_values=snapshot_baru)
+                )
                 ringkasan['applied'] += 1
             else:
                 ringkasan['unchanged'] += 1
 
+        if ringkasan['conflicts']:
+            _logger.warning(
+                'Presenly SaaS: %s penempatan menimpa nilai yang sudah diubah di '
+                'Odoo (%s).', len(ringkasan['conflicts']), '; '.join(ringkasan['conflicts'][:3]),
+            )
         self._log_pull(PENEMPATAN_PATH, True, None, started)
         _logger.info(
             'Presenly SaaS: penempatan pegawai diterapkan (%s diperbarui, %s sama, '

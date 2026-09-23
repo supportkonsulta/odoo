@@ -538,8 +538,13 @@ class PresenlySaasEmployee(models.Model):
         pemeriksaan akan mengira atasannya baru berubah dan menimpanya terus —
         termasuk menimpa atasan yang sengaja diubah orang di Odoo.
         """
+        # Kunci yang bukan milik sinkronisasi pegawai — misalnya yang dicatat
+        # penarikan penempatan — dibiarkan utuh. Menimpanya membuat catatan itu
+        # hilang, dan pemeriksaan berikutnya kehilangan dasar untuk melaporkan
+        # bahwa nilainya sudah diubah orang di Odoo.
         return dict(
-            self._odoo_values(hr, self.SHARED_FIELDS),
+            hr.presenly_synced_values or {},
+            **self._odoo_values(hr, self.SHARED_FIELDS),
             manager_nopeg=row.manager_nopeg or False,
         )
 

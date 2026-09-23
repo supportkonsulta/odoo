@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Daftar approver yang belum punya akun Odoo. Akunnya dibuat manual — di
+        dalamnya ada hak akses dan kata sandi, bukan sekadar data pegawai — tetapi
+        mencari siapa yang perlu tidak perlu dikerjakan dari ingatan.
+    -->
+
+    <record id="action_presenly_saas_approvers_without_account" model="ir.actions.server">
+        <field name="name">Approvers Without an Odoo Account</field>
+        <field name="model_id" ref="hr.model_hr_employee"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_presenly_approvers_without_account()</field>
+    </record>
+
+    <menuitem id="menu_presenly_saas_approver_accounts"
+              name="Approvers Without an Account"
+              parent="presenly_saas.menu_presenly_saas_reference"
+              action="action_presenly_saas_approvers_without_account"
+              sequence="80"/>
+
+</odoo>
