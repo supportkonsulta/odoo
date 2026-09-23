@@ -1,7 +1,7 @@
 /** @odoo-module **/
 /**
  * Kurva-S Widget — Line chart Planned vs Actual per minggu.
- * Ref: FR-010
+ * Menarik data komputasi dinamis dari ksg.sales.project
  */
 
 import { Component, onMounted, onWillUnmount, useRef, useState, xml } from "@odoo/owl";
@@ -12,14 +12,15 @@ import { loadJS } from "@web/core/assets";
 
 export class KurvaSWidget extends Component {
     static template = xml`
-        <div class="o_kurva_s_widget">
-            <div t-if="state.loading" class="text-muted p-3 text-center">
-                Memuat grafik...
+        <div class="o_kurva_s_widget w-100">
+            <div t-if="state.loading" class="text-muted p-3 text-center border rounded bg-light">
+                <i class="fa fa-spinner fa-spin me-2"/> Memuat grafik Kurva-S...
             </div>
             <div t-if="!state.loading and !state.hasData" class="text-muted p-3 text-center border rounded bg-light">
-                Belum ada data Kurva-S. Data akan muncul setelah Laporan Mingguan dibuat.
+                <i class="fa fa-line-chart me-2"/>
+                Belum ada data Kalender Minggu. Generate Kalender Minggu pada tab sebelahnya agar Kurva-S muncul.
             </div>
-            <canvas t-ref="canvas" t-att-style="state.hasData ? 'max-height: 400px;' : 'display: none;'"/>
+            <canvas t-ref="canvas" t-att-style="(!state.loading and state.hasData) ? 'width: 100%; max-height: 400px;' : 'display: none;'"/>
         </div>
     `;
     static props = { ...standardFieldProps };
@@ -45,47 +46,29 @@ export class KurvaSWidget extends Component {
             return;
         }
 
-        let weeklyReports = [];
+        let chartData = null;
         try {
-            weeklyReports = await this.orm.searchRead(
-                "ksg.engineering.weekly.report",
-                [["project_id", "=", projectId]],
-                ["periode_minggu_id", "planned_progress", "actual_progress"],
-                { order: "periode_minggu_id asc" }
+            chartData = await this.orm.call(
+                "ksg.sales.project",
+                "get_kurva_s_data",
+                [projectId]
             );
         } catch (e) {
-            console.warn("Kurva-S: Could not fetch weekly reports", e);
+            console.warn("Kurva-S: Could not fetch data", e);
             this.state.loading = false;
             return;
         }
 
         this.state.loading = false;
 
-        if (!weeklyReports.length) {
+        if (!chartData || !chartData.hasData) {
             this.state.hasData = false;
             return;
         }
 
         this.state.hasData = true;
-
-        const labels = weeklyReports.map(
-            (wr) => wr.periode_minggu_id ? wr.periode_minggu_id[1] : "?"
-        );
-        const planned = weeklyReports.map((wr) => wr.planned_progress || 0);
-        const actual = weeklyReports.map((wr) => wr.actual_progress || 0);
-
-        // Cumulative
-        const plannedCum = [];
-        const actualCum = [];
-        let sumP = 0, sumA = 0;
-        for (let i = 0; i < planned.length; i++) {
-            sumP += planned[i];
-            sumA += actual[i];
-            plannedCum.push(parseFloat(sumP.toFixed(2)));
-            actualCum.push(parseFloat(sumA.toFixed(2)));
-        }
-
-        // Wait for next tick so canvas is rendered
+        
+        // Wait for next tick so canvas is rendered in DOM
         await new Promise((r) => setTimeout(r, 50));
 
         const canvas = this.canvasRef.el;
@@ -114,38 +97,45 @@ export class KurvaSWidget extends Component {
         this.chart = new Chart(canvas, {
             type: "line",
             data: {
-                labels,
+                labels: chartData.labels,
                 datasets: [
                     {
                         label: "Rencana (Kumulatif)",
-                        data: plannedCum,
+                        data: chartData.planned,
                         borderColor: "#3b82f6",
                         backgroundColor: "rgba(59, 130, 246, 0.1)",
                         fill: false,
-                        tension: 0.3,
+                        tension: 0.4,
                         pointRadius: 4,
+                        borderWidth: 2,
                     },
                     {
                         label: "Realisasi (Kumulatif)",
-                        data: actualCum,
+                        data: chartData.actual,
                         borderColor: "#22c55e",
                         backgroundColor: "rgba(34, 197, 94, 0.1)",
                         fill: false,
-                        tension: 0.3,
+                        tension: 0.4,
                         pointRadius: 4,
+                        borderWidth: 2,
                     },
                 ],
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: true,
+                maintainAspectRatio: false,
                 plugins: {
-                    title: { display: true, text: "Kurva-S: Rencana vs Realisasi" },
+                    title: { display: false },
                     legend: { position: "bottom" },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                    },
                 },
                 scales: {
                     y: {
                         beginAtZero: true,
+                        max: 100,
                         title: { display: true, text: "Progress (%)" },
                     },
                     x: {

@@ -57,42 +57,43 @@
                     <notebook>
                         <page string="Detail Pekerjaan Hari Ini">
                             <div class="alert alert-info mb-2" role="alert" invisible="state == 'submitted'">
-                                Isi rincian pekerjaan yang dilakukan hari ini. Wajib mengisi progress (%) dan foto bukti di tab sebelah.
+                                Klik <strong>"Add a line"</strong> untuk memasukkan rincian. Akan muncul *Pop-up Form* yang ramah di layar HP Anda.
                             </div>
                             <field name="line_ids" nolabel="1"
                                    readonly="state == 'submitted'">
-                                <list editable="bottom">
-                                    <field name="project_id" column_invisible="1"/>
-                                    <field name="wbs_id" string="Pekerjaan (WBS)"
-                                           domain="[('project_id', '=', project_id)]"
-                                           options="{'no_create': 1}"/>
+                                <list>
+                                    <field name="wbs_id" string="Pekerjaan (WBS)"/>
                                     <field name="jam_mulai" widget="float_time" string="Mulai"/>
                                     <field name="jam_selesai" widget="float_time" string="Selesai"/>
                                     <field name="progress" string="Progress (%)"/>
                                     <field name="deskripsi" string="Keterangan" optional="show"/>
-                                    <field name="personel_ids" widget="many2many_tags"
-                                           string="Pekerja" optional="hide"/>
                                 </list>
-                            </field>
-                        </page>
-                        <page string="Bukti Foto / Evidence">
-                            <div class="alert alert-info mb-2" role="alert" invisible="state == 'submitted'">
-                                <strong>Wajib:</strong> Upload minimal 1 foto bukti untuk setiap item pekerjaan.
-                            </div>
-                            <field name="line_ids" nolabel="1" mode="kanban"
-                                   readonly="state == 'submitted'">
-                                <kanban>
-                                    <field name="wbs_id"/>
-                                    <field name="evidence_ids"/>
-                                    <templates>
-                                        <t t-name="card">
-                                            <div>
-                                                <strong><field name="wbs_id"/></strong>
-                                                <field name="evidence_ids" widget="many2many_binary"/>
-                                            </div>
-                                        </t>
-                                    </templates>
-                                </kanban>
+                                <form string="Form Detail Pekerjaan">
+                                    <sheet>
+                                        <group>
+                                            <group string="Pekerjaan">
+                                                <field name="project_id" invisible="1"/>
+                                                <field name="wbs_id" string="Pilih Pekerjaan (WBS)"
+                                                       domain="[('project_id', '=', parent.project_id)]"
+                                                       options="{'no_create': 1}"/>
+                                                <field name="progress" string="Progress Hari ini (%)"
+                                                       placeholder="Contoh: 10"/>
+                                            </group>
+                                            <group string="Waktu &amp; Pekerja">
+                                                <field name="jam_mulai" widget="float_time"/>
+                                                <field name="jam_selesai" widget="float_time"/>
+                                                <field name="personel_ids" widget="many2many_tags"
+                                                       string="Tim Pekerja"/>
+                                            </group>
+                                        </group>
+                                        <group string="Dokumentasi">
+                                            <field name="deskripsi" string="Keterangan / Kendala"
+                                                   placeholder="Jelaskan apa yang dikerjakan..."/>
+                                            <field name="evidence_ids" widget="many2many_binary"
+                                                   string="Upload Foto/Bukti"/>
+                                        </group>
+                                    </sheet>
+                                </form>
                             </field>
                         </page>
                     </notebook>

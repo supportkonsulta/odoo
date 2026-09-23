@@ -118,6 +118,69 @@ class KsgSalesProjectExt(models.Model):
             rec.kurva_s_variance = actual - planned
 
     # ==================================================================
+    # KURVA-S DATA PROVIDER FOR WIDGET
+    # ==================================================================
+    
+    @api.model
+    def get_kurva_s_data(self, project_id):
+        """Mengirimkan data Rencana dan Realisasi per minggu ke Widget Kurva-S."""
+        project = self.browse(project_id)
+        if not project.exists() or not project.schedule_week_ids:
+            return {'hasData': False}
+            
+        weeks = project.schedule_week_ids.sorted('no_minggu')
+        labels = []
+        planned = []
+        actual = []
+        
+        cum_planned = 0.0
+        cum_actual = 0.0
+        
+        top_wbs = project.wbs_ids.filtered(lambda w: not w.parent_id)
+        total_bobot = sum(top_wbs.mapped('bobot')) or 1.0 # Hindari div by zero
+        
+        for w in weeks:
+            labels.append(f"W{w.no_minggu}")
+            
+            # Hitung Rencana Kumulatif s/d minggu ini
+            # Bobot WBS yang dialokasikan s/d minggu ini
+            week_planned = 0.0
+            for wbs in top_wbs:
+                if w.id in wbs.periode_minggu_ids.ids:
+                    week_planned += wbs.planned_progress_mingguan * (wbs.bobot / total_bobot)
+            cum_planned += week_planned
+            planned.append(round(min(cum_planned, 100.0), 2))
+            
+            # Hitung Realisasi Kumulatif s/d minggu ini
+            # Ambil semua Laporan Harian yang dikonsolidasi s/d minggu ini
+            cons = self.env['ksg.engineering.report.consolidation'].search([
+                ('project_id', '=', project.id),
+                ('periode_minggu_id.tanggal_selesai', '<=', w.tanggal_selesai),
+                ('state', '=', 'approved')
+            ])
+            
+            # Total progress = sum(line.progress * bobot)
+            # Karena logic ini cukup berat, kita ambil actual_progress_kumulatif dari WBS saat ini saja
+            # tapi itu tidak mencerminkan per minggu. 
+            # Solusi cepat: gunakan data dari Laporan Mingguan jika ada.
+            weekly_rep = self.env['ksg.engineering.weekly.report'].search([
+                ('project_id', '=', project.id),
+                ('periode_minggu_id', '=', w.id),
+                ('state', '=', 'done')
+            ], limit=1)
+            
+            if weekly_rep:
+                cum_actual = weekly_rep.actual_progress_kumulatif
+            actual.append(round(min(cum_actual, 100.0), 2))
+            
+        return {
+            'hasData': True,
+            'labels': labels,
+            'planned': planned,
+            'actual': actual
+        }
+
+    # ==================================================================
     # Calendar weeks generation (FR-011)
     # ==================================================================
 

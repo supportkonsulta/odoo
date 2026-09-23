@@ -76,14 +76,8 @@ class KsgEngineeringReportConsolidation(models.Model):
             rec.state = 'approved'
             rec.catatan_revisi = False
             
-            # 1. Selesaikan activity
-            activities = self.env['mail.activity'].search([
-                ('res_model', '=', self._name),
-                ('res_id', '=', rec.id),
-                ('activity_type_id', '=', self.env.ref('ksg_engineering.activity_pending_approval', raise_if_not_found=False).id)
-            ])
-            for activity in activities:
-                activity.action_feedback(feedback='Konsolidasi disetujui.')
+            # 1. Hapus (unlink) notifikasi pending approval agar tidak error
+            rec.activity_unlink(['ksg_engineering.activity_pending_approval'])
                 
             # 2. OTOMATIS UPDATE LAPORAN MINGGUAN (Agar Kurva-S langsung bergerak)
             if rec.periode_minggu_id:
@@ -146,14 +140,8 @@ class KsgEngineeringReportConsolidation(models.Model):
                     'Catatan revisi wajib diisi sebelum meminta revisi.')
             rec.state = 'revisi'
             
-            # Selesaikan activity pending approval
-            activities = self.env['mail.activity'].search([
-                ('res_model', '=', self._name),
-                ('res_id', '=', rec.id),
-                ('activity_type_id', '=', self.env.ref('ksg_engineering.activity_pending_approval', raise_if_not_found=False).id)
-            ])
-            for activity in activities:
-                activity.action_feedback(feedback='Konsolidasi direvisi.')
+            # Hapus (unlink) notifikasi pending approval
+            rec.activity_unlink(['ksg_engineering.activity_pending_approval'])
                 
             # Notify pengawas
             rec.activity_schedule(

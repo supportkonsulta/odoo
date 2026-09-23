@@ -91,11 +91,5 @@ class KsgEngineeringBapbast(models.Model):
                 'tanggal_approve': fields.Datetime.now(),
             })
             
-            # Selesaikan activities
-            activities = self.env['mail.activity'].search([
-                ('res_model', '=', self._name),
-                ('res_id', '=', rec.id),
-                ('activity_type_id', '=', self.env.ref('ksg_engineering.activity_bapbast_approval', raise_if_not_found=False).id)
-            ])
-            for activity in activities:
-                activity.action_feedback(feedback='BAP/BAST disetujui.')
+            # Hapus (unlink) notifikasi
+            rec.activity_unlink(['ksg_engineering.activity_bapbast_approval'])

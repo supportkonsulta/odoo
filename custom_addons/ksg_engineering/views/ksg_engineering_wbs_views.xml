@@ -69,10 +69,10 @@
                     <notebook>
                         <page string="Periode Minggu">
                             <div class="text-muted mb-2">
-                                Pilih minggu-minggu dimana pekerjaan ini akan dilaksanakan.
+                                Otomatis terisi berdasarkan Tanggal Mulai dan Tanggal Selesai pekerjaan.
                             </div>
                             <field name="periode_minggu_ids" widget="many2many_tags"
-                                   domain="[('project_id', '=', project_id)]"/>
+                                   readonly="1" force_save="1"/>
                         </page>
                         <page string="Sub-Pekerjaan (WBS Anak)">
                             <div class="text-muted mb-2">
