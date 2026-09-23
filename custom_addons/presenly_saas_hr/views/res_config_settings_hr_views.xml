@@ -7,19 +7,25 @@
         <field name="inherit_id" ref="presenly_saas.res_config_settings_view_form"/>
         <field name="arch" type="xml">
             <xpath expr="//block[@name='presenly_saas_policy']" position="before">
-                        <block title="Change Notifications" name="presenly_saas_webhook">
+                        <!-- Blok sendiri untuk kolom native. Sebelumnya ketiga setelan
+                             ini nyempil di dalam "Change Notifications", sehingga
+                             pembacanya mencari sinkronisasi data di tempat yang
+                             membicarakan pemberitahuan perubahan. -->
+                        <block title="Native Data" name="presenly_saas_native">
+                            <setting string="Sync Work Locations to Odoo"
+                                     help="Keep a native hr.work.location (and its address) for every Presenly work location. Turn this on before applying employee placements.">
+                                <field name="presenly_saas_sync_work_locations"/>
+                            </setting>
+                            <setting string="Apply Employee Placements"
+                                     help="Point each employee at the company and work location of their primary placement in Presenly. Requires Work Location sync, because the placement names a work location that must exist in Odoo first.">
+                                <field name="presenly_saas_sync_employee_placements"/>
+                            </setting>
                             <setting string="Send Work Location Edits to Presenly"
-                                 help="Send name, address, and geofence edits made in Odoo back to Presenly. Leave this off if the app stays the source of truth for locations.">
-                            <field name="presenly_saas_push_work_locations"/>
-                        </setting>
-                        <setting string="Apply Employee Placements"
-                                 help="Point each employee at the company and work location of their primary placement in Presenly. Requires Work Location sync, because the placement names a work location that must exist in Odoo first.">
-                            <field name="presenly_saas_sync_employee_placements"/>
-                        </setting>
-                        <setting string="Sync Work Locations to Odoo"
-                                 help="Keep a native hr.work.location (and its address) for every Presenly work location. Turn this on before applying employee placements.">
-                            <field name="presenly_saas_sync_work_locations"/>
-                        </setting>
+                                     help="Send name, address, and geofence edits made in Odoo back to Presenly. Leave this off if the app stays the source of truth for locations.">
+                                <field name="presenly_saas_push_work_locations"/>
+                            </setting>
+                        </block>
+                        <block title="Change Notifications" name="presenly_saas_webhook">
                         <setting string="Send Change Notifications"
                                      help="Register this Odoo with the Presenly server, so it is told when an employee changes there instead of waiting for the next pull. The address must be reachable from the server, so it comes from the `web.base.url` parameter.">
                                 <field name="presenly_saas_webhook_enabled"/>
