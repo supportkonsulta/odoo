@@ -88,7 +88,7 @@ class HrEmployee(models.Model):
             # Konfigurasi dicari lewat induk: pegawai ini boleh jadi milik
             # perusahaan hasil cermin klien, sedangkan integrasinya dimiliki
             # perusahaan pemasang.
-            config = Config._config_for_company(employee.company_id)
+            config = Config._config_for_record(employee)
             if not config:
                 continue
             try:
@@ -109,6 +109,16 @@ class HrEmployee(models.Model):
                     summary['failed'][0],
                 )
 
+    presenly_saas_config_id = fields.Many2one(
+        'presenly.saas.config',
+        string='Presenly Connection',
+        readonly=True,
+        copy=False,
+        ondelete='set null',
+        help='The configuration that owns this employee. Recorded on first '
+             'successful contact, so later write-backs go to the same Presenly '
+             'tenant even when several connections are active.',
+    )
     presenly_synced_values = fields.Json(
         string='Last Synced Values',
         readonly=True,

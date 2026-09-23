@@ -71,6 +71,16 @@ class HrWorkLocation(models.Model):
     presenly_timezone = fields.Char(string='Timezone')
     presenly_attendance_type = fields.Char(string='Attendance Type')
     presenly_synced_at = fields.Datetime(string='Synced from Presenly At', readonly=True)
+    presenly_saas_config_id = fields.Many2one(
+        'presenly.saas.config',
+        string='Presenly Connection',
+        readonly=True,
+        copy=False,
+        ondelete='set null',
+        help='The configuration that owns this location. Recorded on first '
+             'successful contact, so later write-backs go to the same Presenly '
+             'tenant even when several connections are active.',
+    )
 
     _presenly_location_uniq = models.Constraint(
         'unique(presenly_external_id)',
@@ -133,7 +143,7 @@ class HrWorkLocation(models.Model):
             # Konfigurasi dicari lewat induk: lokasi ini boleh jadi milik
             # perusahaan hasil cermin klien, sedangkan integrasinya dimiliki
             # perusahaan pemasang.
-            config = Config._config_for_company(lokasi.company_id)
+            config = Config._config_for_record(lokasi)
             if not config or not config.push_work_locations:
                 continue
             body = lokasi._presenly_push_values(disentuh)
@@ -266,6 +276,8 @@ class PresenlySaasConfig(models.Model):
                 'presenly_timezone': row.get('timezone') or False,
                 'presenly_attendance_type': row.get('attendance_type') or False,
                 'presenly_synced_at': fields.Datetime.now(),
+                # Pemiliknya dicatat di sini, saat konfigurasinya jelas.
+                'presenly_saas_config_id': self.id,
             }
             lokasi = Lokasi.search([('presenly_external_id', '=', external_id)], limit=1)
             # Penanda anti-echo: tanpa ini, lokasi yang baru saja ditarik langsung

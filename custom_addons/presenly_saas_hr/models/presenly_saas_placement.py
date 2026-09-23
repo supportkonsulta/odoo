@@ -140,6 +140,8 @@ class PresenlySaasConfig(models.Model):
                 else:
                     ringkasan['unknown_location'] += 1
 
+            if hr.presenly_saas_config_id != self:
+                nilai['presenly_saas_config_id'] = self.id
             berubah = {k: v for k, v in nilai.items() if hr[k].id != v}
             if berubah:
                 hr.with_context(presenly_skip_push=True).write(berubah)

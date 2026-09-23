@@ -877,6 +877,32 @@ class PresenlySaasConfig(models.Model):
             return False
         return dijalankan
 
+    def _config_for_record(self, record):
+        """Konfigurasi yang berhak mengirim record ini, dan catat pemiliknya.
+
+        Record cermin boleh jadi milik perusahaan hasil cermin klien, sedangkan
+        konfigurasinya dimiliki perusahaan pemasang. Di database dengan satu
+        konfigurasi, `_config_for_company()` sudah cukup. Yang dihindari di sini
+        adalah database dengan beberapa konfigurasi: di sana menebak berarti
+        mengirim data ke tenant Presenly yang salah.
+
+        Karena itu pemiliknya dicatat pada kontak pertama yang berhasil, lalu
+        dipakai terus. Kalau belum pernah tercatat dan konfigurasinya lebih dari
+        satu, kirim baliknya ditolak — bukan ditebak.
+        """
+        tercatat = record.presenly_saas_config_id
+        if tercatat and tercatat.enabled and tercatat.active:
+            return tercatat
+
+        config = self._config_for_company(record.company_id)
+        if config and config != tercatat:
+            # Dicatat tanpa memicu kirim balik: penulisan ini bagian dari
+            # sinkronisasi, bukan suntingan pengguna.
+            record.sudo().with_context(presenly_skip_push=True).write({
+                'presenly_saas_config_id': config.id,
+            })
+        return config
+
     def _config_for_company(self, company):
         """Konfigurasi yang berlaku untuk perusahaan ini.
 
