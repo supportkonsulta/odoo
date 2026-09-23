@@ -45,8 +45,13 @@ class HrEmployee(models.Model):
         help='Group as recorded in Presenly. Informational only.',
     )
     presenly_can_approve = fields.Boolean(
-        string='Can Approve (Presenly)', readonly=True,
-        help='Whether Presenly allows this employee to approve requests.',
+        string='Approval Flag in Presenly', readonly=True,
+        help='The approval flag as stored on the employee in Presenly — nothing '
+             'more. The application also grants the right to approve through its '
+             'approval configuration, so an employee with this flag off can still '
+             'be an approver there (a level listed for them in an active flow). '
+             'Never use this field to decide who may approve: ask the approval '
+             'step instead.',
     )
     presenly_role = fields.Char(
         string='Presenly Role', readonly=True,

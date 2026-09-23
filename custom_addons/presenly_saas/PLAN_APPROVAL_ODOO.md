@@ -68,6 +68,31 @@ Klien tidak boleh dipercaya menyatakan haknya sendiri.
 **Yang perlu diputuskan:** apakah nopeg cukup sebagai identitas, atau perlu email
 sebagai cadangan bila nopeg tidak ada di sisi Odoo?
 
+### 3.1b Jangan memakai `can_approve` untuk menentukan siapa yang berhak
+
+`can_approve` pada payload pegawai adalah **flag tersimpan** di aplikasi, bukan
+hak efektifnya. Hak efektif dihitung aplikasi saat dipakai:
+
+```
+can_approve efektif = flag tersimpan
+                    OR peran = admin
+                    OR terdaftar sebagai approver bertipe `user` di alur aktif
+                    OR perannya terdaftar sebagai approver bertipe `role`
+```
+
+Bukti dari data tenant: `iksg-feri` adalah approver level 1 di kelima alur aktif,
+tetapi flag tersimpannya `0`. Jadi kalau Odoo menentukan siapa yang boleh
+menyetujui berdasarkan kolom ini, **Feri justru tidak akan bisa menyetujui apa
+pun** — padahal di aplikasi ia approver pertama di semua alur.
+
+Karena itu tombolnya ditentukan oleh **langkah persetujuan** (`expected`), bukan
+oleh kolom ini. Kolom di `hr.employee` tetap ada sebagai keterangan, dengan nama
+yang menyebut apa adanya: flag, bukan hak.
+
+Kalau nanti memang perlu menampilkan "boleh menyetujui" secara akurat di Odoo,
+yang benar adalah server mengirim nilai efektifnya — bukan Odoo menghitung ulang
+aturan aplikasi.
+
 ### 3.2 Approver yang bukan orang tertentu
 
 Server mengenal **empat** tipe approver: `user`, `direct_manager`, `role`, dan
