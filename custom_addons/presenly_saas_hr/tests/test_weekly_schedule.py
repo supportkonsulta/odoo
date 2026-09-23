@@ -92,3 +92,72 @@ class TestPresenlyWeeklySchedule(TransactionCase):
         self.assertFalse(
             self.Schedule.search([('employee_nopeg', '=', 'uji-belum-tersinkron')]).hr_employee_id,
         )
+
+
+@tagged('post_install', '-at_install')
+class TestPresenlyWebhookBaseUrl(TransactionCase):
+    """Alamat webhook diambil dari permintaan yang berjalan, bukan dari parameter.
+
+    `web.base.url` bisa basi — pernah tertulis dari instance uji di port lain, dan
+    alamat basi itu membuat webhook dikirim ke tempat yang tidak ada isinya tanpa
+    galat yang terlihat.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.config = cls.env['presenly.saas.config'].search([], limit=1)
+        cls.config.write({'enabled': True, 'active': True})
+
+    def test_di_luar_permintaan_memakai_parameter(self):
+        """Tanpa permintaan (mis. dari cron), parameter yang dipakai."""
+        self.env['ir.config_parameter'].sudo().set_param('web.base.url', 'http://contoh.test:8069')
+
+        self.assertEqual(self.config._webhook_base_url(), 'http://contoh.test:8069')
+
+    def test_alamat_diambil_dari_permintaan_yang_sedang_berjalan(self):
+        """Ini yang membuat port yang berubah mendadak tetap benar.
+
+        Parameter `web.base.url` bisa tertinggal dari instance atau port lain.
+        Permintaan yang barusan dipakai operator menekan tombol adalah bukti
+        paling jujur tentang alamat Odoo sekarang.
+        """
+        import odoo.http
+
+        self.env['ir.config_parameter'].sudo().set_param('web.base.url', 'http://127.0.0.1:8079')
+        request = mock.Mock()
+        request.httprequest.host_url = 'http://localhost:8069/'
+
+        with mock.patch.object(odoo.http, 'request', request):
+            alamat = self.config._webhook_base_url()
+
+        self.assertEqual(
+            alamat, 'http://localhost:8069',
+            'yang dipakai adalah alamat permintaan, bukan nilai parameter yang basi',
+        )
+
+    def test_uji_jangkau_melaporkan_kegagalan_apa_adanya(self):
+        """Alamat yang tidak menjawab harus jadi pesan, bukan diam."""
+        import requests
+
+        self.config.webhook_secret = 'rahasia-uji'
+        with mock.patch.object(requests, 'post', side_effect=OSError('connection refused')):
+            berhasil, keterangan = self.config._webhook_self_check('http://tidak-ada:9/x')
+
+        self.assertFalse(berhasil)
+        self.assertIn('connection refused', keterangan)
+
+    def test_uji_jangkau_menganggap_200_sebagai_berhasil(self):
+        import requests
+
+        self.config.webhook_secret = 'rahasia-uji'
+        jawab = mock.Mock(status_code=200)
+        with mock.patch.object(requests, 'post', return_value=jawab) as panggil:
+            berhasil, keterangan = self.config._webhook_self_check('http://contoh.test:8069/x')
+
+        self.assertTrue(berhasil)
+        self.assertEqual(keterangan, 'HTTP 200')
+        # Tanda tangannya harus ikut dikirim, kalau tidak ujinya tidak membuktikan apa pun.
+        kiriman = panggil.call_args[1]
+        self.assertIn('X-Presenly-Signature', kiriman['headers'])
+        self.assertEqual(kiriman['headers']['X-Presenly-Event'], 'test.ping')

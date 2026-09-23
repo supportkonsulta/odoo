@@ -69,6 +69,13 @@ class PresenlySaasWebhook(http.Controller):
         event = payload.get('event') or request.httprequest.headers.get('X-Presenly-Event')
         nopeg = payload.get('nopeg')
 
+        if event == 'test.ping':
+            # Panggilan uji dari tombol Register: dijawab tanpa menarik apa pun.
+            # Sampai di sini berarti alamatnya terjangkau, tanda tangannya cocok,
+            # dan tokennya benar — itu saja yang dibuktikan panggilan ini.
+            config.sudo().write({'webhook_last_received_at': fields_now()})
+            return self._json(200, {'received': True, 'test': True})
+
         try:
             ringkas, error, ditangani = self._pull_for_event(config, event)
         except Exception as exc:  # noqa: BLE001 - dijawab 500 supaya pengirim mencoba lagi

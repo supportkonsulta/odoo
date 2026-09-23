@@ -121,10 +121,66 @@ class PresenlySaasConfig(models.Model):
         ], limit=1)
 
     def _webhook_base_url(self):
-        """Alamat yang bisa dijangkau server Presenly, bukan localhost."""
+        """Alamat Odoo yang **sedang dipakai sekarang**, bukan yang tercatat dulu.
+
+        `web.base.url` bisa basi: nilainya pernah tertulis dari instance uji di
+        port lain, dan alamat basi itu membuat webhook dikirim ke tempat yang
+        tidak ada isinya — tanpa galat yang terlihat di sini.
+
+        Permintaan yang barusan dipakai operator untuk menekan tombol adalah bukti
+        paling jujur tentang alamat Odoo saat ini: itulah alamat yang benar-benar
+        menjawab. Parameter hanya dipakai sebagai cadangan saat tidak ada
+        permintaan (mis. dipanggil dari cron), dan waktu itu keadaannya dilaporkan.
+        """
+        self.ensure_one()
+        try:
+            from odoo.http import request
+            host = (request.httprequest.host_url or '').rstrip('/') if request else ''
+        except Exception:  # noqa: BLE001 - di luar konteks permintaan
+            host = ''
+        if host:
+            return host
+        return (self.env['ir.config_parameter'].sudo()
+                .get_param('web.base.url') or '').rstrip('/')
+
+    def _webhook_recorded_base_url(self):
+        """Nilai `web.base.url` yang tercatat, untuk dibandingkan dan dilaporkan."""
         self.ensure_one()
         return (self.env['ir.config_parameter'].sudo()
                 .get_param('web.base.url') or '').rstrip('/')
+
+    def _webhook_self_check(self, url):
+        """Uji alamat sendiri dengan satu panggilan bertanda tangan.
+
+        Mengembalikan ``(berhasil, keterangan)``. Tanpa ini, alamat yang salah
+        baru ketahuan saat webhook pertama gagal — dan kegagalan itu tidak terlihat
+        dari sini. Dengan ini, alamatnya diuji sekarang dan hasilnya jadi pesan.
+        """
+        self.ensure_one()
+        import hashlib
+        import hmac
+        import json
+        import time
+
+        import requests
+
+        isi = json.dumps({'event': 'test.ping'}, separators=(',', ':'))
+        cap = str(int(time.time()))
+        tanda = 'sha256=' + hmac.new(
+            (self.webhook_secret or '').encode('utf-8'),
+            ('%s.%s' % (cap, isi)).encode('utf-8'),
+            hashlib.sha256,
+        ).hexdigest()
+        try:
+            jawab = requests.post(url, data=isi.encode('utf-8'), headers={
+                'Content-Type': 'application/json',
+                'X-Presenly-Event': 'test.ping',
+                'X-Presenly-Timestamp': cap,
+                'X-Presenly-Signature': tanda,
+            }, timeout=5)
+        except Exception as exc:  # noqa: BLE001 - dilaporkan, bukan dilempar
+            return False, str(exc)
+        return jawab.status_code == 200, 'HTTP %s' % jawab.status_code
 
     def _webhook_callback_url(self):
         self.ensure_one()
@@ -172,10 +228,34 @@ class PresenlySaasConfig(models.Model):
             'webhook_enabled': True,
         })
         self._log_pull(WEBHOOKS_PATH, True, None, fields.Datetime.now())
+
+        # Alamatnya diuji sekarang, selagi orangnya masih di depan layar. Uji ini
+        # membuktikan tiga hal sekaligus: alamatnya terjangkau, tanda tangannya
+        # cocok, dan tokennya benar.
+        berhasil, keterangan = self._webhook_self_check(url)
+        tercatat = self._webhook_recorded_base_url()
+        catatan = ''
+        if tercatat and tercatat not in url:
+            # Tidak saya perbaiki sendiri: parameter itu dipakai hal lain di Odoo
+            # (tautan di email dan notifikasi), jadi mengubahnya adalah keputusan
+            # pemilik instalasi — tetapi selisihnya harus terlihat.
+            catatan = _(' Note: the recorded `web.base.url` is %(tercatat)s, which '
+                        'differs from the address used here.', tercatat=tercatat)
+
+        if not berhasil:
+            return self._notify(
+                'danger',
+                _('Registered, but the address is not answering'),
+                _('Presenly will call %(url)s, and that address did not answer just '
+                  'now (%(keterangan)s). The webhook will fail until it does. Check '
+                  'that the address is reachable from the Presenly server, then '
+                  'register again.%(catatan)s', url=url, keterangan=keterangan, catatan=catatan),
+            )
         return self._notify(
             'success',
-            _('Webhook registered'),
-            _('Presenly will call %(url)s when an employee changes there.', url=url),
+            _('Webhook registered and reachable'),
+            _('Presenly will call %(url)s when something changes there, and that '
+              'address answered the test just now.%(catatan)s', url=url, catatan=catatan),
         )
 
     def action_unregister_webhook(self):
