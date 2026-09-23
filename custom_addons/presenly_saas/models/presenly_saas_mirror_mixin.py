@@ -1,6 +1,6 @@
 import logging
 
-from odoo import api, fields, models
+from odoo import SUPERUSER_ID, api, fields, models
 from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
@@ -105,6 +105,46 @@ class PresenlySaasMirrorMixin(models.AbstractModel):
         return self._mirror_write(company, rows, domain=domain)
 
     @api.model
+    def _mirror_upsert(self, company, rows):
+        """Tambahkan atau perbarui baris, **tanpa menghapus apa pun**.
+
+        Dipakai penarikan tambahan, yang hanya mengambil baris yang berubah sejak
+        penanda waktu terakhir. Karena itu ia tidak boleh menghapus seperti
+        penggantian per rentang: baris yang tidak ikut terambil bukan baris basi,
+        melainkan baris yang memang tidak berubah.
+
+        Pencocokannya memakai `external_id`, penanda yang sama yang dipakai
+        sinkronisasi untuk mengenali baris — dan yang dijaga constraint
+        `(company_id, external_id)`.
+        """
+        Mirror = self.sudo()
+        values_list = []
+        for row in rows:
+            values = self._mirror_values(company, row)
+            if values:
+                values_list.append(values)
+        if not values_list:
+            return 0
+
+        existing = {
+            baris.external_id: baris
+            for baris in Mirror.search([
+                ('company_id', '=', company.id),
+                ('external_id', 'in', [values['external_id'] for values in values_list]),
+            ])
+        }
+
+        ditulis = 0
+        for values in values_list:
+            baris = existing.get(values['external_id'])
+            if baris:
+                baris.write(values)
+            else:
+                Mirror.create(values)
+            ditulis += 1
+        return ditulis
+
+    @api.model
     def _mirror_write(self, company, rows, domain):
         """Petakan semua baris, hapus yang lama pada `domain`, lalu buat baru."""
         Mirror = self.sudo()
@@ -121,3 +161,40 @@ class PresenlySaasMirrorMixin(models.AbstractModel):
         if values_list:
             Mirror.create(values_list)
         return len(values_list)
+
+    @api.model
+    def web_search_read(self, domain, specification, offset=0, limit=None, order=None,
+                        count_limit=None):
+        """Segarkan cermin sebelum daftarnya dibaca.
+
+        Dipasang di mixin yang diwarisi hampir seluruh cermin. Yang memicu hanya
+        pembacaan daftar: pivot, grafik, dan laporan tidak menyentuh jaringan.
+
+        Model yang tidak mewarisi mixin ini — log presensi dan rekap, yang punya
+        radas penulisan sendiri — memasang penimpaan yang sama dan memanggil
+        `_refresh_from_page()` yang sama.
+        """
+        # Hanya halaman pertama. Menggulir, mengurutkan ulang, dan mencari juga
+        # memanggil metode ini; tanpa syarat ini satu kali membuka daftar yang
+        # panjang bisa memicu belasan penarikan.
+        if not offset:
+            self.env['presenly.saas.config']._refresh_from_page()
+        return super().web_search_read(
+            domain, specification, offset=offset, limit=limit, order=order,
+            count_limit=count_limit,
+        )
+    @api.depends(
+        'approval_has_workflow',
+        'approval_current_level',
+        'approval_step_ids.level',
+        'approval_step_ids.approver_label',
+    )
+    def _compute_approval_waiting_for(self):
+        for request in self:
+            if not request.approval_has_workflow or not request.approval_current_level:
+                request.approval_waiting_for = False
+                continue
+            langkah = request.approval_step_ids.filtered(
+                lambda step: step.level == request.approval_current_level
+            )
+            request.approval_waiting_for = langkah[:1].approver_label or False

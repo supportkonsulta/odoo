@@ -24,6 +24,15 @@
                             type="action"
                             string="Refresh Reference"
                             groups="presenly_saas.group_presenly_saas_manager"/>
+                    <!-- Wizard, bukan server action: penarikan periode perlu
+                         dipilih bulannya lebih dulu. Pengajuan terbaru sudah
+                         tersegarkan sendiri saat daftarnya dibuka; tombol ini
+                         untuk melengkapi bulan lama dan mencoba ulang setelah
+                         gagal. -->
+                    <button name="%(action_presenly_saas_pull_period)d"
+                            type="action"
+                            string="Pull Period Data"
+                            groups="presenly_saas.group_presenly_saas_manager"/>
                     <field name="state_source" widget="badge"
                            decoration-success="state_source == 'live'"
                            decoration-warning="state_source == 'cached'"

@@ -92,6 +92,15 @@ class PresenlySaasClient:
         """Log presensi sesi. Mengembalikan ``{"data": [...], "meta": {...}}``."""
         return self.get_envelope("/v1/presenly/attendance-logs", params)
 
+    def get_changes(self, since=None):
+        """Waktu perubahan terakhir tiap jenis data, tanpa menarik datanya.
+
+        Satu permintaan murah untuk menjawab "ada yang berubah?", dipakai setiap
+        kali halaman cermin dibuka.
+        """
+        params = {'since': since} if since else None
+        return self.get_envelope("/v1/presenly/changes", params)
+
     def get_attendance_recap(self, params=None):
         """Rekap presensi per pegawai per bulan."""
         return self.get_envelope("/v1/presenly/attendance-recap", params)

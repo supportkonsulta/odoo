@@ -11,6 +11,7 @@ from . import test_presenly_endpoints
 from . import test_monitoring
 from . import test_monitoring_fields
 from . import test_submissions
+from . import test_incremental_sync
 from . import test_approval
 from . import test_retention
 from . import test_timesheets

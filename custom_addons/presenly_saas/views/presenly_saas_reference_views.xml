@@ -37,37 +37,57 @@
                         </div>
                     </div>
 
+                    <!-- Dua kolom yang seimbang: aturan geofence di kiri, keterangan
+                         tempatnya di kanan. Sebelumnya lima field berdampingan
+                         dengan satu, dan separuh barisnya kosong. -->
                     <group>
                         <group string="Geofence">
-                            <field name="attendance_type"/>
                             <field name="radius_meters"/>
                             <field name="timezone"/>
+                            <field name="attendance_type"/>
+                        </group>
+                        <group string="Place">
+                            <field name="address"/>
                             <field name="project_name"/>
                             <field name="company_id" groups="base.group_multi_company"/>
                         </group>
-                        <group string="Address">
-                            <field name="address"/>
-                        </group>
                     </group>
 
-                    <!-- Pusat lokasi dan radius yang diizinkan. Lingkaran pada
-                         peta memakai radius yang sama dengan yang dikirim
-                         server, jadi tidak ada angka kedua yang perlu ditebak. -->
+                    <!-- Peta memakai lebar penuh.
+
+                         `colspan="2"` wajib: tanpa itu petanya jatuh ke kolom label
+                         yang hanya selebar 150px, dan kolom nilainya yang lebar
+                         justru kosong.
+
+                         Mode ringkas mematikan tombol pintasannya, dan
+                         `person_field` sengaja tidak diisi: perusahaan internalnya
+                         sudah tertulis di bawah judul, jadi mengulanginya di legenda
+                         hanya menambah baris tanpa menambah keterangan. -->
                     <group string="Location">
                         <!-- Wajib ada di arch; lihat catatan di form presensi. -->
                         <field name="longitude" invisible="1"/>
-                        <!-- Tanpa `office_lat_field`, widget memperlakukan titik
-                             ini sebagai kantornya — memang itu isinya. -->
+                        <!-- Tanpa `office_lat_field`, widget memperlakukan titik ini
+                             sebagai kantornya — memang itu isinya. -->
                         <field name="latitude" widget="presenly_map" nolabel="1"
+                               colspan="2"
                                options="{'lon_field': 'longitude',
                                          'radius_field': 'radius_meters',
                                          'label_field': 'name',
-                                         'person_field': 'internal_company_name',
-                                         'point_label': 'Office location'}"/>
+                                         'point_label': 'Office location',
+                                         'compact': True}"/>
                     </group>
 
+                    <!-- Dua kolom di dalamnya supaya tidak menyisakan separuh halaman
+                         kosong; satu grup tanpa kolom dalam akan menumpuk ketiga
+                         barisnya di kiri. -->
                     <group string="Data Source">
-                        <field name="fetched_at"/>
+                        <group>
+                            <field name="fetched_at"/>
+                            <field name="source_created_at"/>
+                        </group>
+                        <group>
+                            <field name="source_updated_at"/>
+                        </group>
                     </group>
                 </sheet>
             </form>

@@ -25,7 +25,11 @@
                  yang memuat dua peta, dua baris berisi tiga tombol adalah bagian
                  teramai dari halaman. -->
             <div t-if="punyaPintasan" class="o_presenly_map_actions">
-                <button type="button"
+                <!-- Tombol kantor disembunyikan kalau titiknya sendiri adalah
+                     kantornya: dua tombol yang memindahkan peta ke tempat yang sama
+                     hanya membuat pembaca memilih tanpa alasan. -->
+                <button t-if="punyaDuaTitik"
+                        type="button"
                         class="btn btn-sm btn-secondary"
                         t-att-class="state.zoomed === 'office' ? 'active' : ''"
                         t-on-click="keKantor">Office</button>

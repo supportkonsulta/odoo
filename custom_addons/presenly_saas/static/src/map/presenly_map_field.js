@@ -267,9 +267,17 @@ export class PresenlyMapField extends Component {
         return _t("Office%s%s", nama, radius);
     }
 
-    /** Baris legenda titik presensi; kosong kalau titiknya memang tidak ada. */
+    /** Baris legenda titik presensi; kosong kalau memang tidak ada yang bisa dikatakan. */
     get legendPoint() {
         if (!this.hasCoordinates) {
+            return "";
+        }
+        // Sejalan dengan penanda di peta: penanda titik hanya digambar kalau
+        // letaknya memang berbeda dari kantor. Keterangannya tetap ditampilkan
+        // kalau membawa sesuatu yang tidak ada di baris kantor — waktunya, atau
+        // orangnya. Tanpa syarat ini, peta yang menggambar satu penanda kantor
+        // tetap mencantumkan legenda titik berwarna kedua.
+        if (!this.punyaDuaTitik && !this.waktu && !this.person) {
             return "";
         }
         const bagian = [this.pointLabel];

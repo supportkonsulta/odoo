@@ -325,8 +325,169 @@ dikelompokkan, dan dilihat per level.
 masih menunggu belum dikerjakan siapa pun; mengisinya dengan waktu sentuh
 terakhir membuatnya terbaca seolah sudah diputus.
 
-Kalau jenis pengajuan belum punya alur di Presenly, bloknya disembunyikan di
-form — yang kosong tidak perlu terlihat seperti yang rusak.
+### Bagian Persetujuan selalu tampil
+
+Sempat bagian ini disembunyikan saat jenis pengajuannya belum punya alur, dengan
+alasan "yang kosong tidak perlu terlihat seperti yang rusak". Itu salah, dan
+salahnya baru terlihat di tenant yang sebenarnya:
+
+- **Presenly punya dua sumber keputusan.** Selain alur berjenjang, tiap pengajuan
+  menyimpan keputusannya sendiri di kolomnya (`approved_by`, `approved_at`,
+  `rejected_at`, `rejection_reason`). Tenant yang belum menyiapkan alur tetap
+  punya keputusan — dan itulah yang disembunyikan.
+- **Menu tidak menampilkan apa pun, tanpa galat.** Yang terlihat bukan kekosongan
+  yang jelas, melainkan tidak adanya bagian itu sama sekali. Tidak ada yang bisa
+  dibaca pengguna untuk tahu bahwa datanya memang tidak ada.
+
+Sekarang bagiannya selalu tampil, dan keadaannya ditulis dengan kata:
+
+| Keadaan | Yang tampil |
+| --- | --- |
+| Ada alur | Ringkasan alur, rangkaian langkah bernomor (§9e), lalu kolom keputusan pengajuannya |
+| Ada keputusan, tanpa alur | Kolom keputusan, dan catatan bahwa tidak ada level yang tercatat |
+| Belum ada apa pun | Kolom keputusan (kosong), dan catatan "belum ada persetujuan yang tercatat" |
+
+Dua catatan itu dipisah karena keduanya berarti hal berbeda: pengajuan yang belum
+diputus tidak boleh terbaca seolah sudah ada keputusan.
+
+Satu grup datar, bukan dua kolom bersarang: jumlah kolom alur berubah mengikuti
+ada atau tidaknya alur, dan kolom bersarang akan menyisakan sel kosong di separuh
+baris.
+
+### Waktu keputusan tiap level
+
+Nama penyetujunya saja tidak cukup disebut riwayat — tanpa waktunya, urutan
+keputusan tidak bisa dipastikan. Dua kolom sempat tertinggal karena hanya namanya
+yang dicerminkan, padahal server mengirimnya:
+
+| Jenis pengajuan | Kolom waktu dari server |
+| --- | --- |
+| Surat dokter, cuti, tukar shift | `approved_at` |
+| Koreksi presensi | `tl_approved_at`, `manager_approved_at` |
+| Lembur | tidak ada di server; dibiarkan kosong, tidak diisi waktu lain |
+
+### `form` wajib ada di `view_mode`
+
+Action lembur sempat tidak memasang `form`, sehingga formnya **tidak bisa dibuka
+sama sekali**: mengeklik baris di daftar hanya mengembalikan ke daftar, tanpa
+pesan apa pun. Seluruh isi form itu — termasuk bagian Persetujuan — jadi tidak
+pernah terlihat. `tests/test_approval.py` memeriksa `view_mode` kelima action dan
+memastikan kepala grup `Approval` tidak lagi memasang `invisible`.
+
+---
+
+### Cermin segar saat halamannya dibuka
+
+Cermin disegarkan **saat daftarnya dibuka**, bukan hanya oleh cron harian. Yang
+ditarik hanya yang berubah sejak penarikan sebelumnya (`updated_since`), jadi
+yang dibandingkan adalah `updated_at` di sisi server — bukan tanggal bisnis
+datanya.
+
+Cakupannya **seluruh data yang dicerminkan**, bukan hanya pengajuan: absensi yang
+baru di-tap dari aplikasi, timesheet, pengajuan, rekap bulan berjalan, dan
+cermin referensi. Semuanya ikut lewat satu pemicu yang sama.
+
+Bedanya penting. Penarikan rentang menyaring kolom tanggal masing-masing jenis
+(`leave_date`, `date`, `requester_date`, …), sehingga koreksi presensi untuk
+bulan lalu atau tukar shift untuk bulan depan **tidak pernah ikut terambil**.
+Penarikan tambahan tidak punya lubang itu: yang menentukan hanyalah kapan
+barisnya berubah.
+
+| Bagian | Irama | Cakupan |
+| --- | --- | --- |
+| **Pemeriksaan saat halaman dibuka** | setiap kali daftar cermin dibuka | satu permintaan: jenis mana yang berubah |
+| Penarikan menyusul | hanya untuk jenis yang berubah | pengajuan, timesheet, log presensi, rekap, referensi |
+| `Presenly SaaS: Sync Recent Data` | 15 menit, bisa dimatikan | semuanya, tanpa referensi |
+| `Presenly SaaS: Pull Period Data` | harian | presensi, rekap, pengajuan, timesheet — 2 bulan, **dan referensi** |
+| Tombol **Pull Period Data** (Subscription) | manual | satu bulan pilihan |
+
+Baris pertama yang membuat data baru **langsung terlihat**, dan ia bekerja tanpa
+ambang waktu sama sekali:
+
+1. Daftar cermin dibuka → **satu** permintaan ke `GET /v1/presenly/changes`:
+   untuk tiap jenis, waktu perubahan terakhirnya.
+2. Jenis yang perubahannya lebih baru dari penanda terakhir ditarik. Yang tidak
+   berubah tidak disentuh.
+3. Kalau tidak ada yang berubah — yang paling sering terjadi — selesai dengan satu
+   permintaan.
+
+Tanpa langkah 1, "periksa setiap kali halaman dibuka" berarti tujuh penarikan
+penuh untuk sesuatu yang jawabannya biasanya "tidak ada yang berubah". Dengan
+langkah 1, biayanya satu permintaan kecil, jadi tidak ada lagi alasan menahan
+pemeriksaannya dengan ambang waktu.
+
+Yang tercatat di sisi server, misalnya: absen keluar diubah pukul 03:01, daftar
+Presensi dibuka sekali pukul 03:02, dan Odoo sudah menampilkan waktu yang baru —
+dua panggilan penarikan (log presensi dan rekap), bukan tujuh.
+
+Hanya halaman **pertama** yang memeriksa. Menggulir, mengurutkan ulang, dan
+mencari memanggil pembacaan yang sama, dan tanpa syarat itu satu kali membuka
+daftar yang panjang bisa memeriksa belasan kali. Saklar **Refresh on Open** di
+Settings mematikannya sama sekali.
+
+Cermin referensi punya irama sendiri — sejam — karena isinya jarang berubah.
+Sebelum ini ia **tidak pernah** ikut penarikan terjadwal sama sekali: hanya tombol
+di halaman Subscription yang bisa menariknya.
+
+Empat hal yang membuat pemicu dari halaman ini aman:
+
+1. **Berjalan di transaksi tersendiri.** `web_search_read` ditandai
+   `@api.readonly`, sehingga cursornya bisa hanya-baca dan tulisan dari sana
+   ditolak PostgreSQL. Transaksi tersendiri itu juga di-commit sendiri, dan hasilnya
+   tetap terlihat oleh pembacaan daftar sesudahnya (PostgreSQL membaca dengan
+   READ COMMITTED).
+2. **Penjagaan waktu, bukan penekanan tombol.** Paling sering sekali per N menit
+   per perusahaan, dan penjagaan itu dibaca dari **log sinkronisasi**: percobaan
+   yang gagal pun tercatat, sehingga server yang sedang tidak bisa dihubungi tidak
+   dicoba ulang oleh setiap halaman yang dibuka. Nilainya bukan disimpan di kolom
+   konfigurasi, karena menulisnya berarti menunggu kunci baris yang mungkin
+   dipegang transaksi pemanggil — halaman tidak boleh menunggu kunci.
+3. **Kuncinya "try", bukan tunggu.** Kalau ada penarikan yang sedang berjalan,
+   pemanggil berikutnya langsung menyerah.
+4. **Kegagalannya tidak pernah sampai ke halaman.** Server Presenly yang mati
+   berarti daftarnya menampilkan cermin apa adanya — bukan halaman yang gagal
+   dibuka. Batas waktunya pun dipendekkan jadi 3 detik untuk jalur ini, dan
+   percobaan ulang dimatikan supaya halaman tidak menunggu berlipat.
+
+Yang **tidak** bisa dilakukan pemicu ini, dan karena itu tombolnya tetap ada:
+melengkapi bulan lama, dan mencoba ulang setelah gagal berulang. Tombol
+**Pull Period Data** di halaman Subscription mengerjakan keduanya.
+
+#### Kenapa cron dan tombolnya tidak dihapus
+
+Pemicu dari halaman menjawab "data segar saat saya lihat". Dua hal tetap tidak
+bisa dijawabnya, dan keduanya bukan pelengkap:
+
+- **Data yang tidak pernah dilihat siapa pun.** Laporan, ekspor, dan surel
+  dihitung dari cermin. Kalau tidak ada yang membuka daftarnya, cerminnya tidak
+  pernah diperbarui — dan laporan akhir bulan bisa kehilangan hari terakhir.
+  Cron yang mengerjakannya, dan ia bisa dimatikan lewat **Scheduled Refresh**
+  (0 = mati) kalau memang tidak diinginkan. Perlu dicatat: ia juga satu-satunya
+  yang menangkap **penghapusan** di sisi server, karena pemeriksaan perubahan
+  hanya melihat waktu perubahan baris yang masih ada.
+- **Penarikan pertama yang besar.** Penarikan tambahan dibatasi 10 halaman.
+  Untuk instalasi baru dengan ribuan baris presensi, penarikan pertama akan
+  terpotong — dan itu dilaporkan, bukan didiamkan. Tombol **Pull Period Data**
+  ada untuk menariknya per bulan.
+
+#### Dua hal yang membuat pemicu ini sempat tidak berjalan sama sekali
+
+Keduanya tidak memunculkan galat apa pun, jadi keduanya ditulis di sini:
+
+1. **Tidak semua cermin mewarisi `presenly.saas.mirror.mixin`.** Log presensi dan
+   rekap punya radas penulisan sendiri, sehingga pemicu yang dipasang di mixin itu
+   tidak berlaku di sana — membuka daftar presensi tidak menarik apa pun. Keduanya
+   sekarang memasang penimpaan `web_search_read` sendiri dan memanggil
+   `_refresh_from_page()` yang sama dengan mixin.
+2. **Nilai bawaan kolom baru tidak berlaku pada instalasi yang sudah ada.**
+   `request_sync_minutes` ditambahkan dengan bawaan 5 menit, tetapi baris
+   konfigurasi yang sudah terpasang mendapat **0** — dan 0 berarti pemicunya
+   dimatikan.
+3. **Halaman Settings mematikannya lagi setiap kali disimpan.** Field di halaman
+   itu compute/inverse, dan compute-nya tidak mengisi field `request_sync_minutes`
+   — sehingga halaman itu menampilkan 0, dan menyimpannya menulis 0 kembali ke
+   konfigurasi. Compute-nya diperbaiki, dan ada tes yang mengunci putaran
+   tampil→simpan itu.
 
 ---
 
@@ -505,7 +666,7 @@ odoo-bin -d <db> -i presenly_saas \
   --stop-after-init --no-http
 ```
 
-304 kasus uji (modul inti + `presenly_saas_hr`):
+337 kasus uji (modul inti + `presenly_saas_hr`):
 
 | Berkas                         | Cakupan                                                                                                  |
 | ------------------------------ | -------------------------------------------------------------------------------------------------------- |
@@ -519,11 +680,12 @@ odoo-bin -d <db> -i presenly_saas \
 | `tests/test_submissions.py` | pemetaan lima jenis pengajuan, ganti per rentang |
 | `tests/test_retention.py` | jendela bergulir, cron penarikan, setelan baru, peringatan wizard |
 | `tests/test_timesheets.py` | hitungan jam, pemetaan timesheet & proyek, penarikan |
-| `tests/test_approval.py` | kosakata status (Y/N/T vs pending/approved/rejected), pemetaan level alur, label penyetuju |
+| `tests/test_approval.py` | kosakata status, pemetaan level alur, waktu keputusan, bagian Persetujuan yang wajib tampil, dan syarat pemuatan data widget langkah |
+| `tests/test_incremental_sync.py` | penarikan tambahan, penjagaan waktu, dan pemicu dari halaman |
 | `tests/test_monitoring_fields.py` | field turunan monitoring (terlambat, jam masuk, jam sesi) dan kolom yang bisa dibaca di form |
 | `tests/test_acl_coverage.py` | setiap model punya baris ACL |
 | `tests/test_map_widget_registration.py` | skema props widget peta, `onError`, bentuk templat |
-| `tests/test_map_widget_options.py` | setiap field pendamping di `options` benar-benar ada di view |
+| `tests/test_map_widget_options.py` | setiap field pendamping di `options` ada di view, dan peta memakai `colspan="2"` |
 | `tests/test_i18n_file.py` | `id.po` terurai, tidak ada `msgstr` kosong, setiap entri punya `#. module:` |
 
 Model (`.py`) yang berubah menuntut server Odoo **dimulai ulang**; perubahan
@@ -573,7 +735,9 @@ bisa gagal di bundel ter-minify — lihat bagian berikut.
 
 ## 9d. Form presensi: aturan tata letaknya
 
-Form log presensi disusun dengan tiga aturan yang berlaku untuk view lain juga.
+Form detail disusun dengan tiga aturan yang berlaku untuk view lain juga —
+log presensi dan lokasi kerja memakainya, dan bentuk sebelumnya di kedua form itu
+mengulang kesalahan yang sama.
 
 **Yang dibandingkan diletakkan berdampingan, dengan susunan kolom yang sama.**
 Titik masuk dan titik keluar berada di satu baris — waktu, mode, jarak, putusan
@@ -585,6 +749,16 @@ membuat formnya dua kali lebih panjang daripada isinya.
 seimbang (4 lawan 4, bukan 7 lawan 1), dan kelompok dengan jumlah field ganjil
 — seperti sumber data — dibagi lagi menjadi dua kolom di dalamnya. Satu sel
 kosong di baris terakhir tidak apa-apa; separuh halaman kosong tidak.
+
+Di form lokasi kerja, bentuk lamanya menaruh lima field geofence berdampingan
+dengan satu field alamat; sekarang radius, zona waktu, dan jenis absen di kiri
+berhadapan dengan alamat, proyek, dan perusahaan di kanan.
+
+**Peta tanpa `colspan="2"` jatuh ke kolom label.** Peta dengan `nolabel="1"`
+tetap menempati satu sel grid, dan sel yang jatuh ke kolom label hanya selebar
+150px — kolom nilainya yang lebar justru kosong. Gejalanya: peta kurus memanjang
+dengan legenda yang terpotong-potong, dan ubinnya tidak termuat. Dua form yang
+memakai widget peta pernah kena, dan keduanya sudah memakai `colspan="2"`.
 
 **Angka mentah tidak ditampilkan di form.** `13587796.00` meter dan `250.00`
 meter adalah dua angka yang harus dibandingkan sendiri oleh pembacanya, padahal
@@ -651,14 +825,64 @@ dan lokasi kerja.
    penyebabnya. Karena itu `legendOffice`, `legendPoint`, dan `missingFieldsText`
    dirangkai di JavaScript, memakai `_t()` supaya tetap bisa diterjemahkan.
 
-`tests/test_map_widget_registration.py` menjaga kedua hal ini.
+3. **Legenda hanya menjelaskan yang digambar peta.** Penanda titik memang hanya
+   digambar kalau letaknya berbeda dari kantor, tetapi legendanya dulu tetap
+   mencantumkan baris titik — titik berwarna kedua yang tidak ada di peta. Kedua
+   baris itu kini sejalan: baris titik muncul hanya kalau letaknya berbeda, atau
+   kalau ia membawa keterangan yang tidak ada di baris kantor (waktunya, atau
+   orangnya). Karena itu tombol pintasan "Office" juga disembunyikan saat titiknya
+   sendiri adalah kantornya.
+
+`tests/test_map_widget_registration.py` menjaga ketiganya.
+
+---
+
+## 9e. Widget langkah persetujuan
+
+`approval_step_ids` digambar sebagai rangkaian langkah bernomor yang tersambung —
+bukan tabel. Tabel menyembunyikan justru hal yang dicari pembaca: langkah mana
+yang sudah lewat, mana yang sedang berjalan, dan mana yang belum tersentuh.
+
+```
+① Direct Manager                              [APPROVED]
+   Decided by yusril on Sep 22, 9:15 AM
+│
+② Role hrd                                     [PENDING]     ← disorot
+   Waiting for a decision
+│
+③ Role direktur                                [PENDING]
+   Not reached yet
+```
+
+Aturan yang dipegangnya:
+
+| Bagian | Aturan |
+| --- | --- |
+| Rel penghubung | Hijau setelah langkah yang **disetujui**; abu-abu sesudahnya. Langkah yang ditolak sengaja tidak diberi warna: setelah penolakan alurnya berhenti, dan rel berwarna menyiratkan lanjutan yang tidak ada |
+| Langkah berjalan | Latar dan lingkaran disorot kuning — satu-satunya langkah yang butuh tindakan |
+| Langkah belum tersentuh | Diredupkan, dan keterangannya "Belum sampai di langkah ini" |
+| Status asing | Tidak diberi label sama sekali. Lebih baik kosong daripada menyebutnya "Pending" padahal artinya belum tentu itu |
+| Tanpa waktu | "Diputuskan oleh X", tanpa tanggal — bukan diisi waktu tarikan |
+
+### Dua syarat yang gagalnya tidak kelihatan
+
+1. **`<list>` di dalam fieldnya harus tetap ada** meski tidak ditampilkan. Odoo
+   membaca subview itu untuk menentukan field anak mana yang perlu dimuat; tanpa
+   itu widgetnya menerima baris tanpa isi — rangkaian langkah yang kosong, tanpa
+   satu pun pesan kesalahan. Dijaga oleh
+   `test_approval.py::TestPresenlyApprovalStepsWidget`.
+2. **Pembungkus field Odoo (`o_field_<nama widget>`) bersifat `inline-block`**,
+   jadi lebarnya menyusut mengikuti isinya. Akibatnya rangkaian langkahnya
+   terjepit selebar teks terpanjangnya; `width: 100%` di dalamnya tidak menolong
+   karena persentasenya dihitung terhadap pembungkus yang menyusut itu.
+   Pembungkusnya diubah menjadi `block` di SCSS widget ini.
 
 ---
 
 ## 10. Bahasa
 
 String sumber ditulis dalam **bahasa Inggris**; terjemahan Indonesianya ada di
-`i18n/id.po` (513 entri). Pengguna memilih bahasa lewat Preferences, dan kedua
+`i18n/id.po` (537 entri). Pengguna memilih bahasa lewat Preferences, dan kedua
 bahasa tersedia sekaligus.
 
 Aturan yang dipakai:
@@ -718,7 +942,7 @@ presenly_saas/
 ├── security/       group, ACL, record rule multi-company
 ├── services/       klien HTTP (tanpa dependensi Odoo, mudah diuji)
 ├── static/         ikon + komponen OWL banner dan peta
-├── tests/          304 kasus uji
+├── tests/          337 kasus uji
 ├── views/          form, list, search, menu
 └── wizard/         pemilih periode penarikan (presensi + pengajuan)
 ```

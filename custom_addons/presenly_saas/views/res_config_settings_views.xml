@@ -55,6 +55,15 @@
                             <field name="presenly_saas_pull_months" class="text-center o_input" style="width: 6ch;"/>
                             <span> months</span>
                         </setting>
+                        <setting string="Scheduled Refresh"
+                                 help="How often the scheduled pull of recent data runs. 0 turns that cron off: data is still refreshed when its list is opened, but nothing keeps data nobody looks at up to date.">
+                            <field name="presenly_saas_cron_sync_minutes" class="text-center o_input" style="width: 6ch;"/>
+                            <span> minutes</span>
+                        </setting>
+                        <setting string="Refresh on Open"
+                                 help="When a mirror list is opened, ask the Presenly server in one cheap request whether anything changed, and pull only what did. Off means data is only refreshed by the scheduled pull.">
+                            <field name="presenly_saas_request_auto_refresh"/>
+                        </setting>
                         <setting string="Retention"
                                  help="Mirrored period data older than this is removed by the weekly cleanup. 0 keeps everything. Reference data is never removed: it has no period.">
                             <field name="presenly_saas_retention_months" class="text-center o_input" style="width: 6ch;"/>

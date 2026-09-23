@@ -143,6 +143,26 @@ class PresenlySaasAttendanceLog(models.Model):
     office_longitude = fields.Float(compute='_compute_office')
     office_radius_meters = fields.Integer(compute='_compute_office')
 
+    @api.model
+    def web_search_read(self, domain, specification, offset=0, limit=None, order=None,
+                        count_limit=None):
+        """Segarkan cermin sebelum daftarnya dibaca.
+
+        Model ini tidak mewarisi `presenly.saas.mirror.mixin` — radas penulisannya
+        sendiri — sehingga pemicu yang dipasang di mixin itu tidak berlaku di
+        sini. Tanpa penimpaan ini, membuka daftar presensi tidak menarik apa pun,
+        dan absensi baru dari aplikasi tidak pernah muncul.
+        """
+        # Hanya halaman pertama. Menggulir, mengurutkan ulang, dan mencari juga
+        # memanggil metode ini; tanpa syarat ini satu kali membuka daftar yang
+        # panjang bisa memicu belasan penarikan.
+        if not offset:
+            self.env['presenly.saas.config']._refresh_from_page()
+        return super().web_search_read(
+            domain, specification, offset=offset, limit=limit, order=order,
+            count_limit=count_limit,
+        )
+
     @api.depends('location_id', 'company_id')
     def _compute_office(self):
         Lokasi = self.env['presenly.saas.work.location']
@@ -235,8 +255,7 @@ class PresenlySaasAttendanceLog(models.Model):
     # pertanyaan "sesi mana yang di luar geofence" tidak bisa dijawab Odoo.
     check_in_distance_text = fields.Char(
         string='Check-in Distance',
-        compute='_compute_geofence_fields',
-        store=True,
+        compute='_compute_geofence_texts',
         help='Distance from the office and the allowed radius, in units a person '
              'reads. Both numbers are the server\'s own; only the unit and the '
              'rounding are chosen here.',
@@ -248,7 +267,7 @@ class PresenlySaasAttendanceLog(models.Model):
             ('outside', 'Outside'),
             ('unknown', 'Unknown'),
         ],
-        compute='_compute_geofence_fields',
+        compute='_compute_geofence_states',
         store=True,
         help='Inside when the check-in point falls within the allowed radius. '
              'Unknown when either number is missing \u2014 being unknown is not the '
@@ -256,8 +275,7 @@ class PresenlySaasAttendanceLog(models.Model):
     )
     check_out_distance_text = fields.Char(
         string='Check-out Distance',
-        compute='_compute_geofence_fields',
-        store=True,
+        compute='_compute_geofence_texts',
     )
     check_out_radius_state = fields.Selection(
         string='Check-out Geofence',
@@ -266,7 +284,7 @@ class PresenlySaasAttendanceLog(models.Model):
             ('outside', 'Outside'),
             ('unknown', 'Unknown'),
         ],
-        compute='_compute_geofence_fields',
+        compute='_compute_geofence_states',
         store=True,
     )
     late_text = fields.Char(
@@ -322,18 +340,38 @@ class PresenlySaasAttendanceLog(models.Model):
         'check_in_distance_meters', 'check_in_allowed_radius_meters',
         'check_out_distance_meters', 'check_out_allowed_radius_meters',
     )
-    def _compute_geofence_fields(self):
+    def _compute_geofence_states(self):
+        """Putusan geofence. Disimpan supaya bisa disaring dan dikelompokkan.
+
+        Sengaja tanpa `_()`: nilai kolomnya teknis (`inside`/`outside`), dan
+        kolom tersimpan dihitung saat penulisan — termasuk oleh cron, yang tidak
+        punya bahasa pengguna. Teks yang diterjemahkan dihitung saat dibaca, di
+        `_compute_geofence_texts`.
+        """
+        for log in self:
+            log.check_in_radius_state = self._radius_state(
+                log.check_in_distance_meters, log.check_in_allowed_radius_meters
+            )
+            log.check_out_radius_state = self._radius_state(
+                log.check_out_distance_meters, log.check_out_allowed_radius_meters
+            )
+
+    @api.depends(
+        'check_in_distance_meters', 'check_in_allowed_radius_meters',
+        'check_out_distance_meters', 'check_out_allowed_radius_meters',
+    )
+    def _compute_geofence_texts(self):
+        """Kalimat jarak, dalam bahasa pembacanya.
+
+        Tidak disimpan dengan sengaja. Kolom teks yang diterjemahkan lalu
+        disimpan akan terbeku dalam bahasa yang berlaku saat kolom itu dihitung —
+        dan cron menghitungnya tanpa bahasa pengguna sama sekali.
+        """
         for log in self:
             log.check_in_distance_text = self._distance_text(
                 log.check_in_distance_meters, log.check_in_allowed_radius_meters
             )
-            log.check_in_radius_state = self._radius_state(
-                log.check_in_distance_meters, log.check_in_allowed_radius_meters
-            )
             log.check_out_distance_text = self._distance_text(
-                log.check_out_distance_meters, log.check_out_allowed_radius_meters
-            )
-            log.check_out_radius_state = self._radius_state(
                 log.check_out_distance_meters, log.check_out_allowed_radius_meters
             )
 

@@ -71,6 +71,24 @@ class TestPresenlyMapWidgetOptions(TransactionCase):
                 'field %s tidak ada di arch %s' % (field, view.name),
             )
 
+    def test_peta_memakai_lebar_penuh(self):
+        # Peta dengan `nolabel="1"` tetap menempati satu sel grid. Tanpa
+        # `colspan="2"`, selnya jatuh ke kolom label yang hanya selebar 150px,
+        # sementara kolom nilainya yang lebar justru kosong. Gejalanya: peta
+        # kurus memanjang dengan legenda terpotong-potong, dan ubinnya tidak
+        # termuat — bukan galat, hanya tampilan yang tidak bisa dipakai.
+        # Dua form pernah kena, jadi diperiksa di sini.
+        kurang = []
+        for view in self.env['ir.ui.view'].search([]):
+            arch = view.arch_db or ''
+            for pemakaian in re.finditer(r'<field[^>]*widget="presenly_map"[^>]*/>', arch, re.S):
+                if 'colspan="2"' not in pemakaian.group(0):
+                    kurang.append(view.name)
+        self.assertEqual(
+            kurang, [],
+            'peta dipasang tanpa colspan="2", jadi jatuh ke kolom label: %s' % kurang,
+        )
+
 
 @tagged('post_install', '-at_install')
 class TestPresenlyOfficeOnMap(TransactionCase):

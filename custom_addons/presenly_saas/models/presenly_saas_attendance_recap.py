@@ -46,6 +46,26 @@ class PresenlySaasAttendanceRecap(models.Model):
         'An employee may only appear once per month per company.',
     )
 
+    @api.model
+    def web_search_read(self, domain, specification, offset=0, limit=None, order=None,
+                        count_limit=None):
+        """Segarkan cermin sebelum daftarnya dibaca.
+
+        Model ini tidak mewarisi `presenly.saas.mirror.mixin` — radas penulisannya
+        sendiri — sehingga pemicu yang dipasang di mixin itu tidak berlaku di
+        sini. Tanpa penimpaan ini, membuka daftar presensi tidak menarik apa pun,
+        dan absensi baru dari aplikasi tidak pernah muncul.
+        """
+        # Hanya halaman pertama. Menggulir, mengurutkan ulang, dan mencari juga
+        # memanggil metode ini; tanpa syarat ini satu kali membuka daftar yang
+        # panjang bisa memicu belasan penarikan.
+        if not offset:
+            self.env['presenly.saas.config']._refresh_from_page()
+        return super().web_search_read(
+            domain, specification, offset=offset, limit=limit, order=order,
+            count_limit=count_limit,
+        )
+
     @api.depends('employee_name', 'month', 'year')
     def _compute_display_name(self):
         for recap in self:

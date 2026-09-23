@@ -59,11 +59,9 @@
         <field name="search_view_id" ref="view_presenly_saas_attendance_log_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">Nothing to monitor yet</p>
-            <p>
-                Monitoring is computed from the mirrored attendance log. Pull the data first
-                through <b>Attendance Data → Pull Period Data</b>, then choose the
-                month range to fetch.
-            </p>
+            <p>Monitoring is computed from the mirrored attendance log, which is pulled
+               once a day. Use <b>Pull Period Data</b> on the Subscription page to
+               fetch a month right away.</p>
         </field>
     </record>
 

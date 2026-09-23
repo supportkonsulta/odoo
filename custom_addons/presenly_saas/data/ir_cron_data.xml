@@ -32,6 +32,24 @@
         </record>
 
 
+        <!-- Penarikan tambahan: pengajuan, timesheet, dan log presensi, semuanya
+             lewat `updated_since`. Jauh lebih sering daripada penarikan periode,
+             dan tidak menulis ulang seluruh rentang seperti penarikan itu.
+
+             Cron ini juga yang dijalankan oleh pemicu dari halaman pengguna,
+             kalau cerminnya sudah tua saat daftar dibuka. Cermin referensi tidak
+             ikut di sini: isinya jarang berubah, dan disegarkan oleh penarikan
+             harian serta oleh pemicu dari halaman paling sering sekali sejam. -->
+        <record id="ir_cron_presenly_saas_sync_recent" model="ir.cron">
+            <field name="name">Presenly SaaS: Sync Recent Data</field>
+            <field name="model_id" ref="model_presenly_saas_config"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_pull_recent_all()</field>
+            <field name="interval_number">15</field>
+            <field name="interval_type">minutes</field>
+            <field name="user_id" ref="base.user_root"/>
+        </record>
+
         <!-- Pembersihan mingguan, bukan harian: jendela bergulir dihitung dalam
              bulan, jadi menjalankannya tiap hari hanya mengulang pekerjaan yang
              sama tanpa menghapus apa pun. -->

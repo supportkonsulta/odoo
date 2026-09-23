@@ -140,8 +140,10 @@
         <field name="search_view_id" ref="view_presenly_saas_timesheet_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">No timesheets mirrored yet</p>
-            <p>Run <b>Pull Period Data</b> to fill it. The <b>Hours</b> column is
-               derived in Odoo from the start and end times, not sent by the server.</p>
+            <p>Timesheets are pulled once a day, together with the attendance log. Use
+               <b>Pull Period Data</b> on the Subscription page for an older month.
+               The <b>Hours</b> column is derived in Odoo from the start and end
+               times, not sent by the server.</p>
         </field>
     </record>
 
@@ -191,8 +193,8 @@
         <field name="search_view_id" ref="view_presenly_saas_project_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">No projects mirrored yet</p>
-            <p>Use <b>Refresh Reference</b> on the Subscription page, or pull
-               a specific period through <b>Pull Period Data</b>.</p>
+            <p>Timesheets are pulled once a day, together with the attendance log. Use
+               <b>Pull Period Data</b> on the Subscription page for an older month.</p>
         </field>
     </record>
 

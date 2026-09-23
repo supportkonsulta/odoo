@@ -1138,17 +1138,6 @@ msgid "Monitoring"
 msgstr "Pemantauan"
 
 #. module: presenly_saas
-#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_monitoring
-msgid ""
-"Monitoring is computed from the mirrored attendance log. Pull the data first\n"
-"                through <b>Attendance Data → Pull Period Data</b>, then choose the\n"
-"                month range to fetch."
-msgstr ""
-"Monitoring dihitung dari cermin log presensi. Tarik datanya lebih dulu\n"
-"                lewat <b>Data Presensi → Tarik Data Periode</b>, lalu pilih rentang\n"
-"                bulan yang ingin ditarik."
-
-#. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_recap__month
 #: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_correction_search
 #: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_search
@@ -1813,23 +1802,6 @@ msgstr ""
 "tidak pernah diulang."
 
 #. module: presenly_saas
-#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_attendance_correction
-#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_medical_certificate
-#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_overtime
-#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_shift_swap
-msgid "Run <b>Pull Period Data</b> to fill it."
-msgstr "Jalankan <b>Tarik Data Periode</b> untuk mengisi."
-
-#. module: presenly_saas
-#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_timesheet
-msgid ""
-"Run <b>Pull Period Data</b> to fill it. The <b>Hours</b> column is\n"
-"               derived in Odoo from the start and end times, not sent by the server."
-msgstr ""
-"Jalankan <b>Tarik Data Periode</b> untuk mengisi. Kolom <b>Jam</b>\n"
-"               dihitung Odoo dari jam mulai dan jam selesai, bukan kiriman server."
-
-#. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_project__grup
 #: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_project_search
 msgid "SIK Group"
@@ -2098,15 +2070,6 @@ msgstr ""
 "                    selisihnya diberitahukan."
 
 #. module: presenly_saas
-#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_attendance_recap
-msgid ""
-"The recap is fetched together with the attendance log through the\n"
-"                <b>Pull Period Data</b> button."
-msgstr ""
-"Rekap ditarik bersama log presensi melalui tombol\n"
-"                <b>Tarik Data Periode</b>."
-
-#. module: presenly_saas
 #: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_correction_search
 #: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_search
 #: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_leave_search
@@ -2291,15 +2254,6 @@ msgstr "Tidak Terjangkau"
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_location__source_updated_at
 msgid "Updated on SaaS"
 msgstr "Diubah di SaaS"
-
-#. module: presenly_saas
-#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_attendance_log
-msgid ""
-"Use <b>Pull Period Data</b> to fetch the log, the recap, and the requests\n"
-"                from the Presenly SaaS server for a single month."
-msgstr ""
-"Gunakan tombol <b>Tarik Data Periode</b> untuk menarik log, rekap, dan pengajuan\n"
-"                dari server Presenly SaaS untuk satu bulan."
 
 #. module: presenly_saas
 #: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_leave
@@ -3302,7 +3256,6 @@ msgstr "Siapa yang diharapkan memutuskan level yang sedang berjalan sekarang."
 msgid "Who is expected to decide this level, as configured in Presenly."
 msgstr "Siapa yang diharapkan memutuskan level ini, sesuai konfigurasi di Presenly."
 
-
 #. module: presenly_saas
 #. odoo-python
 #: code:addons/presenly_saas/models/presenly_saas_attendance_log.py:0
@@ -3439,3 +3392,212 @@ msgstr "Di Luar Geofence"
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__session_text
 msgid "Session Length"
 msgstr "Lama Sesi"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_work_location_form
+msgid "Place"
+msgstr "Tempat"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__manager_approved_at
+msgid "Manager Approved At"
+msgstr "Disetujui Manager Pada"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_correction_form
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_leave_form
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_medical_certificate_form
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_overtime_form
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_shift_swap_form
+msgid "No approval is recorded for this request yet."
+msgstr "Belum ada persetujuan yang tercatat untuk pengajuan ini."
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_correction_form
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_leave_form
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_medical_certificate_form
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_overtime_form
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_shift_swap_form
+msgid ""
+"No approval levels are recorded for this request. Only the\n"
+"                        decision stored on the request itself is shown."
+msgstr "Tidak ada level persetujuan yang tercatat untuk pengajuan ini. Yang\n"
+"ditampilkan hanya keputusan yang tersimpan pada pengajuannya sendiri."
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__tl_approved_at
+msgid "Team Lead Approved At"
+msgstr "Disetujui Team Lead Pada"
+
+#. module: presenly_saas
+#. odoo-javascript
+#: code:addons/presenly_saas/static/src/approval/presenly_approval_steps.js:0
+msgid "Decided by %s"
+msgstr "Diputuskan oleh %s"
+
+#. module: presenly_saas
+#. odoo-javascript
+#: code:addons/presenly_saas/static/src/approval/presenly_approval_steps.js:0
+msgid "Decided by %s on %s"
+msgstr "Diputuskan oleh %s pada %s"
+
+#. module: presenly_saas
+#. odoo-javascript
+#: code:addons/presenly_saas/static/src/approval/presenly_approval_steps.js:0
+msgid "Not reached yet"
+msgstr "Belum sampai di langkah ini"
+
+#. module: presenly_saas
+#. odoo-javascript
+#: code:addons/presenly_saas/static/src/approval/presenly_approval_steps.js:0
+msgid "Reason: %s"
+msgstr "Alasan: %s"
+
+#. module: presenly_saas
+#. odoo-javascript
+#: code:addons/presenly_saas/static/src/approval/presenly_approval_steps.js:0
+msgid "Waiting for a decision"
+msgstr "Menunggu keputusan"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid "<span> minutes</span>"
+msgstr "<span> menit</span>"
+
+#. module: presenly_saas
+#: model:ir.model.constraint,message:presenly_saas.constraint_presenly_saas_sync_mark_company_dataset_uniq
+msgid "A dataset may only have one sync mark per company."
+msgstr "Satu jenis hanya boleh punya satu penanda sinkronisasi per perusahaan."
+
+#. module: presenly_saas
+#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_attendance_log
+msgid ""
+"Attendance is pulled once a day. Use <b>Pull Period Data</b> on the\n"
+"               Subscription page to fetch a single month right away."
+msgstr "Presensi ditarik sekali sehari. Pakai <b>Pull Period Data</b> di halaman\n"
+"Langganan untuk menarik satu bulan tertentu saat itu juga."
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_sync_mark__last_synced_at
+msgid "Changes Seen Until"
+msgstr "Perubahan Terlihat Sampai"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_sync_mark__dataset
+msgid "Dataset"
+msgstr "Jenis Data"
+
+#. module: presenly_saas
+#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_monitoring
+msgid ""
+"Monitoring is computed from the mirrored attendance log, which is pulled\n"
+"               once a day. Use <b>Pull Period Data</b> on the Subscription page to\n"
+"               fetch a month right away."
+msgstr "Monitoring dihitung dari cermin log presensi, yang ditarik sekali sehari.\n"
+"Pakai <b>Pull Period Data</b> di halaman Langganan untuk menarik satu bulan\n"
+"tertentu saat itu juga."
+
+#. module: presenly_saas
+#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_attendance_correction
+#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_medical_certificate
+#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_overtime
+#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_shift_swap
+msgid ""
+"New and changed requests appear on their own when this list is opened.\n"
+"               Use <b>Pull Period Data</b> on the Subscription page to fill in\n"
+"               an older month."
+msgstr "Pengajuan baru dan yang berubah muncul sendiri saat daftar ini dibuka.\n"
+"Pakai <b>Pull Period Data</b> di halaman Langganan untuk melengkapi bulan\n"
+"yang lebih lama."
+
+#. module: presenly_saas
+#: model:ir.model,name:presenly_saas.model_presenly_saas_sync_mark
+msgid "Presenly SaaS Incremental Sync Mark"
+msgstr "Penanda Sinkronisasi Tambahan Presenly SaaS"
+
+#. module: presenly_saas
+#: model:ir.actions.server,name:presenly_saas.ir_cron_presenly_saas_sync_requests_ir_actions_server
+msgid "Presenly SaaS: Sync Recent Data"
+msgstr "Presenly SaaS: Sinkronkan Data Terbaru"
+
+#. module: presenly_saas
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_sync_mark__last_synced_at
+msgid ""
+"Server time up to which changes have been picked up. The next incremental "
+"pull asks for everything changed after this."
+msgstr "Waktu server sampai kapan perubahan sudah terambil. Penarikan tambahan\n"
+"berikutnya meminta semua yang berubah setelah waktu ini."
+
+#. module: presenly_saas
+#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_attendance_recap
+msgid ""
+"The recap is fetched together with the attendance log, by the daily\n"
+"               pull or by <b>Pull Period Data</b> on the Subscription page."
+msgstr "Rekapnya diambil bersama log presensi, oleh penarikan harian atau oleh\n"
+"<b>Pull Period Data</b> di halaman Langganan."
+
+#. module: presenly_saas
+#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_project
+msgid ""
+"Timesheets are pulled once a day, together with the attendance log. Use\n"
+"               <b>Pull Period Data</b> on the Subscription page for an older month."
+msgstr "Timesheet ditarik sekali sehari, bersama log presensi. Pakai\n"
+"<b>Pull Period Data</b> di halaman Langganan untuk bulan yang lebih lama."
+
+#. module: presenly_saas
+#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_timesheet
+msgid ""
+"Timesheets are pulled once a day, together with the attendance log. Use\n"
+"               <b>Pull Period Data</b> on the Subscription page for an older month.\n"
+"               The <b>Hours</b> column is derived in Odoo from the start and end\n"
+"               times, not sent by the server."
+msgstr "Timesheet ditarik sekali sehari, bersama log presensi. Pakai\n"
+"<b>Pull Period Data</b> di halaman Langganan untuk bulan yang lebih lama.\n"
+"Kolom <b>Hours</b> diturunkan di Odoo dari jam mulai dan selesai, bukan\n"
+"dikirim server."
+
+#. module: presenly_saas
+#. odoo-python
+#: code:addons/presenly_saas/models/presenly_saas_config.py:0
+msgid "Unexpected error, see the Odoo log."
+msgstr "Galat yang tidak terduga, lihat log Odoo."
+
+#. module: presenly_saas
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_config__cron_sync_minutes
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid ""
+"How often the scheduled pull of recent data runs. 0 turns that cron off: "
+"data is still refreshed when its list is opened, but nothing keeps data "
+"nobody looks at up to date."
+msgstr "Seberapa sering penarikan terjadwal data terbaru berjalan. 0 mematikan cron\n"
+"itu: data tetap disegarkan saat daftarnya dibuka, tetapi tidak ada yang\n"
+"menjaga data yang tidak pernah dilihat."
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_config__request_auto_refresh
+#: model:ir.model.fields,field_description:presenly_saas.field_res_config_settings__presenly_saas_request_auto_refresh
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid "Refresh on Open"
+msgstr "Segarkan Saat Dibuka"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid "Scheduled Refresh"
+msgstr "Penyegaran Terjadwal"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_config__cron_sync_minutes
+#: model:ir.model.fields,field_description:presenly_saas.field_res_config_settings__presenly_saas_cron_sync_minutes
+msgid "Scheduled Refresh (minutes)"
+msgstr "Penyegaran Terjadwal (menit)"
+
+#. module: presenly_saas
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_config__request_auto_refresh
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid ""
+"When a mirror list is opened, ask the Presenly server in one cheap request "
+"whether anything changed, and pull only what did. Off means data is only "
+"refreshed by the scheduled pull."
+msgstr "Saat daftar cermin dibuka, tanyakan ke server Presenly dalam satu permintaan\n"
+"murah apakah ada yang berubah, lalu tarik hanya yang berubah. Kalau dimatikan,\n"
+"data hanya disegarkan oleh penarikan terjadwal."

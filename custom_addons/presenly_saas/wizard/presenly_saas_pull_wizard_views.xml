@@ -33,4 +33,15 @@
         </field>
     </record>
 
+    <!-- Pintu masuk wizard. Sebelum ini modelnya punya form tetapi tidak ada
+         satu pun act_window, menu, atau tombol yang membukanya, sehingga bantuan
+         di layar menyuruh pengguna menjalankan perintah yang tidak ada. -->
+    <record id="action_presenly_saas_pull_period" model="ir.actions.act_window">
+        <field name="name">Pull Period Data</field>
+        <field name="res_model">presenly.saas.pull.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="group_ids" eval="[(4, ref('presenly_saas.group_presenly_saas_manager'))]"/>
+    </record>
+
 </odoo>

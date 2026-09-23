@@ -1,12 +1,13 @@
 import logging
 from calendar import monthrange
-from datetime import date
+from datetime import date, timedelta
 
 from dateutil.relativedelta import relativedelta
 
-from odoo import _, api, fields, models
+from odoo import SUPERUSER_ID, _, api, fields, models
 from odoo.exceptions import UserError
 
+from .presenly_saas_attendance_log import parse_datetime
 from ..services.saas_client import PresenlySaasClient, SaasClientError, redact
 
 _logger = logging.getLogger(__name__)
@@ -51,6 +52,55 @@ PERIOD_DATASETS = [
 # pengaman operasional: satu tombol tidak boleh menarik ratusan ribu baris dan
 # mengunci worker. Kalau batasnya tersentuh, itu diberitahukan ke pengguna.
 MAX_PULL_PAGES = 10
+
+# Jenis pengajuan yang ditarik tambahan. Sengaja tanpa presensi, rekap, dan
+# timesheet: tabel pengajuan kecil, sedangkan penarikan rentang presensi menulis
+# ulang seluruh rentangnya setiap kali — menjalankannya tiap 15 menit berarti
+# menulis ulang ribuan baris tiap 15 menit.
+REQUEST_DATASETS = tuple(
+    entry for entry in PERIOD_DATASETS if entry[0] != 'timesheets'
+)
+
+# Yang ditarik tambahan, dengan penanda waktunya sendiri-sendiri. Semuanya
+# mendukung `updated_since` di sisi API: hanya baris yang berubah yang terambil,
+# jadi menjalankannya sesering ini tidak berarti menulis ulang seluruh rentang.
+#
+# Item: (kunci penanda, path API, model cermin).
+#
+# Path-nya relatif ke akar API: klien HTTP sudah menambahkan `/api/external`
+# sendiri. Yang dicatat ke log sinkronisasi adalah bentuk lengkapnya, supaya
+# sebaris dengan catatan penarikan periode.
+RECENT_DATASETS = tuple(
+    (resource, '/v1/%s' % resource, model_name)
+    for resource, model_name in PERIOD_DATASETS
+    if resource != 'attendance-recap'
+) + (
+    # Endpoint presensi berbentuk halaman, bukan resource, tetapi bisa disaring
+    # dengan `updated_since` yang sama.
+    ('attendance-logs', '/v1/presenly/attendance-logs',
+     'presenly.saas.attendance.log'),
+)
+
+# Cermin referensi jarang berubah, tetapi juga tidak pernah ikut penarikan
+# harian: sebelumnya hanya bisa ditarik dengan tombol. Sekarang ikut disegarkan
+# saat halamannya dibuka, paling sering sekali sejam.
+REFERENCE_REFRESH_MINUTES = 60
+
+# Batas waktu untuk penarikan yang dipicu dari halaman pengguna. Bawaannya 10
+# detik terlalu lama untuk sebuah halaman daftar, dan percobaan ulang tidak
+# dipakai di jalur ini: satu kegagalan harus terlihat sebagai daftar yang tidak
+# bertambah, bukan sebagai halaman yang menggantung.
+INLINE_PULL_TIMEOUT = 3
+
+# Tumpang tindih saat meminta `updated_since`. API menyaring dengan
+# `updated_at > since`, jadi baris yang berubah pada detik yang sama dengan
+# penanda terakhir bisa terlewat.
+INCREMENTAL_OVERLAP_MINUTES = 5
+
+# Kunci penasihat untuk penarikan pengajuan dari halaman. Satu angka untuk seluruh
+# modul: yang dijaga adalah "jangan ada dua penarikan berjalan bersamaan", bukan
+# per perusahaan — penarikan per perusahaan sudah dipisah oleh datanya sendiri.
+_REQUEST_LOCK_KEY = 0x70726573  # 'pres' dalam heksadesimal
 
 # Cermin data referensi. Resource API -> model Odoo yang menyimpannya.
 # Semuanya tanpa periode: penarikan mengganti seluruh isinya.
@@ -174,6 +224,20 @@ class PresenlySaasConfig(models.Model):
              'current month. 2 means the current month and the one before it, '
              'so a shift that ends after midnight, or a correction filed the '
              'next day, is still captured.',
+    )
+    request_auto_refresh = fields.Boolean(
+        string='Refresh on Open',
+        default=True,
+        help='When a mirror list is opened, ask the Presenly server in one cheap '
+             'request whether anything changed, and pull only what did. Off means '
+             'data is only refreshed by the scheduled pull.',
+    )
+    cron_sync_minutes = fields.Integer(
+        string='Scheduled Refresh (minutes)',
+        default=15,
+        help='How often the scheduled pull of recent data runs. 0 turns that cron '
+             'off: data is still refreshed when its list is opened, but nothing '
+             'keeps data nobody looks at up to date.',
     )
     retention_months = fields.Integer(
         string='Retention (months)',
@@ -357,7 +421,12 @@ class PresenlySaasConfig(models.Model):
     # ------------------------------------------------------------------
     # Penarikan data fitur Presenly (/v1/presenly/*)
     # ------------------------------------------------------------------
-    def _client(self):
+    def _client(self, timeout=None, retry_count=None):
+        """Klien HTTP untuk koneksi ini.
+
+        `timeout` dan `retry_count` bisa ditimpa untuk jalur yang tidak boleh
+        menunggu lama, yaitu penarikan yang dipicu dari halaman pengguna.
+        """
         self.ensure_one()
         if not (self.base_url and self.tenant_code and self.api_key):
             raise UserError(
@@ -368,8 +437,8 @@ class PresenlySaasConfig(models.Model):
             base_url=self.base_url,
             api_key=self.api_key,
             tenant_code=self.tenant_code,
-            timeout=self.timeout_seconds or 10,
-            retry_count=self.retry_count,
+            timeout=timeout or self.timeout_seconds or 10,
+            retry_count=self.retry_count if retry_count is None else retry_count,
         )
 
     def _pull_reference_data(self):
@@ -389,13 +458,13 @@ class PresenlySaasConfig(models.Model):
                 )
             except SaasClientError as exc:
                 error = redact(exc, self.api_key)
-                self._log_pull('/v1/%s' % resource, False, exc, started)
+                self._log_pull('/api/external/v1/%s' % resource, False, exc, started)
                 return summary, error
 
             summary[resource] = self.env[model_name]._mirror_replace(
                 self.company_id, rows
             )
-            self._log_pull('/v1/%s' % resource, True, None, started)
+            self._log_pull('/api/external/v1/%s' % resource, True, None, started)
 
         return summary, False
 
@@ -607,6 +676,275 @@ class PresenlySaasConfig(models.Model):
                 )
 
         return summary, False
+
+    def _pull_recent_data(self, datasets=None, client=None, timeout=None,
+                          retry_count=None):
+        """Tarik semua yang berubah sejak penarikan tambahan terakhir.
+
+        Mencakup pengajuan, timesheet, dan log presensi — semuanya lewat
+        `updated_since`, jadi yang dibandingkan adalah waktu perubahan di sisi
+        server, bukan tanggal bisnis datanya. Rekap ikut disegarkan karena
+        dihitung server per bulan dan isinya kecil. Cermin referensi ikut kalau
+        sudah lama, karena isinya jarang berubah tetapi tidak pernah ikut
+        penarikan harian.
+
+        Mengembalikan ``(summary, error)``. Penanda waktu hanya dimajukan untuk
+        jenis yang benar-benar berhasil: kegagalan dikembalikan sebagai nilai,
+        jadi jenis yang gagal tidak boleh ikut maju — kalau ikut, perubahannya
+        terlewat selamanya.
+        """
+        self.ensure_one()
+        self._require_enabled()
+        Mark = self.env['presenly.saas.sync.mark'].sudo()
+        client = client or self._client(timeout=timeout, retry_count=retry_count)
+
+        diminta = set(datasets) if datasets else None
+        summary = {'datasets': {}, 'server_time': None, 'recap': 0, 'references': 0}
+        for kunci, path, model_name in RECENT_DATASETS:
+            if diminta is not None and kunci not in diminta:
+                continue
+            started = fields.Datetime.now()
+            params = {'limit': 500}
+
+            since = Mark._since(self.company_id, kunci, INCREMENTAL_OVERLAP_MINUTES)
+            if since:
+                # Odoo menyimpan waktu dalam UTC, dan API meminta ISO-8601.
+                params['updated_since'] = since.strftime('%Y-%m-%dT%H:%M:%SZ')
+
+            try:
+                rows, meta, _pages = self._fetch_pages(
+                    lambda page_params, _client=client, _path=path:
+                        _client.get_envelope(_path, page_params),
+                    params,
+                )
+            except SaasClientError as exc:
+                self._log_pull('/api/external' + path, False, exc, started)
+                return summary, redact(exc, self.api_key)
+
+            if model_name == 'presenly.saas.attendance.log':
+                # Cermin presensi punya penulisan tambah-perbarui sendiri.
+                ditulis = self.env[model_name]._upsert_rows(self.company_id, rows)
+            else:
+                ditulis = self.env[model_name]._mirror_upsert(self.company_id, rows)
+            summary['datasets'][kunci] = ditulis
+            self._log_pull('/api/external' + path, True, None, started)
+
+            # Waktu server, bukan jam Odoo: yang dibandingkan adalah `updated_at`
+            # milik server, dan dua jam yang berbeda tidak boleh diadu.
+            server_time = parse_datetime(meta.get('server_time')) or fields.Datetime.now()
+            Mark._advance(self.company_id, kunci, server_time)
+            summary['server_time'] = server_time
+
+        # Rekap: dihitung server per bulan, isinya beberapa baris per pegawai.
+        # Mengganti satu bulan lebih murah daripada menyimpannya basi.
+        #
+        # Tidak ikut diperiksa `changes` — rekap dihitung server, bukan tabel —
+        # jadi ia ikut ditarik ketika ada yang berubah, atau ketika penarikan ini
+        # memang menarik semuanya (cron dan penarikan periode).
+        if diminta is not None and not diminta:
+            return summary, False
+        today = fields.Date.context_today(self)
+        started = fields.Datetime.now()
+        path = ATTENDANCE_RECAP_PATH
+        try:
+            envelope = client.get_attendance_recap({'month': today.month, 'year': today.year})
+        except SaasClientError as exc:
+            self._log_pull(path, False, exc, started)
+            return summary, redact(exc, self.api_key)
+        Recap = self.env['presenly.saas.attendance.recap']
+        Recap._replace_scope(self.company_id, today.month, today.year)
+        summary['recap'] = Recap._upsert_rows(self.company_id, envelope.get('data') or [])
+        self._log_pull(path, True, None, started)
+
+        # Referensi: seluruh isinya diganti, dan tabelnya kecil.
+        if self._references_need_refresh():
+            ringkas, error = self._pull_reference_data()
+            if error:
+                return summary, error
+            summary['references'] = len(ringkas)
+
+        return summary, False
+
+    def _references_need_refresh(self):
+        """Apakah cermin referensi sudah cukup tua untuk disegarkan lagi."""
+        self.ensure_one()
+        sejak = self._seconds_since_attempt(self._reference_paths())
+        return sejak is None or sejak >= REFERENCE_REFRESH_MINUTES * 60
+
+    def _recent_paths(self):
+        """Endpoint penarikan tambahan, dalam bentuk yang tercatat di log."""
+        return ['/api/external%s' % path for _kunci, path, _model in RECENT_DATASETS]
+
+    def _reference_paths(self):
+        """Endpoint cermin referensi, untuk mengenali barisnya di log."""
+        return ['/api/external/v1/%s' % resource for resource, _model in REFERENCE_MIRRORS]
+
+    def _seconds_since_attempt(self, paths):
+        """Berapa detik sejak endpoint tersebut terakhir **dicoba** ditarik.
+
+        Diambil dari log sinkronisasi, bukan dari kolom tersendiri di konfigurasi.
+        Dua alasan:
+
+        1. Percobaan yang gagal pun tercatat, jadi server yang sedang tidak bisa
+           dihubungi tidak dicoba ulang oleh setiap halaman yang dibuka.
+        2. Menulis kolom di konfigurasi dari jalur halaman berarti menunggu kunci
+           barisnya kalau transaksi pemanggil sedang memegang baris itu — dan
+           halaman tidak boleh menunggu kunci.
+        """
+        self.ensure_one()
+        terakhir = self.env['presenly.saas.sync.log'].sudo().search([
+            ('company_id', '=', self.company_id.id),
+            ('endpoint', 'in', paths),
+        ], order='create_date desc', limit=1)
+        if not terakhir:
+            return None
+        return (fields.Datetime.now() - terakhir.create_date).total_seconds()
+
+    @api.model
+    def _refresh_from_page(self):
+        """Segarkan cermin karena ada yang membuka halamannya.
+
+        Dijalankan di transaksi tersendiri, dan transaksi itu di-commit sendiri.
+
+        Transaksi tersendiri bukan pilihan gaya: pembacaan daftar ditandai
+        `@api.readonly`, sehingga cursornya bisa hanya-baca dan tulisan dari sana
+        ditolak PostgreSQL. Transaksi tersendiri juga melepas kunci penjagaan
+        waktunya lebih cepat — dilepas saat penarikan selesai, bukan saat halaman
+        selesai.
+
+        Hasilnya tetap terlihat oleh pembacaan daftar sesudahnya: PostgreSQL
+        membaca dengan READ COMMITTED, jadi tiap perintah melihat keadaan terbaru.
+
+        Seluruh kegagalannya ditelan: halaman tidak boleh gagal karena server
+        Presenly sedang tidak bisa dihubungi.
+        """
+        company_id = self.env.company.id
+        try:
+            with self.env.registry.cursor() as cr:
+                env = api.Environment(cr, SUPERUSER_ID, {})
+                dijalankan = env['presenly.saas.config']._refresh_requests_now(company_id)
+                cr.commit()
+        except Exception:                      # noqa: BLE001 - halaman tidak boleh gagal
+            _logger.exception(
+                'presenly_saas: penyegaran cermin dari halaman gagal (company id %s)',
+                company_id,
+            )
+            return False
+        return dijalankan
+
+    def _changed_datasets(self):
+        """Jenis mana yang berubah sejak penanda terakhirnya.
+
+        Satu permintaan ke API, bukan tujuh. Jawabannya biasanya "tidak ada",
+        dan pertanyaan itu ditanyakan setiap kali halaman cermin dibuka — jadi
+        yang mahal tidak boleh ikut serta hanya untuk mengetahui tidak ada yang
+        perlu dikerjakan.
+        """
+        self.ensure_one()
+        envelope = self._client(
+            timeout=INLINE_PULL_TIMEOUT, retry_count=0
+        ).get_changes()
+        terakhir = envelope.get('data') or {}
+
+        Mark = self.env['presenly.saas.sync.mark'].sudo()
+        berubah = []
+        for kunci, _path, _model in RECENT_DATASETS:
+            waktu_server = terakhir.get(kunci)
+            if not waktu_server:
+                continue
+            penanda = Mark._since(self.company_id, kunci, 0)
+            # Belum pernah ditarik: apa pun isinya perlu ditarik.
+            if not penanda or parse_datetime(waktu_server) > penanda:
+                berubah.append(kunci)
+        return berubah
+
+    def _refresh_requests_now(self, company_id):
+        """Segarkan cermin karena halamannya dibuka.
+
+        Dijalankan dari pembacaan daftar, jadi seluruh kegagalannya ditelan:
+        membuka daftar tidak boleh gagal karena server Presenly sedang tidak bisa
+        dihubungi.
+
+        Mengembalikan True kalau ada yang ditarik, False kalau tidak ada yang
+        berubah atau penarikannya dilewati.
+        """
+        config = self.sudo().search([
+            ('company_id', '=', company_id),
+            ('enabled', '=', True),
+            ('active', '=', True),
+        ], limit=1)
+        if not config or not config.request_auto_refresh:
+            return False
+
+        # Kunci penasihat, dan sengaja yang "try": kalau ada penarikan yang
+        # sedang berjalan, pemanggil ini langsung menyerah alih-alih menunggu.
+        # Menunggu kunci baris akan menahan halaman.
+        self.env.cr.execute(
+            'SELECT pg_try_advisory_xact_lock(%s, %s)',
+            [_REQUEST_LOCK_KEY, company_id],
+        )
+        if not self.env.cr.fetchone()[0]:
+            return False
+
+        try:
+            berubah = config._changed_datasets()
+        except SaasClientError as exc:
+            _logger.warning(
+                "Presenly SaaS: pemeriksaan perubahan gagal untuk company id %s: %s",
+                company_id, redact(exc, config.api_key),
+            )
+            return False
+
+        if not berubah:
+            # Yang paling sering terjadi: tidak ada yang berubah, dan satu
+            # permintaan sudah cukup untuk memastikannya.
+            return False
+
+        try:
+            _summary, error = config._pull_recent_data(
+                datasets=berubah, timeout=INLINE_PULL_TIMEOUT, retry_count=0,
+            )
+        except Exception:                      # noqa: BLE001 - halaman tidak boleh gagal
+            _logger.exception(
+                "Presenly SaaS: penyegaran cermin dari halaman gagal (company id %s)",
+                company_id,
+            )
+            return False
+
+        if error:
+            _logger.warning(
+                "Presenly SaaS: penyegaran cermin dari halaman melaporkan masalah "
+                "untuk company id %s: %s", company_id, error,
+            )
+        return True
+
+    @api.model
+    def _cron_pull_recent_all(self):
+        """Tarik pengajuan yang berubah untuk setiap koneksi aktif.
+
+        Berjalan jauh lebih sering daripada penarikan periode, dan sengaja hanya
+        menyentuh pengajuan: tabelnya kecil, dan penarikan tambahan hanya
+        mengambil yang berubah.
+        """
+        configs = self.sudo().search([('enabled', '=', True), ('active', '=', True)])
+        for config in configs:
+            try:
+                _summary, error = config._pull_recent_data()
+            except UserError as exc:           # masalah konfigurasi, bukan galat jauh
+                error = str(exc)
+            except Exception:                  # noqa: BLE001 - satu tenant tidak boleh menghentikan tenant lain
+                _logger.exception(
+                    "Presenly SaaS: request sync failed for company %s",
+                    config.company_id.display_name,
+                )
+                error = _('Unexpected error, see the Odoo log.')
+            if error:
+                _logger.warning(
+                    "Presenly SaaS: request sync failed for company %s: %s",
+                    config.company_id.display_name,
+                    error,
+                )
+        return True
 
     def _fetch_pages(self, method, params, max_pages=MAX_PULL_PAGES):
         """Ambil halaman demi halaman sampai habis atau batas tercapai."""

@@ -3,6 +3,7 @@ from . import presenly_saas_subscription
 from . import presenly_saas_sync_log
 from . import presenly_saas_guard
 from . import presenly_saas_mirror_mixin
+from . import presenly_saas_sync_mark
 from . import presenly_saas_reference_mirrors
 from . import presenly_saas_payload
 from . import presenly_saas_submission_mirrors

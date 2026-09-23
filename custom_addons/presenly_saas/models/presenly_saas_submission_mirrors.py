@@ -252,7 +252,12 @@ class PresenlySaasAttendanceCorrection(models.Model):
     reason = fields.Text(string='Reason')
 
     tl_approver_name = fields.Char(string='Team Lead Approver')
+    # Waktu keputusan tiap level ikut dicatat server, dan justru itu yang membuat
+    # riwayatnya terbaca: siapa memutuskan apa, dan kapan. Sebelum ini hanya nama
+    # penyetujunya yang dicerminkan, sehingga urutannya tidak bisa dipastikan.
+    tl_approved_at = fields.Datetime(string='Team Lead Approved At')
     manager_approver_name = fields.Char(string='Manager Approver')
+    manager_approved_at = fields.Datetime(string='Manager Approved At')
     rejecter_name = fields.Char(string='Rejected By')
     rejected_at = fields.Datetime(string='Rejected At')
     rejection_reason = fields.Text(string='Rejection Reason')
@@ -291,7 +296,9 @@ class PresenlySaasAttendanceCorrection(models.Model):
             'status': status,
             'status_raw': status_raw,
             'tl_approver_name': _person(row.get('tl_approver')).get('name') or False,
+            'tl_approved_at': parse_datetime(row.get('tl_approved_at')),
             'manager_approver_name': _person(row.get('manager_approver')).get('name') or False,
+            'manager_approved_at': parse_datetime(row.get('manager_approved_at')),
             'rejecter_name': _person(row.get('rejecter')).get('name') or False,
             'rejected_at': parse_datetime(row.get('rejected_at')),
             'rejection_reason': row.get('rejection_reason') or False,
@@ -327,6 +334,7 @@ class PresenlySaasShiftSwap(models.Model):
     reason = fields.Text(string='Reason')
 
     approver_name = fields.Char(string='Approver')
+    approved_at = fields.Datetime(string='Approved At')
     rejecter_name = fields.Char(string='Rejected By')
     rejected_at = fields.Datetime(string='Rejected At')
     rejection_reason = fields.Text(string='Rejection Reason')
@@ -365,6 +373,7 @@ class PresenlySaasShiftSwap(models.Model):
             'status': status,
             'status_raw': status_raw,
             'approver_name': _person(row.get('approver')).get('name') or False,
+            'approved_at': parse_datetime(row.get('approved_at')),
             'rejecter_name': _person(row.get('rejecter')).get('name') or False,
             'rejected_at': parse_datetime(row.get('rejected_at')),
             'rejection_reason': row.get('rejection_reason') or False,

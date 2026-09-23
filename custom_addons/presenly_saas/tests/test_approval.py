@@ -1,3 +1,6 @@
+import pathlib
+import re
+
 from odoo.tests import tagged
 from odoo.tests.common import TransactionCase
 
@@ -303,3 +306,195 @@ class TestPresenlyApprovalSteps(TransactionCase):
         # Cermin berperiode mengganti isinya dengan menghapus lalu membuat ulang;
         # langkah yang tertinggal akan menumpuk tanpa terlihat.
         self.assertFalse(langkah.exists())
+
+# Action yang membuka daftar pengajuan. `form` wajib ada di `view_mode` masing-
+# masing; lihat catatan di kelas pengujinya.
+ACTIONS = (
+    'action_presenly_saas_leave',
+    'action_presenly_saas_overtime',
+    'action_presenly_saas_medical_certificate',
+    'action_presenly_saas_attendance_correction',
+    'action_presenly_saas_shift_swap',
+)
+
+# Kolom keputusan yang tercatat pada pengajuannya sendiri, per jenis.
+KOLOM_KEPUTUSAN = {
+    'presenly.saas.leave': ('approver_name', 'approved_at'),
+    'presenly.saas.overtime': ('approver_name',),
+    'presenly.saas.medical.certificate': ('approver_name', 'approved_at'),
+    'presenly.saas.attendance.correction': (
+        'tl_approver_name', 'tl_approved_at', 'manager_approver_name',
+        'manager_approved_at', 'rejecter_name', 'rejected_at', 'rejection_reason',
+    ),
+    'presenly.saas.shift.swap': (
+        'approver_name', 'approved_at', 'rejecter_name', 'rejected_at', 'rejection_reason',
+    ),
+}
+
+
+@tagged('post_install', '-at_install')
+class TestPresenlyApprovalIsVisible(TransactionCase):
+    """Bagian Persetujuan harus terlihat di setiap detail pengajuan.
+
+    Dua kesalahan pernah membuatnya tidak terlihat sama sekali, dan keduanya
+    tidak memunculkan galat apa pun:
+
+    1. Seluruh bagian disembunyikan saat jenis pengajuannya belum punya alur
+       berjenjang (`invisible="not approval_has_workflow"`). Tenant yang belum
+       menyiapkan alur karena itu tidak pernah melihat siapa yang memutuskan —
+       padahal jawabannya ada di kolom keputusan pengajuannya sendiri.
+    2. Action lembur tidak memasang `form` di `view_mode`-nya, sehingga formnya
+       tidak bisa dibuka: mengeklik baris di daftar hanya mengembalikan ke daftar.
+    """
+
+    def test_setiap_action_pengajuan_bisa_membuka_form(self):
+        for xmlid in ACTIONS:
+            action = self.env.ref('presenly_saas.%s' % xmlid)
+            mode = [m.strip() for m in (action.view_mode or '').split(',')]
+            self.assertIn(
+                'form', mode,
+                '%s tidak punya form di view_mode (%s), jadi detail pengajuannya '
+                'tidak bisa dibuka sama sekali' % (xmlid, action.view_mode),
+            )
+
+    def test_setiap_form_pengajuan_menampilkan_bagian_persetujuan(self):
+        for model_name in KOLOM_KEPUTUSAN:
+            arch = self.env[model_name].get_view(view_type='form')['arch']
+
+            self.assertIn(
+                'string="Approval"', arch,
+                '%s tidak punya bagian Approval di formnya' % model_name,
+            )
+            self.assertIn(
+                'name="approval_step_ids"', arch,
+                '%s tidak menampilkan daftar level persetujuannya' % model_name,
+            )
+
+            # Bagiannya tidak boleh disembunyikan lagi: menyembunyikannya saat
+            # alurnya kosong membuat keputusan yang tersimpan justru tidak terlihat.
+            kepala = re.search(r'<group string="Approval"[^>]*>', arch)
+            self.assertTrue(kepala, '%s: kepala grup Approval tidak terbaca' % model_name)
+            self.assertNotIn(
+                'invisible', kepala.group(0),
+                '%s menyembunyikan seluruh bagian Approval di formnya' % model_name,
+            )
+
+            # Kolom keputusan pada pengajuannya sendiri harus ikut ditampilkan.
+            for kolom in KOLOM_KEPUTUSAN[model_name][:1]:
+                self.assertIn(
+                    'name="%s"' % kolom, arch,
+                    '%s tidak menampilkan kolom keputusan %s' % (model_name, kolom),
+                )
+
+
+@tagged('post_install', '-at_install')
+class TestPresenlyApprovalTimestamps(TransactionCase):
+    """Waktu keputusan tiap level ikut dicerminkan.
+
+    Nama penyetujunya saja tidak cukup untuk disebut riwayat: tanpa waktunya,
+    urutan keputusan tidak bisa dipastikan. Dua kolom ini sempat tertinggal —
+    server mengirimnya, cerminnya tidak menyimpannya.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.company = self.env.company
+
+    def test_koreksi_presensi_mencatat_waktu_tiap_level(self):
+        model = self.env['presenly.saas.attendance.correction']
+        values = model._mirror_values(self.company, {
+            'id': 41,
+            'date': '2026-09-21',
+            'status': 'approved',
+            'tl_approved_at': '2026-09-21T02:00:00.000Z',
+            'manager_approved_at': '2026-09-21T04:30:00.000Z',
+            'employee': {'id': 2, 'nopeg': 'iksg-rangga', 'name': 'rangga'},
+            'tl_approver': {'id': 3, 'nopeg': 'iksg-yusril', 'name': 'yusril'},
+            'manager_approver': {'id': 4, 'nopeg': 'iksg-boss', 'name': 'boss'},
+        })
+        self.assertTrue(values['tl_approved_at'])
+        self.assertTrue(values['manager_approved_at'])
+        self.assertLess(values['tl_approved_at'], values['manager_approved_at'])
+
+    def test_tukar_shift_mencatat_waktu_persetujuan(self):
+        model = self.env['presenly.saas.shift.swap']
+        values = model._mirror_values(self.company, {
+            'id': 51,
+            'requester_date': '2026-09-21',
+            'status': 'approved',
+            'approved_at': '2026-09-21T03:00:00.000Z',
+            'requester': {'id': 2, 'nopeg': 'iksg-rangga', 'name': 'rangga'},
+            'target': {'id': 3, 'nopeg': 'iksg-yusril', 'name': 'yusril'},
+        })
+        self.assertTrue(values['approved_at'])
+
+    def test_waktu_yang_tidak_dikirim_tetap_kosong(self):
+        # Tidak semua jenis pengajuan punya kolom waktunya di server; yang tidak
+        # ada jangan diisi dengan waktu lain, mis. waktu tarikan.
+        model = self.env['presenly.saas.overtime']
+        values = model._mirror_values(self.company, {
+            'id': 21,
+            'overtime_date': '2026-09-18',
+            'approval_status': 'Y',
+            'employee': {'id': 2, 'nopeg': 'iksg-rangga', 'name': 'rangga'},
+        })
+        self.assertNotIn('approved_at', values)
+
+BERKAS_WIDGET = (
+    pathlib.Path(__file__).resolve().parent.parent
+    / 'static' / 'src' / 'approval' / 'presenly_approval_steps'
+)
+
+
+@tagged('post_install', '-at_install')
+class TestPresenlyApprovalStepsWidget(TransactionCase):
+    """Widget langkah persetujuan: pendaftaran dan syarat pemuatan datanya.
+
+    Mengganti daftar One2many dengan widget punya satu jebakan yang tidak
+    memunculkan galat apa pun: Odoo menentukan field anak mana yang perlu dimuat
+    dari subview di dalam field itu, dan kalau daftarnya dihapus dari arch,
+    widgetnya menerima baris tanpa isi — rangkaian langkah yang kosong, tanpa
+    satu pun pesan kesalahan.
+    """
+
+    NAMA_WIDGET = 'presenly_approval_steps'
+
+    def test_widget_terdaftar_di_javascript(self):
+        sumber = BERKAS_WIDGET.with_suffix('.js').read_text()
+        self.assertIn(
+            '"%s"' % self.NAMA_WIDGET, sumber,
+            'widget %s tidak didaftarkan di JavaScript' % self.NAMA_WIDGET,
+        )
+        self.assertIn('"one2many"', sumber, 'widget langkah tidak menyebut tipe one2many')
+
+    def test_setiap_pemakaian_widget_menyertakan_daftar_field_anak(self):
+        dipakai = 0
+        for view in self.env['ir.ui.view'].search([]):
+            arch = view.arch_db or ''
+            for pemakaian in re.finditer(
+                r'<field[^>]*widget="%s"[^>]*>(.*?)</field>' % self.NAMA_WIDGET, arch, re.S
+            ):
+                dipakai += 1
+                self.assertIn(
+                    '<list', pemakaian.group(1),
+                    '%s: field langkah tidak menyertakan daftar field anak, jadi '
+                    'widgetnya akan menerima baris tanpa isi' % view.name,
+                )
+                for kolom in ('level', 'step_status', 'approver_label', 'acted_by_name'):
+                    self.assertIn(
+                        'name="%s"' % kolom, pemakaian.group(1),
+                        '%s: kolom %s tidak dimuat, padahal dipakai widget'
+                        % (view.name, kolom),
+                    )
+        self.assertTrue(dipakai, 'tidak ada pemakaian widget langkah')
+
+    def test_templat_tidak_memakai_operator_python(self):
+        # Ekspresi templat OWL diperiksa dengan JavaScript. `and`, `or`, dan `not`
+        # tidak dikenali di sana, dan kegagalannya tidak menyebut barisnya.
+        templat = re.sub(r'<!--.*?-->', '', BERKAS_WIDGET.with_suffix('.xml').read_text(), flags=re.S)
+        ekspresi = re.findall(r'\bt-(?:if|elif|esc|out|att-[\w-]+)="([^"]*)"', templat)
+        bersalah = [
+            teks for teks in ekspresi
+            if re.search(r'(?<![\w.])(and|or|not)(?![\w])', teks)
+        ]
+        self.assertEqual(bersalah, [], 'ekspresi templat memakai operator Python: %s' % bersalah)

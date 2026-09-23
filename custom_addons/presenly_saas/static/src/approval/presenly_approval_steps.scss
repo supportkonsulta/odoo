@@ -1,0 +1,151 @@
+// Rangkaian langkah persetujuan.
+//
+// Warna ditulis di sini, bukan memakai kelas Bootstrap: kelas `bg-*` bawaan
+// menimpa latar kartu langkah, sedangkan yang dibutuhkan hanya penanda kecil,
+// label, dan satu baris rel. Nilainya dijaga tetap terbaca di tema terang
+// maupun gelap karena hanya dipakai sebagai aksen.
+// Pembungkus field bawaan Odoo (`o_field_<nama widget>`) bersifat `inline-block`,
+// jadi lebarnya menyusut mengikuti isinya. Tanpa ini, rangkaian langkahnya
+// terjepit selebar teks terpanjangnya walau fieldnya sudah ditaruh di luar grup.
+.o_field_widget.o_field_presenly_approval_steps {
+    display: block;
+}
+
+.o_presenly_steps {
+    display: flex;
+    flex-direction: column;
+    margin-top: 4px;
+    // Batasnya menjaga jarak baca: label status di ujung kanan tidak perlu
+    // terlempar sejauh lebar halaman.
+    width: 100%;
+    max-width: 760px;
+}
+
+.o_presenly_step {
+    position: relative;
+    display: flex;
+    gap: 14px;
+    padding: 8px 12px 18px 12px;
+    border-radius: 6px;
+
+    // Rel penghubung ke langkah berikutnya. Diambil dari tengah lingkaran
+    // (16px) sampai dasar langkah, jadi kedua ujungnya bertemu.
+    &::before {
+        content: "";
+        position: absolute;
+        left: 27px;
+        top: 42px;
+        bottom: 0;
+        width: 2px;
+        background: var(--border-color, #dee2e6);
+    }
+
+    // Langkah terakhir tidak punya sambungan ke mana pun; kalau digambar, relnya
+    // menggantung tanpa ujung.
+    &:last-child::before {
+        content: none;
+    }
+
+    // Rel yang keluar dari langkah yang sudah disetujui berwarna hijau: itu
+    // menandakan bagian alur yang sudah selesai dan diteruskan. Langkah yang
+    // ditolak sengaja tidak diberi warna — setelah penolakan, alurnya berhenti,
+    // jadi rel yang berwarna justru menyiratkan lanjutan yang tidak ada.
+    &.o_presenly_step_approved::before {
+        background: #198754;
+    }
+
+    // Langkah yang sedang berjalan disorot, karena itu satu-satunya yang
+    // membutuhkan tindakan.
+    &.o_presenly_step_current {
+        background: rgba(255, 193, 7, 0.08);
+        box-shadow: inset 0 0 0 1px rgba(255, 193, 7, 0.35);
+    }
+
+    // Langkah yang belum tersentuh diredupkan, supaya mata berhenti di langkah
+    // yang sudah lewat dan yang sedang berjalan.
+    &.o_presenly_step_todo {
+        opacity: 0.7;
+    }
+}
+
+.o_presenly_step_marker {
+    flex: 0 0 auto;
+    position: relative;
+    z-index: 1;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 1;
+    color: #fff;
+    background: #adb5bd;
+}
+
+.o_presenly_marker_approved {
+    background: #198754;
+}
+
+.o_presenly_marker_rejected {
+    background: #dc3545;
+}
+
+.o_presenly_marker_current {
+    background: #ffc107;
+    color: #212529;
+    box-shadow: 0 0 0 4px rgba(255, 193, 7, 0.25);
+}
+
+.o_presenly_step_body {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding-top: 3px;
+}
+
+.o_presenly_step_head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.o_presenly_step_who {
+    font-weight: 600;
+    // Nama penyetuju bisa panjang ("Role direktur"); dibiarkan membungkus
+    // daripada memotong label statusnya.
+    overflow-wrap: anywhere;
+}
+
+.o_presenly_step_label {
+    flex: 0 0 auto;
+    padding: 1px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #fff;
+    background: #adb5bd;
+}
+
+.o_presenly_label_approved {
+    background: #198754;
+}
+
+.o_presenly_label_rejected {
+    background: #dc3545;
+}
+
+.o_presenly_label_current {
+    background: #ffc107;
+    color: #212529;
+}
+
+.o_presenly_step_note {
+    font-size: 12px;
+    color: var(--text-muted, #6c757d);
+    margin-top: 2px;
+}

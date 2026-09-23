@@ -134,7 +134,10 @@ def approval_step_commands(row):
     if not langkah:
         return []
 
-    perintah = []
+    # Baris anak ditulis ulang, bukan ditambahkan: `_mirror_upsert` bisa menulis
+    # ke baris induk yang sudah ada, dan tanpa perintah ini setiap penarikan
+    # tambahan menumpuk satu set level baru di atas yang lama.
+    perintah = [(5, 0, 0)]
     for step in langkah:
         level = _to_int(step.get('level'))
         if not level:
@@ -309,19 +312,3 @@ class PresenlySaasSubmissionMixin(models.AbstractModel):
         string='Waiting For', compute='_compute_approval_waiting_for',
         help='Who is expected to decide the level this request sits at now.',
     )
-
-    @api.depends(
-        'approval_has_workflow',
-        'approval_current_level',
-        'approval_step_ids.level',
-        'approval_step_ids.approver_label',
-    )
-    def _compute_approval_waiting_for(self):
-        for request in self:
-            if not request.approval_has_workflow or not request.approval_current_level:
-                request.approval_waiting_for = False
-                continue
-            langkah = request.approval_step_ids.filtered(
-                lambda step: step.level == request.approval_current_level
-            )
-            request.approval_waiting_for = langkah[:1].approver_label or False

@@ -1,6 +1,6 @@
 {
     'name': 'Presenly SaaS',
-    'version': '19.0.1.6.0',
+    'version': '19.0.1.13.0',
     'category': 'Productivity',
     'summary': 'Langganan Presenly SaaS untuk instalasi Odoo ini',
     'description': """
@@ -70,6 +70,9 @@ Kebijakan produk: full access, tanpa gating fitur per paket.
             'presenly_saas/static/src/banner/presenly_saas_banner.js',
             'presenly_saas/static/src/banner/presenly_saas_banner.xml',
             'presenly_saas/static/src/banner/presenly_saas_banner.scss',
+            'presenly_saas/static/src/approval/presenly_approval_steps.js',
+            'presenly_saas/static/src/approval/presenly_approval_steps.xml',
+            'presenly_saas/static/src/approval/presenly_approval_steps.scss',
         ],
     },
     'installable': True,

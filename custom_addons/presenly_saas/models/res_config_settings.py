@@ -108,6 +108,18 @@ class ResConfigSettings(models.TransientModel):
         inverse='_inverse_presenly_saas_pull_months',
         groups=MANAGER_GROUP,
     )
+    presenly_saas_request_auto_refresh = fields.Boolean(
+        string='Refresh on Open',
+        compute='_compute_presenly_saas',
+        inverse='_inverse_presenly_saas_request_auto_refresh',
+        groups=MANAGER_GROUP,
+    )
+    presenly_saas_cron_sync_minutes = fields.Integer(
+        string='Scheduled Refresh (minutes)',
+        compute='_compute_presenly_saas',
+        inverse='_inverse_presenly_saas_cron_sync_minutes',
+        groups=MANAGER_GROUP,
+    )
     presenly_saas_retention_months = fields.Integer(
         string='Retention (months)',
         compute='_compute_presenly_saas',
@@ -165,7 +177,8 @@ class ResConfigSettings(models.TransientModel):
         config_fields = [
             'enabled', 'environment', 'base_url', 'tenant_code', 'api_key',
             'timeout_seconds', 'retry_count', 'guard_mode', 'grace_days', 'show_banner',
-            'pull_months', 'retention_months',
+            'pull_months', 'retention_months', 'request_auto_refresh',
+            'cron_sync_minutes',
         ]
 
         for settings in self:
@@ -194,6 +207,12 @@ class ResConfigSettings(models.TransientModel):
             settings.presenly_saas_show_banner = values.get('show_banner', True)
             settings.presenly_saas_pull_months = values.get('pull_months', 2)
             settings.presenly_saas_retention_months = values.get('retention_months', 12)
+            settings.presenly_saas_request_auto_refresh = values.get(
+                'request_auto_refresh', True
+            )
+            settings.presenly_saas_cron_sync_minutes = values.get(
+                'cron_sync_minutes', 15
+            )
 
     def _write_presenly_saas_config(self, values):
         """Tulis field yang diberikan ke konfigurasi company pada baris ini.
@@ -235,6 +254,28 @@ class ResConfigSettings(models.TransientModel):
     def _inverse_presenly_saas_pull_months(self):
         self._write_presenly_saas_config(
             {'pull_months': max(1, self.presenly_saas_pull_months or 1)}
+        )
+
+    def _inverse_presenly_saas_cron_sync_minutes(self):
+        menit = max(0, self.presenly_saas_cron_sync_minutes or 0)
+        self._write_presenly_saas_config({'cron_sync_minutes': menit})
+
+        # Irama cron disimpan di record `ir.cron`, bukan di konfigurasi. Nilai 0
+        # berarti cron-nya dimatikan: datanya masih segar saat halamannya dibuka,
+        # tetapi tidak ada lagi yang menyegarkan data yang tidak pernah dilihat.
+        cron = self.env.ref(
+            'presenly_saas.ir_cron_presenly_saas_sync_recent', raise_if_not_found=False
+        )
+        if cron and self.env.user.has_group(MANAGER_GROUP):
+            cron.sudo().write({
+                'interval_number': max(1, menit),
+                'interval_type': 'minutes',
+                'active': menit > 0,
+            })
+
+    def _inverse_presenly_saas_request_auto_refresh(self):
+        self._write_presenly_saas_config(
+            {'request_auto_refresh': self.presenly_saas_request_auto_refresh}
         )
 
     def _inverse_presenly_saas_retention_months(self):
