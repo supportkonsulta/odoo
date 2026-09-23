@@ -967,3 +967,57 @@ presenly_saas/
 | Level alur digabung dari konfigurasi dan langkah nyata | `expected` menjawab "siapa yang seharusnya", `acted_by` menjawab "siapa yang sudah"; memisahkannya membuat level yang belum bergerak tetap terlihat |
 | `acted_at` tidak jatuh ke `updated_at` | Level yang masih menunggu belum dikerjakan siapa pun; mengisinya membuatnya terbaca seolah sudah diputus |
 | Kelima pengajuan memakai model langkah sendiri | Satu One2many yang benar per jenis lebih terbaca daripada kunci polimorfik, dan hak aksesnya tetap eksplisit |
+
+## 8. Klien Presenly menjadi perusahaan Odoo
+
+Sinkronisasi awal hanya mencerminkan data presensi. Bagian ini menambahkan arah yang
+lain: **klien di Presenly menjadi `res.company` di Odoo**, sehingga pegawai bisa
+memiliki perusahaan yang benar tanpa diketik manual.
+
+Setelannya `Create Companies from Clients`, **mati secara bawaan**. Alasannya bukan
+teknis: perusahaan adalah entitas akuntansi. Membuatnya sebagai efek samping
+sinkronisasi presensi berarti membuat buku yang tidak diminta siapa pun.
+
+Perusahaan yang dibuat **tidak pernah dihapus otomatis**. Klien yang hilang dari
+respons hanya dilaporkan lewat log (`missing`) — menghapus `res.company` akan
+membawa data akuntansi yang menggantung padanya.
+
+Catatan yang mahal untuk ditemukan: **hierarki perusahaan tidak bisa diubah setelah
+dibuat.** `res.company.write` menolak dengan *"The company hierarchy cannot be
+changed"*. Rencana awal untuk menaruh perusahaan klien di bawah perusahaan pemasang
+gagal karena itu, dan percobaan itu sempat merusak penarikan klien. Yang dipakai
+sekarang: perusahaan klien berdiri sendiri, dan pencarian konfigurasi untuk kirim
+balik memakai `_config_for_company()` — naik ke induk bila ada, lalu jatuh ke
+konfigurasi aktif **hanya bila tunggal**. Kalau ada lebih dari satu konfigurasi
+aktif, kirim baliknya ditolak dan dilaporkan, karena menebak berisiko mengirim data
+ke tenant Presenly yang salah.
+
+## 9. Rekonsiliasi
+
+Sinkronisasi yang gagal tidak berbunyi: webhook bisa tidak sampai, cron bisa
+melewatkan perubahan yang stempel waktunya tidak jujur, dan tarikan bisa menimpa
+suntingan Odoo tanpa suara. Rekonsiliasi membandingkan **isi sebenarnya**, bukan
+mempercayai salah satu pihak yang mengaku sudah berubah.
+
+Yang **tidak** dilakukannya, dan itu keputusan sadar: ia tidak membereskan apa pun
+sendiri. "Nilai mana yang benar" bergantung pada siapa pemilik kolom itu — radius
+geofence milik aplikasi, nama lokasi bisa jadi milik Odoo karena bagian legal yang
+menggantinya. Menebak berarti menimpa nilai yang benar dengan yang salah, dan kali
+ini juga tanpa suara. Jadi alat ini melapor dan membiarkan manusia memutuskan.
+
+Sisi Presenly dari perbandingan adalah **cermin terakhir**, bukan panggilan API baru.
+Cermin menyimpan nilai yang diterima apa adanya, termasuk yang gagal diterapkan ke
+model native — persis yang perlu dilihat. Waktu penyegaran terakhirnya ikut
+ditampilkan supaya kebasiannya tidak tersembunyi.
+
+Tiga sifat yang dijaga, dan semuanya pernah rusak saat pengembangannya:
+
+| Sifat | Kenapa |
+|---|---|
+| Tiap dataset diperiksa terpisah | Perbandingan klien butuh jaringan, lokasi dan pegawai tidak. Sebelum dipisah, satu kegagalan jaringan membatalkan **seluruh** pemeriksaan — persis kegagalan diam yang alat ini ada untuk mencegahnya |
+| Dataset yang gagal tidak ikut ditutup | Pemeriksaan yang tidak sempat berjalan bukan bukti bahwa bedanya sudah selesai |
+| Temuan diperbarui, bukan ditumpuk | Satu kolom satu baris, dijaga constraint unik. Tanpa itu, pemeriksaan harian akan mengubur laporannya sendiri |
+
+Temuan yang bedanya hilang menutup sendiri (`resolved`), tetapi keputusan manusia
+(`ignored`) tidak dibatalkan oleh pemeriksaan berikutnya. Temuan yang muncul lagi
+setelah ditutup akan terbuka kembali — menyembunyikannya justru yang mau dihindari.

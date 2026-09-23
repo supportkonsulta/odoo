@@ -55,6 +55,14 @@
                             <field name="presenly_saas_pull_months" class="text-center o_input" style="width: 6ch;"/>
                             <span> months</span>
                         </setting>
+                        <setting string="Create Companies from Clients"
+                                 help="Create an Odoo company for each Presenly client, and keep its name, email, and phone in step. Off by default: a company is an accounting entity, so creating one is a decision. Companies are never deleted automatically.">
+                            <field name="presenly_saas_sync_companies"/>
+                        </setting>
+                        <setting string="Pull Attachments"
+                                 help="Download the files attached to requests (leave dispensation, medical certificate, timesheet photo) so they can be viewed in Odoo. The files are always personal, so this is off by default.">
+                            <field name="presenly_saas_request_attachments"/>
+                        </setting>
                         <setting string="Scheduled Refresh"
                                  help="How often the scheduled pull of recent data runs. 0 turns that cron off: data is still refreshed when its list is opened, but nothing keeps data nobody looks at up to date.">
                             <field name="presenly_saas_cron_sync_minutes" class="text-center o_input" style="width: 6ch;"/>

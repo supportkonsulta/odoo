@@ -110,7 +110,8 @@ class PresenlySaasTimesheet(models.Model):
     """
 
     _name = 'presenly.saas.timesheet'
-    _inherit = ['presenly.saas.mirror.mixin']
+    _inherit = ['presenly.saas.mirror.mixin', 'presenly.saas.attachment.mixin',
+                'mail.thread']
     _description = 'Presenly Timesheet (mirror)'
     _order = 'date desc, id desc'
 
@@ -119,6 +120,11 @@ class PresenlySaasTimesheet(models.Model):
 
     date = fields.Date(required=True, index=True)
     employee_nopeg = fields.Char(string='Nopeg', index=True)
+    file_path = fields.Char(
+        string='File on SaaS',
+        readonly=True,
+        help='Path of the timesheet photo as stored by Presenly.',
+    )
     employee_name = fields.Char(string='Employee', index=True)
     project_code = fields.Char(string='Project Code', index=True)
     project_name = fields.Char(string='Project Name', index=True)
@@ -168,6 +174,7 @@ class PresenlySaasTimesheet(models.Model):
         project = row.get('project') if isinstance(row.get('project'), dict) else {}
         return {
             'company_id': company.id,
+            'file_path': row.get('photo_file') or False,
             'external_id': int(row['id']),
             'date': parse_date(row.get('date')),
             'employee_nopeg': employee.get('nopeg') or False,

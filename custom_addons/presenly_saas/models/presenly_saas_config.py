@@ -7,6 +7,7 @@ from dateutil.relativedelta import relativedelta
 from odoo import SUPERUSER_ID, _, api, fields, models
 from odoo.exceptions import UserError
 
+from .presenly_saas_attachment import ATTACHMENT_FIELDS
 from .presenly_saas_attendance_log import parse_datetime
 from ..services.saas_client import PresenlySaasClient, SaasClientError, redact
 
@@ -231,6 +232,21 @@ class PresenlySaasConfig(models.Model):
         help='When a mirror list is opened, ask the Presenly server in one cheap '
              'request whether anything changed, and pull only what did. Off means '
              'data is only refreshed by the scheduled pull.',
+    )
+    sync_companies = fields.Boolean(
+        string='Create Companies from Clients',
+        default=False,
+        help='Create an Odoo company for each Presenly client, and keep its name, '
+             'email, and phone in step. Off by default: a company is an accounting '
+             'entity, so creating one is a decision, not a side effect. Companies '
+             'are never deleted automatically.',
+    )
+    request_attachments = fields.Boolean(
+        string='Pull Attachments',
+        default=False,
+        help='Download the files attached to requests (leave dispensation, '
+             'medical certificate, timesheet photo) so they can be viewed in '
+             'Odoo. The files are always personal, so this is off by default.',
     )
     cron_sync_minutes = fields.Integer(
         string='Scheduled Refresh (minutes)',
@@ -650,6 +666,9 @@ class PresenlySaasConfig(models.Model):
                 'until': fields.Date.to_string(last_day),
                 'limit': 500,
             }
+            if self.request_attachments and model_name in ATTACHMENT_FIELDS:
+                # Jalur berkasnya kolom PII, jadi hanya ikut terkirim kalau diminta.
+                params['include_pii'] = 'true'
             try:
                 rows, meta, _pages = self._fetch_pages(
                     lambda page_params, _client=client, _resource=resource:
@@ -663,7 +682,15 @@ class PresenlySaasConfig(models.Model):
 
             model = self.env[model_name]
             model._mirror_replace_range(self.company_id, rows, first_day, last_day)
-            summary['rows'][resource] = len(rows)
+            jumlah = len(rows)
+            if self.request_attachments and model_name in ATTACHMENT_FIELDS:
+                # Penarikan rentang mengganti barisnya, jadi lampirannya perlu
+                # dipasang ulang. Isi berkasnya sendiri diambil dari cache.
+                jumlah += self.env['presenly.saas.attachment.sync'].sync_attachments(
+                    self.company_id, model_name, rows,
+                    lambda satu_path: client.download_file(satu_path),
+                )
+            summary['rows'][resource] = jumlah
             self._log_pull(path, True, None, started)
 
             total = int(meta.get('total') or 0)
@@ -699,12 +726,17 @@ class PresenlySaasConfig(models.Model):
         client = client or self._client(timeout=timeout, retry_count=retry_count)
 
         diminta = set(datasets) if datasets else None
-        summary = {'datasets': {}, 'server_time': None, 'recap': 0, 'references': 0}
+        summary = {'datasets': {}, 'server_time': None, 'recap': 0,
+                   'references': 0, 'clients': {}}
         for kunci, path, model_name in RECENT_DATASETS:
             if diminta is not None and kunci not in diminta:
                 continue
             started = fields.Datetime.now()
             params = {'limit': 500}
+            if self.request_attachments and model_name in ATTACHMENT_FIELDS:
+                # Jalur berkasnya termasuk kolom PII, jadi hanya ikut terkirim
+                # kalau diminta.
+                params['include_pii'] = 'true'
 
             since = Mark._since(self.company_id, kunci, INCREMENTAL_OVERLAP_MINUTES)
             if since:
@@ -726,6 +758,11 @@ class PresenlySaasConfig(models.Model):
                 ditulis = self.env[model_name]._upsert_rows(self.company_id, rows)
             else:
                 ditulis = self.env[model_name]._mirror_upsert(self.company_id, rows)
+            if self.request_attachments and model_name in ATTACHMENT_FIELDS:
+                ditulis += self.env['presenly.saas.attachment.sync'].sync_attachments(
+                    self.company_id, model_name, rows,
+                    lambda satu_path: client.download_file(satu_path),
+                )
             summary['datasets'][kunci] = ditulis
             self._log_pull('/api/external' + path, True, None, started)
 
@@ -755,6 +792,14 @@ class PresenlySaasConfig(models.Model):
         Recap._replace_scope(self.company_id, today.month, today.year)
         summary['recap'] = Recap._upsert_rows(self.company_id, envelope.get('data') or [])
         self._log_pull(path, True, None, started)
+
+        # Klien: menjadi perusahaan Odoo, kalau memang diizinkan. Dilakukan
+        # sebelum referensi supaya lokasi kerja punya perusahaan tujuan.
+        if self.sync_companies:
+            ringkas_klien, error_klien = self._pull_clients()
+            summary['clients'] = ringkas_klien
+            if error_klien:
+                return summary, error_klien
 
         # Referensi: seluruh isinya diganti, dan tabelnya kecil.
         if self._references_need_refresh():
@@ -831,6 +876,113 @@ class PresenlySaasConfig(models.Model):
             )
             return False
         return dijalankan
+
+    def _config_for_company(self, company):
+        """Konfigurasi yang berlaku untuk perusahaan ini.
+
+        Perusahaan hasil cermin klien **bukan** pemilik integrasi: yang memasang
+        dan memiliki integrasi ini adalah perusahaan tempat konfigurasinya dibuat.
+        Karena itu pencariannya naik ke perusahaan induk sebelum menyerah.
+
+        Tanpa ini, kirim balik dari data milik perusahaan klien gagal tanpa suara
+        — bukan galat, hanya tidak pernah terkirim.
+        """
+        Config = self.sudo()
+        kandidat = company
+        while kandidat:
+            config = Config.search([
+                ('company_id', '=', kandidat.id),
+                ('enabled', '=', True),
+                ('active', '=', True),
+            ], limit=1)
+            if config:
+                return config
+            kandidat = kandidat.parent_id
+
+        # Perusahaan hasil cermin klien biasanya tidak punya induk: Odoo melarang
+        # mengubah hierarki perusahaan (`The company hierarchy cannot be changed`),
+        # jadi induknya hanya bisa ditetapkan saat pembuatan. Untuk data yang
+        # sudah ada, satu-satunya konfigurasi yang masuk akal adalah konfigurasi
+        # yang aktif. Kalau ada lebih dari satu, keadaannya ambigu dan itu
+        # dilaporkan — memilih salah satunya diam-diam berisiko mengirim data ke
+        # tenant Presenly yang salah.
+        kandidat = Config.search([('enabled', '=', True), ('active', '=', True)])
+        if len(kandidat) == 1:
+            return kandidat
+        if len(kandidat) > 1:
+            _logger.warning(
+                'Presenly SaaS: %s milik perusahaan %s, yang bukan pemilik '
+                'konfigurasi mana pun, dan ada %s konfigurasi aktif. Kirim balik '
+                'dilewati supaya data tidak masuk ke tenant yang salah.',
+                company.display_name, company.display_name, len(kandidat),
+            )
+        return Config.browse()
+
+    def _pull_clients(self):
+        """Selaraskan klien Presenly dengan `res.company`.
+
+        Klien yang belum ada dibuat; yang sudah ada diperbarui. Klien yang hilang
+        dari respons **tidak** dihapus — hanya dilaporkan — karena menghapus
+        perusahaan ikut membawa data lain yang menggantung padanya.
+
+        Mengembalikan ``(ringkasan, error)``.
+        """
+        self.ensure_one()
+        started = fields.Datetime.now()
+        path = '/api/external/v1/internal-companies'
+        try:
+            rows, _meta, _pages = self._fetch_pages(
+                lambda params, _client=self._client().get_resource:
+                    _client('internal-companies', params),
+                {'limit': 500},
+            )
+        except SaasClientError as exc:
+            self._log_pull(path, False, exc, started)
+            return {}, redact(exc, self.api_key)
+
+        Perusahaan = self.env['res.company'].sudo()
+        ringkasan = {'created': 0, 'updated': 0, 'missing': 0}
+        terlihat = set()
+
+        for row in rows:
+            if not isinstance(row, dict) or not row.get('id'):
+                continue
+            client_id = int(row['id'])
+            terlihat.add(client_id)
+            nilai = {
+                'name': row.get('name') or _('Presenly Client %s', client_id),
+                'email': row.get('email') or False,
+                'phone': row.get('whatsapp_number') or False,
+                'presenly_business_sector': row.get('business_sector') or False,
+                'presenly_synced_at': fields.Datetime.now(),
+            }
+            # Tanpa induk, hierarki perusahaan tidak bisa dirapikan di sini: Odoo
+            # melarang mengubahnya setelah perusahaan dibuat (`res.company.write`
+            # menolak dengan "The company hierarchy cannot be changed"). Jadi
+            # perusahaan cermin klien berdiri sendiri, dan pencarian konfigurasi
+            # untuk kirim balik mengandalkan konfigurasi aktif — bukan hierarki.
+            perusahaan = Perusahaan.search([('presenly_client_id', '=', client_id)], limit=1)
+            if perusahaan:
+                perusahaan.write(nilai)
+                ringkasan['updated'] += 1
+            else:
+                Perusahaan.create(dict(nilai, presenly_client_id=client_id))
+                ringkasan['created'] += 1
+
+        # Klien yang sudah tercermin tetapi tidak ada lagi di respons.
+        hilang = Perusahaan.search([
+            ('presenly_client_id', '!=', False),
+            ('presenly_client_id', 'not in', list(terlihat)),
+        ])
+        ringkasan['missing'] = len(hilang)
+        if hilang:
+            _logger.warning(
+                'Presenly SaaS: %s klien tidak ada lagi di respons dan tidak dihapus: %s',
+                len(hilang), ', '.join(hilang.mapped('name')),
+            )
+
+        self._log_pull(path, True, None, started)
+        return ringkasan, False
 
     def _changed_datasets(self):
         """Jenis mana yang berubah sejak penanda terakhirnya.
@@ -1113,6 +1265,15 @@ class PresenlySaasConfig(models.Model):
         return True
 
     @api.model
+    def _cron_prune_file_cache_all(self):
+        """Buang cache berkas yang tidak dipakai cermin mana pun.
+
+        Terpisah dari pemangkasan cermin karena urutannya penting: cache hanya
+        boleh dibuang setelah cerminnya dipangkas.
+        """
+        return self.env['presenly.saas.attachment.sync'].prune_file_cache()
+
+    @api.model
     def _cron_prune_mirrors_all(self):
         """Jalankan pembersihan jendela bergulir untuk setiap koneksi aktif."""
         configs = self.sudo().search([('enabled', '=', True), ('active', '=', True)])
@@ -1133,6 +1294,11 @@ class PresenlySaasConfig(models.Model):
                     config.company_id.display_name,
                 )
         return True
+
+
+        # Cache berkas dibuang setelah cerminnya dipangkas: yang masih dipakai
+        # cermin tidak boleh ikut terbuang.
+        self.env['presenly.saas.attachment.sync'].prune_file_cache()
 
     @api.model
     def _cron_refresh_all(self):

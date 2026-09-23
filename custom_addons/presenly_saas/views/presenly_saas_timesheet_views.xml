@@ -128,7 +128,26 @@
                         <field name="fetched_at"/>
                         <field name="source_updated_at"/>
                     </group>
-                </sheet>
+</sheet>
+                <!-- Panel pratinjau lampiran, diletakkan SETELAH `</sheet>` seperti
+                     form Odoo sendiri: compiler mengganti div ini dengan komponen
+                     penampilnya, dan tata letak form menempatkannya di sisi kanan.
+                     Kalau ditaruh sebelum sheet, penampilnya muncul di belakang
+                     kartu informasi. -->
+                <div class="o_attachment_preview"/>
+                                    <!-- Chatter dipasang hanya untuk lampirannya: panel pratinjau
+                         di sisi kanan digambar oleh chatter, dan panel itu terbuka
+                         karena adanya elemen `o_attachment_preview` di atas. Tanpa
+                         salah satunya, berkas pengajuannya tidak bisa dilihat. -->
+                    <!-- Odoo 19 menggambar chatter dari elemen <chatter/>, bukan
+                         dari `div.oe_chatter`: form compiler memilih node dengan tag
+                         itu. Chatter-nya dipakai untuk lampirannya — panel pratinjau
+                         di sisi kanan digambar chatter, dan terbuka karena adanya
+                         `div.o_attachment_preview` di atas. -->
+                    <!-- `open_attachments` membuat kotak berkasnya langsung
+                         terbuka; tanpa itu pengguna menekan paperclip dulu. -->
+                    <chatter open_attachments="True" reload_on_attachment="True"/>
+
             </form>
         </field>
     </record>

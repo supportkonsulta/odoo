@@ -18,7 +18,8 @@ class PresenlySaasLeave(models.Model):
     """Cermin `GET /v1/leaves` — pengajuan cuti."""
 
     _name = 'presenly.saas.leave'
-    _inherit = ['presenly.saas.mirror.mixin', 'presenly.saas.submission.mixin']
+    _inherit = ['presenly.saas.mirror.mixin', 'presenly.saas.submission.mixin',
+                'presenly.saas.attachment.mixin', 'mail.thread']
     _description = 'Presenly Leave Request (mirror)'
     _order = 'leave_date desc, id desc'
 
@@ -75,6 +76,7 @@ class PresenlySaasLeave(models.Model):
             'total_days': float(row.get('total_days') or 0.0),
             'purpose': row.get('purpose') or False,
             'leave_address': row.get('leave_address') or False,
+            'file_path': row.get('certificate_file') or False,
             'status': status,
             'status_raw': status_raw,
             'approver_name': _person(row.get('approver')).get('name') or False,
@@ -165,7 +167,8 @@ class PresenlySaasMedicalCertificate(models.Model):
     """Cermin `GET /v1/medical-certificates` — surat keterangan dokter."""
 
     _name = 'presenly.saas.medical.certificate'
-    _inherit = ['presenly.saas.mirror.mixin', 'presenly.saas.submission.mixin']
+    _inherit = ['presenly.saas.mirror.mixin', 'presenly.saas.submission.mixin',
+                'presenly.saas.attachment.mixin', 'mail.thread']
     _description = 'Presenly Medical Certificate (mirror)'
     _order = 'certificate_date desc, id desc'
 
@@ -215,6 +218,7 @@ class PresenlySaasMedicalCertificate(models.Model):
             'start_date': parse_date(row.get('start_date')),
             'end_date': parse_date(row.get('end_date')),
             'reason': row.get('reason') or False,
+            'file_path': row.get('certificate_file') or False,
             'status': status,
             'status_raw': status_raw,
             'approver_name': _person(row.get('approver')).get('name') or False,

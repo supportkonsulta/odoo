@@ -3,6 +3,8 @@ import hmac
 import time
 
 from odoo import _
+from unittest import mock
+
 from odoo.tests import tagged
 from odoo.tests.common import TransactionCase
 
@@ -155,3 +157,35 @@ class TestPresenlyWebhookVerification(TransactionCase):
         # kosong, jadi `self.env._()` mengembalikan teks sumber dan tes ini akan
         # gagal di bahasa apa pun selain Inggris.
         self.assertIn(_('Webhook not registered'), hasil['params']['title'])
+
+
+class TestPresenlyWebhookRouting(TestPresenlyWebhookVerification):
+    """Peristiwa yang datang diarahkan ke penarikan yang sesuai.
+
+    Sebelum ini setiap peristiwa menarik pegawai, apa pun namanya: perubahan
+    klien memicu penarikan pegawai yang tidak ada hubungannya, dan perubahan
+    lokasi kerja tidak pernah menyalin lokasinya ke `hr.work.location`.
+    """
+
+    def _sumber_untuk(self, event):
+        Config = type(self.config)
+        with mock.patch.object(Config, '_pull_employees', lambda self: ({'pulled': 0}, False)), \
+             mock.patch.object(Config, '_pull_clients', lambda self: ({'created': 0}, False)), \
+             mock.patch.object(Config, '_pull_reference_data', lambda self: ({'work_locations': {}}, False)):
+            _ringkas, _error, sumber = self.controller._pull_for_event(self.config, event)
+        return sumber
+
+    def test_klien_menarik_klien(self):
+        self.assertEqual(self._sumber_untuk('client.created'), 'clients')
+        self.assertEqual(self._sumber_untuk('client.updated'), 'clients')
+
+    def test_lokasi_kerja_menarik_cermin_acuan(self):
+        self.assertEqual(self._sumber_untuk('work_location.created'), 'work_locations')
+        self.assertEqual(self._sumber_untuk('work_location.updated'), 'work_locations')
+
+    def test_pegawai_dan_peristiwa_tak_dikenal_menarik_pegawai(self):
+        self.assertEqual(self._sumber_untuk('employee.updated'), 'employees')
+        # Pengirim lama tidak menyertakan nama peristiwa; pegawai adalah tarikan
+        # yang paling penting, jadi itu yang dijalankan.
+        self.assertEqual(self._sumber_untuk(None), 'employees')
+        self.assertEqual(self._sumber_untuk('sesuatu.yang.baru'), 'employees')

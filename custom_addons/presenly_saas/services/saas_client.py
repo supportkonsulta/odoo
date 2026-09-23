@@ -101,6 +101,18 @@ class PresenlySaasClient:
         params = {'since': since} if since else None
         return self.get_envelope("/v1/presenly/changes", params)
 
+    def download_file(self, path):
+        """Isi sebuah berkas unggahan, dalam byte.
+
+        Berkasnya selalu pribadi, jadi `include_pii=true` ikut dikirim — sama
+        seperti kolom PII lain di API ini.
+        """
+        return self._request(
+            'GET', '/v1/files/download',
+            params={'path': path, 'include_pii': 'true'},
+            raw=True,
+        )
+
     def get_attendance_recap(self, params=None):
         """Rekap presensi per pegawai per bulan."""
         return self.get_envelope("/v1/presenly/attendance-recap", params)
@@ -126,6 +138,21 @@ class PresenlySaasClient:
         """Perbarui sebagian kolom pegawai. Hanya kolom yang dikirim yang ditulis."""
         return self._request('PATCH', '/v1/employees/%s' % quote(nopeg, safe=''), body=payload)
 
+    def update_work_location(self, location_id, payload):
+        """Perbarui sebagian kolom lokasi kerja. Hanya kolom yang dikirim yang ditulis.
+
+        Endpoint-nya menolak lokasi yang belum ada: pembuatan lokasi tetap
+        dilakukan dari aplikasi, karena di sanalah lokasi ditetapkan ke klien dan
+        proyek.
+        """
+        return self._request(
+            'PATCH', '/v1/work-locations/%d' % int(location_id), body=payload
+        )
+
+    def get_work_location_write_contract(self):
+        """Kolom lokasi kerja yang boleh ditulis dari luar, menurut server."""
+        return self._request('GET', '/v1/work-locations/writable-fields')['data']
+
     def register_webhook(self, payload):
         """Daftarkan alamat penerima webhook milik instalasi ini."""
         return self._request('PUT', '/v1/webhooks', body=payload)
@@ -148,7 +175,7 @@ class PresenlySaasClient:
     def _get(self, path, params=None):
         return self._request('GET', path, params=params)
 
-    def _request(self, method, path, params=None, body=None):
+    def _request(self, method, path, params=None, body=None, raw=False):
         """Satu implementasi percobaan ulang untuk semua metode.
 
         Percobaan ulang **tidak** dilakukan untuk galat 4xx: permintaan yang
@@ -199,6 +226,9 @@ class PresenlySaasClient:
                 time.sleep(0.5 * (2**attempt))
                 continue
 
+            if raw:
+                # Unduhan berkas: isinya byte, bukan amplop JSON.
+                return response.content
             return self._parse_response(response)
 
         # Unreachable: the loop either returns or raises.

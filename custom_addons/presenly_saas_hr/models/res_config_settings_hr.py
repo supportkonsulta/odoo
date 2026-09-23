@@ -15,6 +15,24 @@ class ResConfigSettings(models.TransientModel):
     # ------------------------------------------------------------------
     # Pemberitahuan perubahan (webhook)
     # ------------------------------------------------------------------
+    presenly_saas_push_work_locations = fields.Boolean(
+        string='Send Work Location Edits to Presenly',
+        compute='_compute_presenly_saas',
+        inverse='_inverse_presenly_saas_push_work_locations',
+        groups='presenly_saas.group_presenly_saas_manager',
+    )
+    presenly_saas_sync_employee_placements = fields.Boolean(
+        string='Apply Employee Placements',
+        compute='_compute_presenly_saas',
+        inverse='_inverse_presenly_saas_sync_employee_placements',
+        groups='presenly_saas.group_presenly_saas_manager',
+    )
+    presenly_saas_sync_work_locations = fields.Boolean(
+        string='Sync Work Locations to Odoo',
+        compute='_compute_presenly_saas',
+        inverse='_inverse_presenly_saas_sync_work_locations',
+        groups='presenly_saas.group_presenly_saas_manager',
+    )
     presenly_saas_webhook_enabled = fields.Boolean(
         string='Send Change Notifications',
         compute='_compute_presenly_saas',
@@ -42,15 +60,43 @@ class ResConfigSettings(models.TransientModel):
         tertinggal, sehingga fieldnya dideklarasikan ber-compute tanpa ada yang
         mengisinya. Gejalanya baru muncul saat halaman Settings dibuka:
         "Compute method failed to assign ...presenly_saas_webhook_url".
+
+        Kesalahan yang sama terulang saat `sync_work_locations` ditambahkan: field
+        dan inversenya ditulis, pengisiannya terlupa. Karena itu setiap field
+        setelan baru wajib mengisi dirinya di sini juga.
         """
         super()._compute_presenly_saas()
         for settings in self:
             config = settings._presenly_saas_config()
+            settings.presenly_saas_sync_work_locations = (
+                config.sync_work_locations if config else False
+            )
+            settings.presenly_saas_push_work_locations = (
+                config.push_work_locations if config else False
+            )
+            settings.presenly_saas_sync_employee_placements = (
+                config.sync_employee_placements if config else False
+            )
             settings.presenly_saas_webhook_enabled = config.webhook_enabled if config else False
             settings.presenly_saas_webhook_url = config.webhook_url if config else False
             settings.presenly_saas_webhook_last_received_at = (
                 config.webhook_last_received_at if config else False
             )
+
+    def _inverse_presenly_saas_push_work_locations(self):
+        self._write_presenly_saas_config(
+            {'push_work_locations': self.presenly_saas_push_work_locations}
+        )
+
+    def _inverse_presenly_saas_sync_employee_placements(self):
+        self._write_presenly_saas_config(
+            {'sync_employee_placements': self.presenly_saas_sync_employee_placements}
+        )
+
+    def _inverse_presenly_saas_sync_work_locations(self):
+        self._write_presenly_saas_config(
+            {'sync_work_locations': self.presenly_saas_sync_work_locations}
+        )
 
     def _inverse_presenly_saas_webhook_enabled(self):
         # Hanya menyalakan niatnya. Pendaftaran alamatnya sendiri dilakukan

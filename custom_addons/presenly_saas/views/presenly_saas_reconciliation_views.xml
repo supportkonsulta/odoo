@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Layar rekonsiliasi. Bentuknya daftar, bukan papan, karena isinya memang
+        daftar hal yang perlu diputuskan manusia satu per satu.
+    -->
+
+    <record id="view_presenly_saas_reconciliation_tree" model="ir.ui.view">
+        <field name="name">presenly.saas.reconciliation.tree</field>
+        <field name="model">presenly.saas.reconciliation</field>
+        <field name="arch" type="xml">
+            <list string="Discrepancies" create="false" delete="true">
+                <field name="dataset"/>
+                <field name="record_label"/>
+                <field name="presenly_key" optional="show"/>
+                <field name="field_name"/>
+                <field name="presenly_value" string="In Presenly"/>
+                <field name="odoo_value" string="In Odoo"/>
+                <field name="nature" widget="badge"
+                       decoration-danger="nature == 'missing_in_odoo'"
+                       decoration-warning="nature == 'both_changed'"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'resolved'"
+                       decoration-muted="state == 'ignored'"/>
+                <field name="odoo_changed_at" optional="hide"/>
+                <field name="presenly_seen_at" optional="hide"/>
+                <field name="checked_at" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_presenly_saas_reconciliation_form" model="ir.ui.view">
+        <field name="name">presenly.saas.reconciliation.form</field>
+        <field name="model">presenly.saas.reconciliation</field>
+        <field name="arch" type="xml">
+            <form string="Discrepancy" create="false">
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="record_label" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="dataset" readonly="1"/>
+                            <field name="presenly_key" readonly="1"/>
+                            <field name="field_name" readonly="1"/>
+                            <field name="nature" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="presenly_value" readonly="1"/>
+                            <field name="odoo_value" readonly="1"/>
+                            <field name="state"/>
+                        </group>
+                    </group>
+                    <group string="Timing" colspan="2">
+                        <group>
+                            <field name="odoo_changed_at" readonly="1"/>
+                            <field name="detected_at" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="presenly_seen_at" readonly="1"/>
+                            <field name="checked_at" readonly="1"/>
+                            <field name="resolved_at" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Note" colspan="2">
+                        <field name="note" nolabel="1" placeholder="Why this difference is left as it is"/>
+                    </group>
+                    <field name="res_model" invisible="1"/>
+                    <field name="res_id" invisible="1"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_presenly_saas_reconciliation_search" model="ir.ui.view">
+        <field name="name">presenly.saas.reconciliation.search</field>
+        <field name="model">presenly.saas.reconciliation</field>
+        <field name="arch" type="xml">
+            <search string="Discrepancies">
+                <field name="record_label"/>
+                <field name="presenly_key"/>
+                <field name="field_name"/>
+                <filter name="open" string="Open"
+                        domain="[('state', '=', 'open')]"/>
+                <filter name="both_changed" string="Changed on Both Sides"
+                        domain="[('nature', '=', 'both_changed')]"/>
+                <filter name="missing" string="Missing"
+                        domain="[('nature', 'in', ('missing_in_odoo', 'missing_in_presenly'))]"/>
+                <filter name="resolved" string="Resolved"
+                        domain="[('state', '=', 'resolved')]"/>
+                <separator/>
+                <filter name="clients" string="Clients" domain="[('dataset', '=', 'client')]"/>
+                <filter name="locations" string="Work Locations"
+                        domain="[('dataset', '=', 'work_location')]"/>
+                <filter name="employees" string="Employees" domain="[('dataset', '=', 'employee')]"/>
+                <group>
+                    <filter name="by_dataset" string="Dataset"
+                            context="{'group_by': 'dataset'}"/>
+                    <filter name="by_state" string="State"
+                            context="{'group_by': 'state'}"/>
+                    <filter name="by_nature" string="Nature"
+                            context="{'group_by': 'nature'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_presenly_saas_reconciliation" model="ir.actions.act_window">
+        <field name="name">Reconciliation</field>
+        <field name="res_model">presenly.saas.reconciliation</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state', '=', 'open')]</field>
+        <field name="context">{'search_default_open': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Nothing to reconcile
+            </p>
+            <p>
+                This compares what Odoo holds against the last thing Presenly sent,
+                field by field. It reports; it never fixes on its own, because which
+                side is right is a decision about who owns the field, not a detail
+                the computer can guess.
+            </p>
+        </field>
+    </record>
+
+    <!-- Tombol periksa-ulang. Server action, supaya tidak perlu wizard. -->
+    <record id="action_presenly_saas_reconcile_now" model="ir.actions.server">
+        <field name="name">Check Now</field>
+        <field name="model_id" ref="model_presenly_saas_reconciliation"/>
+        <field name="state">code</field>
+        <field name="code">model.run_all()</field>
+        <field name="binding_model_id" ref="model_presenly_saas_reconciliation"/>
+        <field name="binding_view_types">list,form</field>
+    </record>
+
+    <menuitem id="menu_presenly_saas_reconciliation"
+              name="Reconciliation"
+              parent="presenly_saas.menu_presenly_saas_monitoring"
+              action="action_presenly_saas_reconciliation"
+              sequence="30"/>
+
+</odoo>

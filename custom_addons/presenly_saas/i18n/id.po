@@ -3601,3 +3601,127 @@ msgid ""
 msgstr "Saat daftar cermin dibuka, tanyakan ke server Presenly dalam satu permintaan\n"
 "murah apakah ada yang berubah, lalu tarik hanya yang berubah. Kalau dimatikan,\n"
 "data hanya disegarkan oleh penarikan terjadwal."
+
+#. module: presenly_saas
+msgid "Create Companies from Clients"
+msgstr "Buat Perusahaan dari Klien"
+
+#. module: presenly_saas
+msgid "Presenly Client ID"
+msgstr "ID Klien Presenly"
+
+#. module: presenly_saas
+msgid "Presenly Business Sector"
+msgstr "Sektor Usaha Presenly"
+
+#. module: presenly_saas
+msgid "Presenly External ID"
+msgstr "ID Eksternal Presenly"
+
+#. module: presenly_saas
+msgid "Synced from Presenly At"
+msgstr "Disinkronkan dari Presenly Pada"
+
+#. module: presenly_saas
+msgid "Presenly Synchronisation Reconciliation"
+msgstr "Rekonsiliasi Sinkronisasi Presenly"
+
+#. module: presenly_saas
+msgid "Reconciliation"
+msgstr "Rekonsiliasi"
+
+#. module: presenly_saas
+msgid "Discrepancies"
+msgstr "Perbedaan"
+
+#. module: presenly_saas
+msgid "Discrepancy"
+msgstr "Perbedaan"
+
+#. module: presenly_saas
+msgid "In Presenly"
+msgstr "Di Presenly"
+
+#. module: presenly_saas
+msgid "In Odoo"
+msgstr "Di Odoo"
+
+#. module: presenly_saas
+msgid "Differs"
+msgstr "Berbeda"
+
+#. module: presenly_saas
+msgid "Changed on Both Sides"
+msgstr "Berubah di Kedua Sisi"
+
+#. module: presenly_saas
+msgid "Missing in Odoo"
+msgstr "Tidak Ada di Odoo"
+
+#. module: presenly_saas
+msgid "Missing in Presenly"
+msgstr "Tidak Ada di Presenly"
+
+#. module: presenly_saas
+msgid "Check Now"
+msgstr "Periksa Sekarang"
+
+#. module: presenly_saas
+msgid "Nothing to reconcile"
+msgstr "Tidak ada yang perlu direkonsiliasi"
+
+#. module: presenly_saas
+msgid "Open Discrepancies"
+msgstr "Perbedaan Terbuka"
+
+#. module: presenly_saas
+msgid "Last Reconciled"
+msgstr "Terakhir Direkonsiliasi"
+
+#. module: presenly_saas
+msgid "Presenly Key"
+msgstr "Kunci Presenly"
+
+#. module: presenly_saas
+msgid "Odoo Model"
+msgstr "Model Odoo"
+
+#. module: presenly_saas
+msgid "Odoo Record"
+msgstr "Rekaman Odoo"
+
+#. module: presenly_saas
+msgid "Odoo Last Changed"
+msgstr "Terakhir Berubah di Odoo"
+
+#. module: presenly_saas
+msgid "Presenly Value Read At"
+msgstr "Nilai Presenly Dibaca Pada"
+
+#. module: presenly_saas
+msgid "Record"
+msgstr "Rekaman"
+
+#. module: presenly_saas
+msgid "Nature"
+msgstr "Sifat"
+
+#. module: presenly_saas
+msgid "Timing"
+msgstr "Waktu"
+
+#. module: presenly_saas
+msgid "Missing"
+msgstr "Tidak Ada"
+
+#. module: presenly_saas
+msgid "No longer differs as of the last check."
+msgstr "Tidak lagi berbeda pada pemeriksaan terakhir."
+
+#. module: presenly_saas
+msgid "Client or location id, or the employee nopeg, on the Presenly side."
+msgstr "Id klien atau lokasi, atau nopeg pegawai di sisi Presenly."
+
+#. module: presenly_saas
+msgid "Name at the time of the check, so the report stays readable if the record is later deleted."
+msgstr "Nama pada saat pemeriksaan, supaya laporannya masih terbaca bila rekamannya kemudian dihapus."

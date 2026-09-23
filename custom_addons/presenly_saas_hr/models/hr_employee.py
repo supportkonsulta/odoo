@@ -85,11 +85,10 @@ class HrEmployee(models.Model):
         for employee in self.sudo().browse(ids).exists():
             if not employee.presenly_nopeg:
                 continue
-            config = Config.search([
-                ('company_id', '=', employee.company_id.id),
-                ('enabled', '=', True),
-                ('active', '=', True),
-            ], limit=1)
+            # Konfigurasi dicari lewat induk: pegawai ini boleh jadi milik
+            # perusahaan hasil cermin klien, sedangkan integrasinya dimiliki
+            # perusahaan pemasang.
+            config = Config._config_for_company(employee.company_id)
             if not config:
                 continue
             try:

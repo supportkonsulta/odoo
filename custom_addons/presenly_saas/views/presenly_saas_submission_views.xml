@@ -101,51 +101,18 @@
                          alur berubah-ubah mengikuti ada atau tidaknya alur, dan
                          kolom bersarang akan menyisakan sel kosong di separuh
                          baris. -->
-                    <group string="Approval" colspan="2">
+                    <!-- Persetujuan: hanya rangkaian langkahnya.
+
+                         Ringkasan alur dan kolom keputusan pada pengajuannya sendiri
+                         tidak ditampilkan di form — datanya tetap ada di model untuk
+                         daftar, pivot, dan ekspor. Kalau jenis pengajuannya tidak
+                         punya alur, seluruh bagiannya disembunyikan: judul kosong
+                         lebih membingungkan daripada tidak ada judul. -->
+                    <group string="Approval" colspan="2" invisible="not approval_has_workflow">
                         <field name="approval_has_workflow" invisible="1"/>
-
-                        <!-- Alur berjenjang, kalau jenis pengajuan ini memakainya. -->
-                        <field name="approval_flow_status" widget="badge"
-                               invisible="not approval_has_workflow"
-                               decoration-success="approval_flow_status == 'approved'"
-                               decoration-warning="approval_flow_status == 'pending'"
-                               decoration-danger="approval_flow_status == 'rejected'"/>
-                        <field name="approval_current_level" invisible="not approval_has_workflow"/>
-                        <field name="approval_total_levels" invisible="not approval_has_workflow"/>
-                        <field name="approval_waiting_for" invisible="not approval_has_workflow"/>
-
-                        <!-- Keputusan yang tercatat pada pengajuannya sendiri. Terisi
-                             walau jenis pengajuannya tidak memakai alur berjenjang. -->
-                        <field name="approver_name"/>
-                        <field name="approved_at"/>
-                    </group>
-
-                    <!-- Dua keadaan yang saling meniadakan, dan ditulis terpisah
-                         karena keduanya berarti hal berbeda: pengajuan yang belum
-                         diputus tidak boleh terbaca seolah sudah ada keputusan. -->
-                    <div class="text-muted"
-                         invisible="approval_has_workflow or approver_name or approved_at">
-                        No approval is recorded for this request yet.
-                    </div>
-                    <div class="text-muted"
-                         invisible="approval_has_workflow or not (approver_name or approved_at)">
-                        No approval levels are recorded for this request. Only the
-                        decision stored on the request itself is shown.
-                    </div>
-
-                    <!-- Langkah-langkahnya digambar widget sebagai rangkaian
-                         bernomor, dan ditaruh di luar grup supaya selebar halaman:
-                         di dalam grup, fieldnya terjepit kolom grid dan nama
-                         penyetuju yang panjang terbungkus di ruang sempit.
-
-                         Daftar `<list>` di dalamnya tetap ada meski tidak
-                         ditampilkan: Odoo membaca subview itu untuk menentukan
-                         field anak mana yang perlu dimuat, dan tanpa itu widgetnya
-                         menerima baris tanpa isi. -->
-                    <div invisible="not approval_has_workflow">
                         <field name="approval_step_ids"
                                widget="presenly_approval_steps"
-                               nolabel="1">
+                               nolabel="1" colspan="2">
                             <list create="false" edit="false" delete="false" default_order="level">
                                 <field name="level"/>
                                 <field name="step_status" widget="badge"
@@ -160,14 +127,33 @@
                                 <field name="approver_value" optional="hide"/>
                             </list>
                         </field>
-                    </div>
+                    </group>
 
                     <group string="Data Source" colspan="2">
                         <field name="status_raw"/>
                         <field name="fetched_at"/>
                         <field name="source_updated_at"/>
                     </group>
-                </sheet>
+</sheet>
+                <!-- Panel pratinjau lampiran, diletakkan SETELAH `</sheet>` seperti
+                     form Odoo sendiri: compiler mengganti div ini dengan komponen
+                     penampilnya, dan tata letak form menempatkannya di sisi kanan.
+                     Kalau ditaruh sebelum sheet, penampilnya muncul di belakang
+                     kartu informasi. -->
+                <div class="o_attachment_preview"/>
+                                    <!-- Chatter dipasang hanya untuk lampirannya: panel pratinjau
+                         di sisi kanan digambar oleh chatter, dan panel itu terbuka
+                         karena adanya elemen `o_attachment_preview` di atas. Tanpa
+                         salah satunya, berkas pengajuannya tidak bisa dilihat. -->
+                    <!-- Odoo 19 menggambar chatter dari elemen <chatter/>, bukan
+                         dari `div.oe_chatter`: form compiler memilih node dengan tag
+                         itu. Chatter-nya dipakai untuk lampirannya — panel pratinjau
+                         di sisi kanan digambar chatter, dan terbuka karena adanya
+                         `div.o_attachment_preview` di atas. -->
+                    <!-- `open_attachments` membuat kotak berkasnya langsung
+                         terbuka; tanpa itu pengguna menekan paperclip dulu. -->
+                    <chatter open_attachments="True" reload_on_attachment="True"/>
+
             </form>
         </field>
     </record>
@@ -252,9 +238,7 @@
         <field name="search_view_id" ref="view_presenly_saas_overtime_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">No overtime requests mirrored yet</p>
-            <p>New and changed requests appear on their own when this list is opened.
-               Use <b>Pull Period Data</b> on the Subscription page to fill in
-               an older month.</p>
+            <p>Run <b>Pull Period Data</b> to fill it.</p>
         </field>
     </record>
 
@@ -312,9 +296,7 @@
         <field name="search_view_id" ref="view_presenly_saas_medical_certificate_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">No medical certificates mirrored yet</p>
-            <p>New and changed requests appear on their own when this list is opened.
-               Use <b>Pull Period Data</b> on the Subscription page to fill in
-               an older month.</p>
+            <p>Run <b>Pull Period Data</b> to fill it.</p>
         </field>
     </record>
 
@@ -380,9 +362,7 @@
         <field name="search_view_id" ref="view_presenly_saas_attendance_correction_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">No attendance corrections mirrored yet</p>
-            <p>New and changed requests appear on their own when this list is opened.
-               Use <b>Pull Period Data</b> on the Subscription page to fill in
-               an older month.</p>
+            <p>Run <b>Pull Period Data</b> to fill it.</p>
         </field>
     </record>
 
@@ -448,9 +428,7 @@
         <field name="search_view_id" ref="view_presenly_saas_shift_swap_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">No shift swaps mirrored yet</p>
-            <p>New and changed requests appear on their own when this list is opened.
-               Use <b>Pull Period Data</b> on the Subscription page to fill in
-               an older month.</p>
+            <p>Run <b>Pull Period Data</b> to fill it.</p>
         </field>
     </record>
 
@@ -496,50 +474,18 @@
                          alur berubah-ubah mengikuti ada atau tidaknya alur, dan
                          kolom bersarang akan menyisakan sel kosong di separuh
                          baris. -->
-                    <group string="Approval" colspan="2">
+                    <!-- Persetujuan: hanya rangkaian langkahnya.
+
+                         Ringkasan alur dan kolom keputusan pada pengajuannya sendiri
+                         tidak ditampilkan di form — datanya tetap ada di model untuk
+                         daftar, pivot, dan ekspor. Kalau jenis pengajuannya tidak
+                         punya alur, seluruh bagiannya disembunyikan: judul kosong
+                         lebih membingungkan daripada tidak ada judul. -->
+                    <group string="Approval" colspan="2" invisible="not approval_has_workflow">
                         <field name="approval_has_workflow" invisible="1"/>
-
-                        <!-- Alur berjenjang, kalau jenis pengajuan ini memakainya. -->
-                        <field name="approval_flow_status" widget="badge"
-                               invisible="not approval_has_workflow"
-                               decoration-success="approval_flow_status == 'approved'"
-                               decoration-warning="approval_flow_status == 'pending'"
-                               decoration-danger="approval_flow_status == 'rejected'"/>
-                        <field name="approval_current_level" invisible="not approval_has_workflow"/>
-                        <field name="approval_total_levels" invisible="not approval_has_workflow"/>
-                        <field name="approval_waiting_for" invisible="not approval_has_workflow"/>
-
-                        <!-- Keputusan yang tercatat pada pengajuannya sendiri. Terisi
-                             walau jenis pengajuannya tidak memakai alur berjenjang. -->
-                        <field name="approver_name"/>
-                    </group>
-
-                    <!-- Dua keadaan yang saling meniadakan, dan ditulis terpisah
-                         karena keduanya berarti hal berbeda: pengajuan yang belum
-                         diputus tidak boleh terbaca seolah sudah ada keputusan. -->
-                    <div class="text-muted"
-                         invisible="approval_has_workflow or approver_name">
-                        No approval is recorded for this request yet.
-                    </div>
-                    <div class="text-muted"
-                         invisible="approval_has_workflow or not (approver_name)">
-                        No approval levels are recorded for this request. Only the
-                        decision stored on the request itself is shown.
-                    </div>
-
-                    <!-- Langkah-langkahnya digambar widget sebagai rangkaian
-                         bernomor, dan ditaruh di luar grup supaya selebar halaman:
-                         di dalam grup, fieldnya terjepit kolom grid dan nama
-                         penyetuju yang panjang terbungkus di ruang sempit.
-
-                         Daftar `<list>` di dalamnya tetap ada meski tidak
-                         ditampilkan: Odoo membaca subview itu untuk menentukan
-                         field anak mana yang perlu dimuat, dan tanpa itu widgetnya
-                         menerima baris tanpa isi. -->
-                    <div invisible="not approval_has_workflow">
                         <field name="approval_step_ids"
                                widget="presenly_approval_steps"
-                               nolabel="1">
+                               nolabel="1" colspan="2">
                             <list create="false" edit="false" delete="false" default_order="level">
                                 <field name="level"/>
                                 <field name="step_status" widget="badge"
@@ -554,7 +500,7 @@
                                 <field name="approver_value" optional="hide"/>
                             </list>
                         </field>
-                    </div>
+                    </group>
 
                     <group string="Data Source" colspan="2">
                         <field name="status_raw"/>
@@ -605,51 +551,18 @@
                          alur berubah-ubah mengikuti ada atau tidaknya alur, dan
                          kolom bersarang akan menyisakan sel kosong di separuh
                          baris. -->
-                    <group string="Approval" colspan="2">
+                    <!-- Persetujuan: hanya rangkaian langkahnya.
+
+                         Ringkasan alur dan kolom keputusan pada pengajuannya sendiri
+                         tidak ditampilkan di form — datanya tetap ada di model untuk
+                         daftar, pivot, dan ekspor. Kalau jenis pengajuannya tidak
+                         punya alur, seluruh bagiannya disembunyikan: judul kosong
+                         lebih membingungkan daripada tidak ada judul. -->
+                    <group string="Approval" colspan="2" invisible="not approval_has_workflow">
                         <field name="approval_has_workflow" invisible="1"/>
-
-                        <!-- Alur berjenjang, kalau jenis pengajuan ini memakainya. -->
-                        <field name="approval_flow_status" widget="badge"
-                               invisible="not approval_has_workflow"
-                               decoration-success="approval_flow_status == 'approved'"
-                               decoration-warning="approval_flow_status == 'pending'"
-                               decoration-danger="approval_flow_status == 'rejected'"/>
-                        <field name="approval_current_level" invisible="not approval_has_workflow"/>
-                        <field name="approval_total_levels" invisible="not approval_has_workflow"/>
-                        <field name="approval_waiting_for" invisible="not approval_has_workflow"/>
-
-                        <!-- Keputusan yang tercatat pada pengajuannya sendiri. Terisi
-                             walau jenis pengajuannya tidak memakai alur berjenjang. -->
-                        <field name="approver_name"/>
-                        <field name="approved_at"/>
-                    </group>
-
-                    <!-- Dua keadaan yang saling meniadakan, dan ditulis terpisah
-                         karena keduanya berarti hal berbeda: pengajuan yang belum
-                         diputus tidak boleh terbaca seolah sudah ada keputusan. -->
-                    <div class="text-muted"
-                         invisible="approval_has_workflow or approver_name or approved_at">
-                        No approval is recorded for this request yet.
-                    </div>
-                    <div class="text-muted"
-                         invisible="approval_has_workflow or not (approver_name or approved_at)">
-                        No approval levels are recorded for this request. Only the
-                        decision stored on the request itself is shown.
-                    </div>
-
-                    <!-- Langkah-langkahnya digambar widget sebagai rangkaian
-                         bernomor, dan ditaruh di luar grup supaya selebar halaman:
-                         di dalam grup, fieldnya terjepit kolom grid dan nama
-                         penyetuju yang panjang terbungkus di ruang sempit.
-
-                         Daftar `<list>` di dalamnya tetap ada meski tidak
-                         ditampilkan: Odoo membaca subview itu untuk menentukan
-                         field anak mana yang perlu dimuat, dan tanpa itu widgetnya
-                         menerima baris tanpa isi. -->
-                    <div invisible="not approval_has_workflow">
                         <field name="approval_step_ids"
                                widget="presenly_approval_steps"
-                               nolabel="1">
+                               nolabel="1" colspan="2">
                             <list create="false" edit="false" delete="false" default_order="level">
                                 <field name="level"/>
                                 <field name="step_status" widget="badge"
@@ -664,14 +577,33 @@
                                 <field name="approver_value" optional="hide"/>
                             </list>
                         </field>
-                    </div>
+                    </group>
 
                     <group string="Data Source" colspan="2">
                         <field name="status_raw"/>
                         <field name="fetched_at"/>
                         <field name="source_updated_at"/>
                     </group>
-                </sheet>
+</sheet>
+                <!-- Panel pratinjau lampiran, diletakkan SETELAH `</sheet>` seperti
+                     form Odoo sendiri: compiler mengganti div ini dengan komponen
+                     penampilnya, dan tata letak form menempatkannya di sisi kanan.
+                     Kalau ditaruh sebelum sheet, penampilnya muncul di belakang
+                     kartu informasi. -->
+                <div class="o_attachment_preview"/>
+                                    <!-- Chatter dipasang hanya untuk lampirannya: panel pratinjau
+                         di sisi kanan digambar oleh chatter, dan panel itu terbuka
+                         karena adanya elemen `o_attachment_preview` di atas. Tanpa
+                         salah satunya, berkas pengajuannya tidak bisa dilihat. -->
+                    <!-- Odoo 19 menggambar chatter dari elemen <chatter/>, bukan
+                         dari `div.oe_chatter`: form compiler memilih node dengan tag
+                         itu. Chatter-nya dipakai untuk lampirannya — panel pratinjau
+                         di sisi kanan digambar chatter, dan terbuka karena adanya
+                         `div.o_attachment_preview` di atas. -->
+                    <!-- `open_attachments` membuat kotak berkasnya langsung
+                         terbuka; tanpa itu pengguna menekan paperclip dulu. -->
+                    <chatter open_attachments="True" reload_on_attachment="True"/>
+
             </form>
         </field>
     </record>
@@ -703,8 +635,6 @@
                     <group>
                         <field name="reason"/>
                     </group>
-                    <group>
-                    </group>
                     <!-- Persetujuan. Bagian ini SELALU tampil, termasuk saat jenis
                          pengajuan ini belum punya alur berjenjang.
 
@@ -719,56 +649,18 @@
                          alur berubah-ubah mengikuti ada atau tidaknya alur, dan
                          kolom bersarang akan menyisakan sel kosong di separuh
                          baris. -->
-                    <group string="Approval" colspan="2">
+                    <!-- Persetujuan: hanya rangkaian langkahnya.
+
+                         Ringkasan alur dan kolom keputusan pada pengajuannya sendiri
+                         tidak ditampilkan di form — datanya tetap ada di model untuk
+                         daftar, pivot, dan ekspor. Kalau jenis pengajuannya tidak
+                         punya alur, seluruh bagiannya disembunyikan: judul kosong
+                         lebih membingungkan daripada tidak ada judul. -->
+                    <group string="Approval" colspan="2" invisible="not approval_has_workflow">
                         <field name="approval_has_workflow" invisible="1"/>
-
-                        <!-- Alur berjenjang, kalau jenis pengajuan ini memakainya. -->
-                        <field name="approval_flow_status" widget="badge"
-                               invisible="not approval_has_workflow"
-                               decoration-success="approval_flow_status == 'approved'"
-                               decoration-warning="approval_flow_status == 'pending'"
-                               decoration-danger="approval_flow_status == 'rejected'"/>
-                        <field name="approval_current_level" invisible="not approval_has_workflow"/>
-                        <field name="approval_total_levels" invisible="not approval_has_workflow"/>
-                        <field name="approval_waiting_for" invisible="not approval_has_workflow"/>
-
-                        <!-- Keputusan yang tercatat pada pengajuannya sendiri. Terisi
-                             walau jenis pengajuannya tidak memakai alur berjenjang. -->
-                        <field name="tl_approver_name"/>
-                        <field name="tl_approved_at"/>
-                        <field name="manager_approver_name"/>
-                        <field name="manager_approved_at"/>
-                        <field name="rejecter_name"/>
-                        <field name="rejected_at"/>
-                        <field name="rejection_reason"/>
-                    </group>
-
-                    <!-- Dua keadaan yang saling meniadakan, dan ditulis terpisah
-                         karena keduanya berarti hal berbeda: pengajuan yang belum
-                         diputus tidak boleh terbaca seolah sudah ada keputusan. -->
-                    <div class="text-muted"
-                         invisible="approval_has_workflow or tl_approver_name or tl_approved_at or manager_approver_name or manager_approved_at or rejecter_name or rejected_at or rejection_reason">
-                        No approval is recorded for this request yet.
-                    </div>
-                    <div class="text-muted"
-                         invisible="approval_has_workflow or not (tl_approver_name or tl_approved_at or manager_approver_name or manager_approved_at or rejecter_name or rejected_at or rejection_reason)">
-                        No approval levels are recorded for this request. Only the
-                        decision stored on the request itself is shown.
-                    </div>
-
-                    <!-- Langkah-langkahnya digambar widget sebagai rangkaian
-                         bernomor, dan ditaruh di luar grup supaya selebar halaman:
-                         di dalam grup, fieldnya terjepit kolom grid dan nama
-                         penyetuju yang panjang terbungkus di ruang sempit.
-
-                         Daftar `<list>` di dalamnya tetap ada meski tidak
-                         ditampilkan: Odoo membaca subview itu untuk menentukan
-                         field anak mana yang perlu dimuat, dan tanpa itu widgetnya
-                         menerima baris tanpa isi. -->
-                    <div invisible="not approval_has_workflow">
                         <field name="approval_step_ids"
                                widget="presenly_approval_steps"
-                               nolabel="1">
+                               nolabel="1" colspan="2">
                             <list create="false" edit="false" delete="false" default_order="level">
                                 <field name="level"/>
                                 <field name="step_status" widget="badge"
@@ -783,7 +675,7 @@
                                 <field name="approver_value" optional="hide"/>
                             </list>
                         </field>
-                    </div>
+                    </group>
 
                     <group string="Data Source" colspan="2">
                         <field name="status_raw"/>
@@ -821,8 +713,6 @@
                     <group>
                         <field name="reason"/>
                     </group>
-                    <group>
-                    </group>
                     <!-- Persetujuan. Bagian ini SELALU tampil, termasuk saat jenis
                          pengajuan ini belum punya alur berjenjang.
 
@@ -837,54 +727,18 @@
                          alur berubah-ubah mengikuti ada atau tidaknya alur, dan
                          kolom bersarang akan menyisakan sel kosong di separuh
                          baris. -->
-                    <group string="Approval" colspan="2">
+                    <!-- Persetujuan: hanya rangkaian langkahnya.
+
+                         Ringkasan alur dan kolom keputusan pada pengajuannya sendiri
+                         tidak ditampilkan di form — datanya tetap ada di model untuk
+                         daftar, pivot, dan ekspor. Kalau jenis pengajuannya tidak
+                         punya alur, seluruh bagiannya disembunyikan: judul kosong
+                         lebih membingungkan daripada tidak ada judul. -->
+                    <group string="Approval" colspan="2" invisible="not approval_has_workflow">
                         <field name="approval_has_workflow" invisible="1"/>
-
-                        <!-- Alur berjenjang, kalau jenis pengajuan ini memakainya. -->
-                        <field name="approval_flow_status" widget="badge"
-                               invisible="not approval_has_workflow"
-                               decoration-success="approval_flow_status == 'approved'"
-                               decoration-warning="approval_flow_status == 'pending'"
-                               decoration-danger="approval_flow_status == 'rejected'"/>
-                        <field name="approval_current_level" invisible="not approval_has_workflow"/>
-                        <field name="approval_total_levels" invisible="not approval_has_workflow"/>
-                        <field name="approval_waiting_for" invisible="not approval_has_workflow"/>
-
-                        <!-- Keputusan yang tercatat pada pengajuannya sendiri. Terisi
-                             walau jenis pengajuannya tidak memakai alur berjenjang. -->
-                        <field name="approver_name"/>
-                        <field name="approved_at"/>
-                        <field name="rejecter_name"/>
-                        <field name="rejected_at"/>
-                        <field name="rejection_reason"/>
-                    </group>
-
-                    <!-- Dua keadaan yang saling meniadakan, dan ditulis terpisah
-                         karena keduanya berarti hal berbeda: pengajuan yang belum
-                         diputus tidak boleh terbaca seolah sudah ada keputusan. -->
-                    <div class="text-muted"
-                         invisible="approval_has_workflow or approver_name or approved_at or rejecter_name or rejected_at or rejection_reason">
-                        No approval is recorded for this request yet.
-                    </div>
-                    <div class="text-muted"
-                         invisible="approval_has_workflow or not (approver_name or approved_at or rejecter_name or rejected_at or rejection_reason)">
-                        No approval levels are recorded for this request. Only the
-                        decision stored on the request itself is shown.
-                    </div>
-
-                    <!-- Langkah-langkahnya digambar widget sebagai rangkaian
-                         bernomor, dan ditaruh di luar grup supaya selebar halaman:
-                         di dalam grup, fieldnya terjepit kolom grid dan nama
-                         penyetuju yang panjang terbungkus di ruang sempit.
-
-                         Daftar `<list>` di dalamnya tetap ada meski tidak
-                         ditampilkan: Odoo membaca subview itu untuk menentukan
-                         field anak mana yang perlu dimuat, dan tanpa itu widgetnya
-                         menerima baris tanpa isi. -->
-                    <div invisible="not approval_has_workflow">
                         <field name="approval_step_ids"
                                widget="presenly_approval_steps"
-                               nolabel="1">
+                               nolabel="1" colspan="2">
                             <list create="false" edit="false" delete="false" default_order="level">
                                 <field name="level"/>
                                 <field name="step_status" widget="badge"
@@ -899,7 +753,7 @@
                                 <field name="approver_value" optional="hide"/>
                             </list>
                         </field>
-                    </div>
+                    </group>
 
                     <group string="Data Source" colspan="2">
                         <field name="status_raw"/>

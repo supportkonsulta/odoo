@@ -154,9 +154,11 @@ class TestPresenlyEmployeeToHr(TestPresenlyEmployeeSyncBase):
         self._tarik([employee_row()])
         hr = self._hr('iksg-rangga')
 
-        # `bagian`, `grup`, dan `can_approve` tidak punya kolom di Odoo. Kalau
-        # suatu saat dipetakan, itu keputusan sadar dan tes ini yang menahannya.
-        self.assertFalse(hr.job_title)
+        # `bagian` kini dipetakan ke jabatan — keputusan sadar (permintaan
+        # integrasi native), jadi penahannya di sini diperbarui.
+        self.assertEqual(hr.job_title, 'Operasional')
+        # `grup`, `can_approve`, dan `department_id` tetap tanpa padanan. Kalau
+        # suatu saat dipetakan, itu keputusan sadar dan baris ini yang menahannya.
         self.assertFalse(hr.department_id)
 
     def test_memperbarui_pegawai_yang_sudah_ada(self):

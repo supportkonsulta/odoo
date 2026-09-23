@@ -103,3 +103,100 @@ modul.
 
 Rincian lengkap dan keputusan yang mendasarinya ada di
 [`PLAN_HR_SYNC.md`](./PLAN_HR_SYNC.md).
+
+## Lokasi kerja menjadi `hr.work.location`
+
+Presenly menyimpan lokasi beserta geofence-nya; Odoo punya model native untuk lokasi
+kerja tetapi **tanpa koordinat maupun radius**. Karena itu ada dua lapis:
+
+1. **`res.partner`** untuk alamatnya. `hr.work.location` mewajibkan `address_id`,
+   sedangkan Presenly mengirim alamat sebagai teks bebas.
+2. **`hr.work.location`** untuk lokasinya, ditambah field `presenly_*` untuk
+   geofence.
+
+Ini melanggar aturan lama modul ("tidak mewarisi model bisnis native"), dan
+pelanggarannya disengaja: aturan itu dibuat supaya presensi tidak menyeret Odoo ke
+ranah HR, sedangkan di sini yang diminta justru integrasi native. Semua field
+tambahannya berawalan `presenly_`, jadi tidak bertabrakan dengan field Odoo.
+
+Setelannya `Sync Work Locations to Odoo`, mati secara bawaan.
+
+Penarikan menulis ke model native dengan penanda `presenly_skip_push`. Tanpa itu,
+setiap tarikan akan memicu kirim balik dan berputar tanpa henti — dan itu sempat
+terjadi di sini, ketahuan sebelum sempat jalan.
+
+## Penempatan pegawai menentukan perusahaan dan lokasi kerja
+
+Payload pegawai **tidak** membawa klien maupun lokasi kerja. Keduanya hanya ada di
+resource `placements`, yang juga satu-satunya sumber `is_primary`.
+
+Perhatikan penamaan: resource itu menamai kliennya `internal_company` dan lokasinya
+`location`, bukan `tenantClient`/`workLocation` seperti nama asosiasi Sequelize-nya.
+Nama itu sudah diganti fungsi `map` di `ExternalRawDataService.js`. Salah membaca
+nama keluaran pernah membuat seluruh penempatan terbaca kosong, padahal datanya
+lengkap.
+
+Satu pegawai bisa punya beberapa penempatan. `hr.employee` hanya bisa menunjuk satu
+perusahaan dan satu lokasi, jadi yang dipakai adalah penempatan yang **utama** dan
+masih berlaku. Kalau tidak ada yang utama, tautannya dibiarkan apa adanya dan
+keadaannya dicatat — menebak di antara beberapa penempatan menghasilkan tautan yang
+salah tanpa jejak.
+
+## Kirim balik lokasi kerja
+
+Setelannya `Send Work Location Edits to Presenly`, mati secara bawaan. Aplikasi
+tetap pemilik data lokasi kecuali seseorang memutuskan lain.
+
+Yang dikirim hanya **kolom yang benar-benar disunting**, karena endpoint tujuannya
+memang menerapkan semantik itu: kolom yang tidak dikirim tidak disentuh di sana.
+Mengirim seluruh objek justru berbahaya — ia akan mengosongkan kolom yang tidak
+diikutkan.
+
+Pembuatan lokasi **tidak** ada di endpoint itu. Lokasi baru tetap dibuat dari
+aplikasi, karena di sanalah lokasi ditetapkan ke klien dan proyek; memindahkan
+lokasi antar klien dari integrasi berarti melewati alur yang memeriksa hak akses.
+
+Dua kesalahan yang ditemukan di jalur ini, keduanya berbahaya karena **tidak
+berbunyi**: pencarian konfigurasi per perusahaan (lokasi milik perusahaan cermin
+klien, sedangkan konfigurasi dimiliki perusahaan pemasang) membuat kirim balik
+tidak pernah terkirim tanpa galat apa pun; dan jalur yang saya tulis
+(`/api/external/v1/...`) menggandakan prefiks karena `_request` sudah menambahkannya.
+
+## Pemberitahuan perubahan
+
+`employee.created/updated`, `client.created/updated`, `work_location.created/updated`.
+
+Hooknya dipasang di tingkat model, bukan di tiap controller: data ini bisa berubah
+dari pendaftaran mandiri, profil mobile, panel admin, dan API eksternal, sehingga
+satu tempat yang terlewat akan membuat integrasi diam-diam tidak sinkron.
+
+Payloadnya hanya penanda (`{event, id, updated_at}`), tanpa isi data. Penerima
+mengambil sendiri lewat API terautentikasi, jadi tidak ada nama klien maupun alamat
+lokasi yang melintas ke luar atau tersimpan di riwayat pengiriman.
+
+Penerima di Odoo mengarahkan per peristiwa. Sebelumnya semua peristiwa menarik
+pegawai: perubahan klien memicu penarikan pegawai yang tidak ada hubungannya, dan
+perubahan lokasi kerja tidak pernah menyalin lokasinya. Peristiwa tanpa nama
+(pengirim lama) dan nama yang belum dikenal tetap ke pegawai — itu tarikan yang
+paling penting.
+
+Endpoint yang **sudah terdaftar** perlu didaftarkan ulang agar keenam peristiwa
+berlaku. Selama belum, fiturnya ada tetapi diam.
+
+## Rekonsiliasi sisi bridge
+
+Untuk pegawai, hasilnya lebih tajam daripada lokasi: sinkronisasi pegawai menyimpan
+snapshot nilai terakhir yang disepakati, sehingga bisa dibedakan **"berbeda"** dari
+**"berubah di kedua sisi"**. Yang kedua itu yang berbahaya — sinkronisasi memilih
+nilai Presenly, dan tanpa laporan ini suntingan Odoo hilang tanpa jejak.
+
+Untuk lokasi tidak ada snapshot, jadi yang dilaporkan hanya "berbeda" beserta waktu
+perubahan di kedua sisi. Saya tidak mengaku tahu mana yang lebih dulu berubah.
+
+Kalau `Sync Work Locations to Odoo` mati, dataset lokasi dilewati seluruhnya.
+Melaporkan setiap lokasi sebagai "hilang" bukan temuan, itu setelan.
+
+Satu hal yang mahal ditemukan di sini: `native['address_id.street']` **tidak**
+didukung Odoo. Saya sempat mengira didukung dan menulis komentar yang mengklaim
+begitu; galatnya menelan seluruh dataset lokasi sehingga tidak ada satu pun temuan
+muncul.

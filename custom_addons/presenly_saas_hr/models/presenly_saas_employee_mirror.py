@@ -161,7 +161,16 @@ class PresenlySaasEmployee(models.Model):
     # ditambah `is_active`, yang dimiliki Presenly tetapi tetap perlu
     # dibandingkan supaya perubahannya ikut diterapkan.
     SHARED_FIELDS = ('name', 'email', 'phone', 'birth_date', 'birth_place',
-                     'address', 'is_active')
+                     'address', 'is_active',
+                     # `bagian` dipetakan ke jabatan. Ikut dibandingkan supaya
+                     # pegawai yang sudah tersinkron pun mendapat jabatannya.
+                     #
+                     # `internal_company_id` TIDAK ikut: sisi Odoo selalu punya
+                     # perusahaan (bawaan pemasangan), sedangkan klien di Presenly
+                     # boleh kosong. Membandingkannya membuat setiap tarikan
+                     # terlihat bentrok, dan pegawai yang bentrok tidak dikirim
+                     # balik — pengiriman yang sah jadi ikut hilang.
+                     'bagian')
 
     # Kolom yang dikirim BALIK ke Presenly. `is_active` sengaja tidak ada di
     # sini: status aktif dimiliki Presenly, dan Odoo tidak pernah menulisnya.
@@ -179,6 +188,11 @@ class PresenlySaasEmployee(models.Model):
         # Ikut dibandingkan supaya perubahan status aktif ikut diterapkan,
         # tetapi TIDAK ikut dikirim balik (lihat `PUSH_FIELDS`).
         'is_active': 'active',
+        # Dipakai untuk menautkan, bukan untuk dikirim balik: `bagian` menjadi
+        # jabatan. Klien Presenly juga menjadi perusahaan Odoo, tetapi tautan itu
+        # diterapkan lewat `_hr_values` tanpa ikut dibandingkan (lihat
+        # `SHARED_FIELDS`).
+        'bagian': 'job_title',
     }
 
     @api.model
@@ -188,14 +202,36 @@ class PresenlySaasEmployee(models.Model):
         Hanya berisi kolom yang **ada di kedua sisi**. Sisanya sengaja tidak
         dipetakan; alasannya di `PLAN_HR_SYNC.md` §3.
         """
-        return {
+        nilai = {
             'name': employee.name,
             'work_email': employee.email or False,
             'work_phone': employee.phone or False,
             'birthday': employee.birth_date or False,
             'place_of_birth': employee.birth_place or False,
             'private_street': employee.address or False,
+            # `bagian` di Presenly berisi nama jabatan (mis. "IT Engineer"),
+            # bukan nama bagian organisasi. Padanan Odoo yang artinya sama
+            # adalah `job_title`, sedangkan `department_id` menuntut data
+            # organisasi yang belum dikirim server.
+            'job_title': employee.bagian or False,
         }
+
+        # Klien Presenly menjadi perusahaan Odoo. Kalau kliennya belum dibuat
+        # (setelannya mati, atau pegawai ini belum punya klien), tautannya
+        # dilewati dan keadaannya terlihat dari `internal_company_name` di cermin.
+        perusahaan = self._presenly_company(employee.internal_company_id)
+        if perusahaan:
+            nilai['company_id'] = perusahaan.id
+        return nilai
+
+    @api.model
+    def _presenly_company(self, client_id):
+        """Perusahaan Odoo yang mencerminkan klien Presenly itu, kalau ada."""
+        if not client_id:
+            return self.env['res.company'].browse()
+        return self.env['res.company'].sudo().search(
+            [('presenly_client_id', '=', client_id)], limit=1
+        )
 
     def _hr_model(self):
         """Model `hr.employee` dengan penanda agar tidak memicu kirim balik.
@@ -375,6 +411,10 @@ class PresenlySaasEmployee(models.Model):
             return fields.Date.to_string(value) if value else False
         if key == 'is_active':
             return bool(value)
+        if hasattr(value, 'ids'):
+            # Relasi: yang dibandingkan id-nya, bukan recordset-nya. Tanpa ini,
+            # snapshot selalu terlihat berbeda dan tarikan menulis berulang.
+            return value.id or False
         return value or False
 
     @api.model

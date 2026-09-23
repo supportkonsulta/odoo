@@ -150,7 +150,13 @@ class PresenlySaasConfig(models.Model):
         try:
             hasil = self._client().register_webhook({
                 'url': url,
-                'events': ['employee.created', 'employee.updated'],
+                'events': [
+                    'employee.created', 'employee.updated',
+                    # Klien dan lokasi kerja membentuk perusahaan serta
+                    # `hr.work.location` di sisi ini.
+                    'client.created', 'client.updated',
+                    'work_location.created', 'work_location.updated',
+                ],
                 'label': '%s (%s)' % (self.env.cr.dbname, self.tenant_code or 'no tenant'),
             })
         except SaasClientError as exc:

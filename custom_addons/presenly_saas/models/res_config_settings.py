@@ -108,6 +108,18 @@ class ResConfigSettings(models.TransientModel):
         inverse='_inverse_presenly_saas_pull_months',
         groups=MANAGER_GROUP,
     )
+    presenly_saas_sync_companies = fields.Boolean(
+        string='Create Companies from Clients',
+        compute='_compute_presenly_saas',
+        inverse='_inverse_presenly_saas_sync_companies',
+        groups=MANAGER_GROUP,
+    )
+    presenly_saas_request_attachments = fields.Boolean(
+        string='Pull Attachments',
+        compute='_compute_presenly_saas',
+        inverse='_inverse_presenly_saas_request_attachments',
+        groups=MANAGER_GROUP,
+    )
     presenly_saas_request_auto_refresh = fields.Boolean(
         string='Refresh on Open',
         compute='_compute_presenly_saas',
@@ -177,7 +189,7 @@ class ResConfigSettings(models.TransientModel):
         config_fields = [
             'enabled', 'environment', 'base_url', 'tenant_code', 'api_key',
             'timeout_seconds', 'retry_count', 'guard_mode', 'grace_days', 'show_banner',
-            'pull_months', 'retention_months', 'request_auto_refresh',
+            'pull_months', 'retention_months', 'request_auto_refresh', 'request_attachments', 'sync_companies',
             'cron_sync_minutes',
         ]
 
@@ -210,6 +222,11 @@ class ResConfigSettings(models.TransientModel):
             settings.presenly_saas_request_auto_refresh = values.get(
                 'request_auto_refresh', True
             )
+
+            settings.presenly_saas_request_attachments = values.get(
+                'request_attachments', False
+            )
+            settings.presenly_saas_sync_companies = values.get('sync_companies', False)
             settings.presenly_saas_cron_sync_minutes = values.get(
                 'cron_sync_minutes', 15
             )
@@ -272,6 +289,35 @@ class ResConfigSettings(models.TransientModel):
                 'interval_type': 'minutes',
                 'active': menit > 0,
             })
+
+    def _inverse_presenly_saas_sync_companies(self):
+        self._write_presenly_saas_config({'sync_companies': self.presenly_saas_sync_companies})
+
+    def _inverse_presenly_saas_request_attachments(self):
+        sebelumnya = self._presenly_saas_config().request_attachments
+        self._write_presenly_saas_config(
+            {'request_attachments': self.presenly_saas_request_attachments}
+        )
+        if self.presenly_saas_request_attachments and not sebelumnya:
+            # Saat lampiran baru dinyalakan, baris yang sudah tercermin belum punya
+            # jalur berkasnya: penarikan tambahan hanya melihat baris yang berubah,
+            # jadi berkas yang sudah ada tidak akan pernah ikut terunduh. Penanda
+            # jenis berberkas direset supaya datanya ditarik ulang seluruhnya.
+            self._reset_attachment_marks()
+
+    def _reset_attachment_marks(self):
+        from ..models.presenly_saas_attachment import ATTACHMENT_FIELDS
+        from ..models.presenly_saas_config import PERIOD_DATASETS
+
+        resources = [
+            resource for resource, model_name in PERIOD_DATASETS
+            if model_name in ATTACHMENT_FIELDS
+        ]
+        marks = self.env['presenly.saas.sync.mark'].sudo().search([
+            ('dataset', 'in', resources),
+        ])
+        if marks:
+            marks.unlink()
 
     def _inverse_presenly_saas_request_auto_refresh(self):
         self._write_presenly_saas_config(

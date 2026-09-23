@@ -718,3 +718,59 @@ msgstr "Alamat penerima Odoo ini, sebagaimana terdaftar di server Presenly."
 #. module: presenly_saas_hr
 msgid "When this record was last written by the Presenly sync."
 msgstr "Kapan record ini terakhir ditulis oleh sinkronisasi Presenly."
+
+#. module: presenly_saas_hr
+msgid "Presenly SaaS: HR Integration"
+msgstr "Presenly SaaS: Integrasi HR"
+
+#. module: presenly_saas_hr
+msgid "Apply Employee Placements"
+msgstr "Terapkan Penempatan Pegawai"
+
+#. module: presenly_saas_hr
+msgid "Sync Work Locations to Odoo"
+msgstr "Sinkronkan Lokasi Kerja ke Odoo"
+
+#. module: presenly_saas_hr
+msgid "Send Work Location Edits to Presenly"
+msgstr "Kirim Suntingan Lokasi Kerja ke Presenly"
+
+#. module: presenly_saas_hr
+msgid "Presenly Work Location ID"
+msgstr "ID Lokasi Kerja Presenly"
+
+#. module: presenly_saas_hr
+msgid "Presenly Location ID"
+msgstr "ID Lokasi Presenly"
+
+#. module: presenly_saas_hr
+msgid "Allowed Radius (m)"
+msgstr "Radius yang Diizinkan (m)"
+
+#. module: presenly_saas_hr
+msgid "Attendance Type"
+msgstr "Jenis Presensi"
+
+#. module: presenly_saas_hr
+msgid "Timezone"
+msgstr "Zona Waktu"
+
+#. module: presenly_saas_hr
+msgid "Latitude"
+msgstr "Lintang"
+
+#. module: presenly_saas_hr
+msgid "Longitude"
+msgstr "Bujur"
+
+#. module: presenly_saas_hr
+msgid "One work location may only mirror one Presenly location."
+msgstr "Satu lokasi kerja hanya boleh mencerminkan satu lokasi Presenly."
+
+#. module: presenly_saas_hr
+msgid "One row per field per record; re-checking updates it instead of adding another."
+msgstr "Satu baris untuk satu kolom per rekaman; pemeriksaan ulang memperbaruinya, bukan menambah baris baru."
+
+#. module: presenly_saas_hr
+msgid "Presenly Work Location (mirror)"
+msgstr "Lokasi Kerja Presenly (cermin)"

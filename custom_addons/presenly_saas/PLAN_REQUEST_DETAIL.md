@@ -125,18 +125,48 @@ Bentuknya persis begini — dibaca dari `mail/static/src/chatter/web/form_compil
 ```
 
 Tanpa elemen `o_attachment_preview` itu, chatter tetap ada tetapi panel kanannya
-tidak pernah muncul. Tiga pilihan, dan ini keputusan arsitektur yang perlu Anda
-pilih:
+tidak pernah muncul.
 
-| Pilihan | Yang pengguna lihat | Ongkos |
+**Keputusan: dikerjakan di modul inti `presenly_saas`.** Usulan awal saya adalah
+modul terpisah mengikuti pola `presenly_saas_hr`; setelah diperiksa, itu kalah
+argumen.
+
+| Pilihan | Yang pengguna lihat | Ongkos sebenarnya |
 | --- | --- | --- |
-| **Modul terpisah `presenly_saas_documents`** | paperclip + panel pratinjau kanan, seperti permintaan Anda | `mail` jadi dependensi modul baru itu saja; instalasi yang tidak ingin chatter tidak ikut berat |
-| `mail` di modul inti | sama | modul inti menyeret `mail` untuk semua tenant |
+| **`mail` di modul inti** | paperclip + panel pratinjau kanan | `mail` jadi dependensi tetap; di instalasi yang sudah punya `mail` (praktis semuanya — di database uji pun `mail`, `bus`, `base_setup`, `web_tour`, `html_editor` sudah terpasang) ongkosnya nol |
+| Modul terpisah | sama | satu instalasi tambahan yang harus diingat; lupa memasangnya berarti lampirannya diam-diam tidak muncul |
 | Tanpa `mail`: One2many ke `ir.attachment` | daftar lampiran, pratinjau di jendela terpisah | tidak ada panel kanan — tidak sesuai permintaan |
 
-**Usulan: modul terpisah**, mengikuti pola yang sudah dipakai `presenly_saas_hr`
-(lihat README §5c). Dependensinya `presenly_saas` + `mail`, dan isinya: chatter
-pada tiga form, cermin lampiran, dan pembersihannya.
+Alasan memilih modul inti:
+
+- **Jalur filenya bagian dari muatan yang dicerminkan.** Field-nya tetap harus ada
+  di modul inti, karena `_mirror_values` yang mengisinya. Memisahkan hanya
+  tampilannya membuat satu fitur tinggal di dua modul.
+- **`mail.thread` tidak menambah perilaku bisnis apa pun di sini.** Modul ini tidak
+  pernah memanggil `message_post` (nol rujukan di seluruh kode), jadi tabel pesan
+  dan pengikutnya tetap kosong untuk model cermin — yang bertambah hanya kolom dan
+  baris lampiran.
+- **Pemisahan `presenly_saas_hr` dulu karena alasannya berbeda.** `hr` adalah
+  aplikasi bisnis dengan model dan semantiknya sendiri (kontrak, cuti, kehadiran)
+  yang tidak pantas dipaksakan ke setiap tenant. `mail` adalah prasarana yang
+  dipakai tampilan cermin, bukan aplikasi yang pendapatnya ikut masuk ke data.
+- **Satu modul, satu tempat memasang.** Kalau fitur ini opsional, dukungannya jadi
+  pertanyaan berulang: "kok lampirannya tidak muncul" — jawabannya "modul
+  dokumennya belum dipasang".
+
+Konsekuensi yang diterima, dan sebaiknya tercatat:
+
+1. `mail` (beserta `base_setup`, `bus`, `web_tour`, `html_editor`) menjadi
+   dependensi tetap `presenly_saas`.
+2. Chatter-nya dibuat **minimal**: hanya daftar pesan dengan lampirannya, tanpa
+   pengikut dan tanpa aktivitas. Composer tetap muncul bagi pengguna yang boleh
+   menulis, dan itu diterima sebagai tempat mencatat — modelnya tetap tidak bisa
+   disunting dari Odoo.
+3. Tabel pesan dan pengikut tidak ikut tumbuh selama modul tidak memposting apa pun.
+
+Berkasnya: chatter pada tiga form (cuti, surat dokter, timesheet), field jalur
+file di cermin, unduhan dan lampirannya, serta pembersihannya — semuanya di
+`presenly_saas`.
 
 ### 2d. Bagian Persetujuan: hanya langkahnya
 
@@ -163,7 +193,8 @@ ada judul.
 
 ## 3. Yang perlu Anda putuskan
 
-1. **Modul terpisah atau `mail` di modul inti?** Usulan: modul terpisah.
+1. ~~Modul terpisah atau `mail` di modul inti?~~ **Diputuskan: modul inti** (§2c).
+   Yang tersisa untuk Anda setujui: `mail` menjadi dependensi tetap `presenly_saas`.
 2. **Menutup `/uploads` sekarang atau nanti?** Menutupnya memutus tautan langsung
    yang mungkin masih dipakai aplikasi mobile atau web. Usulan: endpoint
    berautentikasi dulu, jalur statis ditutup setelah dipastikan tidak ada pemakai.
@@ -181,7 +212,7 @@ ada judul.
 | --- | --- | --- |
 | 1 | Endpoint unduh berautentikasi + penjagaan path traversal + tes | ½ hari |
 | 2 | Simpan jalur file di cermin + unduh sekali + lampiran Odoo + tes | 1 hari |
-| 3 | Modul `presenly_saas_documents`: chatter pada tiga form + pembersihan lampiran | 1 hari |
+| 3 | Chatter pada tiga form di modul inti + pembersihan lampiran | 1 hari |
 | 4 | Bagian Persetujuan: sisakan langkahnya + perbarui tes yang menguncinya | ½ hari |
 | 5 | (Terpisah) tutup `/uploads` setelah dipastikan tidak ada pemakai | ¼ hari |
 

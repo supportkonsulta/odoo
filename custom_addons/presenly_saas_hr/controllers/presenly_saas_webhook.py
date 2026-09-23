@@ -70,7 +70,7 @@ class PresenlySaasWebhook(http.Controller):
         nopeg = payload.get('nopeg')
 
         try:
-            summary, error = config._pull_employees()
+            ringkas, error, ditangani = self._pull_for_event(config, event)
         except Exception as exc:  # noqa: BLE001 - dijawab 500 supaya pengirim mencoba lagi
             _logger.exception("Presenly SaaS: webhook sync failed: %s", exc)
             return self._json(500, {'error': 'sync_failed'})
@@ -80,16 +80,39 @@ class PresenlySaasWebhook(http.Controller):
             return self._json(500, {'error': 'sync_failed', 'detail': error})
 
         config.sudo().write({'webhook_last_received_at': fields_now()})
-        push = summary.get('push') or {}
+        push = ringkas.get('push') or {}
         return self._json(200, {
             'received': True,
             'event': event,
+            'handled': ditangani,
+            'pulled': ringkas.get('pulled', 0),
             'nopeg': nopeg,
-            'pulled': summary.get('pulled', 0),
-            'created': summary.get('created', 0),
-            'updated': summary.get('updated', 0),
+            'created': ringkas.get('created', 0),
+            'updated': ringkas.get('updated', 0),
             'pushed': push.get('pushed', 0),
         })
+
+    def _pull_for_event(self, config, event):
+        """Tarik hanya yang berubah, sesuai peristiwa yang datang.
+
+        Mengembalikan ``(ringkasan, error, sumber)``. Sebelumnya semua peristiwa
+        menarik pegawai, sehingga perubahan klien pun memicu penarikan pegawai
+        yang tidak ada hubungannya — dan perubahan lokasi kerja tidak pernah
+        tersalin ke `hr.work.location` sampai cron berjalan.
+        """
+        nama = event or ''
+        if nama.startswith('client.'):
+            ringkas, error = config._pull_clients()
+            return ringkas, error, 'clients'
+        if nama.startswith('work_location.'):
+            # Cermin acuan diganti sekaligus, dan penyalinan ke `hr.work.location`
+            # ikut berjalan di dalamnya bila setelannya menyala.
+            ringkas, error = config._pull_reference_data()
+            return ringkas, error, 'work_locations'
+        # Pegawai juga menjadi jalur untuk peristiwa tanpa nama (pengirim lama)
+        # dan untuk nama yang belum dikenal: itu tarikan yang paling penting.
+        ringkas, error = config._pull_employees()
+        return ringkas, error, 'employees'
 
     # ------------------------------------------------------------------
     # Pembantu

@@ -370,20 +370,34 @@ class TestPresenlyApprovalIsVisible(TransactionCase):
                 '%s tidak menampilkan daftar level persetujuannya' % model_name,
             )
 
-            # Bagiannya tidak boleh disembunyikan lagi: menyembunyikannya saat
-            # alurnya kosong membuat keputusan yang tersimpan justru tidak terlihat.
+            # Tanpa alur, isinya benar-benar kosong, jadi seluruh bagiannya
+            # disembunyikan: judul kosong lebih membingungkan daripada tidak ada
+            # judul.
             kepala = re.search(r'<group string="Approval"[^>]*>', arch)
             self.assertTrue(kepala, '%s: kepala grup Approval tidak terbaca' % model_name)
-            self.assertNotIn(
-                'invisible', kepala.group(0),
-                '%s menyembunyikan seluruh bagian Approval di formnya' % model_name,
+            self.assertIn(
+                'not approval_has_workflow', kepala.group(0),
+                '%s menampilkan bagian Approval walau tidak ada alurnya' % model_name,
             )
 
-            # Kolom keputusan pada pengajuannya sendiri harus ikut ditampilkan.
-            for kolom in KOLOM_KEPUTUSAN[model_name][:1]:
-                self.assertIn(
+            # Ringkasan alur dan kolom keputusan tidak ditampilkan lagi: yang
+            # dibaca orang di form hanya rangkaian langkahnya. Datanya tetap ada
+            # di model, jadi yang diperiksa di sini adalah tampilannya.
+            for kolom in ('approval_flow_status', 'approval_current_level',
+                          'approval_total_levels', 'approval_waiting_for'):
+                self.assertNotIn(
                     'name="%s"' % kolom, arch,
-                    '%s tidak menampilkan kolom keputusan %s' % (model_name, kolom),
+                    '%s masih menampilkan %s; bagian Persetujuan seharusnya hanya '
+                    'rangkaian langkahnya' % (model_name, kolom),
+                )
+            # `rejection_reason` dikecualikan: ia juga kolom pada tiap langkah,
+            # dan keterangan per langkah itu bagian dari rangkaiannya.
+            for kolom in KOLOM_KEPUTUSAN[model_name]:
+                if kolom == 'rejection_reason':
+                    continue
+                self.assertNotIn(
+                    'name="%s"' % kolom, arch,
+                    '%s masih menampilkan kolom keputusan %s' % (model_name, kolom),
                 )
 
 

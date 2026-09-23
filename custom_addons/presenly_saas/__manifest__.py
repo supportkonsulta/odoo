@@ -1,6 +1,6 @@
 {
     'name': 'Presenly SaaS',
-    'version': '19.0.1.13.0',
+    'version': '19.0.2.0.0',
     'category': 'Productivity',
     'summary': 'Langganan Presenly SaaS untuk instalasi Odoo ini',
     'description': """
@@ -34,7 +34,7 @@ Kebijakan produk: full access, tanpa gating fitur per paket.
     # terpisah `presenly_saas_hr`, supaya modul langganan ini tidak memaksa
     # pemasangan HR — beserta `resource`, `mail`, dan `phone_validation` yang
     # ikut terbawa — pada instalasi yang tidak membutuhkannya.
-    'depends': ['base', 'web'],
+    'depends': ['base', 'web', 'mail'],
     'data': [
         'security/presenly_saas_security.xml',
         'security/ir.model.access.csv',
@@ -52,6 +52,7 @@ Kebijakan produk: full access, tanpa gating fitur per paket.
         # harus dimuat SETELAHNYA, kalau tidak `parent="menu_presenly_saas_root"`
         # tidak ditemukan.
         'views/presenly_saas_menus.xml',
+        'views/presenly_saas_reconciliation_views.xml',
         'views/presenly_saas_reference_menus.xml',
         # Settings native memakai action dari menus, dan form langganan memakai
         # action settings, jadi urutannya harus begini.

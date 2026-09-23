@@ -104,6 +104,21 @@ class PresenlySaasMirrorMixin(models.AbstractModel):
         ]
         return self._mirror_write(company, rows, domain=domain)
 
+    def unlink(self):
+        """Hapus lampiran bersama barisnya.
+
+        `ir.attachment` tidak ikut terhapus bersama record yang ditunjuknya, dan
+        cermin berperiode diganti per rentang setiap kali ditarik — jadi tanpa ini
+        setiap penarikan meninggalkan lampiran yang menunjuk baris yang sudah
+        tidak ada. Akibatnya bukan sekadar sampah: penampil lampiran Odoo menolak
+        berkas yang record-nya hilang, dan berkasnya tampil kosong.
+        """
+        lampiran = self.mapped('attachment_id') if 'attachment_id' in self._fields else self.browse()
+        hasil = super().unlink()
+        if lampiran:
+            lampiran.unlink()
+        return hasil
+
     @api.model
     def _mirror_upsert(self, company, rows):
         """Tambahkan atau perbarui baris, **tanpa menghapus apa pun**.
