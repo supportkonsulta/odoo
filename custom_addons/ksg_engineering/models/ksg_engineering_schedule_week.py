@@ -1,6 +1,6 @@
 """Kalender Minggu per Project (FR-011)."""
 
-from odoo import models, fields
+from odoo import models, fields, api
 
 
 class KsgEngineeringScheduleWeek(models.Model):
@@ -20,6 +20,10 @@ class KsgEngineeringScheduleWeek(models.Model):
         'Nomor minggu harus unik per project.',
     )
 
+    @api.depends('no_minggu', 'tanggal_mulai', 'tanggal_selesai')
     def _compute_display_name(self):
         for rec in self:
-            rec.display_name = f"Minggu {rec.no_minggu} ({rec.tanggal_mulai} - {rec.tanggal_selesai})"
+            if rec.tanggal_mulai and rec.tanggal_selesai:
+                rec.display_name = f"Minggu {rec.no_minggu} ({rec.tanggal_mulai.strftime('%d %b %y')} - {rec.tanggal_selesai.strftime('%d %b %y')})"
+            else:
+                rec.display_name = f"Minggu {rec.no_minggu}"

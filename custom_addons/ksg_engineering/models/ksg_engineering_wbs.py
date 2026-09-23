@@ -48,10 +48,9 @@ class KsgEngineeringWbs(models.Model):
         string='Bobot (%)', compute='_compute_bobot',
         store=True, digits=(5, 2), tracking=True)
 
-    # Periode minggu (FR-004) - Auto Computed
+    # Periode minggu (FR-004) - Manual selection
     periode_minggu_ids = fields.Many2many(
-        'ksg.engineering.schedule.week', string='Periode Minggu',
-        compute='_compute_periode_minggu', store=True)
+        'ksg.engineering.schedule.week', string='Periode Minggu', tracking=True)
 
     # Progress (FR-004, FR-010)
     planned_progress_mingguan = fields.Float(
@@ -101,19 +100,6 @@ class KsgEngineeringWbs(models.Model):
     # ==================================================================
     # COMPUTES
     # ==================================================================
-
-    @api.depends('tanggal_mulai', 'tanggal_selesai', 'project_id.schedule_week_ids')
-    def _compute_periode_minggu(self):
-        """Otomatis mencari minggu yang bersinggungan dengan tanggal pelaksanaan WBS."""
-        for rec in self:
-            if not rec.tanggal_mulai or not rec.tanggal_selesai or not rec.project_id:
-                rec.periode_minggu_ids = [(5, 0, 0)]
-                continue
-                
-            weeks = rec.project_id.schedule_week_ids.filtered(
-                lambda w: (w.tanggal_mulai <= rec.tanggal_selesai and w.tanggal_selesai >= rec.tanggal_mulai)
-            )
-            rec.periode_minggu_ids = [(6, 0, weeks.ids)]
 
     @api.depends('nilai_pekerjaan', 'project_id.nilai_kontrak_terkini')
     def _compute_bobot(self):

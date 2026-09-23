@@ -68,11 +68,12 @@
                     </group>
                     <notebook>
                         <page string="Periode Minggu">
-                            <div class="text-muted mb-2">
-                                Otomatis terisi berdasarkan Tanggal Mulai dan Tanggal Selesai pekerjaan.
+                            <div class="alert alert-info mb-2" role="alert">
+                                Pilih minggu-minggu (dari Master Schedule) dimana pekerjaan ini akan dilaksanakan. 
+                                Bobot Rencana (%) akan didistribusikan secara merata ke minggu-minggu yang dipilih.
                             </div>
                             <field name="periode_minggu_ids" widget="many2many_tags"
-                                   readonly="1" force_save="1"/>
+                                   domain="[('project_id', '=', project_id)]"/>
                         </page>
                         <page string="Sub-Pekerjaan (WBS Anak)">
                             <div class="text-muted mb-2">

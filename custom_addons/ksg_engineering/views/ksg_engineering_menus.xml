@@ -77,10 +77,24 @@
     </record>
 
     <!-- Schedule Weeks -->
+    <record id="view_schedule_week_tree" model="ir.ui.view">
+        <field name="name">ksg.engineering.schedule.week.list</field>
+        <field name="model">ksg.engineering.schedule.week</field>
+        <field name="arch" type="xml">
+            <list editable="bottom" default_order="project_id, no_minggu" string="Kalender Minggu">
+                <field name="project_id" string="Nama Proyek"/>
+                <field name="no_minggu" string="Minggu Ke-"/>
+                <field name="tanggal_mulai" string="Tanggal Mulai"/>
+                <field name="tanggal_selesai" string="Tanggal Selesai"/>
+            </list>
+        </field>
+    </record>
+
     <record id="action_engineering_schedule_weeks" model="ir.actions.act_window">
         <field name="name">Kalender Minggu</field>
         <field name="res_model">ksg.engineering.schedule.week</field>
         <field name="view_mode">list</field>
+        <field name="view_id" ref="view_schedule_week_tree"/>
     </record>
 
     <!-- ============================================================ -->
