@@ -29,6 +29,51 @@ class HrEmployee(models.Model):
              'has not been pulled yet is refused rather than saved, because an '
              'unmatchable number would make the next sync create a duplicate.',
     )
+    # ------------------------------------------------------------------
+    # Kolom yang datang dari Presenly dan tidak punya padanan native di Odoo.
+    # Semuanya milik Presenly: diterapkan saat tarikan, tidak pernah dikirim
+    # balik, dan perbedaannya ikut dilaporkan.
+    #
+    # `presenly_role` sengaja hanya kolom biasa, BUKAN `res.groups`. Kalau peran
+    # dari aplikasi menjadi hak akses di Odoo, satu perubahan di sana bisa
+    # memberi orang izin yang tidak pernah disetujui siapa pun di sini. Peran itu
+    # dipakai untuk mencocokkan approver, bukan untuk memberi akses.
+    # ------------------------------------------------------------------
+    presenly_group = fields.Char(
+        string='SIK Group',
+        readonly=True,
+        help='Group as recorded in Presenly. Informational only.',
+    )
+    presenly_can_approve = fields.Boolean(
+        string='Can Approve (Presenly)', readonly=True,
+        help='Whether Presenly allows this employee to approve requests.',
+    )
+    presenly_role = fields.Char(
+        string='Presenly Role', readonly=True,
+        help='Role as recorded in Presenly. Deliberately not an Odoo group: it '
+             'never grants access here.',
+    )
+    presenly_shift = fields.Char(
+        string='Presenly Shift', readonly=True,
+        help='Shift as recorded in Presenly. Informational only.',
+    )
+
+    # PII. Dibatasi grup supaya hanya yang berhak membacanya, dan hanya terisi
+    # bila tarikan memang meminta `include_pii`.
+    presenly_no_npwp = fields.Char(
+        string='NPWP', readonly=True, groups='presenly_saas.group_presenly_saas_manager',
+    )
+    presenly_no_rekening = fields.Char(
+        string='Bank Account', readonly=True, groups='presenly_saas.group_presenly_saas_manager',
+    )
+    presenly_no_bpjs = fields.Char(
+        string='BPJS Kesehatan', readonly=True, groups='presenly_saas.group_presenly_saas_manager',
+    )
+    presenly_no_bpjs_kes = fields.Char(
+        string='BPJS Ketenagakerjaan', readonly=True,
+        groups='presenly_saas.group_presenly_saas_manager',
+    )
+
     presenly_source_updated_at = fields.Datetime(
         string='Changed in Presenly At',
         readonly=True,

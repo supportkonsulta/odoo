@@ -51,6 +51,9 @@ class PresenlySaasEmployee(models.Model):
     manager_nopeg = fields.Char(string='Manager Nopeg', index=True)
     manager_name = fields.Char(string='Manager')
 
+    shift_id = fields.Integer(string='Shift ID')
+    shift_name = fields.Char(string='Shift')
+
     internal_company_id = fields.Integer(string='Internal Company ID')
     internal_company_name = fields.Char(string='Internal Company')
 
@@ -101,6 +104,7 @@ class PresenlySaasEmployee(models.Model):
             return None
         role = row.get('role')
         manager = row.get('manager')
+        shift = row.get('shift')
         internal_company = row.get('internal_company')
         if not isinstance(internal_company, dict):
             internal_company = {}
@@ -121,6 +125,8 @@ class PresenlySaasEmployee(models.Model):
             'role_name': (role.get('name') if isinstance(role, dict) else None) or False,
             'manager_nopeg': (manager.get('nopeg') if isinstance(manager, dict) else None) or False,
             'manager_name': (manager.get('name') if isinstance(manager, dict) else None) or False,
+            'shift_id': int((shift or {}).get('id') or 0) if isinstance(shift, dict) else 0,
+            'shift_name': (shift.get('name') if isinstance(shift, dict) else None) or False,
             'internal_company_id': int(internal_company.get('id') or 0),
             'internal_company_name': internal_company.get('name') or False,
             'no_npwp': row.get('no_npwp') or False,
@@ -180,7 +186,15 @@ class PresenlySaasEmployee(models.Model):
                      # boleh kosong. Membandingkannya membuat setiap tarikan
                      # terlihat bentrok, dan pegawai yang bentrok tidak dikirim
                      # balik — pengiriman yang sah jadi ikut hilang.
-                     'bagian')
+                     # Kolom yang tadinya hanya ada di cermin, kini punya rumah
+                     # di `hr.employee`. Ruang nilainya sama dengan cermin, jadi
+                     # ikut dibandingkan dan bentroknya ikut dilaporkan.
+                     'bagian', 'grup', 'can_approve', 'role_name', 'shift_name')
+
+    # Kolom milik Presenly yang **tidak** dikirim balik. Perubahannya tetap
+    # dilaporkan kalau Odoo juga menyentuhnya, karena nilainya akan tertimpa —
+    # dan suntingan yang hilang tanpa jejak persis yang dihindari modul ini.
+    MILIK_PRESENLY = ('grup', 'can_approve', 'role_name', 'shift_name')
 
     # Kolom yang dikirim BALIK ke Presenly. `is_active` sengaja tidak ada di
     # sini: status aktif dimiliki Presenly, dan Odoo tidak pernah menulisnya.
@@ -203,6 +217,10 @@ class PresenlySaasEmployee(models.Model):
         # diterapkan lewat `_hr_values` tanpa ikut dibandingkan (lihat
         # `SHARED_FIELDS`).
         'bagian': 'job_title',
+        'grup': 'presenly_group',
+        'can_approve': 'presenly_can_approve',
+        'role_name': 'presenly_role',
+        'shift_name': 'presenly_shift',
     }
 
     @api.model
@@ -236,6 +254,23 @@ class PresenlySaasEmployee(models.Model):
         # Atasan dicari lewat nopeg, kunci yang sama dengan penautan pegawai.
         # Kalau atasannya belum tertaut di Odoo, dibiarkan kosong dan keadaannya
         # terlihat dari cermin — menebak dari nama akan salah orang.
+        # Kolom yang tidak punya padanan native di Odoo. Disimpan apa adanya:
+        # `role` sengaja BUKAN grup Odoo — kalau peran di aplikasi menjadi hak
+        # akses di sini, satu perubahan di sana bisa memberi orang izin yang tidak
+        # pernah disetujui siapa pun di Odoo.
+        nilai['presenly_group'] = employee.grup or False
+        nilai['presenly_can_approve'] = bool(employee.can_approve)
+        nilai['presenly_role'] = employee.role_name or False
+        nilai['presenly_shift'] = employee.shift_name or False
+
+        # PII hanya ditulis bila cermin memang memilikinya. Tarikan tanpa
+        # `include_pii` tidak memuat kolom ini, dan menulisnya sebagai kosong akan
+        # menghapus data yang sudah ada — bukan karena berubah, hanya karena tidak
+        # ditanyakan.
+        for kolom in ('no_npwp', 'no_rekening', 'no_bpjs', 'no_bpjs_kes'):
+            if employee[kolom]:
+                nilai['presenly_%s' % kolom] = employee[kolom]
+
         atasan = self._hr_oleh_nopeg(employee.manager_nopeg)
         if atasan:
             # Id, karena inilah bentuk yang ditulis ke database. Pembandingnya
@@ -410,6 +445,25 @@ class PresenlySaasEmployee(models.Model):
                       'Presenly value was kept. Review it in Odoo.',
                       name=hr.name or row.name, nopeg=row.nopeg)
                 )
+
+            # Kolom milik Presenly yang tidak ikut dikirim balik tidak terlihat
+            # oleh pemeriksaan di atas, yang hanya melihat kolom `PUSH_FIELDS`.
+            # Tanpa pemeriksaan ini, suntingan Odoo pada kolom seperti `grup` atau
+            # `presenly_role` tertimpa tanpa satu pun catatan.
+            for kolom_cermin in self.MILIK_PRESENLY:
+                if kolom_cermin not in presenly_beda:
+                    continue
+                dasar = snapshot.get(kolom_cermin)
+                sekarang = self._normalkan(
+                    kolom_cermin, hr[self.PUSH_TO_HR_FIELD[kolom_cermin]]
+                )
+                if (dasar or False) != (sekarang or False):
+                    summary['conflicts'].append(
+                        _('%(name)s (nopeg %(nopeg)s): %(field)s was changed on both '
+                          'sides; the Presenly value was kept.',
+                          name=hr.name or row.name, nopeg=row.nopeg,
+                          field=self.PUSH_TO_HR_FIELD[kolom_cermin])
+                    )
 
             values = self._hr_values(row)
             berubah = {

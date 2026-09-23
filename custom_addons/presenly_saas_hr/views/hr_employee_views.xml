@@ -23,6 +23,30 @@
                 <field name="presenly_saas_config_id"
                        readonly="1"
                        groups="presenly_saas.group_presenly_saas_manager"/>
+                <field name="presenly_group"
+                       readonly="1"
+                       groups="presenly_saas.group_presenly_saas_manager"/>
+                <field name="presenly_role"
+                       readonly="1"
+                       groups="presenly_saas.group_presenly_saas_manager"/>
+                <field name="presenly_shift"
+                       readonly="1"
+                       groups="presenly_saas.group_presenly_saas_manager"/>
+                <field name="presenly_can_approve"
+                       readonly="1"
+                       groups="presenly_saas.group_presenly_saas_manager"/>
+                <field name="presenly_no_npwp"
+                       readonly="1"
+                       groups="presenly_saas.group_presenly_saas_manager"/>
+                <field name="presenly_no_rekening"
+                       readonly="1"
+                       groups="presenly_saas.group_presenly_saas_manager"/>
+                <field name="presenly_no_bpjs"
+                       readonly="1"
+                       groups="presenly_saas.group_presenly_saas_manager"/>
+                <field name="presenly_no_bpjs_kes"
+                       readonly="1"
+                       groups="presenly_saas.group_presenly_saas_manager"/>
                 <field name="presenly_synced_values" invisible="1"/>
             </xpath>
         </field>

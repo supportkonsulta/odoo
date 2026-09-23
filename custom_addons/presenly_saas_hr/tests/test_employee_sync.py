@@ -699,3 +699,64 @@ class TestPresenlyEmployeeManager(TestPresenlyEmployeeSyncBase):
         self._tarik([self._bawahan('atasan-2')])
 
         self.assertEqual(bawahan.parent_id, self._hr('atasan-2'))
+
+
+class TestPresenlyEmployeeFullMapping(TestPresenlyEmployeeSyncBase):
+    """Kolom yang tadinya hanya ada di cermin kini punya rumah di `hr.employee`.
+
+    Arahnya sesuai kesepakatan: Presenly pemilik data kepegawaian, Odoo
+    mencerminkannya. Yang dijaga tes ini adalah dua keputusan yang mahal kalau
+    dilanggar — `role` bukan hak akses, dan PII tidak terhapus oleh tarikan yang
+    tidak memintanya.
+    """
+
+    def _tarik_lengkap(self, **overrides):
+        row = employee_row(shift={'id': 2, 'name': 'Normal 2'}, **overrides)
+        self._tarik([row])
+        return self._hr(row['nopeg'])
+
+    def test_kolom_tanpa_padanan_native_ikut_diterapkan(self):
+        hr = self._tarik_lengkap()
+
+        self.assertEqual(hr.presenly_group, 'Grup 1')
+        self.assertTrue(hr.presenly_can_approve)
+        self.assertEqual(hr.presenly_role, 'Supervisor')
+        self.assertEqual(hr.presenly_shift, 'Normal 2')
+
+    def test_role_adalah_kolom_biasa_bukan_hak_akses(self):
+        """Kalau peran dari aplikasi menjadi grup Odoo, satu perubahan di sana
+        bisa memberi orang izin yang tidak pernah disetujui siapa pun di Odoo."""
+        bidang = self.env['hr.employee']._fields['presenly_role']
+
+        self.assertEqual(
+            bidang.type, 'char',
+            'peran dari Presenly harus tetap kolom biasa, bukan relasi ke grup',
+        )
+
+    def test_bentrok_kolom_baru_dilaporkan(self):
+        hr = self._tarik_lengkap()
+        hr.write({'presenly_group': 'Grup dari Odoo'})
+
+        ringkas, _error = self._tarik([employee_row(
+            shift={'id': 2, 'name': 'Normal 2'}, grup='Grup dari Presenly',
+        )])
+
+        self.assertEqual(len(ringkas['conflicts']), 1)
+        self.assertEqual(hr.presenly_group, 'Grup dari Presenly', 'Presenly yang dipakai')
+
+    def test_pii_tidak_terhapus_tarikan_tanpa_include_pii(self):
+        """Tarikan yang tidak meminta PII tidak memuat kolomnya. Menulisnya
+        sebagai kosong akan menghapus data yang sudah ada — bukan karena berubah,
+        hanya karena tidak ditanyakan."""
+        hr = self._tarik_lengkap()
+        hr.write({'presenly_no_npwp': '09.123.456.7-890.000'})
+
+        # Tarikan berikutnya tanpa PII di payload.
+        self._tarik([employee_row(shift={'id': 2, 'name': 'Normal 2'})])
+
+        self.assertEqual(hr.presenly_no_npwp, '09.123.456.7-890.000')
+
+    def test_pii_terisi_bila_memang_dikirim(self):
+        hr = self._tarik_lengkap(no_npwp='09.999.888.7-777.000')
+
+        self.assertEqual(hr.presenly_no_npwp, '09.999.888.7-777.000')
