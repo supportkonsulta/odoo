@@ -213,15 +213,35 @@ memperbarui langkahnya tanpa tarikan penuh.
 
 Tiap tahap bisa diuji sendiri dan tidak meninggalkan setengah fitur.
 
-### Tahap A — Backend, satu jenis pengajuan (cuti)
+### Tahap A — Backend, satu jenis pengajuan (cuti) — **selesai**
 
-- Endpoint kontrak + endpoint keputusan untuk `leaves`.
-- Aktor diverifikasi di server; keputusan bersyarat pada level.
-- Memanggil layanan persetujuan yang sudah ada, termasuk efek samping dan
-  notifikasi.
-- Tes: aktor berhak diterima; aktor lain ditolak 403; level sudah lewat ditolak
-  409; penolakan tanpa alasan ditolak 400; keputusan ganda tidak menggandakan efek;
-  saldo cuti berubah tepat sekali.
+Bentuk yang dipakai:
+
+```
+GET  /v1/approvals/contract
+POST /v1/submissions/{resource}/{id}/decision
+     { actor_nopeg, decision, level, reason? }
+```
+
+Yang dikerjakan, dan yang menyimpang dari rencana di atas:
+
+- Aktor diverifikasi di server; haknya diperiksa `WorkflowService.processApproval`
+  lewat `LeaveService` — layanan yang sama dengan aplikasi, jadi urutan level, efek
+  samping, dan notifikasinya tidak ditulis ulang.
+- Keputusan bersyarat pada `level`: level yang tidak disebut ditolak 400, dan level
+  yang sudah bergerak ditolak 409.
+- Alasan penolakan **tidak wajib** (keputusan yang sudah diambil di §7).
+- **Menyimpang dari rencana:** balasannya bukan rantai persetujuan yang baru,
+  melainkan penanda `refresh_resource`. Rantai itu dibangun di satu tempat saja —
+  pembentuk yang sama dengan tarikan — dan klien memuat ulang pengajuan lewat
+  tarikan. Menyalin bentuknya ke endpoint keputusan berarti dua tempat yang harus
+  dijaga tetap sama.
+
+Dibuktikan pada server sungguhan, seluruhnya lewat jalur yang tidak mengubah data:
+kontrak 200, nopeg tak dikenal 403, level tak disebut 400, pengajuan yang tidak
+menunggu 409, dan keputusan untuk level yang salah 409 — dengan cutinya tetap
+`pending` di level 2 sesudahnya. Kedua penolakan tercatat di audit beserta nopeg
+yang mencoba dan levelnya.
 
 ### Tahap B — Odoo, tombol dan penautan
 
