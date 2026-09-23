@@ -1,24 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <!-- ============================================================ -->
-    <!-- Assignment Views (FR-012) -->
+    <!-- Assignment Views -->
     <!-- ============================================================ -->
 
+    <!-- List: Grouped by Project by default -->
     <record id="view_assignment_tree" model="ir.ui.view">
         <field name="name">ksg.engineering.assignment.list</field>
         <field name="model">ksg.engineering.assignment</field>
         <field name="arch" type="xml">
             <list editable="bottom">
                 <field name="project_id"/>
-                <field name="user_id"/>
-                <field name="peran"/>
-                <field name="tanggal_mulai_tugas"/>
-                <field name="tanggal_selesai_tugas"/>
-                <field name="active"/>
+                <field name="user_id" string="Nama Personel"/>
+                <field name="peran" string="Jabatan / Peran"/>
+                <field name="tanggal_mulai_tugas" string="Mulai Tugas" optional="show"/>
+                <field name="tanggal_selesai_tugas" string="Selesai Tugas" optional="show"/>
+                <field name="active" string="Aktif" widget="boolean_toggle"/>
             </list>
         </field>
     </record>
 
+    <!-- Form -->
     <record id="view_assignment_form" model="ir.ui.view">
         <field name="name">ksg.engineering.assignment.form</field>
         <field name="model">ksg.engineering.assignment</field>
@@ -26,15 +28,15 @@
             <form>
                 <sheet>
                     <group>
-                        <group>
+                        <group string="Penugasan">
                             <field name="project_id"/>
-                            <field name="user_id"/>
-                            <field name="peran"/>
+                            <field name="user_id" string="Nama Personel"/>
+                            <field name="peran" string="Jabatan / Peran"/>
                         </group>
-                        <group>
+                        <group string="Periode Tugas">
                             <field name="tanggal_mulai_tugas"/>
                             <field name="tanggal_selesai_tugas"/>
-                            <field name="active"/>
+                            <field name="active" widget="boolean_toggle"/>
                         </group>
                     </group>
                 </sheet>

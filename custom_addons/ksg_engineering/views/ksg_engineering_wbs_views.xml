@@ -1,24 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <!-- ============================================================ -->
-    <!-- WBS Views (FR-003) -->
+    <!-- WBS Views -->
     <!-- ============================================================ -->
 
-    <!-- Tree (hierarkis) -->
+    <!-- List: Grouped by Project -->
     <record id="view_wbs_tree" model="ir.ui.view">
         <field name="name">ksg.engineering.wbs.list</field>
         <field name="model">ksg.engineering.wbs</field>
         <field name="arch" type="xml">
-            <list>
+            <list default_order="project_id, parent_path"
+                  decoration-bf="not parent_id">
                 <field name="project_id"/>
+                <field name="parent_id" string="Induk" optional="show"/>
                 <field name="nama_pekerjaan"/>
-                <field name="parent_id"/>
-                <field name="nilai_pekerjaan"/>
-                <field name="bobot"/>
+                <field name="nilai_pekerjaan" string="Nilai (Rp)" sum="Total"/>
+                <field name="bobot" string="Bobot (%)" sum="Total"/>
                 <field name="tanggal_mulai"/>
                 <field name="tanggal_selesai"/>
-                <field name="planned_progress_kumulatif"/>
-                <field name="actual_progress_kumulatif"/>
+                <field name="planned_progress_kumulatif" string="Rencana (%)"/>
+                <field name="actual_progress_kumulatif" string="Realisasi (%)"/>
             </list>
         </field>
     </record>
@@ -30,23 +31,27 @@
         <field name="arch" type="xml">
             <form>
                 <sheet>
+                    <div class="oe_title mb-3">
+                        <label for="nama_pekerjaan" string="Nama Pekerjaan"/>
+                        <h1><field name="nama_pekerjaan" placeholder="Contoh: Pekerjaan Pondasi..."/></h1>
+                    </div>
                     <group>
                         <group string="Identitas">
                             <field name="project_id"/>
-                            <field name="parent_id" domain="[('project_id', '=', project_id)]"/>
-                            <field name="nama_pekerjaan"/>
+                            <field name="parent_id" string="Induk Pekerjaan"
+                                   domain="[('project_id', '=', project_id)]"/>
                             <field name="currency_id" invisible="1"/>
                         </group>
                         <group string="Nilai &amp; Bobot">
                             <field name="nilai_pekerjaan"/>
-                            <field name="bobot" readonly="1"/>
+                            <field name="bobot" readonly="1" string="Bobot Otomatis (%)"/>
                             <field name="volume"/>
                             <field name="satuan"/>
                             <field name="durasi"/>
                         </group>
                     </group>
                     <group>
-                        <group string="Periode">
+                        <group string="Periode Pelaksanaan">
                             <field name="tanggal_mulai"/>
                             <field name="tanggal_selesai"/>
                             <field name="otorisasi_luar_periode"
@@ -56,13 +61,16 @@
                                    groups="ksg_engineering.group_kepala_unit,base.group_system"/>
                         </group>
                         <group string="Progress">
-                            <field name="planned_progress_mingguan" readonly="1"/>
-                            <field name="planned_progress_kumulatif" readonly="1"/>
-                            <field name="actual_progress_kumulatif" readonly="1"/>
+                            <field name="planned_progress_mingguan" readonly="1" string="Rencana / Minggu (%)"/>
+                            <field name="planned_progress_kumulatif" readonly="1" string="Rencana Kumulatif (%)"/>
+                            <field name="actual_progress_kumulatif" readonly="1" string="Realisasi Kumulatif (%)"/>
                         </group>
                     </group>
                     <notebook>
                         <page string="Periode Minggu">
+                            <div class="text-muted mb-2">
+                                Pilih minggu-minggu dimana pekerjaan ini akan dilaksanakan.
+                            </div>
                             <field name="periode_minggu_ids" widget="many2many_tags"
                                    domain="[('project_id', '=', project_id)]"/>
                         </page>
@@ -70,8 +78,8 @@
                             <field name="child_ids" nolabel="1">
                                 <list>
                                     <field name="nama_pekerjaan"/>
-                                    <field name="nilai_pekerjaan"/>
-                                    <field name="bobot"/>
+                                    <field name="nilai_pekerjaan" sum="Total"/>
+                                    <field name="bobot" sum="Total (%)"/>
                                     <field name="tanggal_mulai"/>
                                     <field name="tanggal_selesai"/>
                                 </list>

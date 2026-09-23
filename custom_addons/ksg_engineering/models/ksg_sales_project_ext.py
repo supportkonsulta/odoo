@@ -31,13 +31,11 @@ class KsgSalesProjectExt(models.Model):
     # TODO: Pindahkan tipe/status ke ksg_sales saat modul Sales diupdate.
     # ------------------------------------------------------------------
     working_permit_ok = fields.Boolean(
-        string='Working Permit OK', compute='_compute_document_prerequisites',
-        store=True, tracking=True,
-        help='True jika Working Permit sudah dilengkapi.')
+        string='Working Permit OK', tracking=True,
+        help='Centang jika Working Permit sudah dilengkapi.')
     safety_induction_ok = fields.Boolean(
-        string='Safety Induction OK', compute='_compute_document_prerequisites',
-        store=True, tracking=True,
-        help='True jika Safety Induction sudah dilengkapi.')
+        string='Safety Induction OK', tracking=True,
+        help='Centang jika Safety Induction sudah dilengkapi.')
 
     # ------------------------------------------------------------------
     # Engineering One2many relations
@@ -92,20 +90,6 @@ class KsgSalesProjectExt(models.Model):
     # ==================================================================
     # COMPUTES
     # ==================================================================
-
-    @api.depends('checklist_dokumen_ids.name')
-    def _compute_document_prerequisites(self):
-        """Karena ksg.sales.document.checklist tidak punya field tipe & status,
-        kita cek berdasarkan nama dokumen (contains 'working permit' /
-        'safety induction'). Pendekatan ini bersifat sementara.
-        TODO: Sinkronkan dengan ksg_sales jika tipe/status ditambahkan."""
-        for rec in self:
-            checklist_names = rec.checklist_dokumen_ids.mapped('name')
-            lower_names = [n.lower() for n in checklist_names if n]
-            rec.working_permit_ok = any(
-                'working permit' in n for n in lower_names)
-            rec.safety_induction_ok = any(
-                'safety induction' in n for n in lower_names)
 
     @api.depends('bapbast_ids.state')
     def _compute_bapbast_approved(self):

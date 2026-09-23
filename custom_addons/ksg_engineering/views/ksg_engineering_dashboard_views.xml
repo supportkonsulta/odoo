@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <!-- ============================================================ -->
-    <!-- Dashboard Kanban (FR-001B, FR-002B) -->
+    <!-- Dashboard Kanban -->
     <!-- ============================================================ -->
 
     <record id="view_engineering_dashboard_kanban" model="ir.ui.view">
@@ -31,18 +31,18 @@
                                 <span t-if="record.working_permit_ok.raw_value"
                                       class="badge text-bg-success">WP OK</span>
                                 <span t-else=""
-                                      class="badge text-bg-danger">WP Missing</span>
+                                      class="badge text-bg-danger">WP Belum</span>
                                 <span t-if="record.safety_induction_ok.raw_value"
                                       class="badge text-bg-success">SI OK</span>
                                 <span t-else=""
-                                      class="badge text-bg-danger">SI Missing</span>
+                                      class="badge text-bg-danger">SI Belum</span>
                                 <span t-if="record.bapbast_approved.raw_value"
-                                      class="badge text-bg-primary">BAP/BAST</span>
+                                      class="badge text-bg-primary">BAP/BAST OK</span>
                             </div>
                             <div class="mt-2">
-                                <small>Planned: <field name="kurva_s_planned"/>%</small>
-                                <small> | Actual: <field name="kurva_s_actual"/>%</small>
-                                <small> | Var: <field name="kurva_s_variance"/>%</small>
+                                <small>Rencana: <field name="kurva_s_planned"/>%</small>
+                                <small> | Realisasi: <field name="kurva_s_actual"/>%</small>
+                                <small> | Selisih: <field name="kurva_s_variance"/>%</small>
                             </div>
                         </div>
                     </t>

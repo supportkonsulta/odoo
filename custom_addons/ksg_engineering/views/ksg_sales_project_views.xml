@@ -2,7 +2,6 @@
 <odoo>
     <!-- ============================================================ -->
     <!-- Inherit Form Project dari ksg_sales — tambah tab Engineering -->
-    <!-- External ID view Sales: ksg_sales.view_ksg_sales_project_form -->
     <!-- ============================================================ -->
     <record id="view_ksg_sales_project_engineering_tab" model="ir.ui.view">
         <field name="name">ksg.sales.project.form.engineering.tab</field>
@@ -10,85 +9,108 @@
         <field name="inherit_id" ref="ksg_sales.view_ksg_sales_project_form"/>
         <field name="arch" type="xml">
             <xpath expr="//notebook" position="inside">
-                <!-- Tab Engineering Overview -->
+
+                <!-- ===== Tab 1: Engineering Overview ===== -->
                 <page string="Engineering" name="engineering_tab">
                     <group>
-                        <group string="Prasyarat Dokumen">
-                            <field name="working_permit_ok" widget="boolean_toggle"/>
-                            <field name="safety_induction_ok" widget="boolean_toggle"/>
+                        <group string="Prasyarat Keselamatan (Wajib)">
+                            <div class="text-muted mb-2" colspan="2">
+                                Centang kedua item di bawah setelah dokumen keselamatan lengkap.
+                                Daily Report tidak bisa disubmit jika belum dicentang.
+                            </div>
+                            <field name="working_permit_ok" string="Working Permit Lengkap"/>
+                            <field name="safety_induction_ok" string="Safety Induction Lengkap"/>
                         </group>
-                        <group string="Status Engineering">
-                            <field name="bapbast_approved" readonly="1"/>
-                            <field name="notify_email_enabled"/>
+                        <group string="Status">
+                            <field name="bapbast_approved" readonly="1" string="BAP/BAST Disetujui"/>
+                            <field name="notify_email_enabled" string="Kirim Notifikasi Email"/>
                         </group>
                     </group>
-                    <group string="Kurva-S">
+                    <group string="Progress Proyek (Kurva-S)">
                         <group>
-                            <field name="kurva_s_planned"/>
-                            <field name="kurva_s_actual"/>
-                            <field name="kurva_s_variance"/>
+                            <field name="kurva_s_planned" string="Rencana (%)"/>
+                            <field name="kurva_s_actual" string="Realisasi (%)"/>
+                            <field name="kurva_s_variance" string="Selisih (%)"/>
                         </group>
                     </group>
-                    <group string="Dokumen Teknis">
-                        <field name="document_ids" widget="many2many_binary" nolabel="1"/>
-                    </group>
+                    <field name="kurva_s_planned" widget="kurva_s_chart" nolabel="1"/>
+                    <separator string="Dokumen Teknis Proyek"/>
+                    <field name="document_ids" widget="many2many_binary" nolabel="1"/>
                 </page>
 
-                <!-- Tab WBS -->
-                <page string="WBS" name="wbs_tab">
-                    <field name="wbs_ids" nolabel="1">
-                        <list>
-                            <field name="nama_pekerjaan"/>
-                            <field name="nilai_pekerjaan"/>
-                            <field name="bobot"/>
-                            <field name="tanggal_mulai"/>
-                            <field name="tanggal_selesai"/>
-                            <field name="planned_progress_kumulatif"/>
-                            <field name="actual_progress_kumulatif"/>
-                        </list>
-                    </field>
-                </page>
-
-                <!-- Tab Kalender Minggu -->
-                <page string="Kalender Minggu" name="schedule_tab">
-                    <button name="action_generate_calendar_weeks"
-                            string="Generate Kalender Minggu"
-                            type="object" class="btn-primary"
-                            groups="ksg_engineering.group_engineer,ksg_engineering.group_kepala_unit,base.group_system"/>
-                    <field name="schedule_week_ids" nolabel="1">
-                        <list>
-                            <field name="no_minggu"/>
-                            <field name="tanggal_mulai"/>
-                            <field name="tanggal_selesai"/>
-                        </list>
-                    </field>
-                </page>
-
-                <!-- Tab Assignment -->
-                <page string="Assignment" name="assignment_tab">
+                <!-- ===== Tab 2: Struktur Personel / Assignment ===== -->
+                <page string="Struktur Personel" name="assignment_tab">
+                    <div class="text-muted mb-2">
+                        Tentukan siapa saja yang ditugaskan pada proyek ini beserta perannya.
+                    </div>
                     <field name="assignment_ids" nolabel="1">
                         <list editable="bottom">
-                            <field name="user_id"/>
-                            <field name="peran"/>
-                            <field name="tanggal_mulai_tugas"/>
-                            <field name="tanggal_selesai_tugas"/>
-                            <field name="active"/>
+                            <field name="user_id" string="Nama Personel"/>
+                            <field name="peran" string="Jabatan / Peran"/>
+                            <field name="tanggal_mulai_tugas" string="Mulai Tugas" optional="show"/>
+                            <field name="tanggal_selesai_tugas" string="Selesai Tugas" optional="show"/>
+                            <field name="active" string="Aktif" widget="boolean_toggle"/>
                         </list>
                     </field>
                 </page>
 
-                <!-- Tab BAP/BAST -->
+                <!-- ===== Tab 3: WBS (Rincian Pekerjaan) ===== -->
+                <page string="WBS (Rincian Pekerjaan)" name="wbs_tab">
+                    <div class="text-muted mb-2">
+                        Buat rincian pekerjaan proyek. Klik "Tambah baris" untuk menambah item. Untuk sub-pekerjaan, isi kolom "Induk".
+                    </div>
+                    <field name="wbs_ids" nolabel="1">
+                        <list editable="bottom" default_order="parent_path">
+                            <field name="nama_pekerjaan" string="Nama Pekerjaan"/>
+                            <field name="parent_id" string="Induk"
+                                   domain="[('project_id', '=', parent.id)]"
+                                   optional="show"/>
+                            <field name="nilai_pekerjaan" string="Nilai (Rp)" sum="Total"/>
+                            <field name="bobot" string="Bobot (%)" sum="Total"/>
+                            <field name="tanggal_mulai"/>
+                            <field name="tanggal_selesai"/>
+                            <field name="planned_progress_kumulatif" string="Rencana (%)"/>
+                            <field name="actual_progress_kumulatif" string="Realisasi (%)"/>
+                            <field name="currency_id" column_invisible="1"/>
+                        </list>
+                    </field>
+                </page>
+
+                <!-- ===== Tab 4: Kalender Minggu ===== -->
+                <page string="Kalender Minggu" name="schedule_tab">
+                    <div class="mb-3">
+                        <button name="action_generate_calendar_weeks"
+                                string="Generate Kalender Minggu"
+                                type="object" class="btn-primary"
+                                groups="ksg_engineering.group_engineer,ksg_engineering.group_kepala_unit,base.group_system"
+                                confirm="Ini akan menghapus kalender minggu lama dan membuat ulang berdasarkan periode kontrak. Lanjutkan?"/>
+                        <span class="text-muted ms-2">Otomatis membagi periode kontrak menjadi minggu-minggu.</span>
+                    </div>
+                    <field name="schedule_week_ids" nolabel="1">
+                        <list>
+                            <field name="no_minggu" string="Minggu Ke-"/>
+                            <field name="tanggal_mulai"/>
+                            <field name="tanggal_selesai"/>
+                        </list>
+                    </field>
+                </page>
+
+                <!-- ===== Tab 5: BAP/BAST ===== -->
                 <page string="BAP/BAST" name="bapbast_tab">
                     <field name="bapbast_ids" nolabel="1">
                         <list>
-                            <field name="name"/>
+                            <field name="name" string="Nomor"/>
                             <field name="periode"/>
-                            <field name="state"/>
-                            <field name="approver_id"/>
-                            <field name="tanggal_approve"/>
+                            <field name="state" widget="badge"
+                                   decoration-info="state == 'draft'"
+                                   decoration-warning="state == 'waiting_approval'"
+                                   decoration-success="state == 'approved'"/>
+                            <field name="approver_id" string="Disetujui Oleh"/>
+                            <field name="tanggal_approve" string="Tgl Disetujui"/>
                         </list>
                     </field>
                 </page>
+
             </xpath>
         </field>
     </record>

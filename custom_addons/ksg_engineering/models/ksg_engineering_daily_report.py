@@ -46,12 +46,14 @@ class KsgEngineeringDailyReport(models.Model):
         for rec in self:
             if not rec.project_id.working_permit_ok:
                 raise ValidationError(
-                    'Tidak dapat submit Daily Report: Working Permit belum lengkap. '
-                    'Pastikan dokumen Working Permit sudah ada di checklist project.')
+                    'Tidak dapat submit Daily Report: Working Permit belum lengkap.\n\n'
+                    'Pastikan checkbox "Working Permit OK" sudah dicentang '
+                    'di tab Engineering pada form Project.')
             if not rec.project_id.safety_induction_ok:
                 raise ValidationError(
-                    'Tidak dapat submit Daily Report: Safety Induction belum lengkap. '
-                    'Pastikan dokumen Safety Induction sudah ada di checklist project.')
+                    'Tidak dapat submit Daily Report: Safety Induction belum lengkap.\n\n'
+                    'Pastikan checkbox "Safety Induction OK" sudah dicentang '
+                    'di tab Engineering pada form Project.')
             if not rec.line_ids:
                 raise ValidationError(
                     'Daily Report harus memiliki minimal satu detail pekerjaan.')
