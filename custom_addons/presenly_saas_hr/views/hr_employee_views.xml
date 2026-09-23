@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Kolom nopeg di form pegawai, supaya pegawai yang tidak berhasil
+        dicocokkan tarikan bisa ditautkan manual. Yang bisa melihat dan
+        mengisinya hanya manajer: menyunting nopeg berarti menautkan data
+        kepegawaian ke orang di sistem lain.
+    -->
+
+    <record id="view_employee_form_presenly" model="ir.ui.view">
+        <field name="name">hr.employee.form.inherit.presenly.saas.hr</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='job_title']" position="after">
+                <field name="presenly_nopeg"
+                       placeholder="e.g. iksg-rangga"
+                       groups="presenly_saas.group_presenly_saas_manager"/>
+                <field name="presenly_synced_at"
+                       readonly="1"
+                       groups="presenly_saas.group_presenly_saas_manager"/>
+                <field name="presenly_saas_config_id"
+                       readonly="1"
+                       groups="presenly_saas.group_presenly_saas_manager"/>
+                <field name="presenly_synced_values" invisible="1"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

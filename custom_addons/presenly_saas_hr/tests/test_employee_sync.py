@@ -527,3 +527,98 @@ class TestPresenlyEmployeeTrigger(TestPresenlyEmployeeSyncBase):
             self._jalankan_tertunda()
 
         self.assertEqual(terkirim, [])
+
+
+class TestPresenlyEmployeeManualLink(TestPresenlyEmployeeSyncBase):
+    """Nopeg yang diketik di form pegawai menautkan dan menerapkan datanya.
+
+    Ini bagian dari keputusan identitas persetujuan: nopeg adalah satu-satunya
+    kunci yang dipakai, jadi pegawai Odoo harus bisa ditautkan ke nopeg yang
+    benar walaupun tarikan tidak menemukannya sendiri.
+    """
+
+    def _cermin_belum_tertaut(self, nopeg, nama='rangga'):
+        """Baris cermin yang belum punya padanan `hr.employee`.
+
+        Dibuat langsung, bukan lewat tarikan: tarikan akan membuat sendiri
+        pegawainya, sehingga nopeg-nya sudah terpakai dan kasus yang mau diuji
+        tidak pernah terjadi. Keadaan ini nyata — cermin sudah memuat pegawai
+        sementara Odoo belum punya padanannya, misalnya karena pegawai di Odoo
+        dibuat lebih dulu dengan nomor yang keliru.
+        """
+        return self.env['presenly.saas.employee'].create({
+            'external_id': abs(hash(nopeg)) % 100000,
+            'nopeg': nopeg,
+            'name': nama,
+            'email': '%s@example.com' % nopeg,
+            'is_active': True,
+            'company_id': self.config.company_id.id,
+        })
+
+    def test_nopeg_yang_diketik_menautkan_dan_menerapkan_data(self):
+        cermin = self._cermin_belum_tertaut('uji-bebas')
+        hr = self.env['hr.employee'].create({'name': 'Pegawai Lokal'})
+
+        hr.write({'presenly_nopeg': 'uji-bebas'})
+
+        self.assertEqual(
+            hr.name, 'rangga',
+            'data cermin untuk nopeg itu langsung diterapkan',
+        )
+        self.assertEqual(
+            cermin.hr_employee_id, hr, 'cerminnya menunjuk balik ke pegawai ini',
+        )
+
+    def test_nopeg_saat_pembuatan_tidak_diperiksa(self):
+        """Pegawai Odoo boleh dibuat lebih dulu, sebelum cerminnya ada.
+
+        Tarikan berikutnya yang mencocokkannya lewat nopeg (lihat
+        `test_mencocokkan_pegawai_yang_sudah_ada_lewat_nopeg`). Kalau pembuatan
+        ikut diperiksa, alur yang sah itu jadi terblokir.
+        """
+        hr = self.env['hr.employee'].create({
+            'name': 'Pegawai Odoo Lebih Dulu', 'presenly_nopeg': 'uji-nanti',
+        })
+
+        self.assertEqual(hr.name, 'Pegawai Odoo Lebih Dulu')
+        self.assertEqual(hr.presenly_nopeg, 'uji-nanti')
+        self.assertFalse(
+            self.env['presenly.saas.employee'].search([('nopeg', '=', 'uji-nanti')]),
+            'belum ada cerminnya, dan itu bukan kesalahan',
+        )
+
+    def test_nopeg_yang_sudah_dipakai_pegawai_lain_ditolak(self):
+        """Dua pegawai dengan nopeg sama membuat sinkronisasi menolak menyentuh
+        keduanya, jadi nomor itu tidak boleh disimpan di sini."""
+        from odoo.exceptions import UserError
+
+        self._cermin_belum_tertaut('uji-rebutan')
+        pertama = self.env['hr.employee'].create({
+            'name': 'Pegawai Pertama', 'presenly_nopeg': 'uji-rebutan',
+        })
+        kedua = self.env['hr.employee'].create({'name': 'Pegawai Kedua'})
+
+        with self.assertRaises(UserError):
+            kedua.write({'presenly_nopeg': 'uji-rebutan'})
+        self.assertEqual(kedua.presenly_nopeg, False, 'nomornya tidak tersimpan')
+        self.assertEqual(pertama.presenly_nopeg, 'uji-rebutan')
+
+    def test_nopeg_yang_belum_ditarik_ditolak(self):
+        """Nopeg tanpa pasangan di cermin akan membuat duplikat saat tarikan
+        berikutnya, jadi penyimpanannya ditolak — bukan disimpan diam-diam."""
+        from odoo.exceptions import UserError
+
+        # Lewat `write`, bukan `create`: pemeriksaannya memang di situ — saat
+        # nopeg pegawai yang sudah ada diubah, bukan saat pegawai baru dibuat.
+        hr = self.env['hr.employee'].create({'name': 'Pegawai Lokal'})
+        with self.assertRaises(UserError):
+            hr.write({'presenly_nopeg': 'tidak-ada-di-cermin'})
+
+    def test_sinkronisasi_sendiri_tidak_memicu_penautan_ulang(self):
+        """Penulisan dari tarikan dilewati, supaya tidak berputar."""
+        self._tarik([employee_row()])
+        hr = self._hr('iksg-rangga')
+
+        # Menuliskan nopeg yang sama di dalam konteks sinkronisasi tidak melempar.
+        hr.with_context(presenly_skip_push=True).write({'presenly_nopeg': 'iksi-tidak-ada'})
+        self.assertEqual(hr.presenly_nopeg, 'iksi-tidak-ada')

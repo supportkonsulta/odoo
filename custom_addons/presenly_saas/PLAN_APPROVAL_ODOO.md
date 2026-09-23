@@ -68,18 +68,37 @@ Klien tidak boleh dipercaya menyatakan haknya sendiri.
 **Yang perlu diputuskan:** apakah nopeg cukup sebagai identitas, atau perlu email
 sebagai cadangan bila nopeg tidak ada di sisi Odoo?
 
-### 3.2 Approver bertipe manajer
+### 3.2 Approver yang bukan orang tertentu
 
-Pada data, approver bertipe `user` membawa id yang bisa dipetakan ke orang. Approver
-bertipe **atasan langsung tidak membawa nilai mentah** (lihat
-`test_external_approval.test.js`: *"atasan langsung tidak punya nilai mentah"*).
+Server mengenal **empat** tipe approver: `user`, `direct_manager`, `role`, dan
+`permission`. Yang dikirim sebagai orang **hanya `user`**.
 
-Artinya level bertipe manajer **tidak bisa dicocokkan ke pengguna Odoo** dari data
-yang ada sekarang.
+Untuk tiga tipe lainnya, payloadnya cuma `{ type: ..., value: null, user: null }`
+(lihat `test_external_approval.test.js`: *"atasan langsung tidak punya nilai
+mentah"*). Sebabnya berbeda-beda, dan itu yang membuatnya bukan sekadar pekerjaan
+pemetaan:
 
-**Yang perlu diputuskan:** apakah server akan menyelesaikan rantai manajer menjadi
-orang tertentu (perubahan di backend), atau level seperti itu cukup ditampilkan
-tetapi tidak bisa diputuskan dari Odoo.
+- **`direct_manager`** — siapa atasannya bergantung pada **pemohonnya**. Level 2
+  pada satu konfigurasi menunjuk orang yang berbeda untuk tiap pengajuan, jadi
+  "siapa approvernya" tidak bisa dikirim sebagai satu nilai.
+- **`role` dan `permission`** — yang berhak adalah **sekumpulan orang**, bukan satu
+  orang. Tidak ada satu orang pun yang bisa disebut sebagai approvernya.
+
+Konsekuensinya di Odoo: tombol **Setujui** pada level seperti ini tidak bisa
+ditampilkan ke satu pengguna tertentu berdasarkan data yang ada sekarang.
+
+**Yang perlu diputuskan** (belum dijawab): apakah
+
+- (a) server menyelesaikan `direct_manager` menjadi orangnya lalu mengirimkannya,
+      dan `role`/`permission` dipetakan ke grup Odoo — sehingga tombolnya muncul
+      untuk yang berhak; atau
+- (b) level seperti itu tetap ditampilkan tetapi hanya bisa diputuskan dari
+      aplikasi, sementara Odoo menangani level bertipe `user` saja.
+
+Saran: (a) untuk `direct_manager` karena penyelesaiannya jelas dan satu orang,
+tetapi (b) untuk `role`/`permission` — memetakan "siapa saja yang punya peran ini"
+ke grup Odoo menuntut data peran yang belum tentu sama di kedua sisi, dan salah
+petakan berarti menampilkan tombol kepada orang yang tidak berhak.
 
 ### 3.3 Hanya level berjalan, atau boleh melompat
 
@@ -209,14 +228,25 @@ Pengingat ke approver yang menunggu, dan tampilan "menunggu saya" di beranda Odo
 
 ---
 
-## 7. Yang perlu diputuskan sebelum mulai
+## 7. Keputusan
 
-1. Cukup nopeg sebagai identitas, atau perlu email sebagai cadangan?
-2. Level bertipe atasan langsung: diselesaikan jadi orang di server, atau tidak bisa
-   diputuskan dari Odoo?
-3. Hanya level berjalan, atau ada override admin terpisah?
-4. Alasan wajib untuk penolakan?
-5. Mulai dari cuti, atau ada jenis pengajuan yang lebih mendesak?
+Sudah dijawab:
+
+1. **Identitas: nopeg saja.** Tidak ada email sebagai cadangan.
+   Ikutannya sudah dikerjakan: kolom `Presenly Nopeg` di form pegawai kini bisa
+   diisi manual dan **menautkan sendiri** — data cermin untuk nopeg itu langsung
+   diterapkan. Nopeg yang belum pernah ditarik **ditolak**, dan nopeg yang sudah
+   dipegang pegawai lain juga ditolak, karena dua pegawai dengan nopeg sama
+   membuat sinkronisasi menolak menyentuh keduanya.
+2. **Approver selain tipe `user`: belum diputuskan.** Penjelasannya di §3.2.
+3. **Hanya level berjalan.** Tidak ada override admin di Odoo.
+4. **Alasan penolakan tidak wajib**, sama seperti di aplikasi. Kalau alasan
+   dikirim, ia diteruskan dan ditampilkan.
+5. **Mulai dari cuti**, lalu pengajuan lain yang bersifat pengajuan: lembur,
+   koreksi presensi, sertifikat medis, tukar shift.
+
+Yang masih menunggu jawaban hanya nomor 2. Tahap A dan B bisa dimulai tanpa itu,
+karena keduanya bekerja untuk level bertipe `user`.
 
 ---
 

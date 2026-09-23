@@ -2,6 +2,7 @@ import logging
 from functools import partial
 
 from odoo import _, api, fields, models
+from odoo.exceptions import UserError
 
 
 class HrEmployee(models.Model):
@@ -22,9 +23,11 @@ class HrEmployee(models.Model):
         string='Presenly Nopeg',
         index=True,
         copy=False,
-        help='Employee number from Presenly. This is the key the sync matches on, '
-             'so it is only ever written by the sync. Changing it by hand makes '
-             'the record unmatchable, and the next sync would create a duplicate.',
+        help='Employee number from Presenly, and the key the sync matches on. '
+             'Type one here to link an employee the sync could not match; the '
+             'mirror data for that nopeg is applied straight away. A nopeg that '
+             'has not been pulled yet is refused rather than saved, because an '
+             'unmatchable number would make the next sync create a duplicate.',
     )
     presenly_source_updated_at = fields.Datetime(
         string='Changed in Presenly At',
@@ -38,14 +41,69 @@ class HrEmployee(models.Model):
     @api.model_create_multi
     def create(self, values_list):
         employees = super().create(values_list)
+        # Nopeg saat pembuatan **tidak** diperiksa di sini, dan itu disengaja:
+        # pegawai Odoo boleh dibuat lebih dulu — bahkan sebelum tarikan pertama —
+        # lalu dicocokkan oleh tarikan lewat nopeg-nya. Memaksa cerminnya sudah ada
+        # akan memblokir alur yang sah itu.
+        #
+        # Pemeriksaannya ada di `write`, saat nopeg sebuah pegawai yang sudah ada
+        # **diubah**: di situlah kunci penghubungnya berpindah, dan di situ pula
+        # nomor yang salah atau sudah dipakai orang lain berbahaya.
         employees._presenly_queue_push()
         return employees
 
     def write(self, values):
         result = super().write(values)
+        if 'presenly_nopeg' in values:
+            self._presenly_link_from_nopeg()
         if self._presenly_fields_touched(values):
             self._presenly_queue_push()
         return result
+
+    def _presenly_link_from_nopeg(self):
+        """Tautkan pegawai ini ke cermin Presenly lewat nopeg yang diketik pengguna.
+
+        Nopeg yang belum pernah ditarik **ditolak**, bukan disimpan. Nopeg adalah
+        kunci pencocokan: menyimpan nomor yang tidak punya pasangan di cermin
+        membuat pegawai ini tidak bisa dicocokkan, dan tarikan berikutnya akan
+        membuat duplikatnya.
+
+        Penulisan dari sinkronisasi sendiri dilewati — penanda `presenly_skip_push`
+        dipakai untuk itu, sama seperti di tempat lain yang menandai "ini bukan
+        suntingan pengguna".
+        """
+        if self.env.context.get('presenly_skip_push'):
+            return
+        Mirror = self.env['presenly.saas.employee'].sudo()
+        for employee in self:
+            nopeg = (employee.presenly_nopeg or '').strip()
+            if not nopeg:
+                continue
+            cermin = Mirror.search([
+                ('nopeg', '=', nopeg), ('company_id', '=', employee.company_id.id),
+            ], limit=1) or Mirror.search([('nopeg', '=', nopeg)], limit=1)
+            if not cermin:
+                raise UserError(_(
+                    'No Presenly employee with nopeg %(nopeg)s has been pulled yet. '
+                    'Run "Pull Employees" first, then set the nopeg again.'
+                ) % {'nopeg': nopeg})
+            # Nopeg yang sudah dipegang pegawai lain tidak boleh dipakai di sini.
+            # Dua pegawai dengan nopeg sama membuat sinkronisasi menolak menyentuh
+            # keduanya, jadi menyimpannya justru mengunci data yang mau ditautkan.
+            lain = self.env['hr.employee'].sudo().with_context(active_test=False).search([
+                ('presenly_nopeg', '=', nopeg),
+                ('id', 'not in', employee.ids),
+            ], limit=1)
+            if lain:
+                raise UserError(_(
+                    'Nopeg %(nopeg)s is already used by %(other)s. Clear it there '
+                    'first, or link that employee instead.'
+                ) % {'nopeg': nopeg, 'other': lain.display_name})
+            # Sinkronisasi per perusahaan menautkan barisnya sendiri lewat nopeg,
+            # lalu menerapkan nilainya. Tidak ada jalan pintas di sini: jalur yang
+            # dipakai adalah jalur yang sama dengan tarikan biasa, supaya aturannya
+            # cuma satu.
+            cermin.with_context(presenly_skip_push=True)._sync_to_hr(cermin.company_id)
 
     def _presenly_fields_touched(self, values):
         """Apakah penulisan ini menyentuh kolom yang ikut disinkronkan?"""
