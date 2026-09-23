@@ -44,6 +44,13 @@ class PresenlySaasEmployee(models.Model):
     can_approve = fields.Boolean(string='Can Approve')
     role_name = fields.Char(string='Role')
 
+    # Atasan langsung, apa adanya dari payload. Inilah yang membuat level
+    # persetujuan bertipe `direct_manager` bisa dicocokkan ke pengguna Odoo:
+    # server tidak mengirim siapa atasannya (bergantung pemohon), tetapi tiap
+    # pegawai membawa atasannya sendiri.
+    manager_nopeg = fields.Char(string='Manager Nopeg', index=True)
+    manager_name = fields.Char(string='Manager')
+
     internal_company_id = fields.Integer(string='Internal Company ID')
     internal_company_name = fields.Char(string='Internal Company')
 
@@ -93,6 +100,7 @@ class PresenlySaasEmployee(models.Model):
         if not isinstance(row, dict) or not row.get('id'):
             return None
         role = row.get('role')
+        manager = row.get('manager')
         internal_company = row.get('internal_company')
         if not isinstance(internal_company, dict):
             internal_company = {}
@@ -111,6 +119,8 @@ class PresenlySaasEmployee(models.Model):
             'birth_place': row.get('birth_place') or False,
             'can_approve': bool(row.get('can_approve')),
             'role_name': (role.get('name') if isinstance(role, dict) else None) or False,
+            'manager_nopeg': (manager.get('nopeg') if isinstance(manager, dict) else None) or False,
+            'manager_name': (manager.get('name') if isinstance(manager, dict) else None) or False,
             'internal_company_id': int(internal_company.get('id') or 0),
             'internal_company_name': internal_company.get('name') or False,
             'no_npwp': row.get('no_npwp') or False,
@@ -222,7 +232,25 @@ class PresenlySaasEmployee(models.Model):
         perusahaan = self._presenly_company(employee.internal_company_id)
         if perusahaan:
             nilai['company_id'] = perusahaan.id
+
+        # Atasan dicari lewat nopeg, kunci yang sama dengan penautan pegawai.
+        # Kalau atasannya belum tertaut di Odoo, dibiarkan kosong dan keadaannya
+        # terlihat dari cermin — menebak dari nama akan salah orang.
+        atasan = self._hr_oleh_nopeg(employee.manager_nopeg)
+        if atasan:
+            # Id, karena inilah bentuk yang ditulis ke database. Pembandingnya
+            # yang menyesuaikan diri — lihat `_beda_nilai`.
+            nilai['parent_id'] = atasan.id
         return nilai
+
+    @api.model
+    def _hr_oleh_nopeg(self, nopeg):
+        """Pegawai Odoo yang memegang nopeg ini, kalau ada."""
+        if not nopeg:
+            return self.env['hr.employee'].browse()
+        return self._hr_model().sudo().with_context(active_test=False).search(
+            [('presenly_nopeg', '=', nopeg)], limit=1
+        )
 
     @api.model
     def _presenly_company(self, client_id):
@@ -347,6 +375,22 @@ class PresenlySaasEmployee(models.Model):
             presenly_beda = self._beda(
                 self._mirror_values_for(row, self.SHARED_FIELDS), snapshot
             )
+            # Atasan tidak ada di `SHARED_FIELDS` karena ruang nilainya berbeda:
+            # cermin menyimpan nopeg, Odoo menyimpan id pegawai. Karena itu
+            # diperiksa terpisah — tanpa ini, perubahan atasan saja tidak pernah
+            # diterapkan, dan kelalaian seperti itu sulit terlihat.
+            if (snapshot.get('manager_nopeg') or '') != (row.manager_nopeg or ''):
+                presenly_beda['manager_nopeg'] = row.manager_nopeg or False
+                # Kalau atasan juga diubah di Odoo, yang di Odoo akan tertimpa.
+                # Itu diperlakukan sama dengan bentrok kolom lain: dilaporkan,
+                # bukan dihilangkan diam-diam.
+                if (snapshot.get('manager_nopeg') or '') and \
+                        (hr.parent_id.presenly_nopeg or '') not in ('', snapshot.get('manager_nopeg')):
+                    summary['conflicts'].append(
+                        _('%(name)s (nopeg %(nopeg)s): the manager was changed on both '
+                          'sides; the Presenly value was kept.',
+                          name=hr.name or row.name, nopeg=row.nopeg)
+                    )
 
             # Bila Presenly tidak berubah, suntingan yang dibuat di Odoo harus
             # dibiarkan utuh supaya bisa dikirim balik oleh `_push_to_presenly`.
@@ -370,7 +414,7 @@ class PresenlySaasEmployee(models.Model):
             values = self._hr_values(row)
             berubah = {
                 key: value for key, value in values.items()
-                if hr[key] != value
+                if self._beda_nilai(hr[key], value)
             }
             if berubah:
                 hr.with_context(presenly_skip_push=True).write(berubah)
@@ -394,7 +438,7 @@ class PresenlySaasEmployee(models.Model):
         """
         hr.with_context(presenly_skip_push=True).write({
             'presenly_source_updated_at': row.source_updated_at,
-            'presenly_synced_values': self._odoo_values(hr, self.SHARED_FIELDS),
+            'presenly_synced_values': self._snapshot_untuk(hr, row),
             'presenly_synced_at': fields.Datetime.now(),
         })
 
@@ -416,6 +460,34 @@ class PresenlySaasEmployee(models.Model):
             # snapshot selalu terlihat berbeda dan tarikan menulis berulang.
             return value.id or False
         return value or False
+
+    @staticmethod
+    def _beda_nilai(sekarang, baru):
+        """Apakah nilainya berbeda — termasuk untuk kolom relasi.
+
+        Membandingkan recordset dengan angka tidak bisa diandalkan: recordset
+        kosong lolos begitu saja, yang terisi melempar, dan gejalanya hanya
+        muncul saat nilainya benar-benar berubah. Karena itu relasinya
+        dibandingkan lewat id — bentuk yang sama dengan yang ditulis ke database.
+        """
+        if hasattr(sekarang, 'ids') or hasattr(baru, 'ids'):
+            id_sekarang = sekarang.id if hasattr(sekarang, 'ids') else (sekarang or False)
+            id_baru = baru.id if hasattr(baru, 'ids') else (baru or False)
+            return (id_sekarang or False) != (id_baru or False)
+        return sekarang != baru
+
+    @api.model
+    def _snapshot_untuk(self, hr, row):
+        """Nilai yang disepakati kedua sisi, termasuk atasan.
+
+        Atasan ikut disimpan walaupun bukan kolom bersama: tanpa itu, setiap
+        pemeriksaan akan mengira atasannya baru berubah dan menimpanya terus —
+        termasuk menimpa atasan yang sengaja diubah orang di Odoo.
+        """
+        return dict(
+            self._odoo_values(hr, self.SHARED_FIELDS),
+            manager_nopeg=row.manager_nopeg or False,
+        )
 
     @api.model
     def _odoo_values(self, hr, keys):
@@ -459,6 +531,8 @@ class PresenlySaasEmployee(models.Model):
     def _push_employee(self, client, hr, summary):
         """Kirim satu pegawai ke Presenly. Galat satu pegawai tidak menghentikan
         pegawai lain."""
+        # Baris cerminnya diperlukan untuk menuliskan snapshot yang utuh.
+        row = self.sudo().search([('hr_employee_id', '=', hr.id)], limit=1)
         berubah = self._changed_fields(hr)
         if not berubah:
             summary['unchanged'] += 1
@@ -477,7 +551,7 @@ class PresenlySaasEmployee(models.Model):
         hr.with_context(presenly_skip_push=True).write({
             # Snapshot penuh, bukan hanya yang tadi dikirim: tanpa itu, kolom
             # lain yang kebetulan berbeda akan terus terlihat sebagai perubahan.
-            'presenly_synced_values': self._odoo_values(hr, self.SHARED_FIELDS),
+            'presenly_synced_values': self._snapshot_untuk(hr, row),
             'presenly_source_updated_at': parse_datetime(data.get('updated_at')),
             'presenly_synced_at': fields.Datetime.now(),
         })

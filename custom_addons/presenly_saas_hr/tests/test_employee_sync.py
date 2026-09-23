@@ -622,3 +622,80 @@ class TestPresenlyEmployeeManualLink(TestPresenlyEmployeeSyncBase):
         # Menuliskan nopeg yang sama di dalam konteks sinkronisasi tidak melempar.
         hr.with_context(presenly_skip_push=True).write({'presenly_nopeg': 'iksi-tidak-ada'})
         self.assertEqual(hr.presenly_nopeg, 'iksi-tidak-ada')
+
+
+class TestPresenlyEmployeeManager(TestPresenlyEmployeeSyncBase):
+    """Atasan langsung dari Presenly, untuk mencocokkan level `direct_manager`.
+
+    Server tidak mengirim siapa atasan seorang pemohon — itu bergantung pada
+    pemohonnya. Tetapi tiap pegawai membawa atasannya sendiri di payload, jadi
+    hubungannya disalin dari sana. Dengan begitu level persetujuan bertipe atasan
+    langsung bisa dicocokkan ke pengguna Odoo tanpa aturan baru.
+    """
+
+    def _bawahan(self, manager_nopeg, nopeg='bawahan-1'):
+        return employee_row(
+            id=12, nopeg=nopeg, name='Bawahan',
+            manager={'id': 11, 'nopeg': manager_nopeg, 'name': 'Atasan'},
+        )
+
+    def test_atasan_diterapkan_dari_cermin(self):
+        self._tarik([employee_row(id=11, nopeg='atasan-1', name='Atasan', manager=None)])
+        atasan = self._hr('atasan-1')
+
+        self._tarik([self._bawahan('atasan-1')])
+
+        self.assertEqual(
+            self._hr('bawahan-1').parent_id, atasan,
+            'atasan dari payload disalin ke pegawai native',
+        )
+
+    def test_atasan_yang_belum_tertaut_dibiarkan_kosong(self):
+        """Menebak dari nama akan salah orang, jadi dibiarkan kosong."""
+        self._tarik([self._bawahan('atasan-yang-belum-ada')])
+
+        self.assertFalse(self._hr('bawahan-1').parent_id)
+
+    def test_suntingan_atasan_di_odoo_tidak_ditimpa(self):
+        """Selama atasannya tidak berubah di Presenly, yang di Odoo dibiarkan.
+
+        Sama seperti kolom lain: yang menimpa suntingan pengguna tanpa jejak
+        adalah kelalaian yang justru dihindari di modul ini.
+        """
+        self._tarik([employee_row(id=11, nopeg='atasan-1', name='Atasan', manager=None)])
+        self._tarik([self._bawahan('atasan-1')])
+        bawahan = self._hr('bawahan-1')
+
+        atasan_pilihan = self.env['hr.employee'].create({'name': 'Atasan Pilihan HR'})
+        bawahan.write({'parent_id': atasan_pilihan.id})
+
+        # Tarikan berikutnya, isi Presenly tidak berubah.
+        self._tarik([employee_row(id=11, nopeg='atasan-1', name='Atasan', manager=None)])
+        self._tarik([self._bawahan('atasan-1')])
+
+        self.assertEqual(
+            self._hr('bawahan-1').parent_id, atasan_pilihan,
+            'suntingan atasan di Odoo tidak boleh ditimpa selama Presenly tidak berubah',
+        )
+
+    def test_atasan_yang_berubah_di_presenly_diterapkan(self):
+        self._tarik([employee_row(id=11, nopeg='atasan-1', name='Atasan', manager=None)])
+        self._tarik([employee_row(id=13, nopeg='atasan-2', name='Atasan Baru', manager=None)])
+        self._tarik([self._bawahan('atasan-1')])
+
+        self._tarik([self._bawahan('atasan-2')])
+
+        self.assertEqual(self._hr('bawahan-1').parent_id, self._hr('atasan-2'))
+
+    def test_perubahan_atasan_saja_tetap_diterapkan(self):
+        """Tanpa pemeriksaan terpisah, perubahan atasan saja tidak akan pernah
+        diterapkan — karena atasan tidak termasuk kolom bersama."""
+        self._tarik([employee_row(id=11, nopeg='atasan-1', name='Atasan', manager=None)])
+        self._tarik([self._bawahan('atasan-1')])
+        bawahan = self._hr('bawahan-1')
+        self.assertEqual(bawahan.parent_id, self._hr('atasan-1'))
+
+        self._tarik([employee_row(id=13, nopeg='atasan-2', name='Atasan Baru', manager=None)])
+        self._tarik([self._bawahan('atasan-2')])
+
+        self.assertEqual(bawahan.parent_id, self._hr('atasan-2'))
