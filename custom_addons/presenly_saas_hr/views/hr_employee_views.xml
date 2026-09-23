@@ -47,6 +47,19 @@
                 <field name="presenly_no_bpjs_kes"
                        readonly="1"
                        groups="presenly_saas.group_presenly_saas_manager"/>
+                <field name="presenly_schedule_ids"
+                       readonly="1"
+                       groups="presenly_saas.group_presenly_saas_manager">
+                    <list create="false" edit="false" delete="false">
+                        <field name="day_of_week"/>
+                        <field name="is_workday"/>
+                        <field name="location_name"/>
+                        <field name="shift_name"/>
+                        <field name="status" optional="show"/>
+                        <field name="valid_from" optional="hide"/>
+                        <field name="valid_until" optional="hide"/>
+                    </list>
+                </field>
                 <field name="presenly_synced_values" invisible="1"/>
             </xpath>
         </field>

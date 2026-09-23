@@ -6,3 +6,4 @@ from . import test_reconciliation
 from . import test_config_ownership
 from . import test_approval_decide
 from . import test_placement_conflict
+from . import test_weekly_schedule
