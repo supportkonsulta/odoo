@@ -30,6 +30,7 @@ Rincian pemetaan kolom dan aturan konflik ada di `PLAN_HR_SYNC.md`.
         'data/ir_cron_data.xml',
         'views/presenly_saas_employee_views.xml',
         'views/presenly_saas_employee_menus.xml',
+        'views/presenly_saas_approval_hr_views.xml',
         'views/hr_employee_views.xml',
         'views/res_config_settings_hr_views.xml',
         # Form langganan memakai action dari berkas atas, jadi dimuat terakhir.

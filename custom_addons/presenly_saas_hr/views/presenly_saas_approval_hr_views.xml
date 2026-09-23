@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Tombol keputusan pada form pengajuan cuti. Hanya muncul untuk pengguna
+        yang menurut langkah persetujuan berhak memutuskan level yang berjalan,
+        dan hanya kalau arah tulisnya dinyalakan di koneksi.
+
+        Tombol ini kenyamanan, bukan pengaman: server tetap memeriksa haknya, dan
+        penolakannya ditampilkan.
+    -->
+
+    <record id="view_presenly_saas_leave_form_decide" model="ir.ui.view">
+        <field name="name">presenly.saas.leave.form.decide</field>
+        <field name="model">presenly.saas.leave</field>
+        <field name="inherit_id" ref="presenly_saas.view_presenly_saas_leave_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <header>
+                    <button name="action_presenly_approve"
+                            type="object"
+                            string="Approve"
+                            class="btn-primary"
+                            invisible="not presenly_can_decide"/>
+                    <button name="action_presenly_reject"
+                            type="object"
+                            string="Reject"
+                            invisible="not presenly_can_decide"/>
+                    <field name="presenly_can_decide" invisible="1"/>
+                    <field name="presenly_decidable" invisible="1"/>
+                    <field name="presenly_odoo_approver_id"
+                           readonly="1"
+                           invisible="not presenly_decidable"/>
+                </header>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

@@ -153,6 +153,22 @@ class PresenlySaasClient:
         """Kolom lokasi kerja yang boleh ditulis dari luar, menurut server."""
         return self._request('GET', '/v1/work-locations/writable-fields')['data']
 
+    def decide_submission(self, resource, submission_id, payload):
+        """Putuskan satu pengajuan: setuju atau tolak, pada level yang berjalan.
+
+        Aktornya disebutkan di badan permintaan karena satu kunci API mewakili
+        tenant, bukan orang. Haknya tetap diperiksa server.
+        """
+        return self._request(
+            'POST',
+            '/v1/submissions/%s/%d/decision' % (resource, int(submission_id)),
+            body=payload,
+        )
+
+    def get_approval_contract(self):
+        """Kontrak keputusan persetujuan menurut server."""
+        return self._request('GET', '/v1/approvals/contract')['data']
+
     def register_webhook(self, payload):
         """Daftarkan alamat penerima webhook milik instalasi ini."""
         return self._request('PUT', '/v1/webhooks', body=payload)
