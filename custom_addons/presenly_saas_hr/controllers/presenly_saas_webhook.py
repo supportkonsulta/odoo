@@ -70,10 +70,13 @@ class PresenlySaasWebhook(http.Controller):
         nopeg = payload.get('nopeg')
 
         if event == 'test.ping':
-            # Panggilan uji dari tombol Register: dijawab tanpa menarik apa pun.
-            # Sampai di sini berarti alamatnya terjangkau, tanda tangannya cocok,
-            # dan tokennya benar — itu saja yang dibuktikan panggilan ini.
-            config.sudo().write({'webhook_last_received_at': fields_now()})
+            # Panggilan uji dari tombol Register: dijawab tanpa menarik apa pun,
+            # dan **tanpa menulis apa pun**.
+            #
+            # Menulis di sini pernah membuat pendaftarannya gagal: panggilan uji
+            # datang saat transaksi pendaftaran belum commit, dan dua transaksi
+            # yang menulis baris konfigurasi yang sama berakhir serialization
+            # failure. Pembacaan tidak menimbulkan itu; penulisan iya.
             return self._json(200, {'received': True, 'test': True})
 
         try:

@@ -180,7 +180,14 @@ class PresenlySaasConfig(models.Model):
             }, timeout=5)
         except Exception as exc:  # noqa: BLE001 - dilaporkan, bukan dilempar
             return False, str(exc)
-        return jawab.status_code == 200, 'HTTP %s' % jawab.status_code
+        # 401 diterima sebagai "menjawab". Panggilan ini terjadi **sebelum**
+        # transaksi pendaftaran commit, jadi rahasia baru belum tersimpan di
+        # database dan tanda tangannya bisa ditolak walau semuanya benar. Yang
+        # dibuktikan 401 tetap berharga: alamatnya menjawab, dan tokennya dikenal
+        # — kalau tidak, jawabannya 404.
+        if jawab.status_code in (200, 401):
+            return True, 'HTTP %s' % jawab.status_code
+        return False, 'HTTP %s' % jawab.status_code
 
     def _webhook_callback_url(self):
         self.ensure_one()
@@ -254,8 +261,9 @@ class PresenlySaasConfig(models.Model):
         return self._notify(
             'success',
             _('Webhook registered and reachable'),
-            _('Presenly will call %(url)s when something changes there, and that '
-              'address answered the test just now.%(catatan)s', url=url, catatan=catatan),
+            _('Presenly will call %(url)s when something changes there. That address '
+              'answered the test just now (%(keterangan)s).%(catatan)s',
+              url=url, keterangan=keterangan, catatan=catatan),
         )
 
     def action_unregister_webhook(self):

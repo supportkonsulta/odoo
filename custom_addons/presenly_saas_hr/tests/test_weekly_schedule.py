@@ -161,3 +161,55 @@ class TestPresenlyWebhookBaseUrl(TransactionCase):
         kiriman = panggil.call_args[1]
         self.assertIn('X-Presenly-Signature', kiriman['headers'])
         self.assertEqual(kiriman['headers']['X-Presenly-Event'], 'test.ping')
+
+
+@tagged('post_install', '-at_install')
+class TestPresenlySelfCheckTolerance(TransactionCase):
+    """Uji-jangkau tidak boleh menjatuhkan pendaftarannya sendiri.
+
+    Panggilan uji terjadi sebelum transaksi pendaftaran commit, jadi rahasia baru
+    belum tersimpan dan tanda tangannya bisa ditolak walau semuanya benar. Yang
+    penting dibedakan: 401 berarti alamatnya menjawab dan tokennya dikenal,
+    sedangkan 404 berarti alamatnya menunjuk Odoo yang salah.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.config = cls.env['presenly.saas.config'].search([], limit=1)
+        cls.config.write({'enabled': True, 'active': True, 'webhook_secret': 'rahasia-uji'})
+
+    def _periksa(self, status):
+        import requests
+
+        with mock.patch.object(requests, 'post', return_value=mock.Mock(status_code=status)):
+            return self.config._webhook_self_check('http://contoh.test:8069/x')
+
+    def test_200_dianggap_berhasil(self):
+        berhasil, keterangan = self._periksa(200)
+        self.assertTrue(berhasil)
+        self.assertEqual(keterangan, 'HTTP 200')
+
+    def test_401_tetap_dianggap_menjawab(self):
+        """Rahasia baru belum commit; tanda tangan ditolak, alamatnya tidak."""
+        berhasil, keterangan = self._periksa(401)
+        self.assertTrue(berhasil)
+        self.assertEqual(keterangan, 'HTTP 401')
+
+    def test_404_dianggap_gagal_karena_tokennya_tidak_dikenal(self):
+        berhasil, keterangan = self._periksa(404)
+        self.assertFalse(berhasil)
+        self.assertEqual(keterangan, 'HTTP 404')
+
+    def test_panggilan_uji_tidak_menulis_baris_konfigurasi(self):
+        """Penulisan itu yang dulu membuat dua transaksi bentrok."""
+        import inspect
+
+        from odoo.addons.presenly_saas_hr.controllers import presenly_saas_webhook as modul
+
+        sumber = inspect.getsource(modul.PresenlySaasWebhook.employee_webhook)
+        cabang = sumber.split("event == 'test.ping'")[1].split('return')[0]
+        self.assertNotIn(
+            'write', cabang,
+            'cabang test.ping tidak boleh menulis apa pun ke konfigurasi',
+        )
