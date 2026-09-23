@@ -67,7 +67,7 @@ class KsgEngineeringReportConsolidation(models.Model):
                          f'menunggu persetujuan Anda.')
 
     def action_approve(self):
-        """Supervisor menyetujui konsolidasi."""
+        """Supervisor menyetujui konsolidasi dan otomatis update Laporan Mingguan."""
         for rec in self:
             if rec.state != 'waiting_approval':
                 raise ValidationError(
@@ -75,10 +75,64 @@ class KsgEngineeringReportConsolidation(models.Model):
                     'yang bisa disetujui.')
             rec.state = 'approved'
             rec.catatan_revisi = False
-            # Mark activities as done
-            rec.activity_feedback(
-                act_type_xmlid='ksg_engineering.activity_pending_approval',
-                feedback='Konsolidasi disetujui.')
+            
+            # 1. Selesaikan activity
+            activities = self.env['mail.activity'].search([
+                ('res_model', '=', self._name),
+                ('res_id', '=', rec.id),
+                ('activity_type_id', '=', self.env.ref('ksg_engineering.activity_pending_approval', raise_if_not_found=False).id)
+            ])
+            for activity in activities:
+                activity.action_feedback(feedback='Konsolidasi disetujui.')
+                
+            # 2. OTOMATIS UPDATE LAPORAN MINGGUAN (Agar Kurva-S langsung bergerak)
+            if rec.periode_minggu_id:
+                WeeklyReport = self.env['ksg.engineering.weekly.report']
+                existing_weekly = WeeklyReport.search([
+                    ('project_id', '=', rec.project_id.id),
+                    ('periode_minggu_id', '=', rec.periode_minggu_id.id)
+                ], limit=1)
+                
+                if not existing_weekly:
+                    # Hitung planned progress dari WBS untuk minggu ini
+                    wbs_in_week = self.env['ksg.engineering.wbs'].search([
+                        ('project_id', '=', rec.project_id.id),
+                        ('periode_minggu_ids', 'in', [rec.periode_minggu_id.id]),
+                    ])
+                    planned = sum(wbs_in_week.mapped('planned_progress_mingguan'))
+                    existing_weekly = WeeklyReport.create({
+                        'project_id': rec.project_id.id,
+                        'periode_minggu_id': rec.periode_minggu_id.id,
+                        'planned_progress': planned,
+                        'state': 'done',
+                    })
+                
+                # Tambahkan konsolidasi ini ke weekly report
+                existing_weekly.consolidation_ids = [(4, rec.id)]
+                # Paksa recompute actual_progress
+                existing_weekly._compute_progress()
+                existing_weekly.project_id._compute_kurva_s()
+
+    def action_pull_daily_reports(self):
+        """Otomatis menarik daily report yang disubmit pada minggu yang dipilih."""
+        for rec in self:
+            if not rec.periode_minggu_id:
+                raise ValidationError("Pilih Periode Minggu terlebih dahulu.")
+                
+            daily_reports = self.env['ksg.engineering.daily.report'].search([
+                ('project_id', '=', rec.project_id.id),
+                ('state', '=', 'submitted'),
+                ('tanggal', '>=', rec.periode_minggu_id.tanggal_mulai),
+                ('tanggal', '<=', rec.periode_minggu_id.tanggal_selesai)
+            ])
+            
+            if not daily_reports:
+                raise ValidationError(
+                    f"Tidak ada Laporan Harian dengan status 'Submitted' "
+                    f"untuk periode {rec.periode_minggu_id.tanggal_mulai} s/d {rec.periode_minggu_id.tanggal_selesai}."
+                )
+                
+            rec.daily_report_ids = [(6, 0, daily_reports.ids)]
 
     def action_revisi(self):
         """Supervisor meminta revisi. RULE-05: wajib catatan_revisi."""
@@ -91,13 +145,22 @@ class KsgEngineeringReportConsolidation(models.Model):
                 raise ValidationError(
                     'Catatan revisi wajib diisi sebelum meminta revisi.')
             rec.state = 'revisi'
+            
+            # Selesaikan activity pending approval
+            activities = self.env['mail.activity'].search([
+                ('res_model', '=', self._name),
+                ('res_id', '=', rec.id),
+                ('activity_type_id', '=', self.env.ref('ksg_engineering.activity_pending_approval', raise_if_not_found=False).id)
+            ])
+            for activity in activities:
+                activity.action_feedback(feedback='Konsolidasi direvisi.')
+                
             # Notify pengawas
             rec.activity_schedule(
                 act_type_xmlid='ksg_engineering.activity_pending_approval',
                 user_id=rec.pengawas_id.id,
                 summary='Konsolidasi Perlu Revisi',
-                note=f'Konsolidasi dikembalikan untuk revisi. '
-                     f'Catatan: {rec.catatan_revisi}')
+                note=f'Konsolidasi dikembalikan untuk revisi. Catatan: {rec.catatan_revisi}')
 
     def action_reset_draft(self):
         """Reset ke draft (dari revisi)."""

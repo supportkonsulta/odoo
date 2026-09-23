@@ -27,6 +27,10 @@
         <field name="arch" type="xml">
             <form>
                 <header>
+                    <button name="action_pull_daily_reports" string="Tarik Laporan Harian"
+                            type="object" class="btn-info"
+                            invisible="state not in ('draft', 'revisi') or not periode_minggu_id"
+                            groups="ksg_engineering.group_pengawas,base.group_system"/>
                     <button name="action_ajukan" string="Ajukan ke Supervisor"
                             type="object" class="btn-primary"
                             invisible="state not in ('draft', 'revisi')"
@@ -67,9 +71,9 @@
                     </group>
                     <notebook>
                         <page string="Daily Reports yang Dikonsolidasi">
-                            <div class="text-muted mb-2"
+                            <div class="alert alert-info mb-2" role="alert"
                                  invisible="state not in ('draft', 'revisi')">
-                                Pilih daily reports yang sudah disubmit untuk dikonsolidasi.
+                                Klik tombol <strong>Tarik Laporan Harian</strong> di atas untuk otomatis memuat laporan pada periode minggu yang dipilih.
                             </div>
                             <field name="daily_report_ids" nolabel="1"
                                    widget="many2many"

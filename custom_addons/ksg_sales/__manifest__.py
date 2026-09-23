@@ -53,8 +53,8 @@
         "report/invoice_template.xml",
 
         "views/ksg_sales_invoice_views.xml",
-        "views/ksg_sales_views.xml",
         "views/ksg_sales_dashboard_views.xml",
+        "views/ksg_sales_views.xml",
     ],
 
     "installable": True,

@@ -81,12 +81,21 @@ class KsgEngineeringBapbast(models.Model):
                 raise ValidationError(
                     'Hanya BAP/BAST dengan status "Menunggu Approval" '
                     'yang bisa disetujui.')
+            if not rec.signature_image:
+                raise ValidationError(
+                    'Tanda Tangan Digital wajib diisi sebelum BAP/BAST disetujui.')
+                    
             rec.write({
                 'state': 'approved',
                 'approver_id': self.env.user.id,
                 'tanggal_approve': fields.Datetime.now(),
             })
-            # Mark activities as done
-            rec.activity_feedback(
-                act_type_xmlid='ksg_engineering.activity_bapbast_approval',
-                feedback='BAP/BAST disetujui.')
+            
+            # Selesaikan activities
+            activities = self.env['mail.activity'].search([
+                ('res_model', '=', self._name),
+                ('res_id', '=', rec.id),
+                ('activity_type_id', '=', self.env.ref('ksg_engineering.activity_bapbast_approval', raise_if_not_found=False).id)
+            ])
+            for activity in activities:
+                activity.action_feedback(feedback='BAP/BAST disetujui.')

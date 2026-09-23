@@ -9,13 +9,10 @@ class KsgSalesProject(models.Model):
     _order = "id desc"
     _rec_name = "kode_proyek"
 
-    _sql_constraints = [
-        (
-            "kode_proyek_unique",
-            "unique(kode_proyek)",
-            "Kode Proyek harus unik.",
-        ),
-    ]
+    _unique_kode_proyek = models.Constraint(
+        "unique(kode_proyek)",
+        "Kode Proyek harus unik.",
+    )
 
     # =========================================================
     # IDENTITAS PROYEK

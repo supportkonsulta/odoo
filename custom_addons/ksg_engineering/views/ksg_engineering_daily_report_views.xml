@@ -56,8 +56,8 @@
                     </group>
                     <notebook>
                         <page string="Detail Pekerjaan Hari Ini">
-                            <div class="text-muted mb-2" invisible="state == 'submitted'">
-                                Isi pekerjaan yang dikerjakan hari ini. Pilih item WBS, masukkan jam dan progress.
+                            <div class="alert alert-info mb-2" role="alert" invisible="state == 'submitted'">
+                                Isi rincian pekerjaan yang dilakukan hari ini. Wajib mengisi progress (%) dan foto bukti di tab sebelah.
                             </div>
                             <field name="line_ids" nolabel="1"
                                    readonly="state == 'submitted'">
@@ -66,18 +66,18 @@
                                     <field name="wbs_id" string="Pekerjaan (WBS)"
                                            domain="[('project_id', '=', project_id)]"
                                            options="{'no_create': 1}"/>
-                                    <field name="jam_mulai" widget="float_time" string="Jam Mulai"/>
-                                    <field name="jam_selesai" widget="float_time" string="Jam Selesai"/>
+                                    <field name="jam_mulai" widget="float_time" string="Mulai"/>
+                                    <field name="jam_selesai" widget="float_time" string="Selesai"/>
                                     <field name="progress" string="Progress (%)"/>
-                                    <field name="deskripsi" string="Keterangan"/>
+                                    <field name="deskripsi" string="Keterangan" optional="show"/>
                                     <field name="personel_ids" widget="many2many_tags"
-                                           string="Pekerja" optional="show"/>
+                                           string="Pekerja" optional="hide"/>
                                 </list>
                             </field>
                         </page>
                         <page string="Bukti Foto / Evidence">
-                            <div class="text-muted mb-2">
-                                Upload foto bukti pekerjaan untuk setiap item.
+                            <div class="alert alert-info mb-2" role="alert" invisible="state == 'submitted'">
+                                <strong>Wajib:</strong> Upload minimal 1 foto bukti untuk setiap item pekerjaan.
                             </div>
                             <field name="line_ids" nolabel="1" mode="kanban"
                                    readonly="state == 'submitted'">

@@ -74,8 +74,11 @@
                             <field name="periode_minggu_ids" widget="many2many_tags"
                                    domain="[('project_id', '=', project_id)]"/>
                         </page>
-                        <page string="Sub-Pekerjaan">
-                            <field name="child_ids" nolabel="1">
+                        <page string="Sub-Pekerjaan (WBS Anak)">
+                            <div class="text-muted mb-2">
+                                Jika pekerjaan ini memiliki rincian tahapan, tambahkan di sini. (Total bobot otomatis menyesuaikan nilai).
+                            </div>
+                            <field name="child_ids" nolabel="1" context="{'default_project_id': project_id, 'default_parent_id': id}">
                                 <list>
                                     <field name="nama_pekerjaan"/>
                                     <field name="nilai_pekerjaan" sum="Total"/>
