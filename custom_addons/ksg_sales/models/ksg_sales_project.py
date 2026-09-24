@@ -63,6 +63,30 @@ class KsgSalesProject(models.Model):
     )
 
     # =========================================================
+    # SCOPE PROYEK
+    # =========================================================
+
+    scope_engineering = fields.Boolean(
+        string="Engineering",
+        default=False,
+        tracking=True,
+        help=(
+            "Centang jika proyek ini membutuhkan proses "
+            "atau pekerjaan dalam scope Engineering."
+        ),
+    )
+
+    scope_operational = fields.Boolean(
+        string="Operational",
+        default=False,
+        tracking=True,
+        help=(
+            "Centang jika proyek ini membutuhkan proses "
+            "atau pekerjaan dalam scope Operational."
+        ),
+    )
+
+    # =========================================================
     # DOKUMEN & KONTRAK
     # =========================================================
 
@@ -141,21 +165,23 @@ class KsgSalesProject(models.Model):
     # =========================================================
     # RAB
     # =========================================================
+
     rab_ids = fields.One2many(
         comodel_name="ksg.sales.rab",
         inverse_name="project_id",
         string="RAB",
     )
-    
+
     # =========================================================
     # HPP
     # =========================================================
+
     hpp_ids = fields.One2many(
         "ksg.sales.hpp",
         "project_id",
         string="HPP",
     )
-    
+
     # =========================================================
     # TERMIN PENAGIHAN
     # =========================================================
@@ -228,10 +254,14 @@ class KsgSalesProject(models.Model):
             return
 
         self.checklist_dokumen_ids = [
-            (0, 0, {
-                "checklist_id": checklist.id,
-                "state": "not_available",
-            })
+            (
+                0,
+                0,
+                {
+                    "checklist_id": checklist.id,
+                    "state": "not_available",
+                },
+            )
             for checklist in self.kategori.default_checklist_ids
         ]
 
@@ -404,7 +434,6 @@ class KsgSalesProject(models.Model):
     def _generate_termin_berkala(self, month_interval):
         self.ensure_one()
 
-        # dateutil sudah menjadi dependency standar Odoo
         from dateutil.relativedelta import relativedelta
 
         tanggal = self.awal_kontrak
@@ -452,8 +481,6 @@ class KsgSalesProject(models.Model):
             tanggal_list,
             start=1,
         ):
-
-            # Termin terakhir disesuaikan agar total tepat 100%
             if index == jumlah_termin:
                 persentase = round(
                     100.0 - total_persentase,
@@ -479,9 +506,7 @@ class KsgSalesProject(models.Model):
                     "no_termin": index,
                     "deskripsi": deskripsi,
                     "persentase": persentase,
-                    "tanggal_jatuh_tempo": (
-                        tanggal_jatuh_tempo
-                    ),
+                    "tanggal_jatuh_tempo": tanggal_jatuh_tempo,
                 }
             )
 

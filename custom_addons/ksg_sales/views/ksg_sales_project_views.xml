@@ -18,6 +18,16 @@
                 <field name="kategori"/>
 
                 <field
+                    name="scope_engineering"
+                    string="Engineering"
+                />
+
+                <field
+                    name="scope_operational"
+                    string="Operational"
+                />
+
+                <field
                     name="status"
                     widget="badge"
                     decoration-success="status == 'aktif'"
@@ -104,6 +114,22 @@
                             <field name="klien"/>
 
                             <field name="kategori"/>
+
+                            <!-- =================================================
+                                 SCOPE PROYEK
+                            ================================================== -->
+
+                            <separator string="Scope Proyek"/>
+
+                            <field
+                                name="scope_engineering"
+                                string="Engineering"
+                            />
+
+                            <field
+                                name="scope_operational"
+                                string="Operational"
+                            />
 
                             <field
                                 name="status"
@@ -479,6 +505,22 @@
 
                             <field name="kategori"/>
 
+                            <!-- =================================================
+                                 SCOPE PROYEK
+                            ================================================== -->
+
+                            <separator string="Scope Proyek"/>
+
+                            <field
+                                name="scope_engineering"
+                                string="Engineering"
+                            />
+
+                            <field
+                                name="scope_operational"
+                                string="Operational"
+                            />
+
                             <field
                                 name="status"
                                 widget="badge"
@@ -795,14 +837,13 @@
          ACTION DATA PROYEK
 
          IMPORTANT:
-         Action ini secara eksplisit menentukan:
 
-         1. List  -> view_ksg_sales_project_list
-         2. Form  -> view_ksg_sales_project_sales_form
+         1. List -> view_ksg_sales_project_list
+         2. Form -> view_ksg_sales_project_sales_form
 
-         Jadi ketika masuk dari menu Penjualan,
-         Odoo TIDAK mencari form default
-         view_ksg_sales_project_form.
+         Jadi menu Penjualan tetap menggunakan
+         Sales-only form dan tidak menarik
+         tab Engineering.
     ========================================================== -->
 
     <record id="action_ksg_sales_project" model="ir.actions.act_window">

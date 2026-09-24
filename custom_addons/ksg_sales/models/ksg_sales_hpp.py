@@ -14,6 +14,11 @@ class KsgSalesHpp(models.Model):
             "unique(name)",
             "Nomor HPP harus unik.",
         ),
+        (
+            "ksg_sales_hpp_rab_unique",
+            "unique(rab_id)",
+            "Satu RAB hanya dapat digunakan untuk satu HPP.",
+        ),
     ]
 
     name = fields.Char(
@@ -87,6 +92,12 @@ class KsgSalesHpp(models.Model):
         store=True,
     )
 
+    used_rab_ids = fields.Many2many(
+        comodel_name="ksg.sales.rab",
+        compute="_compute_used_rab_ids",
+        string="RAB yang Sudah Digunakan",
+    )
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
@@ -98,10 +109,43 @@ class KsgSalesHpp(models.Model):
 
         return super().create(vals_list)
 
+    @api.depends("rab_id")
+    def _compute_used_rab_ids(self):
+        used_rabs = self.env["ksg.sales.hpp"].search([
+            ("rab_id", "!=", False),
+        ]).mapped("rab_id")
+
+        for hpp in self:
+            hpp.used_rab_ids = used_rabs - hpp.rab_id
+
     @api.onchange("rab_id")
     def _onchange_rab_id(self):
-        if self.rab_id:
-            self.project_id = self.rab_id.project_id
+        if not self.rab_id:
+            self.project_id = False
+            self.line_ids = [(5, 0, 0)]
+            return
+
+        # Otomatis mengambil proyek dari RAB
+        self.project_id = self.rab_id.project_id
+
+        # Otomatis menyalin detail RAB menjadi detail HPP
+        self.line_ids = [
+            (
+                0,
+                0,
+                {
+                    "sequence": line.sequence,
+                    "kategori": line.kategori,
+                    "uraian": line.uraian,
+                    "spesifikasi": line.spesifikasi,
+                    "satuan": line.satuan,
+                    "qty": line.qty,
+                    "harga_satuan": line.harga_satuan,
+                    "keterangan": line.keterangan,
+                },
+            )
+            for line in self.rab_id.line_ids
+        ]
 
     @api.depends("line_ids.subtotal")
     def _compute_total_hpp(self):
@@ -109,6 +153,23 @@ class KsgSalesHpp(models.Model):
             hpp.total_hpp = sum(
                 hpp.line_ids.mapped("subtotal")
             )
+
+    @api.constrains("rab_id")
+    def _check_rab_unique(self):
+        for hpp in self:
+            if not hpp.rab_id:
+                continue
+
+            duplicate = self.search_count([
+                ("rab_id", "=", hpp.rab_id.id),
+                ("id", "!=", hpp.id),
+            ])
+
+            if duplicate:
+                raise ValidationError(
+                    f"RAB {hpp.rab_id.name} sudah digunakan "
+                    "untuk HPP lain."
+                )
 
     def action_submit(self):
         for hpp in self:

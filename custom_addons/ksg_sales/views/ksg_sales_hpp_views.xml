@@ -145,7 +145,13 @@
                             <field
                                 name="rab_id"
                                 string="RAB"
+                                domain="[('state', '=', 'approved'), ('id', 'not in', used_rab_ids)]"
                                 readonly="state == 'approved'"
+                            />
+
+                            <field
+                                name="used_rab_ids"
+                                invisible="1"
                             />
 
                             <field
