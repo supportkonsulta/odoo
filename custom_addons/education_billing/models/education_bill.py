@@ -2,6 +2,7 @@
 from urllib.parse import quote
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError, ValidationError
+from odoo.tools import html_escape
 
 
 MONTH_SELECTIONS = [
@@ -490,11 +491,14 @@ class EducationBill(models.Model):
             if not email_target:
                 raise UserError(_('Email Orang Tua atau Siswa belum diisi.'))
 
-            msg_body = rec.get_reminder_message().replace('\n', '<br/>')
+            plain_body = rec.get_reminder_message()
+            html_body = html_escape(plain_body).replace('\n', '<br/>')
             rec.message_post(
-                body=f"<b>Pemberitahuan Tagihan Pendidikan</b><br/>{msg_body}",
+                body=f"<b>Pemberitahuan Tagihan Pendidikan</b><br/>{html_body}",
                 subject=f"Tagihan {rec.period_label} - {rec.student_id.name}",
-                partner_ids=[rec.student_id.partner_id.id] if rec.student_id.partner_id else []
+                partner_ids=[rec.student_id.partner_id.id] if rec.student_id.partner_id else [],
+                message_type='comment',
+                subtype_xmlid='mail.mt_comment',
             )
             rec.write({
                 'reminder_count': rec.reminder_count + 1,

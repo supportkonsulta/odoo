@@ -55,7 +55,7 @@ class EducationBillGenerateWizard(models.TransientModel):
     bill_type = fields.Selection([
         ('spp', 'SPP Bulanan (Sekolah)'),
         ('ukt', 'UKT Semesteran (Universitas)'),
-    ], string='Tipe Tagihan', required=True, default='spp')
+    ], string='Tipe Tagihan', compute='_compute_bill_type', readonly=True)
 
     month = fields.Selection(
         MONTH_SELECTIONS,
@@ -95,18 +95,23 @@ class EducationBillGenerateWizard(models.TransientModel):
         help='Jika dicentang, status tagihan langsung "Belum Dibayar" sehingga siap diverifikasi / ditagihkan.'
     )
 
-    @api.onchange('school_id')
-    def _onchange_school_id(self):
-        if self.school_id:
-            if self.school_id.level == 'univ':
-                self.bill_type = 'ukt'
+    @api.depends('school_id', 'school_id.level')
+    def _compute_bill_type(self):
+        for rec in self:
+            if rec.school_id and rec.school_id.level == 'univ':
+                rec.bill_type = 'ukt'
             else:
-                self.bill_type = 'spp'
+                rec.bill_type = 'spp'
 
     def action_generate_bills(self):
         self.ensure_one()
+        if not self.school_id:
+            raise UserError(_('Silakan pilih Sekolah / Kampus terlebih dahulu.'))
+
         Student = self.env['education.student']
         Bill = self.env['education.bill']
+
+        effective_bill_type = self.bill_type or ('ukt' if self.school_id.level == 'univ' else 'spp')
 
         domain = [
             ('school_id', '=', self.school_id.id),
@@ -119,9 +124,6 @@ class EducationBillGenerateWizard(models.TransientModel):
         if not students:
             raise UserError(_('Tidak ditemukan siswa/mahasiswa aktif untuk kriteria yang dipilih.'))
 
-        month_dict = dict(MONTH_SELECTIONS)
-        semester_dict = dict(SEMESTER_SELECTIONS)
-
         created_bills = self.env['education.bill']
         skipped_count = 0
 
@@ -133,10 +135,10 @@ class EducationBillGenerateWizard(models.TransientModel):
             # Periksa tagihan duplikat untuk periode ini
             dup_domain = [
                 ('student_id', '=', student.id),
-                ('bill_type', '=', self.bill_type),
+                ('bill_type', '=', effective_bill_type),
                 ('state', '!=', 'cancelled'),
             ]
-            if self.bill_type == 'spp':
+            if effective_bill_type == 'spp':
                 dup_domain.extend([('month', '=', self.month), ('year', '=', self.year)])
             else:
                 dup_domain.extend([('semester', '=', self.semester), ('academic_year_id', '=', self.academic_year_id.id)])
@@ -151,10 +153,10 @@ class EducationBillGenerateWizard(models.TransientModel):
                 'school_id': self.school_id.id,
                 'class_id': student.class_id.id if student.class_id else False,
                 'major_id': student.major_id.id if student.major_id else False,
-                'bill_type': self.bill_type,
-                'month': self.month if self.bill_type == 'spp' else False,
+                'bill_type': effective_bill_type,
+                'month': self.month if effective_bill_type == 'spp' else False,
                 'year': self.year,
-                'semester': self.semester if self.bill_type == 'ukt' else False,
+                'semester': self.semester if effective_bill_type == 'ukt' else False,
                 'academic_year_id': self.academic_year_id.id,
                 'bill_date': self.bill_date,
                 'due_date': self.due_date,

@@ -215,3 +215,24 @@ class TestEducationBilling(common.TransactionCase):
         self.assertIn('Ahmad Fauzi', msg)
         self.assertIn('SPP Desember 2026', msg)
         self.assertIn('Rp 500.000', msg)
+
+    def test_06_generate_ukt_bill_wizard_auto_type(self):
+        """Test wizard generate otomatis mendeteksi UKT untuk jenjang universitas"""
+        wizard_univ = self.env['education.bill.generate.wizard'].create({
+            'school_id': self.school_univ.id,
+            'semester': 'ganjil',
+            'academic_year_id': self.academic_year.id,
+            'auto_publish': True,
+        })
+        self.assertEqual(wizard_univ.bill_type, 'ukt')
+        action = wizard_univ.action_generate_bills()
+        self.assertTrue(action)
+
+        bill_univ = self.env['education.bill'].search([
+            ('student_id', '=', self.student_univ.id),
+            ('semester', '=', 'ganjil'),
+            ('academic_year_id', '=', self.academic_year.id),
+        ])
+        self.assertTrue(bill_univ)
+        self.assertEqual(bill_univ.bill_type, 'ukt')
+        self.assertEqual(bill_univ.amount, 5000000.0)

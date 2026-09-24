@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
+from odoo.tools import html_escape
 
 
 class EducationBillRejectWizard(models.TransientModel):
@@ -31,9 +32,10 @@ class EducationBillRejectWizard(models.TransientModel):
             'verified_date': False,
         })
         bill.message_post(
-            body=_("<b>Verifikasi Pembayaran Ditolak oleh %s</b><br/>Alasan: %s") % (
-                self.env.user.name,
-                self.reason
+            body="<b>%s</b><br/>%s %s" % (
+                html_escape(_('Verifikasi Pembayaran Ditolak oleh %s') % self.env.user.name),
+                html_escape(_('Alasan:')),
+                html_escape(self.reason or ''),
             )
         )
         return {'type': 'ir.actions.act_window_close'}

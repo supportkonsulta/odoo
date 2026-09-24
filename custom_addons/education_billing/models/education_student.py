@@ -84,11 +84,11 @@ class EducationStudent(models.Model):
     email = fields.Char(string='Email Siswa / Mahasiswa')
     address = fields.Text(string='Alamat')
 
-    # Skema Tarif Tagihan
+    # Skema Tarif Tagihan (Otomatis berdasarkan Jenjang Sekolah / Kampus)
     billing_scheme = fields.Selection([
         ('spp_bulanan', 'SPP Bulanan (Sekolah)'),
         ('ukt_semester', 'UKT Semesteran (Universitas)'),
-    ], string='Skema Tagihan', compute='_compute_billing_scheme', store=True, readonly=False, tracking=True)
+    ], string='Skema Tagihan', compute='_compute_billing_scheme', store=True, readonly=True, tracking=True)
 
     custom_amount = fields.Monetary(
         string='Tarif Khusus / Beasiswa',

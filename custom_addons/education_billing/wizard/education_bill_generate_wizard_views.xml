@@ -14,7 +14,7 @@
                             <field name="school_id" options="{'no_create': True}"/>
                             <field name="level" invisible="1"/>
                             <field name="class_id" options="{'no_create': True}"/>
-                            <field name="bill_type" widget="radio"/>
+                            <field name="bill_type" readonly="1"/>
                         </group>
                         <group string="Periode &amp; Tanggal">
                             <field name="month" invisible="bill_type != 'spp'" required="bill_type == 'spp'"/>
