@@ -1,6 +1,6 @@
 """Assignment personel ke Project (FR-012)."""
 
-from odoo import models, fields
+from odoo import models, fields, api
 
 
 class KsgEngineeringAssignment(models.Model):
@@ -28,3 +28,12 @@ class KsgEngineeringAssignment(models.Model):
     tanggal_selesai_tugas = fields.Date(
         string='Tanggal Selesai Tugas', tracking=True)
     active = fields.Boolean(string='Aktif', default=True)
+
+    @api.onchange('project_id')
+    def _onchange_project_id(self):
+        """Otomatis mengambil tanggal dari proyek jika tidak ada isian."""
+        if self.project_id:
+            if not self.tanggal_mulai_tugas:
+                self.tanggal_mulai_tugas = self.project_id.awal_kontrak
+            if not self.tanggal_selesai_tugas:
+                self.tanggal_selesai_tugas = self.project_id.akhir_kontrak

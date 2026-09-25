@@ -9,11 +9,6 @@ class KsgSalesProject(models.Model):
     _order = "id desc"
     _rec_name = "kode_proyek"
 
-    _unique_kode_proyek = models.Constraint(
-        "unique(kode_proyek)",
-        "Kode Proyek harus unik.",
-    )
-
     # =========================================================
     # IDENTITAS PROYEK
     # =========================================================
@@ -198,8 +193,22 @@ class KsgSalesProject(models.Model):
     )
 
     # =========================================================
-    # CREATE
+    # OVERRIDES & COMPUTES
     # =========================================================
+
+    def _compute_display_name(self):
+        for rec in self:
+            if rec.kode_proyek and rec.nama_pekerjaan:
+                rec.display_name = f"[{rec.kode_proyek}] {rec.nama_pekerjaan}"
+            else:
+                rec.display_name = rec.kode_proyek or rec.nama_pekerjaan or "Proyek Baru"
+
+    @api.model
+    def _name_search(self, name, domain=None, operator='ilike', limit=None, order=None):
+        domain = domain or []
+        if name:
+            domain = ['|', ('kode_proyek', operator, name), ('nama_pekerjaan', operator, name)] + domain
+        return self._search(domain, limit=limit, order=order)
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -556,3 +565,14 @@ class KsgSalesProject(models.Model):
                 raise ValidationError(
                     "Checklist Dokumen Engineering wajib diisi."
                 )
+
+    @api.constrains("kode_proyek")
+    def _check_kode_proyek_unik(self):
+        for rec in self:
+            if rec.kode_proyek and rec.kode_proyek != "/":
+                existing = self.search([
+                    ('kode_proyek', '=', rec.kode_proyek),
+                    ('id', '!=', rec.id)
+                ], limit=1)
+                if existing:
+                    raise ValidationError(f"Kode Proyek '{rec.kode_proyek}' sudah digunakan. Harus unik.")
