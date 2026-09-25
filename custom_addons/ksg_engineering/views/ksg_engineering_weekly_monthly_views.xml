@@ -24,6 +24,17 @@
         </field>
     </record>
 
+    <record id="view_weekly_report_search" model="ir.ui.view">
+        <field name="name">ksg.engineering.weekly.report.search</field>
+        <field name="model">ksg.engineering.weekly.report</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="project_id"/>
+                <filter name="group_project" string="Project" context="{'group_by': 'project_id'}"/>
+            </search>
+        </field>
+    </record>
+
     <record id="view_weekly_report_form" model="ir.ui.view">
         <field name="name">ksg.engineering.weekly.report.form</field>
         <field name="model">ksg.engineering.weekly.report</field>
@@ -80,6 +91,17 @@
                        decoration-success="variance &gt;= 0"/>
                 <field name="state" string="Status" widget="badge"/>
             </list>
+        </field>
+    </record>
+
+    <record id="view_monthly_report_search" model="ir.ui.view">
+        <field name="name">ksg.engineering.monthly.report.search</field>
+        <field name="model">ksg.engineering.monthly.report</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="project_id"/>
+                <filter name="group_project" string="Project" context="{'group_by': 'project_id'}"/>
+            </search>
         </field>
     </record>
 

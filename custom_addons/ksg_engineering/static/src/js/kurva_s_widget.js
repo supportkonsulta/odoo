@@ -18,7 +18,7 @@ export class KurvaSWidget extends Component {
             </div>
             <div t-if="!state.loading and !state.hasData" class="text-muted p-3 text-center border rounded bg-light">
                 <i class="fa fa-line-chart me-2"/>
-                Belum ada data Kalender Minggu. Generate Kalender Minggu pada tab sebelahnya agar Kurva-S muncul.
+                Belum ada data Kurva-S. Pastikan Anda telah menekan tombol "Generate Kalender Minggu" pada tab Kalender.
             </div>
             <canvas t-ref="canvas" t-att-style="(!state.loading and state.hasData) ? 'width: 100%; max-height: 400px;' : 'display: none;'"/>
         </div>
@@ -31,7 +31,11 @@ export class KurvaSWidget extends Component {
         this.orm = useService("orm");
         this.state = useState({ hasData: false, loading: true });
 
-        onMounted(() => this.renderChart());
+        onMounted(() => {
+            // Tunggu form sepenuhnya dimuat sebelum render
+            setTimeout(() => this.renderChart(), 500);
+        });
+        
         onWillUnmount(() => {
             if (this.chart) {
                 this.chart.destroy();
@@ -54,7 +58,7 @@ export class KurvaSWidget extends Component {
                 [projectId]
             );
         } catch (e) {
-            console.warn("Kurva-S: Could not fetch data", e);
+            console.error("Kurva-S: Gagal memuat data dari server.", e);
             this.state.loading = false;
             return;
         }
@@ -68,8 +72,8 @@ export class KurvaSWidget extends Component {
 
         this.state.hasData = true;
         
-        // Wait for next tick so canvas is rendered in DOM
-        await new Promise((r) => setTimeout(r, 50));
+        // Beri waktu canvas untuk ter-render di DOM
+        await new Promise((r) => setTimeout(r, 100));
 
         const canvas = this.canvasRef.el;
         if (!canvas) return;
@@ -78,21 +82,14 @@ export class KurvaSWidget extends Component {
             this.chart.destroy();
         }
 
-        // Load Chart.js if not available globally
-        if (typeof Chart === "undefined") {
-            try {
+        try {
+            if (typeof Chart === "undefined") {
                 await loadJS("/web/static/lib/Chart/Chart.js");
-            } catch {
-                try {
-                    await loadJS("/web/static/lib/chart/chart.umd.js");
-                } catch {
-                    console.warn("Kurva-S: Chart.js not found");
-                    return;
-                }
             }
+        } catch (e) {
+            console.error("Kurva-S: Pustaka Chart.js bawaan Odoo gagal dimuat.", e);
+            return;
         }
-
-        if (typeof Chart === "undefined") return;
 
         this.chart = new Chart(canvas, {
             type: "line",

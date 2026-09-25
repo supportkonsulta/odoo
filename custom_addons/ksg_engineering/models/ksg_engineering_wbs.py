@@ -98,8 +98,13 @@ class KsgEngineeringWbs(models.Model):
                         f'Gunakan otorisasi luar periode jika diperlukan.')
 
     # ==================================================================
-    # COMPUTES
+    # COMPUTES & OVERRIDES
     # ==================================================================
+    
+    @api.depends('nama_pekerjaan')
+    def _compute_display_name(self):
+        for rec in self:
+            rec.display_name = rec.nama_pekerjaan
 
     @api.depends('nilai_pekerjaan', 'project_id.nilai_kontrak_terkini')
     def _compute_bobot(self):

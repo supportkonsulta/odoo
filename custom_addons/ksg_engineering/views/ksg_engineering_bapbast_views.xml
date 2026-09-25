@@ -22,6 +22,18 @@
         </field>
     </record>
 
+    <record id="view_bapbast_search" model="ir.ui.view">
+        <field name="name">ksg.engineering.bapbast.search</field>
+        <field name="model">ksg.engineering.bapbast</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="project_id"/>
+                <field name="name"/>
+                <filter name="group_project" string="Project" context="{'group_by': 'project_id'}"/>
+            </search>
+        </field>
+    </record>
+
     <record id="view_bapbast_form" model="ir.ui.view">
         <field name="name">ksg.engineering.bapbast.form</field>
         <field name="model">ksg.engineering.bapbast</field>

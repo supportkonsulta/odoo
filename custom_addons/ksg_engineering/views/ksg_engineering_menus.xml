@@ -64,6 +64,8 @@
         <field name="name">WBS (Rincian Pekerjaan)</field>
         <field name="res_model">ksg.engineering.wbs</field>
         <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_wbs_search"/>
+        <field name="context">{'search_default_group_project': 1}</field>
         <field name="domain">[('parent_id', '=', False)]</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">Belum ada Rincian Pekerjaan.</p>
@@ -76,6 +78,8 @@
         <field name="name">Laporan Harian</field>
         <field name="res_model">ksg.engineering.daily.report</field>
         <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_daily_report_search"/>
+        <field name="context">{'search_default_group_project': 1}</field>
     </record>
 
     <!-- Consolidations -->
@@ -83,6 +87,8 @@
         <field name="name">Konsolidasi Laporan</field>
         <field name="res_model">ksg.engineering.report.consolidation</field>
         <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_consolidation_search"/>
+        <field name="context">{'search_default_group_project': 1}</field>
     </record>
 
     <!-- Weekly Reports -->
@@ -90,6 +96,8 @@
         <field name="name">Laporan Mingguan</field>
         <field name="res_model">ksg.engineering.weekly.report</field>
         <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_weekly_report_search"/>
+        <field name="context">{'search_default_group_project': 1}</field>
     </record>
 
     <!-- Monthly Reports -->
@@ -97,6 +105,8 @@
         <field name="name">Laporan Bulanan</field>
         <field name="res_model">ksg.engineering.monthly.report</field>
         <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_monthly_report_search"/>
+        <field name="context">{'search_default_group_project': 1}</field>
     </record>
 
     <!-- BAP/BAST -->
@@ -104,6 +114,8 @@
         <field name="name">BAP/BAST</field>
         <field name="res_model">ksg.engineering.bapbast</field>
         <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_bapbast_search"/>
+        <field name="context">{'search_default_group_project': 1}</field>
     </record>
 
     <!-- Assignments -->
@@ -111,6 +123,8 @@
         <field name="name">Penugasan Personel</field>
         <field name="res_model">ksg.engineering.assignment</field>
         <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_assignment_search"/>
+        <field name="context">{'search_default_group_project': 1}</field>
     </record>
 
     <!-- Schedule Weeks -->
@@ -120,10 +134,21 @@
         <field name="arch" type="xml">
             <list editable="bottom" default_order="project_id, no_minggu" string="Kalender Minggu">
                 <field name="project_id" string="Nama Proyek"/>
-                <field name="no_minggu" string="Minggu Ke-"/>
+                <field name="no_minggu" string="Minggu Ke-" sum=""/>
                 <field name="tanggal_mulai" string="Tanggal Mulai"/>
                 <field name="tanggal_selesai" string="Tanggal Selesai"/>
             </list>
+        </field>
+    </record>
+
+    <record id="view_schedule_week_search" model="ir.ui.view">
+        <field name="name">ksg.engineering.schedule.week.search</field>
+        <field name="model">ksg.engineering.schedule.week</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="project_id"/>
+                <filter name="group_project" string="Project" context="{'group_by': 'project_id'}"/>
+            </search>
         </field>
     </record>
 
@@ -132,6 +157,8 @@
         <field name="res_model">ksg.engineering.schedule.week</field>
         <field name="view_mode">list</field>
         <field name="view_id" ref="view_schedule_week_tree"/>
+        <field name="search_view_id" ref="view_schedule_week_search"/>
+        <field name="context">{'search_default_group_project': 1}</field>
     </record>
 
     <!-- ============================================================ -->

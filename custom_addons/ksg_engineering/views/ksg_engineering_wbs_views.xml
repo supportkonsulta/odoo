@@ -24,6 +24,19 @@
         </field>
     </record>
 
+    <!-- Search View untuk Group By Default -->
+    <record id="view_wbs_search" model="ir.ui.view">
+        <field name="name">ksg.engineering.wbs.search</field>
+        <field name="model">ksg.engineering.wbs</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="nama_pekerjaan"/>
+                <field name="project_id"/>
+                <filter name="group_project" string="Project" context="{'group_by': 'project_id'}"/>
+            </search>
+        </field>
+    </record>
+
     <!-- Form -->
     <record id="view_wbs_form" model="ir.ui.view">
         <field name="name">ksg.engineering.wbs.form</field>
