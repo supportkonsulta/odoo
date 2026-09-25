@@ -56,12 +56,13 @@ class SifnextPPL(models.Model):
                 if line.subtotal <= 0:
                     continue
                 emp = line.employee_id
+                emp_sudo = emp.sudo() if emp else False
                 bank_acc = False
-                if emp:
-                    bank_acc = getattr(emp, "primary_bank_account_id", False) or (emp.bank_account_ids and emp.bank_account_ids[0]) or (emp.work_contact_id and emp.work_contact_id.bank_ids and emp.work_contact_id.bank_ids[0]) or False
+                if emp_sudo:
+                    bank_acc = getattr(emp_sudo, "primary_bank_account_id", False) or (emp_sudo.bank_account_ids and emp_sudo.bank_account_ids[0]) or (emp_sudo.work_contact_id and emp_sudo.work_contact_id.bank_ids and emp_sudo.work_contact_id.bank_ids[0]) or False
 
-                if not bank_acc and emp and emp.user_id and emp.user_id.partner_id and emp.user_id.partner_id.bank_ids:
-                    bank_acc = emp.user_id.partner_id.bank_ids[0]
+                if not bank_acc and emp_sudo and emp_sudo.user_id and emp_sudo.user_id.partner_id and emp_sudo.user_id.partner_id.bank_ids:
+                    bank_acc = emp_sudo.user_id.partner_id.bank_ids[0]
 
                 if not bank_acc:
                     emp_name = emp.name if emp else line.description

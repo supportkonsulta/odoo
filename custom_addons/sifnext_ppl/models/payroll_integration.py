@@ -28,7 +28,7 @@ class CustomPayrollBatch(models.Model):
             if not ppl_lines:
                 raise UserError(_("Tidak ada slip gaji dengan nilai lebih dari 0 untuk dibuatkan PPL."))
 
-            unit = self.env['sifnext.unit'].search([('company_id', '=', batch.company_id.id)], limit=1)
+            unit = self.env['hr.department'].search([('company_id', '=', batch.company_id.id)], limit=1)
             # Buat dokumen PPL
             ppl_vals = {
                 'title': f"Pembayaran Gaji - {batch.name}",

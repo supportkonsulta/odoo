@@ -11,7 +11,7 @@ class TestPPLWorkflow(TransactionCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.unit = cls.env["sifnext.unit"].create({
+        cls.unit = cls.env["hr.department"].create({
             "name": "Unit Automated Test PPL",
             "code": "AUTOTEST",
             "company_id": cls.env.company.id,
@@ -38,6 +38,12 @@ class TestPPLWorkflow(TransactionCase):
             cls.env,
             login="test_ppl_director",
             groups="sifnext_ppl.group_ppl_approver",
+            company_id=cls.env.company.id,
+        )
+        cls.admin = new_test_user(
+            cls.env,
+            login="test_ppl_admin",
+            groups="base.group_system",
             company_id=cls.env.company.id,
         )
         (cls.user | cls.other_user | cls.finance | cls.director).write({"unit_id": cls.unit.id})
@@ -114,7 +120,7 @@ class TestPPLWorkflow(TransactionCase):
         employee = self.env.ref("sifnext_ppl.user_ppl_uat_employee")
         finance = self.env.ref("sifnext_ppl.user_ppl_uat_finance")
         director = self.env.ref("sifnext_ppl.user_ppl_uat_director")
-        uat_unit = self.env.ref("sifnext_ppl.unit_uat_ppl")
+        uat_unit = self.env.ref("sifnext_ppl.dept_uat_ppl")
 
         self.assertEqual(employee.login, "ppl_user")
         self.assertEqual(finance.login, "ppl_finance")
@@ -133,7 +139,7 @@ class TestPPLWorkflow(TransactionCase):
     def test_unit_code_is_normalized_and_unique_per_company(self):
         self.assertEqual(self.unit.code, "AUTOTEST")
         with self.assertRaises(Exception), self.cr.savepoint():
-            self.env["sifnext.unit"].create({
+            self.env["hr.department"].create({
                 "name": "Duplikat Automated Test",
                 "code": " autotest ",
                 "company_id": self.env.company.id,
@@ -344,6 +350,75 @@ class TestPPLWorkflow(TransactionCase):
                 "title": "Tidak valid",
                 "description": "Tidak valid",
             })
+
+    def test_employee_cannot_change_applicant(self):
+        ppl = self._create_ppl()
+        with self.assertRaises(AccessError):
+            ppl.with_user(self.user).write({"applicant_id": self.other_user.id})
+
+    def test_admin_can_create_ppl_for_other_user_and_unit_follows_applicant(self):
+        ppl = self.env["sifnext.ppl"].with_user(self.admin).create({
+            "applicant_id": self.other_user.id,
+            "title": "PPL oleh Administrator",
+            "description": "Administrator membuatkan untuk user lain",
+            "line_ids": [Command.create({
+                "description": "Item admin",
+                "quantity": 1,
+                "unit_price": 20_000,
+            })],
+        })
+        self.assertEqual(ppl.applicant_id, self.other_user)
+        self.assertEqual(ppl.unit_id, self.unit)
+
+    def test_admin_can_choose_source_type(self):
+        ppl = self.env["sifnext.ppl"].with_user(self.admin).create({
+            "applicant_id": self.other_user.id,
+            "title": "PPL finance oleh admin",
+            "description": "Administrator memilih source_type finance",
+            "source_type": "finance",
+            "line_ids": [Command.create({
+                "description": "Item",
+                "quantity": 1,
+                "unit_price": 10_000,
+            })],
+        })
+        self.assertEqual(ppl.source_type, "finance")
+
+    def test_admin_can_change_applicant_in_draft(self):
+        ppl = self.env["sifnext.ppl"].with_user(self.admin).create({
+            "applicant_id": self.other_user.id,
+            "title": "PPL ganti pemohon",
+            "description": "Uji ganti applicant oleh admin",
+            "line_ids": [Command.create({
+                "description": "Item",
+                "quantity": 1,
+                "unit_price": 10_000,
+            })],
+        })
+        ppl.with_user(self.admin).write({"applicant_id": self.user.id})
+        self.assertEqual(ppl.applicant_id, self.user)
+
+    def test_can_assign_applicant_flag(self):
+        ppl = self._create_ppl()
+        self.assertFalse(ppl.with_user(self.user).can_assign_applicant)
+        self.assertTrue(ppl.with_user(self.finance).can_assign_applicant)
+        self.assertTrue(ppl.with_user(self.admin).can_assign_applicant)
+
+    def test_admin_sees_all_requests(self):
+        own_ppl = self._create_ppl()
+        other_ppl = self.env["sifnext.ppl"].with_user(self.other_user).create({
+            "title": "PPL user lain",
+            "description": "Untuk uji visibilitas admin",
+            "line_ids": [Command.create({
+                "description": "Item",
+                "quantity": 1,
+                "unit_price": 10_000,
+            })],
+        })
+        admin_results = self.env["sifnext.ppl"].with_user(self.admin).search([
+            ("id", "in", (own_ppl | other_ppl).ids),
+        ])
+        self.assertEqual(admin_results, own_ppl | other_ppl)
 
     def test_employee_only_sees_own_requests(self):
         own_ppl = self._create_ppl()
