@@ -8,6 +8,23 @@ class KsgSalesHpp(models.Model):
     _inherit = ["mail.thread", "mail.activity.mixin"]
     _order = "id desc"
 
+    _sql_constraints = [
+        (
+            "ksg_sales_hpp_name_unique",
+            "unique(name)",
+            "Nomor HPP harus unik.",
+        ),
+        (
+            "ksg_sales_hpp_rab_unique",
+            "unique(rab_id)",
+            "Satu RAB hanya dapat digunakan untuk satu HPP.",
+        ),
+    ]
+
+    # =========================================================
+    # IDENTITAS HPP
+    # =========================================================
+
     name = fields.Char(
         string="No. HPP",
         required=True,
@@ -28,8 +45,7 @@ class KsgSalesHpp(models.Model):
     rab_id = fields.Many2one(
         comodel_name="ksg.sales.rab",
         string="RAB",
-        required=True,
-        ondelete="cascade",
+        ondelete="set null",
         index=True,
         tracking=True,
     )
@@ -53,6 +69,13 @@ class KsgSalesHpp(models.Model):
         readonly=True,
     )
 
+    scope = fields.Selection(
+        related="project_id.scope",
+        string="Scope Proyek",
+        store=True,
+        readonly=True,
+    )
+
     state = fields.Selection(
         selection=[
             ("draft", "Draft"),
@@ -65,11 +88,80 @@ class KsgSalesHpp(models.Model):
         tracking=True,
     )
 
+    # =========================================================
+    # DETAIL HPP
+    # =========================================================
+    # Detail HPP menjadi tabel utama yang digunakan
+    # untuk perhitungan HPP.
+    #
+    # Tabel ini bersifat common sehingga dapat digunakan
+    # baik untuk proyek Operational maupun Engineering.
+
     line_ids = fields.One2many(
         comodel_name="ksg.sales.hpp.line",
         inverse_name="hpp_id",
         string="Detail HPP",
         copy=True,
+    )
+
+    # =========================================================
+    # KEBUTUHAN OPERATIONAL
+    # =========================================================
+
+    tenaga_kerja_ids = fields.One2many(
+        comodel_name="ksg.sales.hpp.tenaga.kerja",
+        inverse_name="hpp_id",
+        string="Kebutuhan Tenaga Kerja",
+        copy=True,
+    )
+
+    perlengkapan_ids = fields.One2many(
+        comodel_name="ksg.sales.hpp.perlengkapan",
+        inverse_name="hpp_id",
+        string="Kebutuhan Perlengkapan dan Chemical",
+        copy=True,
+    )
+
+    # =========================================================
+    # KEBUTUHAN ENGINEERING
+    # =========================================================
+    engineering_ids = fields.One2many(
+        comodel_name="ksg.sales.hpp.engineering",
+        inverse_name="hpp_id",
+        string="Kebutuhan Engineering",
+        copy=True,
+    )
+
+    # =========================================================
+    # TOTAL HPP
+    # =========================================================
+
+    total_tenaga_kerja = fields.Monetary(
+        string="Total Tenaga Kerja / Bulan",
+        currency_field="currency_id",
+        compute="_compute_total_hpp",
+        store=True,
+    )
+
+    total_perlengkapan = fields.Monetary(
+        string="Total Perlengkapan & Chemical / Bulan",
+        currency_field="currency_id",
+        compute="_compute_total_hpp",
+        store=True,
+    )
+
+    total_hpp_bulanan = fields.Monetary(
+        string="Total HPP / Bulan",
+        currency_field="currency_id",
+        compute="_compute_total_hpp",
+        store=True,
+    )
+
+    total_hpp_tahunan = fields.Monetary(
+        string="Total HPP / Tahun",
+        currency_field="currency_id",
+        compute="_compute_total_hpp",
+        store=True,
     )
 
     total_hpp = fields.Monetary(
@@ -79,39 +171,164 @@ class KsgSalesHpp(models.Model):
         store=True,
     )
 
+    # =========================================================
+    # RAB FILTER
+    # =========================================================
+
+    used_rab_ids = fields.Many2many(
+        comodel_name="ksg.sales.rab",
+        compute="_compute_used_rab_ids",
+        string="RAB yang Sudah Digunakan",
+    )
+
+    # =========================================================
+    # CREATE
+    # =========================================================
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
             if not vals.get("name") or vals.get("name") == "New":
                 vals["name"] = (
-                    self.env["ir.sequence"].next_by_code("ksg.sales.hpp")
+                    self.env["ir.sequence"].next_by_code(
+                        "ksg.sales.hpp"
+                    )
                     or "New"
                 )
+
         return super().create(vals_list)
 
-    @api.onchange("rab_id")
-    def _onchange_rab_id(self):
-        if self.rab_id:
-            self.project_id = self.rab_id.project_id
+    # =========================================================
+    # RAB FILTER
+    # =========================================================
 
-    @api.depends("line_ids.subtotal")
+    @api.depends("rab_id")
+    def _compute_used_rab_ids(self):
+        used_rabs = self.env["ksg.sales.hpp"].search([
+            ("rab_id", "!=", False),
+        ]).mapped("rab_id")
+
+        for hpp in self:
+            hpp.used_rab_ids = used_rabs - hpp.rab_id
+
+    # =========================================================
+    # TOTAL HPP
+    # =========================================================
+    #
+    # Total HPP diambil dari Detail HPP.
+    #
+    # Detail HPP:
+    # Uang Pokok
+    # + Tunjangan
+    # + THR
+    # + Seragam
+    # + OVH
+    # + Sistem
+    # + BPJS TK
+    # + BPJS KES
+    # + Ex. Pengeluaran
+    #
+    # = Jumlah / Bulan
+    #
+    # Kemudian:
+    # Jumlah / Bulan x 12
+    # = HPP / Tahun
+    #
+    # Kebutuhan Operational tidak dijumlahkan lagi
+    # di sini agar tidak terjadi double counting.
+
+    @api.depends(
+        "line_ids.jumlah_bulan",
+        "tenaga_kerja_ids.subtotal",
+        "perlengkapan_ids.subtotal",
+    )
     def _compute_total_hpp(self):
         for hpp in self:
-            hpp.total_hpp = sum(
-                hpp.line_ids.mapped("subtotal")
+
+            # -------------------------------------------------
+            # Informasi kebutuhan Operational
+            # -------------------------------------------------
+            # Ini hanya sebagai informasi total kebutuhan,
+            # bukan ditambahkan lagi ke Total HPP.
+            hpp.total_tenaga_kerja = sum(
+                hpp.tenaga_kerja_ids.mapped("subtotal")
             )
+
+            hpp.total_perlengkapan = sum(
+                hpp.perlengkapan_ids.mapped("subtotal")
+            )
+
+            # -------------------------------------------------
+            # Total HPP berasal dari Detail HPP
+            # -------------------------------------------------
+            total_bulanan = sum(
+                hpp.line_ids.mapped("jumlah_bulan")
+            )
+
+            hpp.total_hpp_bulanan = total_bulanan
+
+            # Sementara menggunakan 12 bulan.
+            # Nanti dapat disesuaikan dengan durasi kontrak.
+            hpp.total_hpp_tahunan = total_bulanan * 12
+
+            # Compatibility dengan field lama.
+            hpp.total_hpp = hpp.total_hpp_tahunan
+
+    # =========================================================
+    # VALIDATION RAB
+    # =========================================================
+
+    @api.constrains("rab_id")
+    def _check_rab_unique(self):
+        for hpp in self:
+            if not hpp.rab_id:
+                continue
+
+            duplicate = self.search_count([
+                ("rab_id", "=", hpp.rab_id.id),
+                ("id", "!=", hpp.id),
+            ])
+
+            if duplicate:
+                raise ValidationError(
+                    f"RAB {hpp.rab_id.name} sudah digunakan "
+                    "untuk HPP lain."
+                )
+
+    # =========================================================
+    # WORKFLOW
+    # =========================================================
 
     def action_submit(self):
         for hpp in self:
+
             if hpp.state != "draft":
                 raise ValidationError(
                     "Hanya HPP dengan status Draft yang dapat diajukan."
                 )
 
+            # -------------------------------------------------
+            # Detail HPP wajib diisi untuk semua scope
+            # -------------------------------------------------
             if not hpp.line_ids:
                 raise ValidationError(
-                    "HPP harus memiliki minimal satu detail."
+                    "Isi minimal satu Detail HPP sebelum "
+                    "mengajukan HPP."
                 )
+
+            # -------------------------------------------------
+            # Validasi tambahan untuk Operational
+            # -------------------------------------------------
+            if hpp.scope == "operational":
+                if (
+                    not hpp.tenaga_kerja_ids
+                    and not hpp.perlengkapan_ids
+                ):
+                    raise ValidationError(
+                        "Untuk HPP Operational, isi minimal satu "
+                        "kebutuhan tenaga kerja atau "
+                        "perlengkapan/chemical."
+                    )
 
             hpp.write({
                 "state": "submitted",
@@ -126,9 +343,11 @@ class KsgSalesHpp(models.Model):
 
     def action_approve(self):
         for hpp in self:
+
             if hpp.state != "submitted":
                 raise ValidationError(
-                    "Hanya HPP dengan status Submitted yang dapat disetujui."
+                    "Hanya HPP dengan status Submitted "
+                    "yang dapat disetujui."
                 )
 
             hpp.write({
@@ -141,6 +360,10 @@ class KsgSalesHpp(models.Model):
             )
 
         return True
+
+    # =========================================================
+    # PROTECTION AFTER APPROVAL
+    # =========================================================
 
     def write(self, vals):
         for hpp in self:

@@ -1,40 +1,61 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Form View -->
+    <!-- Form View BoQ -->
     <record id="view_ksg_operational_procurement_form" model="ir.ui.view">
         <field name="name">ksg.operational.procurement.request.form</field>
         <field name="model">ksg.operational.procurement.request</field>
         <field name="arch" type="xml">
             <form string="Pengadaan Alat &amp; Bahan (BoQ)">
                 <header>
-                    <button name="action_submit" type="object" string="Ajukan ke Direktur" class="oe_highlight" invisible="state != 'draft'"/>
-                    <button name="action_approve" type="object" string="Setujui" class="btn-success" invisible="state != 'waiting_approval'"/>
-                    <button name="action_reject" type="object" string="Tolak" class="btn-danger" invisible="state != 'waiting_approval'"/>
+                    <button name="action_submit" type="object" string="Ajukan ke Direktur" class="oe_highlight" invisible="state != 'draft'" icon="fa-paper-plane"/>
+                    <button name="action_approve" type="object" string="Setujui BoQ (Direktur)" class="btn-success" invisible="state != 'waiting_approval'" icon="fa-check-circle"/>
+                    <button name="action_reject" type="object" string="Tolak BoQ" class="btn-danger" invisible="state != 'waiting_approval'" icon="fa-times-circle"/>
+                    <button name="%(action_report_procurement_boq)d" type="action" string="Cetak BoQ (PDF)" class="btn-outline-primary" icon="fa-print"/>
+                    <button name="action_reset_draft" type="object" string="Setel ke Draft" invisible="state in ['draft', 'waiting_approval']"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,waiting_approval,approved"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
-                        <h1><field name="name" readonly="1"/></h1>
+                        <label for="name" string="Nomor Dokumen BoQ Proyek"/>
+                        <h1 class="text-primary"><field name="name" readonly="1"/></h1>
                     </div>
                     <group>
-                        <group>
-                            <field name="project_id" readonly="state != 'draft'"/>
-                            <field name="requested_by" readonly="1"/>
+                        <group string="Identitas Proyek Penjualan">
+                            <field name="project_id" readonly="state in ['approved', 'rejected']" options="{'no_create': True}"/>
+                            <field name="tanggal_pengajuan" readonly="state in ['approved', 'rejected']"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group string="Otorisasi &amp; PIC">
+                            <field name="requested_by"/>
+                            <field name="approver_id"/>
+                            <field name="tanggal_approval" invisible="not tanggal_approval"/>
                         </group>
                     </group>
+                    
+                    <div class="alert alert-danger" role="alert" invisible="state != 'rejected'">
+                        <strong>Dokumen Ditolak Direktur:</strong> <field name="catatan_penolakan" class="d-inline"/>
+                    </div>
+
                     <notebook>
-                        <page string="Rincian Barang (BoQ)">
+                        <page string="Daftar Rincian BoQ (Alat, Bahan &amp; APD)" name="boq_lines">
                             <field name="boq_line_ids" readonly="state in ['approved', 'rejected']">
                                 <list editable="bottom">
-                                    <field name="item"/>
-                                    <field name="spesifikasi"/>
+                                    <field name="kategori"/>
+                                    <field name="item" placeholder="Nama Barang / Alat"/>
+                                    <field name="spesifikasi" placeholder="Merk / Tipe / Dimensi teknis"/>
                                     <field name="jumlah"/>
                                     <field name="satuan"/>
+                                    <field name="harga_estimasi_satuan" widget="monetary"/>
+                                    <field name="subtotal_estimasi" widget="monetary" sum="Total Biaya"/>
+                                    <field name="keterangan"/>
                                 </list>
                             </field>
+                            <group class="oe_subtotal_footer oe_right">
+                                <field name="total_estimasi_biaya" widget="monetary" class="oe_subtotal_footer_separator"/>
+                            </group>
                         </page>
-                        <page string="Catatan / Penolakan" invisible="not catatan_penolakan">
-                            <field name="catatan_penolakan" readonly="1"/>
+                        <page string="Catatan Pengadaan / Kebutuhan Tambahan" name="catatan">
+                            <field name="catatan_pengadaan" placeholder="Tuliskan catatan urgensi lapangan atau instruksi pengadaan untuk logistik..."/>
                         </page>
                     </notebook>
                 </sheet>
@@ -43,16 +64,18 @@
         </field>
     </record>
 
-    <!-- List View -->
+    <!-- List View BoQ -->
     <record id="view_ksg_operational_procurement_list" model="ir.ui.view">
         <field name="name">ksg.operational.procurement.request.list</field>
         <field name="model">ksg.operational.procurement.request</field>
         <field name="arch" type="xml">
-            <list string="Pengadaan Alat &amp; Bahan (BoQ)">
+            <list string="Pengadaan Proyek (BoQ)" decoration-success="state == 'approved'" decoration-warning="state == 'waiting_approval'" decoration-danger="state == 'rejected'">
                 <field name="name"/>
                 <field name="project_id"/>
+                <field name="tanggal_pengajuan"/>
+                <field name="total_estimasi_biaya" widget="monetary"/>
                 <field name="requested_by"/>
-                <field name="create_date" string="Tanggal Pengajuan"/>
+                <field name="approver_id"/>
                 <field name="state" widget="badge" 
                        decoration-info="state == 'draft'" 
                        decoration-warning="state == 'waiting_approval'" 
@@ -62,7 +85,6 @@
         </field>
     </record>
 
-    <!-- Action Window -->
     <record id="action_ksg_operational_procurement" model="ir.actions.act_window">
         <field name="name">Pengadaan Alat &amp; Bahan (BoQ)</field>
         <field name="res_model">ksg.operational.procurement.request</field>

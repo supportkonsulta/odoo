@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_operational_supply_request_form" model="ir.ui.view">
+        <field name="name">ksg.operational.supply.request.form</field>
+        <field name="model">ksg.operational.supply.request</field>
+        <field name="arch" type="xml">
+            <form string="Permintaan Perlengkapan &amp; Chemical">
+                <header>
+                    <button name="action_export_excel" type="object" string="Cetak Excel Perlengkapan (.xlsx)" class="btn-success" icon="fa-file-excel-o"/>
+                    <button name="action_submit" type="object" string="Ajukan ke Direktur" class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_approve" type="object" string="Setujui" class="btn-success" invisible="state != 'submitted'"/>
+                    <button name="action_reject" type="object" string="Tolak" class="btn-danger" invisible="state != 'submitted'"/>
+                    <button name="action_reset_draft" type="object" string="Setel Draft" invisible="state == 'draft'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,approved"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" string="Nomor Pengajuan"/>
+                        <h1 class="text-primary"><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Informasi Proyek">
+                            <field name="project_id" options="{'no_create': True}" readonly="state != 'draft'"/>
+                            <field name="tanggal_pengajuan" readonly="state != 'draft'"/>
+                            <field name="durasi_bulan" readonly="state != 'draft'"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group string="Rekapitulasi Biaya">
+                            <field name="total_alat_bahan_bulan" widget="monetary"/>
+                            <field name="total_alat_bahan_tahun" widget="monetary"/>
+                            <field name="total_jasa_bulan" widget="monetary"/>
+                            <field name="total_jasa_tahun" widget="monetary"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Daftar Kebutuhan Barang &amp; Jasa" name="items_page">
+                            <field name="line_ids" readonly="state != 'draft'">
+                                <list editable="bottom">
+                                    <field name="currency_id" column_invisible="True"/>
+                                    <field name="sub_jenis" string="Kategori"/>
+                                    <field name="item" placeholder="Nama Barang / Uraian Jasa"/>
+                                    <field name="qty"/>
+                                    <field name="uom_periodik"/>
+                                    <field name="harga_satuan" widget="monetary"/>
+                                    <field name="total_harga" widget="monetary" sum="Total Setahun"/>
+                                    <field name="biaya_per_bulan" widget="monetary" sum="Total Perbulan"/>
+                                    <field name="keterangan"/>
+                                </list>
+                            </field>
+                            <group class="oe_subtotal_footer oe_right">
+                                <field name="grand_total_bulan" widget="monetary" class="oe_subtotal_footer_separator"/>
+                                <field name="grand_total_tahun" widget="monetary"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_operational_supply_request_list" model="ir.ui.view">
+        <field name="name">ksg.operational.supply.request.list</field>
+        <field name="model">ksg.operational.supply.request</field>
+        <field name="arch" type="xml">
+            <list string="Permintaan Perlengkapan" decoration-success="state == 'approved'" decoration-warning="state == 'submitted'">
+                <field name="currency_id" column_invisible="True"/>
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="tanggal_pengajuan"/>
+                <field name="total_alat_bahan_bulan" widget="monetary"/>
+                <field name="total_jasa_bulan" widget="monetary"/>
+                <field name="grand_total_bulan" widget="monetary"/>
+                <field name="grand_total_tahun" widget="monetary"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_operational_supply_request" model="ir.actions.act_window">
+        <field name="name">Permintaan Perlengkapan</field>
+        <field name="res_model">ksg.operational.supply.request</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

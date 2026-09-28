@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_procurement_boq" model="ir.actions.report">
+        <field name="name">Cetak Dokumen BoQ Resmi (PDF)</field>
+        <field name="model">ksg.operational.procurement.request</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ksg_operational.report_procurement_boq_template</field>
+        <field name="report_file">ksg_operational.report_procurement_boq_template</field>
+        <field name="print_report_name">'BoQ_' + (object.name or 'Draft').replace('/','_')</field>
+        <field name="binding_model_id" ref="model_ksg_operational_procurement_request"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_procurement_boq_template">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <div class="page" style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 12px; color: #222;">
+                        
+                        <div class="text-center mb-4 pb-2" style="border-bottom: 2px solid #1a3a60;">
+                            <h3 style="font-weight: bold; text-transform: uppercase; color: #1a3a60; margin-bottom: 4px;">
+                                BILL OF QUANTITY (BoQ) &amp; PENGAJUAN PENGADAAN PROYEK
+                            </h3>
+                            <span style="font-size: 13px; color: #555;">
+                                No. Dokumen: <strong t-field="o.name"/> | Tanggal: <strong t-field="o.tanggal_pengajuan" t-options="{'widget': 'date'}"/>
+                            </span>
+                        </div>
+
+                        <table class="table table-sm table-borderless mb-4" style="line-height: 1.6;">
+                            <tr>
+                                <td style="width: 20%; font-weight: bold; color: #555;">Kode Proyek</td>
+                                <td style="width: 30%;">: <strong><span t-field="o.project_code"/></strong></td>
+                                <td style="width: 20%; font-weight: bold; color: #555;">Diajukan Oleh</td>
+                                <td style="width: 30%;">: <span t-field="o.requested_by.name"/></td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: bold; color: #555;">Nama Pekerjaan</td>
+                                <td>: <span t-field="o.project_name"/></td>
+                                <td style="font-weight: bold; color: #555;">Status Otorisasi</td>
+                                <td>: 
+                                    <span t-if="o.state == 'approved'" style="color: green; font-weight: bold;">DISETUJUI DIREKTUR</span>
+                                    <span t-elif="o.state == 'waiting_approval'" style="color: orange; font-weight: bold;">MENUNGGU APPROVAL</span>
+                                    <span t-elif="o.state == 'rejected'" style="color: red; font-weight: bold;">DITOLAK</span>
+                                    <span t-else="" style="color: gray; font-weight: bold;">DRAFT</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: bold; color: #555;">Nama Klien / Mitra</td>
+                                <td>: <span t-field="o.client_name"/></td>
+                                <td style="font-weight: bold; color: #555;">Otorisator Direksi</td>
+                                <td>: <span t-field="o.approver_id.name"/></td>
+                            </tr>
+                        </table>
+
+                        <table class="table table-bordered table-sm mb-3" style="width: 100%; border: 1px solid #ddd;">
+                            <thead>
+                                <tr style="background-color: #f1f4f8; color: #1a3a60; text-align: center; vertical-align: middle;">
+                                    <th style="width: 5%; padding: 6px;">No</th>
+                                    <th style="width: 15%; padding: 6px;">Kategori</th>
+                                    <th style="width: 25%; padding: 6px;">Uraian Barang / Item</th>
+                                    <th style="width: 20%; padding: 6px;">Spesifikasi Teknis</th>
+                                    <th style="width: 8%; padding: 6px;">Volume</th>
+                                    <th style="width: 8%; padding: 6px;">Satuan</th>
+                                    <th style="width: 19%; padding: 6px;">Subtotal Estimasi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-set="idx" t-value="1"/>
+                                <tr t-foreach="o.boq_line_ids" t-as="line">
+                                    <td class="text-center" style="padding: 6px;"><t t-esc="idx"/><t t-set="idx" t-value="idx + 1"/></td>
+                                    <td style="padding: 6px;"><span t-field="line.kategori"/></td>
+                                    <td style="padding: 6px; font-weight: bold;"><span t-field="line.item"/></td>
+                                    <td style="padding: 6px; font-size: 11px;"><span t-field="line.spesifikasi"/></td>
+                                    <td class="text-center" style="padding: 6px;"><span t-field="line.jumlah"/></td>
+                                    <td class="text-center" style="padding: 6px;"><span t-field="line.satuan"/></td>
+                                    <td class="text-end" style="padding: 6px; font-weight: bold;">
+                                        <span t-field="line.subtotal_estimasi" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr style="background-color: #f9fbfd;">
+                                    <td colspan="6" class="text-end" style="font-weight: bold; padding: 8px; font-size: 13px;">
+                                        TOTAL KEBUTUHAN BIAYA BoQ:
+                                    </td>
+                                    <td class="text-end" style="font-weight: bold; padding: 8px; font-size: 13px; color: #1a3a60;">
+                                        <span t-field="o.total_estimasi_biaya" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+
+                        <div t-if="o.catatan_pengadaan" class="mb-4" style="background-color: #fafafa; padding: 8px; border-left: 3px solid #1a3a60; font-size: 11px;">
+                            <strong>Catatan Lapangan:</strong> <span t-field="o.catatan_pengadaan"/>
+                        </div>
+
+                        <div class="row mt-5 pt-3" style="page-break-inside: avoid;">
+                            <div class="col-6 text-center">
+                                <p style="margin-bottom: 60px; font-weight: bold;">Diajukan Oleh,<br/><span style="font-weight: normal; color: #666;">Tim Operasional Proyek</span></p>
+                                <p style="font-weight: bold; text-decoration: underline; margin-bottom: 2px;"><span t-field="o.requested_by.name"/></p>
+                                <span style="font-size: 10px; color: #777;">Staff / Koordinator Operasional</span>
+                            </div>
+                            <div class="col-6 text-center">
+                                <p style="margin-bottom: 60px; font-weight: bold;">Mengetahui &amp; Menyetujui,<br/><span style="font-weight: normal; color: #666;">Direksi PT. Konsulta Sinergi Global</span></p>
+                                <p style="font-weight: bold; text-decoration: underline; margin-bottom: 2px;">
+                                    <span t-if="o.approver_id" t-field="o.approver_id.name"/>
+                                    <span t-else="">( .................................................. )</span>
+                                </p>
+                                <span style="font-size: 10px; color: #777;">Direktur Utama / Direktur Operasional</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

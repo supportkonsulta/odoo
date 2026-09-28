@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_operational_hpp_form" model="ir.ui.view">
+        <field name="name">ksg.operational.hpp.form</field>
+        <field name="model">ksg.operational.hpp</field>
+        <field name="arch" type="xml">
+            <form string="Lembar HPP Operasional">
+                <header>
+                    <button name="action_sync_from_sdm_and_supply" type="object" string="Tarik &amp; Hitung HPP Otomatis" class="btn-primary" invisible="state != 'draft'" icon="fa-refresh"/>
+                    <button name="action_export_excel" type="object" string="Cetak Excel HPP (.xlsx)" class="btn-success" icon="fa-file-excel-o"/>
+                    <button name="action_approve" type="object" string="Setujui HPP" class="btn-success" invisible="state != 'draft'"/>
+                    <button name="action_reset_draft" type="object" string="Setel Draft" invisible="state in ['draft']"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,approved"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" string="Nomor Lembar HPP"/>
+                        <h1 class="text-primary"><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Proyek &amp; Sumber Data">
+                            <field name="project_id" options="{'no_create': True}" readonly="state != 'draft'"/>
+                            <field name="manpower_id" options="{'no_create': True}" readonly="state != 'draft'"/>
+                            <field name="supply_id" options="{'no_create': True}" readonly="state != 'draft'"/>
+                            <field name="tanggal" readonly="state != 'draft'"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group string="Parameter HPP">
+                            <field name="mk_bulan" readonly="state != 'draft'"/>
+                            <field name="ovh_rate_hpp" widget="percentage" readonly="state != 'draft'"/>
+                            <field name="seragam_hpp" widget="monetary" readonly="state != 'draft'"/>
+                            <field name="sistem_hpp" widget="monetary" readonly="state != 'draft'"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Rincian Pos HPP" name="hpp_lines">
+                            <field name="line_ids" readonly="state != 'draft'">
+                                <list editable="bottom">
+                                    <field name="pos_type" invisible="1"/>
+                                    <field name="bagian"/>
+                                    <field name="mk"/>
+                                    <field name="tk"/>
+                                    <field name="uang_pokok" widget="monetary"/>
+                                    <field name="tunj" widget="monetary"/>
+                                    <field name="thr" widget="monetary"/>
+                                    <field name="seragam" widget="monetary"/>
+                                    <field name="ovh" widget="monetary"/>
+                                    <field name="sistem" widget="monetary"/>
+                                    <field name="bpjstk" widget="monetary"/>
+                                    <field name="bpjkes" widget="monetary"/>
+                                    <field name="ex_pengeluaran" widget="monetary"/>
+                                    <field name="jumlah_bulan" widget="monetary" sum="Total HPP/Bln"/>
+                                    <field name="hpp_tahun" widget="monetary" sum="Total HPP/Thn"/>
+                                    <field name="tagihan_bulan" widget="monetary" sum="Total Tagihan/Bln"/>
+                                    <field name="tagihan_tahun" widget="monetary" sum="Total Tagihan/Thn"/>
+                                </list>
+                            </field>
+                            <group class="oe_subtotal_footer oe_right">
+                                <field name="total_hpp_bulan" widget="monetary"/>
+                                <field name="total_tagihan_bulan" widget="monetary"/>
+                                <field name="profit_bulan" widget="monetary" class="oe_subtotal_footer_separator"/>
+                                <field name="total_hpp_tahun" widget="monetary"/>
+                                <field name="total_tagihan_tahun" widget="monetary"/>
+                                <field name="profit_tahun" widget="monetary"/>
+                                <field name="margin_percentage" widget="percentage"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_operational_hpp_list" model="ir.ui.view">
+        <field name="name">ksg.operational.hpp.list</field>
+        <field name="model">ksg.operational.hpp</field>
+        <field name="arch" type="xml">
+            <list string="Lembar HPP Operasional" decoration-success="state == 'approved'">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="tanggal"/>
+                <field name="total_hpp_bulan" widget="monetary"/>
+                <field name="total_tagihan_bulan" widget="monetary"/>
+                <field name="profit_bulan" widget="monetary"/>
+                <field name="margin_percentage" widget="percentage"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_operational_hpp" model="ir.actions.act_window">
+        <field name="name">Lembar HPP Proyek</field>
+        <field name="res_model">ksg.operational.hpp</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

@@ -1,8 +1,8 @@
 {
     'name': 'KSG Operational',
-    'version': '19.0.1.0.0',
+    'version': '19.0.2.0.0',
     'category': 'Operations',
-    'summary': 'Manajemen Operasional, Perencanaan Proyek, Manpower, BoQ, dan Dokumen Penagihan KSG',
+    'summary': 'Manajemen Operasional, Permintaan Tenaga Kerja, Perlengkapan 3 Sub-Jenis, dan Lembar HPP Terpadu KSG',
     'author': 'Tim ERP KSG',
     'license': 'LGPL-3',
     'depends': [
@@ -15,9 +15,9 @@
         'security/ir.model.access.csv',
         'data/ir_sequence_data.xml',
         'data/ir_cron_data.xml',
-        'views/project_views.xml',
         'views/manpower_request_views.xml',
-        'views/procurement_views.xml',
+        'views/supply_request_views.xml',
+        'views/hpp_operational_views.xml',
         'views/attendance_views.xml',
         'views/monthly_report_views.xml',
         'views/operational_assignment_views.xml',

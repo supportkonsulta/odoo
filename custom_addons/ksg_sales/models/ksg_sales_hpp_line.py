@@ -20,6 +20,10 @@ class KsgSalesHppLine(models.Model):
         default=10,
     )
 
+    # =========================================================
+    # DATA DASAR DARI RAB
+    # =========================================================
+
     kategori = fields.Selection(
         selection=[
             ("material", "Material"),
@@ -75,10 +79,136 @@ class KsgSalesHppLine(models.Model):
         string="Keterangan",
     )
 
+    # =========================================================
+    # STRUKTUR HPP OPERATIONAL
+    # Mengikuti struktur HPP Operational yang sudah dibahas
+    # =========================================================
+
+    bagian = fields.Char(
+        string="Bagian",
+        help="Bagian atau posisi/item yang dihitung dalam HPP.",
+    )
+
+    mk = fields.Float(
+        string="MK",
+        default=0.0,
+        help="Jumlah kebutuhan/man-month atau nilai kuantitas tenaga kerja sesuai kebutuhan perhitungan HPP.",
+    )
+
+    tk = fields.Float(
+        string="TK",
+        default=0.0,
+        help="Jumlah tenaga kerja.",
+    )
+
+    uang_pokok = fields.Monetary(
+        string="Uang Pokok",
+        currency_field="currency_id",
+        default=0.0,
+    )
+
+    tunj = fields.Monetary(
+        string="Tunj.",
+        currency_field="currency_id",
+        default=0.0,
+    )
+
+    thr = fields.Monetary(
+        string="THR",
+        currency_field="currency_id",
+        default=0.0,
+    )
+
+    seragam = fields.Monetary(
+        string="Seragam",
+        currency_field="currency_id",
+        default=0.0,
+    )
+
+    ovh = fields.Monetary(
+        string="OVH",
+        currency_field="currency_id",
+        default=0.0,
+    )
+
+    sistem = fields.Monetary(
+        string="Sistem",
+        currency_field="currency_id",
+        default=0.0,
+    )
+
+    bpjs_tk = fields.Monetary(
+        string="BPJS TK",
+        currency_field="currency_id",
+        default=0.0,
+    )
+
+    bpjs_kes = fields.Monetary(
+        string="BPJS KES",
+        currency_field="currency_id",
+        default=0.0,
+    )
+
+    ex_pengeluaran = fields.Monetary(
+        string="Ex. Pengeluaran",
+        currency_field="currency_id",
+        default=0.0,
+    )
+
+    jumlah_bulan = fields.Monetary(
+        string="Jumlah / Bulan",
+        currency_field="currency_id",
+        compute="_compute_hpp_operational",
+        store=True,
+    )
+
+    hpp_tahun = fields.Monetary(
+        string="HPP / Tahun",
+        currency_field="currency_id",
+        compute="_compute_hpp_operational",
+        store=True,
+    )
+
+    # =========================================================
+    # COMPUTE
+    # =========================================================
+
     @api.depends("qty", "harga_satuan")
     def _compute_subtotal(self):
         for line in self:
             line.subtotal = line.qty * line.harga_satuan
+
+    @api.depends(
+        "uang_pokok",
+        "tunj",
+        "thr",
+        "seragam",
+        "ovh",
+        "sistem",
+        "bpjs_tk",
+        "bpjs_kes",
+        "ex_pengeluaran",
+    )
+    def _compute_hpp_operational(self):
+        for line in self:
+            line.jumlah_bulan = (
+                line.uang_pokok
+                + line.tunj
+                + line.thr
+                + line.seragam
+                + line.ovh
+                + line.sistem
+                + line.bpjs_tk
+                + line.bpjs_kes
+                + line.ex_pengeluaran
+            )
+
+            # Template Operational menggunakan periode 12 bulan.
+            line.hpp_tahun = line.jumlah_bulan * 12
+
+    # =========================================================
+    # VALIDATION
+    # =========================================================
 
     @api.constrains("qty")
     def _check_qty(self):
@@ -88,13 +218,43 @@ class KsgSalesHppLine(models.Model):
                     "Qty harus lebih besar dari 0."
                 )
 
-    @api.constrains("harga_satuan")
-    def _check_harga_satuan(self):
+    @api.constrains(
+        "harga_satuan",
+        "uang_pokok",
+        "tunj",
+        "thr",
+        "seragam",
+        "ovh",
+        "sistem",
+        "bpjs_tk",
+        "bpjs_kes",
+        "ex_pengeluaran",
+    )
+    def _check_amounts(self):
+        amount_fields = [
+            "harga_satuan",
+            "uang_pokok",
+            "tunj",
+            "thr",
+            "seragam",
+            "ovh",
+            "sistem",
+            "bpjs_tk",
+            "bpjs_kes",
+            "ex_pengeluaran",
+        ]
+
         for line in self:
-            if line.harga_satuan < 0:
-                raise ValidationError(
-                    "Harga Satuan tidak boleh bernilai negatif."
-                )
+            for field_name in amount_fields:
+                if getattr(line, field_name) < 0:
+                    raise ValidationError(
+                        f"{line._fields[field_name].string} "
+                        "tidak boleh bernilai negatif."
+                    )
+
+    # =========================================================
+    # PROTECTION AFTER APPROVAL
+    # =========================================================
 
     def write(self, vals):
         for line in self:

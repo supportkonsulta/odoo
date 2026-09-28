@@ -1,35 +1,31 @@
-﻿from odoo import models, fields, api
-
-class KsgSalesWorker(models.Model):
-    _name = 'ksg.sales.worker'
-    _description = 'Master Data Tenaga Kerja'
-
-    name = fields.Char(string='Nama Pekerja', required=True)
-    nik = fields.Char(string='NIK')
-    posisi = fields.Char(string='Posisi / Jabatan')
-
+from odoo import models, fields, api, _
 
 class KsgOperationalAssignment(models.Model):
     _name = 'ksg.operational.assignment'
-    _description = 'Penugasan Tenaga Kerja ke Proyek (Dikelola Eksklusif oleh HC)'
-    _inherit = ['mail.thread']
+    _description = 'Penugasan Tenaga Kerja Proyek'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
 
+    name = fields.Char(string='ID Penugasan', required=True, copy=False, default=lambda self: _('New'))
     project_id = fields.Many2one('ksg.sales.project', string='Proyek', required=True, tracking=True)
-    worker_id = fields.Many2one('ksg.sales.worker', string='Tenaga Kerja', required=True, tracking=True)
-    tanggal_mulai_tugas = fields.Date(string='Tanggal Mulai', required=True, default=fields.Date.today)
-    tanggal_selesai_tugas = fields.Date(string='Tanggal Selesai')
-    status_aktif = fields.Boolean(string='Status Aktif', compute='_compute_status_aktif', store=True)
+    worker_name = fields.Char(string='Nama Pekerja', required=True, tracking=True)
+    jabatan = fields.Char(string='Jabatan / Posisi', required=True)
+    tanggal_mulai = fields.Date(string='Tanggal Mulai', default=fields.Date.context_today)
+    tanggal_selesai = fields.Date(string='Tanggal Selesai')
+    status = fields.Selection([
+        ('active', 'Aktif'),
+        ('ended', 'Selesai'),
+        ('mutated', 'Mutasi')
+    ], string='Status Penugasan', default='active', tracking=True)
 
-    @api.depends('tanggal_selesai_tugas')
-    def _compute_status_aktif(self):
-        today = fields.Date.today()
-        for rec in self:
-            if rec.tanggal_selesai_tugas and rec.tanggal_selesai_tugas <= today:
-                rec.status_aktif = False
-            else:
-                rec.status_aktif = True
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('name', _('New')) in [_('New'), 'New', False]:
+                vals['name'] = self.env['ir.sequence'].next_by_code('ksg.operational.assignment') or _('New')
+        return super().create(vals_list)
 
     @api.model
-    def cron_update_worker_active_status(self):
-        assignments = self.search([])
-        assignments._compute_status_aktif()
+    def cron_check_assignment_status(self):
+        today = fields.Date.context_today(self)
+        expired = self.search([('status', '=', 'active'), ('tanggal_selesai', '<', today)])
+        expired.write({'status': 'ended'})

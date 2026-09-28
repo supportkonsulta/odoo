@@ -10,3 +10,8 @@ from . import ksg_sales_hpp
 from . import ksg_sales_hpp_line
 from . import ksg_sales_invoice
 from . import account_move
+from . import ksg_sales_dashboard
+from . import ksg_sales_project_checklist
+from . import ksg_sales_hpp_tenaga_kerja
+from . import ksg_sales_hpp_perlengkapan
+from . import ksg_sales_hpp_engineering

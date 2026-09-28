@@ -8,6 +8,13 @@ class KsgSalesRab(models.Model):
     _inherit = ["mail.thread", "mail.activity.mixin"]
     _order = "id desc"
 
+    _sql_constraints = [
+        (
+            "ksg_sales_rab_name_unique",
+            "unique(name)",
+            "Nomor RAB harus unik.",
+        ),
+    ]
     # ==========================================================
     # IDENTITAS RAB
     # ==========================================================

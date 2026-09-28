@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_procurement_reject_wizard_form" model="ir.ui.view">
+        <field name="name">ksg.operational.procurement.reject.wizard.form</field>
+        <field name="model">ksg.operational.procurement.reject.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Konfirmasi Penolakan BoQ">
+                <sheet>
+                    <p class="text-danger">
+                        Silakan masukkan alasan penolakan dokumen BoQ pengadaan ini:
+                    </p>
+                    <group>
+                        <field name="alasan_penolakan" placeholder="Contoh: Estimasi harga melebihi anggaran proyek, spesifikasi belum lengkap..." required="1"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_confirm_reject" type="object" string="Tolak Dokumen" class="btn-danger"/>
+                    <button string="Batal" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

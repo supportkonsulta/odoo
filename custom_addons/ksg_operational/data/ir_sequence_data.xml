@@ -1,29 +1,50 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data noupdate="1">
-        <!-- Sequence Pengadaan BoQ -->
-        <record id="seq_operational_procurement" model="ir.sequence">
-            <field name="name">Nomor Pengadaan BoQ Operasional</field>
-            <field name="code">ksg.operational.procurement</field>
-            <field name="prefix">BOQ/%(year)s/%(month)s/</field>
+        <record id="seq_operational_manpower_request" model="ir.sequence">
+            <field name="name">Nomor Permintaan SDM</field>
+            <field name="code">ksg.operational.manpower</field>
+            <field name="prefix">SDM/%(year)s/%(month)s/</field>
             <field name="padding">4</field>
             <field name="company_id" eval="False"/>
         </record>
 
-        <!-- Sequence Upload Presensi Lapangan -->
-        <record id="seq_operational_attendance_report" model="ir.sequence">
-            <field name="name">Nomor Rekap Presensi</field>
-            <field name="code">ksg.operational.attendance.report</field>
-            <field name="prefix">ATT/%(year)s/%(month)s/</field>
+        <record id="seq_operational_supply_request" model="ir.sequence">
+            <field name="name">Nomor Permintaan Perlengkapan</field>
+            <field name="code">ksg.operational.supply</field>
+            <field name="prefix">SUP/%(year)s/%(month)s/</field>
             <field name="padding">4</field>
             <field name="company_id" eval="False"/>
         </record>
 
-        <!-- Sequence Laporan Bulanan -->
-        <record id="seq_operational_monthly_report" model="ir.sequence">
-            <field name="name">Nomor Laporan Bulanan Operasional</field>
+        <record id="seq_operational_hpp" model="ir.sequence">
+            <field name="name">Nomor Lembar HPP</field>
+            <field name="code">ksg.operational.hpp</field>
+            <field name="prefix">HPP/%(year)s/%(month)s/</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <record id="seq_operational_assignment" model="ir.sequence">
+            <field name="name">ID Penugasan Pekerja</field>
+            <field name="code">ksg.operational.assignment</field>
+            <field name="prefix">ASN/%(year)s/</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <record id="seq_operational_attendance" model="ir.sequence">
+            <field name="name">Nomor Laporan Presensi</field>
+            <field name="code">ksg.operational.attendance</field>
+            <field name="prefix">PRS/%(year)s/%(month)s/</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <record id="seq_operational_monthly" model="ir.sequence">
+            <field name="name">Nomor Laporan Bulanan</field>
             <field name="code">ksg.operational.monthly.report</field>
-            <field name="prefix">OPS/REP/%(year)s/%(month)s/</field>
+            <field name="prefix">BLN/%(year)s/%(month)s/</field>
             <field name="padding">4</field>
             <field name="company_id" eval="False"/>
         </record>

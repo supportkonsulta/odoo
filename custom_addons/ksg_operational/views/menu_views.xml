@@ -1,56 +1,68 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Menu Utama Aplikasi Operasional -->
-    <menuitem id="menu_ksg_operational_root"
-              name="Operasional"
-              web_icon="ksg_operational,static/description/icon.png"
+    <!-- Menu Utama Operasional -->
+    <menuitem id="menu_ksg_operational_root" 
+              name="Operasional" 
+              web_icon="ksg_operational,static/description/icon.png" 
               sequence="25"/>
 
-    <!-- 1. Kategori Sumber Daya Lapangan -->
-    <menuitem id="menu_ops_manpower_category"
-              name="Tenaga Kerja"
-              parent="menu_ksg_operational_root"
+    <!-- 1. Menu Tenaga Kerja (SDM) -->
+    <menuitem id="menu_operational_sdm_root" 
+              name="Tenaga Kerja" 
+              parent="menu_ksg_operational_root" 
               sequence="10"/>
 
-    <menuitem id="menu_ksg_operational_manpower_request"
-              name="Permohonan Manpower (ke HC)"
-              parent="menu_ops_manpower_category"
-              action="action_ksg_operational_manpower_request"
+    <menuitem id="menu_operational_manpower_request" 
+              name="Permintaan Tenaga Kerja" 
+              parent="menu_operational_sdm_root" 
+              action="action_operational_manpower_request" 
               sequence="10"/>
 
-    <menuitem id="menu_ksg_operational_assignment_menu"
-              name="Penugasan Pekerja Aktif"
-              parent="menu_ops_manpower_category"
-              action="action_ksg_operational_assignment"
+    <menuitem id="menu_operational_assignment" 
+              name="Penugasan Pekerja Aktif" 
+              parent="menu_operational_sdm_root" 
+              action="action_ksg_operational_assignment" 
               sequence="20"/>
 
-    <!-- 2. Kategori Logistik & Pengadaan -->
-    <menuitem id="menu_ops_logistics_category"
-              name="Pengadaan"
-              parent="menu_ksg_operational_root"
+    <!-- 2. Menu Perlengkapan & Chemical -->
+    <menuitem id="menu_operational_supply_root" 
+              name="Perlengkapan &amp; Chemical" 
+              parent="menu_ksg_operational_root" 
               sequence="20"/>
 
-    <menuitem id="menu_ksg_operational_procurement"
-              name="Pengadaan &amp; BoQ"
-              parent="menu_ops_logistics_category"
-              action="action_ksg_operational_procurement"
+    <menuitem id="menu_operational_supply_request" 
+              name="Permintaan Perlengkapan" 
+              parent="menu_operational_supply_root" 
+              action="action_operational_supply_request" 
               sequence="10"/>
 
-    <!-- 3. Kategori Monitoring & Laporan -->
-    <menuitem id="menu_ops_monitoring_category"
-              name="Monitoring &amp; Laporan"
-              parent="menu_ksg_operational_root"
+    <!-- 3. Menu Kalkulasi HPP -->
+    <menuitem id="menu_operational_hpp_root" 
+              name="Kalkulasi HPP" 
+              parent="menu_ksg_operational_root" 
               sequence="30"/>
 
-    <menuitem id="menu_ksg_operational_attendance"
-              name="Presensi Lapangan (SIDAC / Presenly)"
-              parent="menu_ops_monitoring_category"
-              action="action_ksg_operational_attendance"
+    <menuitem id="menu_operational_hpp_entry" 
+              name="Lembar HPP Proyek" 
+              parent="menu_operational_hpp_root" 
+              action="action_operational_hpp" 
               sequence="10"/>
 
-    <menuitem id="menu_ksg_operational_monthly_report_menu"
-              name="Laporan Bulanan Proyek"
-              parent="menu_ops_monitoring_category"
-              action="action_ksg_operational_monthly_report"
+    <!-- 4. Menu Monitoring & Laporan -->
+    <menuitem id="menu_operational_monitoring_root" 
+              name="Monitoring &amp; Laporan" 
+              parent="menu_ksg_operational_root" 
+              sequence="40"/>
+
+    <menuitem id="menu_operational_attendance_report" 
+              name="Presensi Lapangan" 
+              parent="menu_operational_monitoring_root" 
+              action="action_ksg_operational_attendance_report" 
+              sequence="10"/>
+
+    <menuitem id="menu_operational_monthly_report" 
+              name="Laporan Bulanan Proyek" 
+              parent="menu_operational_monitoring_root" 
+              action="action_ksg_operational_monthly_report" 
               sequence="20"/>
 </odoo>

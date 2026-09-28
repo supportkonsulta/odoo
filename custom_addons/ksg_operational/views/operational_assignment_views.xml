@@ -1,34 +1,27 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="view_ksg_operational_assignment_list" model="ir.ui.view">
-        <field name="name">ksg.operational.assignment.list</field>
-        <field name="model">ksg.operational.assignment</field>
-        <field name="arch" type="xml">
-            <list string="Penugasan Tenaga Kerja Proyek" decoration-danger="not status_aktif" decoration-success="status_aktif">
-                <field name="worker_id"/>
-                <field name="project_id"/>
-                <field name="tanggal_mulai_tugas"/>
-                <field name="tanggal_selesai_tugas"/>
-                <field name="status_aktif" widget="boolean_toggle"/>
-            </list>
-        </field>
-    </record>
-
-    <record id="view_ksg_operational_assignment_form" model="ir.ui.view">
+    <record id="view_operational_assignment_form" model="ir.ui.view">
         <field name="name">ksg.operational.assignment.form</field>
         <field name="model">ksg.operational.assignment</field>
         <field name="arch" type="xml">
-            <form string="Penugasan Tenaga Kerja Proyek">
+            <form string="Penugasan Pekerja">
+                <header>
+                    <field name="status" widget="statusbar" statusbar_visible="active,ended"/>
+                </header>
                 <sheet>
+                    <div class="oe_title">
+                        <label for="name" string="ID Penugasan"/>
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
                     <group>
-                        <group string="Identitas Tenaga Kerja">
-                            <field name="worker_id"/>
-                            <field name="project_id"/>
+                        <group string="Data Proyek &amp; Pekerja">
+                            <field name="project_id" options="{'no_create': True}"/>
+                            <field name="worker_name"/>
+                            <field name="jabatan"/>
                         </group>
-                        <group string="Durasi Penempatan">
-                            <field name="tanggal_mulai_tugas"/>
-                            <field name="tanggal_selesai_tugas"/>
-                            <field name="status_aktif" widget="boolean_toggle"/>
+                        <group string="Masa Tugas">
+                            <field name="tanggal_mulai"/>
+                            <field name="tanggal_selesai"/>
                         </group>
                     </group>
                 </sheet>
@@ -37,8 +30,24 @@
         </field>
     </record>
 
+    <record id="view_operational_assignment_list" model="ir.ui.view">
+        <field name="name">ksg.operational.assignment.list</field>
+        <field name="model">ksg.operational.assignment</field>
+        <field name="arch" type="xml">
+            <list string="Daftar Penugasan Pekerja" decoration-success="status == 'active'" decoration-muted="status == 'ended'">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="worker_name"/>
+                <field name="jabatan"/>
+                <field name="tanggal_mulai"/>
+                <field name="tanggal_selesai"/>
+                <field name="status" widget="badge" decoration-success="status == 'active'" decoration-danger="status == 'ended'"/>
+            </list>
+        </field>
+    </record>
+
     <record id="action_ksg_operational_assignment" model="ir.actions.act_window">
-        <field name="name">Tenaga Kerja Proyek</field>
+        <field name="name">Penugasan Pekerja</field>
         <field name="res_model">ksg.operational.assignment</field>
         <field name="view_mode">list,form</field>
     </record>

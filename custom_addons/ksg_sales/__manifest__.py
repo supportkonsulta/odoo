@@ -7,11 +7,15 @@
         Custom Modul Penjualan ERP KSG.
 
         Scope:
+        - Dashboard Penjualan
         - Data Proyek
         - Data Kontrak
         - Kategori Pekerjaan
         - Checklist Dokumen Engineering
         - Sistem Penagihan
+        - HPP Operational
+        - Kebutuhan Tenaga Kerja
+        - Kebutuhan Perlengkapan & Chemical
         - Integrasi dengan Contacts
         - Chatter dan Activity
     """,
@@ -27,24 +31,29 @@
         "account",
     ],
 
+    "assets": {
+        "web.assets_backend": [
+            "ksg_sales/static/src/css/ksg_sales_dashboard.css",
+        ],
+    },
+
     "data": [
         "security/security.xml",
         "security/ir.model.access.csv",
-
         "data/sequence.xml",
         "data/ksg_sales_sequence.xml",
-
+        "data/ksg_sales_dashboard_data.xml",
         "views/ksg_sales_category_views.xml",
         "views/ksg_sales_document_checklist_views.xml",
         "views/ksg_sales_project_views.xml",
         "views/ksg_sales_project_addendum_views.xml",
         "views/ksg_sales_rab_views.xml",
         "views/ksg_sales_hpp_views.xml",
-
         "report/invoice_report.xml",
         "report/invoice_template.xml",
-
         "views/ksg_sales_invoice_views.xml",
+        "views/ksg_sales_views.xml",
+        "views/ksg_sales_dashboard_views.xml",
     ],
 
     "installable": True,
