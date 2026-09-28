@@ -5,77 +5,57 @@
         <field name="model">ksg.sales.project</field>
         <field name="priority" eval="99"/>
         <field name="arch" type="xml">
-            <form string="Data Proyek Engineering">
+            <form string="Data Proyek Engineering" create="0" edit="1">
+                <header>
+                    <button name="action_export_master_schedule" string="Cetak Master Schedule (Excel)" type="object" class="btn-primary"/>
+                    <field name="status" widget="statusbar"/>
+                </header>
                 <sheet>
                     <div class="oe_title">
                         <label for="nama_pekerjaan" string="Nama Pekerjaan"/>
                         <h1>
-                            <field name="nama_pekerjaan" placeholder="Nama pekerjaan proyek..."/>
+                            <field name="nama_pekerjaan" readonly="1"/>
                         </h1>
                     </div>
 
                     <group>
-                        <group string="Informasi Proyek">
+                        <group string="Identitas Proyek (Read-Only)">
                             <field name="kode_proyek" readonly="1"/>
-                            <field name="klien"/>
-                            <field name="kategori"/>
-                            <field name="status" widget="badge"
-                                decoration-success="status == 'aktif'"
-                                decoration-muted="status == 'selesai'"
-                                decoration-danger="status == 'batal'"/>
-                            <field name="tanggal_po_diterima"/>
-                            <field name="no_pk"/>
+                            <field name="klien" readonly="1"/>
+                            <field name="kategori" readonly="1"/>
+                            <field name="tanggal_po_diterima" readonly="1"/>
+                            <field name="no_pk" readonly="1"/>
                         </group>
 
-                        <group string="Kontrak">
-                            <field name="awal_kontrak"/>
-                            <field name="akhir_kontrak"/>
-                            <field name="currency_id"/>
+                        <group string="Nilai Kontrak &amp; Tagihan (Read-Only)">
+                            <field name="awal_kontrak" readonly="1"/>
+                            <field name="akhir_kontrak" readonly="1"/>
+                            <field name="currency_id" readonly="1"/>
                             <field name="nilai_kontrak_awal" string="Nilai Kontrak Awal" readonly="1"/>
                             <field name="nilai_kontrak_terkini" string="Nilai Kontrak Terkini" readonly="1"/>
                             <field name="sisa_nilai_kontrak" string="Sisa Nilai Kontrak" readonly="1"/>
+                            <field name="sistem_penagihan" readonly="1"/>
                         </group>
-                    </group>
-
-                    <group string="Sistem Penagihan">
-                        <field name="sistem_penagihan" readonly="1"/>
                     </group>
 
                     <notebook>
-                <!-- ===== Tab 1: Engineering Overview ===== -->
-                <page string="Engineering" name="engineering_tab">
-                    <group>
-                        <group string="Informasi Kontrak (Read-Only)">
-                            <field name="klien" readonly="1"/>
-                            <field name="tanggal_po_diterima" readonly="1"/>
-                            <field name="no_pk" readonly="1"/>
-                            <field name="awal_kontrak" readonly="1"/>
-                            <field name="akhir_kontrak" readonly="1"/>
-                            <field name="nilai_kontrak_awal" readonly="1"/>
-                            <field name="nilai_kontrak_terkini" readonly="1"/>
-                            <field name="sistem_penagihan" readonly="1"/>
-                        </group>
-                        <group string="Prasyarat Keselamatan (Wajib)">
-                            <div class="text-muted mb-2" colspan="2">
-                                Centang kedua item di bawah setelah dokumen keselamatan lengkap.
-                                Daily Report tidak bisa disubmit jika belum dicentang.
-                            </div>
-                            <field name="working_permit_ok" string="Working Permit Lengkap"/>
-                            <field name="safety_induction_ok" string="Safety Induction Lengkap"/>
-                        </group>
-                    </group>
-                    <group>
-                        <group string="Progress Proyek (Kurva-S)">
-                            <field name="kurva_s_planned" string="Rencana (%)"/>
-                            <field name="kurva_s_actual" string="Realisasi (%)"/>
-                            <field name="kurva_s_variance" string="Selisih (%)"/>
-                        </group>
-                        <group string="Status &amp; Notifikasi">
-                            <field name="bapbast_approved" readonly="1" string="BAP/BAST Disetujui"/>
-                            <field name="notify_email_enabled" string="Kirim Notifikasi Email"/>
-                        </group>
-                    </group>
-                    <separator string="Grafik Kurva-S"/>
+                        <!-- ===== Tab 1: Engineering Overview ===== -->
+                        <page string="Engineering" name="engineering_tab">
+                            <group>
+                                <group string="Prasyarat Keselamatan (Wajib)">
+                                    <div class="text-muted mb-2" colspan="2">
+                                        Centang kedua item di bawah setelah dokumen keselamatan lengkap.
+                                        Daily Report tidak bisa disubmit jika belum dicentang.
+                                    </div>
+                                    <field name="working_permit_ok" string="Working Permit Lengkap"/>
+                                    <field name="safety_induction_ok" string="Safety Induction Lengkap"/>
+                                </group>
+                                <group string="Status &amp; Notifikasi">
+                                    <field name="bapbast_approved" readonly="1" string="BAP/BAST Disetujui"/>
+                                    <field name="notify_email_enabled" string="Kirim Notifikasi Email"/>
+                                </group>
+                            </group>
+                            <separator string="Grafik Kurva-S (Rencana vs Realisasi)"/>
                     <field name="kurva_s_planned" widget="kurva_s_chart" nolabel="1"/>
                     <separator string="Dokumen Teknis Proyek"/>
                     <field name="document_ids" widget="many2many_binary" nolabel="1"/>
@@ -103,7 +83,7 @@
                         Buat rincian pekerjaan proyek. Klik "Tambah baris" untuk menambah item. Untuk sub-pekerjaan, isi kolom "Induk".
                     </div>
                     <field name="wbs_ids" nolabel="1">
-                        <list default_order="parent_path">
+                        <list default_order="id">
                             <field name="display_name" string="Nama Pekerjaan"/>
                             <field name="parent_id" string="Induk"
                                            domain="[('project_id', '=', parent.id)]"

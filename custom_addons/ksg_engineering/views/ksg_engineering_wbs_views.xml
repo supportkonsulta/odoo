@@ -9,7 +9,7 @@
         <field name="name">ksg.engineering.wbs.list</field>
         <field name="model">ksg.engineering.wbs</field>
         <field name="arch" type="xml">
-            <list default_order="project_id, parent_path"
+            <list default_order="project_id, id"
                   decoration-bf="not parent_id">
                 <field name="project_id"/>
                 <field name="parent_id" string="Induk" optional="show"/>

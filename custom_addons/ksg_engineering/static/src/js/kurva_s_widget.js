@@ -87,8 +87,12 @@ export class KurvaSWidget extends Component {
                 await loadJS("/web/static/lib/Chart/Chart.js");
             }
         } catch (e) {
-            console.error("Kurva-S: Pustaka Chart.js bawaan Odoo gagal dimuat.", e);
-            return;
+            try {
+                await loadJS("https://cdn.jsdelivr.net/npm/chart.js");
+            } catch (err2) {
+                console.error("Kurva-S: Pustaka Chart.js gagal dimuat.", err2);
+                return;
+            }
         }
 
         this.chart = new Chart(canvas, {

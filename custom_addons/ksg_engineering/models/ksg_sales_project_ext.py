@@ -182,6 +182,148 @@ class KsgSalesProjectExt(models.Model):
         }
 
     # ==================================================================
+    # EXPORT MASTER SCHEDULE (EXCEL)
+    # ==================================================================
+    def action_export_master_schedule(self):
+        self.ensure_one()
+        import io
+        import base64
+        try:
+            import xlsxwriter
+        except ImportError:
+            raise ValidationError("Library xlsxwriter tidak ditemukan di server.")
+
+        output = io.BytesIO()
+        workbook = xlsxwriter.Workbook(output, {'in_memory': True})
+        sheet = workbook.add_worksheet('MASTER SCHEDULE')
+        
+        # Formats
+        title_format = workbook.add_format({'bold': True, 'font_size': 14, 'align': 'center', 'valign': 'vcenter'})
+        header_format = workbook.add_format({'bold': True, 'align': 'center', 'valign': 'vcenter', 'border': 1, 'bg_color': '#D3D3D3'})
+        cell_format = workbook.add_format({'border': 1, 'valign': 'vcenter'})
+        center_format = workbook.add_format({'border': 1, 'align': 'center', 'valign': 'vcenter'})
+        percent_format = workbook.add_format({'border': 1, 'align': 'center', 'valign': 'vcenter', 'num_format': '0.00%'})
+        
+        # Title
+        sheet.merge_range('A1:J1', 'MASTER SCHEDULE PEKERJAAN', title_format)
+        sheet.merge_range('A2:J2', self.nama_pekerjaan.upper() if self.nama_pekerjaan else '', title_format)
+        
+        # Meta
+        sheet.write('A4', 'KONSULTAN / KLIEN:', workbook.add_format({'bold': True}))
+        sheet.write('C4', self.klien.name if self.klien else '')
+        sheet.write('A5', 'NOMOR KONTRAK / SP:', workbook.add_format({'bold': True}))
+        sheet.write('C5', self.no_pk or '')
+        sheet.write('A6', 'TANGGAL KONTRAK:', workbook.add_format({'bold': True}))
+        sheet.write('C6', f"{self.awal_kontrak.strftime('%d %b %Y')} s.d {self.akhir_kontrak.strftime('%d %b %Y')}" if self.awal_kontrak and self.akhir_kontrak else '')
+        
+        # Table Headers
+        row = 8
+        sheet.write(row, 0, 'NO', header_format)
+        sheet.write(row, 1, 'URAIAN PEKERJAAN', header_format)
+        sheet.write(row, 2, 'BOBOT (%)', header_format)
+        
+        weeks = self.schedule_week_ids.sorted('no_minggu')
+        col = 3
+        for w in weeks:
+            sheet.write(row, col, f"M-{w.no_minggu}\n{w.tanggal_mulai.strftime('%d/%m')}-{w.tanggal_selesai.strftime('%d/%m')}", header_format)
+            sheet.set_column(col, col, 12)
+            col += 1
+            
+        sheet.write(row, col, 'TOTAL (%)', header_format)
+        sheet.set_column(0, 0, 5)
+        sheet.set_column(1, 1, 40)
+        sheet.set_column(2, 2, 10)
+        
+        # Data Rows
+        row += 1
+        
+        def write_wbs(wbs_list, level, current_row):
+            idx = 1
+            for w in wbs_list:
+                prefix = ""
+                if level == 1:
+                    # Convert to Roman
+                    val = idx
+                    roman = ''
+                    num = [1, 4, 5, 9, 10, 40, 50, 90, 100, 400, 500, 900, 1000]
+                    sym = ["I", "IV", "V", "IX", "X", "XL", "L", "XC", "C", "CD", "D", "CM", "M"]
+                    i = 12
+                    while val:
+                        div = val // num[i]
+                        val %= num[i]
+                        while div:
+                            roman += sym[i]
+                            div -= 1
+                        i -= 1
+                    no_str = roman
+                else:
+                    no_str = f"{idx}"
+                    prefix = "  " * level
+                    
+                sheet.write(current_row, 0, no_str, center_format)
+                sheet.write(current_row, 1, prefix + w.nama_pekerjaan, cell_format)
+                sheet.write(current_row, 2, w.bobot / 100.0, percent_format)
+                
+                # Targets
+                c = 3
+                for wk in weeks:
+                    target = w.target_ids.filtered(lambda t: t.periode_minggu_id.id == wk.id)
+                    val = sum(target.mapped('target_progress')) / 100.0 if target else 0.0
+                    if val > 0:
+                        sheet.write(current_row, c, val, percent_format)
+                    else:
+                        sheet.write(current_row, c, '', cell_format)
+                    c += 1
+                    
+                sheet.write(current_row, c, sum(w.target_ids.mapped('target_progress')) / 100.0, percent_format)
+                current_row += 1
+                
+                # Children
+                children = w.child_ids.sorted('id')
+                if children:
+                    current_row = write_wbs(children, level + 1, current_row)
+                    
+                idx += 1
+            return current_row
+            
+        top_wbs = self.wbs_ids.filtered(lambda w: not w.parent_id).sorted('id')
+        row = write_wbs(top_wbs, 1, row)
+        
+        # Footer
+        sheet.write(row, 1, 'GRAND TOTAL', workbook.add_format({'bold': True, 'align': 'right', 'border': 1}))
+        sheet.write(row, 2, sum(top_wbs.mapped('bobot')) / 100.0, workbook.add_format({'bold': True, 'align': 'center', 'border': 1, 'num_format': '0.00%'}))
+        
+        c = 3
+        for wk in weeks:
+            total_wk = 0.0
+            for w in top_wbs:
+                target = w.target_ids.filtered(lambda t: t.periode_minggu_id.id == wk.id)
+                if target:
+                    total_wk += sum(target.mapped('target_progress'))
+            sheet.write(row, c, total_wk / 100.0, workbook.add_format({'bold': True, 'align': 'center', 'border': 1, 'num_format': '0.00%'}))
+            c += 1
+            
+        sheet.write(row, c, '', cell_format)
+        
+        workbook.close()
+        output.seek(0)
+        
+        attachment = self.env['ir.attachment'].create({
+            'name': f"Master_Schedule_{self.kode_proyek}.xlsx",
+            'type': 'binary',
+            'datas': base64.b64encode(output.read()),
+            'res_model': self._name,
+            'res_id': self.id,
+            'mimetype': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        })
+        
+        return {
+            'type': 'ir.actions.act_url',
+            'url': f'/web/content/{attachment.id}?download=true',
+            'target': 'self',
+        }
+
+    # ==================================================================
     # Calendar weeks generation (FR-011)
     # ==================================================================
 
