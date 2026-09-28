@@ -226,3 +226,28 @@ Urutan pengerjaan yang dulu direncanakan, ketiganya sudah dikerjakan:
 1. Field `presenly_nopeg` + pencocokan pegawai (Presenly → Odoo). ✅
 2. Cermin `presenly.saas.employee` untuk kolom yang tidak punya rumah di Odoo. ✅
 3. Sinkronisasi dua arah. ✅
+
+## 7. Cabang, dan akses perusahaan pengguna (diputuskan 2026-09-28)
+
+Empat pertanyaan, dan jawaban pemiliknya:
+
+| Pertanyaan | Jawaban |
+| --- | --- |
+| Boleh penempatan memberi akses perusahaan Odoo ke pengguna itu? | Ya, terbatas pada perusahaan hasil cermin klien |
+| Perusahaan bawaan pengguna ikut pindah ke cabangnya? | Tidak; perpindahan hanya lewat pemilih perusahaan |
+| Akses dicabut saat penempatan berakhir? | **Tidak**, supaya tidak ada kejutan berupa hilangnya perusahaan di tengah pekerjaan |
+| Perlu tabel cermin penempatan? | Tidak untuk sekarang; cukup daftar cabang di pegawai |
+
+Akibat yang perlu diketahui:
+
+- Sinkronisasi **hanya menambah** akses. Kalau seseorang menghapusnya di Odoo,
+  tarikan berikutnya menambahkannya kembali. Itu konsekuensi langsung dari
+  jawaban ketiga, bukan kelalaian.
+- Daftar cabang (`hr.employee.presenly_client_ids`) tetap keadaan sekarang,
+  sedangkan aksesnya menumpuk. Keduanya bisa berbeda, dan itu memang disengaja.
+- Riwayat penempatan tidak disimpan, jadi pertanyaan "dulu di cabang mana, dari
+  kapan sampai kapan" belum bisa dijawab. Tabel cermin penempatan adalah
+  pekerjaan lanjutan bila itu dibutuhkan.
+- Peristiwa `placement.*` belum ada di sisi SaaS. Perubahan penempatan sekarang
+  sampai lewat peristiwa pegawai, `sync.changed` dengan `dataset=placements`
+  (klien sudah mengenalinya), atau cron.

@@ -142,6 +142,37 @@ masih berlaku. Kalau tidak ada yang utama, tautannya dibiarkan apa adanya dan
 keadaannya dicatat — menebak di antara beberapa penempatan menghasilkan tautan yang
 salah tanpa jejak.
 
+## Cabang per pegawai, dan akses perusahaan pengguna
+
+Penempatan utama hanya satu, tetapi **cabangnya bisa beberapa**: satu baris
+`placements` per pegawai dan klien. Karena itu:
+
+- `hr.employee.presenly_client_ids` berisi **seluruh** perusahaan cabang dari
+  penempatan yang berlaku hari ini (aktif, sudah mulai, belum berakhir). Daftarnya
+  adalah keadaan sekarang, jadi cabang keluar dari daftar begitu penempatannya
+  berakhir.
+- Pengguna yang tertaut ke pegawai itu (`hr.employee.user_id`) mendapat perusahaan
+  cabangnya di daftar **Perusahaan** miliknya, sehingga pemilih perusahaan berisi
+  cabangnya dan ia bisa bekerja di sana.
+
+Aturan yang dipegang, dan ini keputusan pemilik:
+
+| Keadaan | Yang terjadi |
+| --- | --- |
+| Penempatan baru muncul | Perusahaannya ditambahkan ke daftar perusahaan pengguna, dan dicatat di log sinkronisasi |
+| Penempatan berakhir | Cabangnya keluar dari daftar cabang pegawai, tetapi **akses perusahaannya dibiarkan** |
+| Akses dihapus orang di Odoo | Tarikan berikutnya menambahkannya kembali; sinkronisasi hanya menambah, tidak pernah mencabut |
+| Klien belum ada sebagai perusahaan | Tidak diberikan, dan keadaannya dihitung di ringkasan (`unknown_company`) |
+| Perusahaan bukan hasil cermin klien | Tidak pernah ditambahkan |
+| Perusahaan bawaan pengguna (`res.users.company_id`) | Tidak diubah; perpindahan hanya lewat pemilih perusahaan |
+| Tarikan terpotong | Daftar cabang tidak disentuh sama sekali |
+
+Alasannya: kehilangan perusahaan di tengah pekerjaan tanpa diminta lebih
+merugikan daripada akses yang tertinggal sedikit lebih lama. Karena itu modul ini
+**menulis ke `res.users`**, yaitu model native yang sebelumnya tidak pernah
+disentuh; yang ditulis hanya kolom `company_ids`, tidak ada kolom native yang
+diubah artinya.
+
 ## Kirim balik lokasi kerja
 
 Setelannya `Send Work Location Edits to Presenly`, mati secara bawaan. Aplikasi

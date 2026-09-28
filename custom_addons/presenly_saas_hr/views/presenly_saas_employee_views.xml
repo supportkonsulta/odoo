@@ -64,7 +64,12 @@ action = config.action_unregister_webhook()
                 <field name="nopeg"/>
                 <field name="name"/>
                 <field name="bagian"/>
-                <field name="internal_company_name" optional="show"/>
+                <!-- Perusahaan tempat baris cermin ini disimpan. Disembunyikan
+                     secara bawaan karena biasanya hanya ada satu, tetapi
+                     tersedia begitu ada lebih dari satu konfigurasi. -->
+                <field name="company_id" string="Integration Company" optional="hide"/>
+                <field name="branch_ids" widget="many2many_tags" optional="hide"/>
+                <field name="internal_company_name" optional="hide"/>
                 <field name="manager_name" optional="hide"/>
                 <field name="role_name" optional="hide"/>
                 <field name="is_active" optional="show"/>
@@ -105,7 +110,7 @@ action = config.action_unregister_webhook()
                 <group>
                     <filter name="group_bagian" string="Bagian"
                             context="{'group_by': 'bagian'}"/>
-                    <filter name="group_internal_company" string="Internal Company"
+                    <filter name="group_internal_company" string="Branch"
                             context="{'group_by': 'internal_company_name'}"/>
                     <filter name="group_role" string="Role"
                             context="{'group_by': 'role_name'}"/>
@@ -145,8 +150,14 @@ action = config.action_unregister_webhook()
                         </group>
                     </group>
                     <group>
-                        <group string="Placement">
-                            <field name="internal_company_name" string="Internal Company"/>
+                        <group string="Branches">
+                            <!-- Yang berlaku: dari penempatan pegawai tertaut. -->
+                            <field name="branch_ids" widget="many2many_tags"/>
+                            <!-- Kolom tunggal dari payload pegawai. Sering kosong,
+                                 karena klien memang datang dari penempatan; hanya
+                                 tampil bila daftar di atas belum terisi. -->
+                            <field name="internal_company_name"
+                                   invisible="branch_ids"/>
                         </group>
                         <group string="Manager">
                             <field name="manager_name" string="Manager"/>
@@ -173,6 +184,10 @@ action = config.action_unregister_webhook()
                         </group>
                         <group>
                             <field name="fetched_at" string="Pulled At"/>
+                            <!-- Perusahaan yang memiliki baris cermin ini, yaitu
+                                 tempat integrasi dipasang. Bukan cabang pegawai,
+                                 jadi namanya tidak boleh terbaca sebagai cabang. -->
+                            <field name="company_id" string="Integration Company"/>
                         </group>
                     </group>
                 </sheet>

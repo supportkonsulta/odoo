@@ -73,15 +73,39 @@ class HrEmployee(models.Model):
              'pattern of shifts and locations is in the schedule list below.',
     )
     presenly_client_id = fields.Integer(
-        string='Presenly Client ID', readonly=True, index=True,
-        help='The client this employee is placed at in Presenly.',
+        string='Branch Client ID', readonly=True, index=True,
+        help='The branch this employee is placed at, as an id on the Presenly '
+             'side. Kept next to the name so the branch stays readable even when '
+             'no Odoo company carries that id.',
     )
     presenly_client_name = fields.Char(
-        string='Presenly Client', readonly=True,
-        help='The client this employee is placed at in Presenly. Kept as a field '
-             'of its own instead of making the employee belong to the client '
-             'company, so the employee list stays in one company and remains '
-             'visible without the multi-company selector.',
+        string='Branch', readonly=True,
+        help='Which branch this employee works for, from their primary placement. '
+             'Kept as a field of its own instead of making the employee belong to '
+             'the client company, so the employee list stays in one company and '
+             'remains visible without the multi-company selector. Empty until a '
+             'placement names one.',
+    )
+    presenly_client_ids = fields.Many2many(
+        'res.company',
+        'hr_employee_presenly_client_rel',
+        'employee_id',
+        'company_id',
+        string='Branches',
+        readonly=True,
+        copy=False,
+        help='Every branch company this employee is placed at right now, taken '
+             'from their placements in Presenly. This is the current picture, so '
+             'a branch leaves this list when its placement ends. Access to the '
+             'company, once given, is never taken back by the sync.',
+    )
+    presenly_other_company_names = fields.Char(
+        string='Also an Employee in',
+        compute='_compute_presenly_other_company_names',
+        help='Other companies where this same person is also an employee. Odoo '
+             'keeps one employee per company, while Presenly keeps one person '
+             '(one nopeg), so a person can appear here more than once. Shown so '
+             'the reader knows the row they are looking at is not the only one.',
     )
 
     # PII dari Presenly — NPWP, nomor rekening, BPJS — sengaja TIDAK disalin ke
@@ -96,6 +120,35 @@ class HrEmployee(models.Model):
              'reports. It is Presenly\'s clock, not this server\'s, and it does '
              'not move when a pull here finds nothing new.',
     )
+
+    # ------------------------------------------------------------------
+    # Dibaca saja: perusahaan lain tempat orang yang sama juga pegawai
+    # ------------------------------------------------------------------
+    # Odoo menyimpan satu pegawai per perusahaan, sedangkan Presenly menyimpan
+    # satu orang (satu nopeg). Orang yang sama karena itu bisa punya beberapa
+    # baris pegawai di sini, dan tanpa penanda ini baris yang sedang dibaca
+    # terlihat seperti satu-satunya.
+    @api.depends('user_id', 'presenly_nopeg', 'company_id')
+    def _compute_presenly_other_company_names(self):
+        for employee in self:
+            domain = []
+            if employee.presenly_nopeg:
+                domain.append(('presenly_nopeg', '=', employee.presenly_nopeg))
+            if employee.user_id:
+                domain.append(('user_id', '=', employee.user_id.id))
+            if not domain:
+                employee.presenly_other_company_names = False
+                continue
+            if len(domain) > 1:
+                domain = ['|'] + domain
+            lain = self.sudo().search(domain + [
+                ('id', '!=', employee.id),
+                ('company_id', '!=', employee.company_id.id),
+            ])
+            employee.presenly_other_company_names = ', '.join(
+                sorted(set(lain.mapped('company_id.name')))
+            ) or False
+
     # ------------------------------------------------------------------
     # Kirim balik saat disimpan
     # ------------------------------------------------------------------
@@ -117,9 +170,49 @@ class HrEmployee(models.Model):
         result = super().write(values)
         if 'presenly_nopeg' in values:
             self._presenly_link_from_nopeg()
+        if 'user_id' in values:
+            # Pengguna baru ditautkan: cabang yang sudah tercatat langsung
+            # diberikan, bukan menunggu tarikan berikutnya. Tanpa ini, pertanyaan
+            # "akunnya sudah saya buat, kenapa ia belum bisa masuk cabangnya"
+            # hanya terjawab besok.
+            self._presenly_grant_branch_access()
         if self._presenly_fields_touched(values):
             self._presenly_queue_push()
         return result
+
+    def _presenly_grant_branch_access(self):
+        """Tambahkan perusahaan cabang ke daftar perusahaan pengguna pegawai ini.
+
+        Hanya **menambah**, tidak pernah mencabut: akses yang sudah diberikan
+        dibiarkan, supaya tidak ada kejutan berupa hilangnya perusahaan di tengah
+        pekerjaan. Yang diberikan hanya perusahaan hasil cermin klien.
+
+        Dipanggil dari dua tempat, dan keduanya memang perlu: penarikan
+        penempatan (cabang baru muncul) dan penautan pengguna (akun baru muncul
+        untuk cabang yang sudah ada). Mengembalikan jumlah yang ditambahkan.
+        """
+        ditambahkan = 0
+        for employee in self:
+            if not employee.user_id or not employee.presenly_client_ids:
+                continue
+            kurang = employee.presenly_client_ids - employee.user_id.company_ids
+            if not kurang:
+                continue
+            employee.user_id.sudo().write({'company_ids': [(4, c.id) for c in kurang]})
+            keterangan = _('%(user)s can now work in %(companies)s, from their '
+                           'placements in Presenly.',
+                           user=employee.user_id.display_name,
+                           companies=', '.join(kurang.mapped('name')))
+            self.env['presenly.saas.sync.log'].sudo()._record(
+                employee.company_id, 'access.companies', success=True,
+                error_message=keterangan,
+            )
+            _logger.info(
+                'Presenly SaaS: akses perusahaan ditambahkan untuk %s: %s',
+                employee.user_id.display_name, ', '.join(kurang.mapped('name')),
+            )
+            ditambahkan += len(kurang)
+        return ditambahkan
 
     def _presenly_link_from_nopeg(self):
         """Tautkan pegawai ini ke cermin Presenly lewat nopeg yang diketik pengguna.

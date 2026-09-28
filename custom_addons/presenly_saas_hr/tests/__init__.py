@@ -5,5 +5,6 @@ from . import test_settings_fields
 from . import test_config_ownership
 from . import test_approval_decide
 from . import test_placement_conflict
+from . import test_placement_branches
 from . import test_weekly_schedule
 from . import test_approver_group
