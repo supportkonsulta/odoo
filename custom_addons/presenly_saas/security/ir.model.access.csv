@@ -15,6 +15,8 @@ access_presenly_saas_holiday_internal,presenly.saas.holiday.internal,model_prese
 access_presenly_saas_holiday_manager,presenly.saas.holiday.manager,model_presenly_saas_holiday,group_presenly_saas_manager,1,1,1,1
 access_presenly_saas_work_day_setup_internal,presenly.saas.work.day.setup.internal,model_presenly_saas_work_day_setup,base.group_user,1,0,0,0
 access_presenly_saas_work_day_setup_manager,presenly.saas.work.day.setup.manager,model_presenly_saas_work_day_setup,group_presenly_saas_manager,1,1,1,1
+access_presenly_saas_work_day_setup_month_internal,presenly.saas.work.day.setup.month.internal,model_presenly_saas_work_day_setup_month,base.group_user,1,0,0,0
+access_presenly_saas_work_day_setup_month_manager,presenly.saas.work.day.setup.month.manager,model_presenly_saas_work_day_setup_month,group_presenly_saas_manager,1,1,1,1
 access_presenly_saas_leave_internal,presenly.saas.leave.internal,model_presenly_saas_leave,base.group_user,1,0,0,0
 access_presenly_saas_leave_manager,presenly.saas.leave.manager,model_presenly_saas_leave,group_presenly_saas_manager,1,1,1,1
 access_presenly_saas_overtime_internal,presenly.saas.overtime.internal,model_presenly_saas_overtime,base.group_user,1,0,0,0
@@ -31,8 +33,6 @@ access_presenly_saas_timesheet_internal,presenly.saas.timesheet.internal,model_p
 access_presenly_saas_timesheet_manager,presenly.saas.timesheet.manager,model_presenly_saas_timesheet,group_presenly_saas_manager,1,1,1,1
 access_presenly_saas_attendance_log_internal,presenly.saas.attendance.log.internal,model_presenly_saas_attendance_log,base.group_user,1,0,0,0
 access_presenly_saas_attendance_log_manager,presenly.saas.attendance.log.manager,model_presenly_saas_attendance_log,group_presenly_saas_manager,1,1,1,1
-access_presenly_saas_attendance_recap_internal,presenly.saas.attendance.recap.internal,model_presenly_saas_attendance_recap,base.group_user,1,0,0,0
-access_presenly_saas_attendance_recap_manager,presenly.saas.attendance.recap.manager,model_presenly_saas_attendance_recap,group_presenly_saas_manager,1,1,1,1
 access_presenly_saas_pull_wizard_internal,presenly.saas.pull.wizard.internal,model_presenly_saas_pull_wizard,base.group_user,1,0,0,0
 access_presenly_saas_pull_wizard_manager,presenly.saas.pull.wizard.manager,model_presenly_saas_pull_wizard,group_presenly_saas_manager,1,1,1,1
 access_presenly_saas_approval_step_leave_internal,presenly.saas.approval.step.leave.internal,model_presenly_saas_approval_step_leave,base.group_user,1,0,0,0
@@ -49,5 +49,3 @@ access_presenly_saas_sync_mark_internal,presenly.saas.sync_mark.internal,model_p
 access_presenly_saas_sync_mark_manager,presenly.saas.sync_mark.manager,model_presenly_saas_sync_mark,group_presenly_saas_manager,1,1,1,1
 access_presenly_saas_attachment_sync_internal,presenly.saas.attachment.sync.internal,model_presenly_saas_attachment_sync,base.group_user,1,0,0,0
 access_presenly_saas_attachment_sync_manager,presenly.saas.attachment.sync.manager,model_presenly_saas_attachment_sync,group_presenly_saas_manager,1,0,0,0
-access_presenly_saas_reconciliation_manager,presenly.saas.reconciliation.manager,model_presenly_saas_reconciliation,group_presenly_saas_manager,1,1,1,1
-access_presenly_saas_reconciliation_user,presenly.saas.reconciliation.internal,model_presenly_saas_reconciliation,base.group_user,1,0,0,0

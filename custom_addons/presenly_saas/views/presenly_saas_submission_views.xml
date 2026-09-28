@@ -8,7 +8,7 @@
         <field name="name">presenly.saas.leave.list</field>
         <field name="model">presenly.saas.leave</field>
         <field name="arch" type="xml">
-            <list create="false" edit="false" delete="false" default_order="leave_date desc">
+            <list create="false" edit="false" delete="false" default_order="source_created_at desc">
                 <field name="reference_number"/>
                 <field name="employee_name"/>
                 <field name="leave_type_name"/>
@@ -174,7 +174,7 @@
         <field name="name">presenly.saas.overtime.list</field>
         <field name="model">presenly.saas.overtime</field>
         <field name="arch" type="xml">
-            <list create="false" edit="false" delete="false" default_order="overtime_date desc">
+            <list create="false" edit="false" delete="false" default_order="source_created_at desc">
                 <field name="employee_name"/>
                 <field name="overtime_date"/>
                 <field name="start_time"/>
@@ -246,7 +246,7 @@
         <field name="name">presenly.saas.medical.certificate.list</field>
         <field name="model">presenly.saas.medical.certificate</field>
         <field name="arch" type="xml">
-            <list create="false" edit="false" delete="false" default_order="certificate_date desc">
+            <list create="false" edit="false" delete="false" default_order="source_created_at desc">
                 <field name="dc_number"/>
                 <field name="employee_name"/>
                 <field name="certificate_date"/>
@@ -304,7 +304,7 @@
         <field name="name">presenly.saas.attendance.correction.list</field>
         <field name="model">presenly.saas.attendance.correction</field>
         <field name="arch" type="xml">
-            <list create="false" edit="false" delete="false" default_order="date desc">
+            <list create="false" edit="false" delete="false" default_order="source_created_at desc">
                 <field name="employee_name"/>
                 <field name="date"/>
                 <field name="original_check_in_time" optional="hide"/>
@@ -370,7 +370,7 @@
         <field name="name">presenly.saas.shift.swap.list</field>
         <field name="model">presenly.saas.shift.swap</field>
         <field name="arch" type="xml">
-            <list create="false" edit="false" delete="false" default_order="requester_date desc">
+            <list create="false" edit="false" delete="false" default_order="source_created_at desc">
                 <field name="requester_name"/>
                 <field name="requester_date"/>
                 <field name="requester_shift_name"/>

@@ -153,6 +153,10 @@
         <field name="name">Shift</field>
         <field name="res_model">presenly.saas.shift</field>
         <field name="view_mode">list</field>
+        <!-- Shift selalu milik satu lokasi kerja, dan daftarnya jadi masuk akal
+             hanya kalau dikelompokkan begitu. Dijadikan bawaan supaya tidak
+             perlu diklik dulu setiap kali halamannya dibuka. -->
+        <field name="context">{'search_default_group_location': 1}</field>
     </record>
 
     <!-- Mode absen ====================================================== -->
@@ -211,7 +215,57 @@
     <record id="action_presenly_saas_holiday" model="ir.actions.act_window">
         <field name="name">Public Holidays</field>
         <field name="res_model">presenly.saas.holiday</field>
-        <field name="view_mode">list</field>
+        <!-- Kalender lebih dulu: hari libur dibaca menurut tanggalnya, dan
+             daftarnya cuma jadi tampilan cadangan. -->
+        <field name="view_mode">calendar,list,form</field>
+    </record>
+
+    <record id="view_presenly_saas_holiday_calendar" model="ir.ui.view">
+        <field name="name">presenly.saas.holiday.calendar</field>
+        <field name="model">presenly.saas.holiday</field>
+        <field name="arch" type="xml">
+            <!-- `date` bertipe Date, jadi kalender menampilkannya sebagai
+                 kejadian sehari penuh — tidak ada jam yang perlu dikarang.
+                 `color` memakai jenisnya: libur nasional dan libur perusahaan
+                 berbeda warnanya tanpa perlu difilter dulu. -->
+            <calendar string="Public Holidays" date_start="date" color="holiday_type"
+                      mode="month" create="false" edit="false" delete="false"
+                      quick_create="false">
+                <field name="name"/>
+                <field name="holiday_type"/>
+                <field name="location_name"/>
+            </calendar>
+        </field>
+    </record>
+
+    <record id="view_presenly_saas_holiday_form" model="ir.ui.view">
+        <field name="name">presenly.saas.holiday.form</field>
+        <field name="model">presenly.saas.holiday</field>
+        <field name="arch" type="xml">
+            <form create="false" edit="false" delete="false">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="date"/>
+                            <field name="holiday_type"/>
+                        </group>
+                        <group>
+                            <field name="location_name"/>
+                        </group>
+                    </group>
+                    <group string="Data Source">
+                        <group>
+                            <field name="fetched_at"/>
+                            <field name="source_created_at"/>
+                        </group>
+                        <group>
+                            <field name="source_updated_at"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
     </record>
 
     <!-- Setup hari kerja ================================================ -->
@@ -244,7 +298,50 @@
     <record id="action_presenly_saas_work_day_setup" model="ir.actions.act_window">
         <field name="name">Work Day Setup</field>
         <field name="res_model">presenly.saas.work.day.setup</field>
-        <field name="view_mode">list</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="view_presenly_saas_work_day_setup_form" model="ir.ui.view">
+        <field name="name">presenly.saas.work.day.setup.form</field>
+        <field name="model">presenly.saas.work.day.setup</field>
+        <field name="arch" type="xml">
+            <form create="false" edit="false" delete="false">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="year"/>
+                            <field name="location_name"/>
+                        </group>
+                        <group>
+                            <!-- Angka resmi dari server; rincian di bawahnya
+                                 hanya memecahnya per bulan. -->
+                            <field name="total_days"/>
+                        </group>
+                    </group>
+                    <group string="Working Days per Month">
+                        <!-- Server mengirim dua belas kolom sekaligus; baris ini
+                             memecahnya supaya bisa dibaca dan dijumlahkan. -->
+                        <field name="month_ids" nolabel="1" colspan="2" readonly="1">
+                            <list create="false" edit="false" delete="false"
+                                  default_order="sequence">
+                                <field name="sequence" optional="hide"/>
+                                <field name="month"/>
+                                <field name="days" sum="Total working days"/>
+                            </list>
+                        </field>
+                    </group>
+                    <group string="Data Source">
+                        <group>
+                            <field name="fetched_at"/>
+                            <field name="source_created_at"/>
+                        </group>
+                        <group>
+                            <field name="source_updated_at"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
     </record>
 
 </odoo>

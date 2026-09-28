@@ -97,9 +97,21 @@ class TestPresenlyTimesheetMirror(TransactionCase):
         self.assertEqual(sheet.employee_name, 'rangga')
         self.assertEqual(sheet.approver_name, 'yusril')
         self.assertEqual(sheet.shift_name, 'Normal 2')
-        self.assertEqual(sheet.rating, 4.5)
         self.assertEqual(sheet.status, 'approved')
         self.assertEqual(str(sheet.date), '2026-09-21')
+
+    def test_penilaian_manajer_tidak_dicerminkan(self):
+        """`rating` dan `comment` tidak punya rumah di sini.
+
+        Payload-nya tetap memuat keduanya — itu memang yang dikirim server —
+        dan yang dijaga tes ini adalah keduanya tidak lagi berakhir sebagai
+        kolom cermin. Menambahkannya kembali tanpa alasan akan ketahuan.
+        """
+        sheet = self._mirror('presenly.saas.timesheet', timesheet_row())
+
+        self.assertNotIn('rating', sheet._fields)
+        self.assertNotIn('comment', sheet._fields)
+        self.assertTrue(timesheet_row()['rating'], 'payload uji memuat rating')
 
     def test_proyek_diambil_dari_kode_dan_nama(self):
         # Proyek dikirim sebagai {id, code, name}, bukan {id, name} seperti
@@ -127,12 +139,11 @@ class TestPresenlyTimesheetMirror(TransactionCase):
     def test_relasi_kosong_tidak_menggagalkan_baris(self):
         sheet = self._mirror('presenly.saas.timesheet', timesheet_row(
             employee=None, project=None, approver=None, shift=None,
-            start_time=None, end_time=None, rating=None,
+            start_time=None, end_time=None,
         ))
         self.assertFalse(sheet.employee_name)
         self.assertFalse(sheet.project_code)
         self.assertEqual(sheet.hours, 0.0)
-        self.assertEqual(sheet.rating, 0.0)
 
     def test_baris_tanpa_id_ditolak(self):
         self.assertFalse(
@@ -192,8 +203,7 @@ class TestPresenlyTimesheetPull(TransactionCase):
             return EMPTY_PAGE
 
         with patch.object(PresenlySaasClient, 'get_resource', side_effect=fake_resource), \
-             patch.object(PresenlySaasClient, 'get_attendance_logs', return_value=EMPTY_PAGE), \
-             patch.object(PresenlySaasClient, 'get_attendance_recap', return_value=EMPTY_PAGE):
+             patch.object(PresenlySaasClient, 'get_attendance_logs', return_value=EMPTY_PAGE):
             summary, error = self.config._pull_period_range(9, 2026, months_back=2)
 
         self.assertFalse(error)

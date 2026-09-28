@@ -113,10 +113,6 @@ class PresenlySaasClient:
             raw=True,
         )
 
-    def get_attendance_recap(self, params=None):
-        """Rekap presensi per pegawai per bulan."""
-        return self.get_envelope("/v1/presenly/attendance-recap", params)
-
     def get_resource(self, resource, params=None):
         """Ambil satu resource referensi, mis. ``work-locations``."""
         return self.get_envelope("/v1/%s" % resource, params)
@@ -168,6 +164,15 @@ class PresenlySaasClient:
     def get_approval_contract(self):
         """Kontrak keputusan persetujuan menurut server."""
         return self._request('GET', '/v1/approvals/contract')['data']
+
+    def get_webhook(self):
+        """Pendaftaran webhook yang tersimpan di server, atau `null` bila belum ada.
+
+        Dipakai untuk memeriksa pendaftaran yang sudah berjalan: daftar
+        peristiwanya ditulis sekali saat mendaftar dan server tidak menambahnya
+        sendiri saat Odoo mulai menangani peristiwa baru.
+        """
+        return self._request('GET', '/v1/webhooks')
 
     def register_webhook(self, payload):
         """Daftarkan alamat penerima webhook milik instalasi ini."""

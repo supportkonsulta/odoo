@@ -47,10 +47,8 @@ class TestPresenlyRetention(TransactionCase):
         self.today = date.today()
         self.Log = self.env['presenly.saas.attendance.log']
         self.Leave = self.env['presenly.saas.leave']
-        self.Recap = self.env['presenly.saas.attendance.recap']
         self.Log.search([]).unlink()
         self.Leave.search([]).unlink()
-        self.Recap.search([]).unlink()
 
     def _hari(self, bulan_lalu):
         """Tanggal yang berjarak `bulan_lalu` bulan dari hari ini."""
@@ -102,54 +100,6 @@ class TestPresenlyRetention(TransactionCase):
         self.assertEqual(removed, {})
         self.assertEqual(self.Log.search_count([]), 1)
 
-    def test_rekap_dibersihkan_per_periode_bukan_per_tanggal(self):
-        tua = self._hari(18)
-        muda = self._hari(2)
-        self.Recap._upsert_rows(self.env.company, [
-            {'user_id': 2, 'month': tua.month, 'year': tua.year,
-             'attendance_count': 1, 'total_late_minutes': 0},
-            {'user_id': 2, 'month': muda.month, 'year': muda.year,
-             'attendance_count': 1, 'total_late_minutes': 0},
-        ])
-
-        removed = self.config._prune_mirrors()
-
-        self.assertEqual(removed['presenly.saas.attendance.recap'], 1)
-        self.assertEqual(self.Recap.search_count([]), 1)
-        sisa = self.Recap.search([])
-        self.assertEqual(sisa.year, muda.year)
-        self.assertEqual(sisa.month, muda.month)
-
-    def test_periode_di_dua_sisi_batas_disaring_tepat(self):
-        # Satu periode tepat sebelum batas, satu tepat sesudahnya. Berlaku
-        # kapan pun tes ini dijalankan, tanpa bergantung tanggal hari ini.
-        from dateutil.relativedelta import relativedelta
-        self.config.write({'retention_months': 6})
-        cutoff = self.config._retention_cutoff()
-        sebelum = cutoff - relativedelta(months=1)
-        sesudah = cutoff + relativedelta(months=1)
-        self.Recap._upsert_rows(self.env.company, [
-            {'user_id': 2, 'month': sebelum.month, 'year': sebelum.year,
-             'attendance_count': 1, 'total_late_minutes': 0},
-            {'user_id': 2, 'month': sesudah.month, 'year': sesudah.year,
-             'attendance_count': 1, 'total_late_minutes': 0},
-        ])
-
-        self.config._prune_mirrors()
-
-        sisa = self.Recap.search([])
-        self.assertEqual(len(sisa), 1, 'harus tepat satu periode tersisa')
-        self.assertEqual((sisa.year, sisa.month), (sesudah.year, sesudah.month))
-
-    def test_urutan_bulan_melewati_batas_tahun(self):
-        # Inilah alasan rekap dibandingkan sebagai nomor bulan berjalan, bukan
-        # sebagai pasangan (tahun, bulan) yang diurut mentah: Desember 2025 lebih
-        # TUA dari Januari 2026, walaupun 12 > 1.
-        desember_2025 = 2025 * 12 + 12
-        januari_2026 = 2026 * 12 + 1
-        self.assertLess(desember_2025, januari_2026)
-        self.assertGreater(12, 1)
-
     def test_cermin_referensi_tidak_pernah_dihapus(self):
         self.env['presenly.saas.work.location']._mirror_replace(
             self.env.company,
@@ -197,8 +147,7 @@ class TestPresenlyPullCron(TransactionCase):
             return EMPTY_PAGE
 
         with patch.object(PresenlySaasClient, 'get_resource', side_effect=fake_resource), \
-             patch.object(PresenlySaasClient, 'get_attendance_logs', return_value=EMPTY_PAGE), \
-             patch.object(PresenlySaasClient, 'get_attendance_recap', return_value=EMPTY_PAGE):
+             patch.object(PresenlySaasClient, 'get_attendance_logs', return_value=EMPTY_PAGE):
             self.Config._cron_pull_periods_all()
 
         # Dua bulan x enam dataset berperiode (lima pengajuan + timesheet).
@@ -212,8 +161,7 @@ class TestPresenlyPullCron(TransactionCase):
             return EMPTY_PAGE
 
         with patch.object(PresenlySaasClient, 'get_resource', side_effect=fake_resource), \
-             patch.object(PresenlySaasClient, 'get_attendance_logs', return_value=EMPTY_PAGE), \
-             patch.object(PresenlySaasClient, 'get_attendance_recap', return_value=EMPTY_PAGE):
+             patch.object(PresenlySaasClient, 'get_attendance_logs', return_value=EMPTY_PAGE):
             self.Config._cron_pull_periods_all()
 
         bulan = {p['since'][:7] for p in terlihat}
@@ -238,8 +186,8 @@ class TestPresenlyPullCron(TransactionCase):
         def fake_pull(self, *_args, **_kwargs):
             urutan.append(self.company_id.name)
             if self.company_id == lain:
-                return {'logs': 0, 'recap': 0, 'months': 1, 'submissions': {}}, 'gagal'
-            return {'logs': 0, 'recap': 0, 'months': 1, 'submissions': {}}, False
+                return {'logs': 0, 'months': 1, 'submissions': {}}, 'gagal'
+            return {'logs': 0, 'months': 1, 'submissions': {}}, False
 
         with patch.object(self.Config.__class__, '_pull_period_range', fake_pull):
             self.Config._cron_pull_periods_all()
@@ -336,7 +284,6 @@ class TestPresenlyWizardRetentionNotice(TransactionCase):
             'month': str(today.month), 'year': today.year, 'months_back': months_back,
         })
         with patch.object(PresenlySaasClient, 'get_attendance_logs', return_value=EMPTY_PAGE), \
-             patch.object(PresenlySaasClient, 'get_attendance_recap', return_value=EMPTY_PAGE), \
              patch.object(PresenlySaasClient, 'get_resource', return_value=EMPTY_PAGE):
             return wizard.action_pull()
 
@@ -373,3 +320,53 @@ class TestPresenlyWizardRetentionNotice(TransactionCase):
         result = self._tarik(months_back=24, retention=0)
         self.assertEqual(result['params']['type'], 'success')
         self.assertNotIn(self._pesan_batas_simpan(0), result['params']['message'])
+
+
+@tagged('post_install', '-at_install')
+class TestPresenlyRangeReplaceIsAtomic(TransactionCase):
+    """Penggantian per rentang tidak boleh menghapus tanpa sempat menulis.
+
+    Urutannya memang hapus dulu, baru tulis — baris lama memakai `external_id`
+    yang sama, jadi menulis lebih dulu akan menabrak constraint-nya. Yang dijaga
+    di sini adalah kegagalan di tengah: penghapusan yang sudah berjalan tidak
+    boleh ikut ter-commit sendirian, karena hasilnya adalah data yang hilang
+    tanpa penggantinya dan tanpa catatan gagal — persis yang membuat daftar cuti
+    tampak kosong walaupun server masih memegang datanya.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.config = cls.env['presenly.saas.config']._get_or_create(cls.env.company)
+
+    def setUp(self):
+        super().setUp()
+        self.Leave = self.env['presenly.saas.leave']
+        self.Leave.search([]).unlink()
+
+    def _replace(self, rows):
+        return self.Leave._mirror_replace_range(
+            self.env.company, rows, date(2026, 9, 1), date(2026, 9, 30),
+        )
+
+    def test_penulisan_yang_gagal_tidak_menghapus_baris_lama(self):
+        self.assertEqual(self._replace([leave_row(1, '2026-09-10')]), 1)
+        self.assertEqual(self.Leave.search_count([]), 1)
+
+        with patch.object(type(self.Leave), 'create', side_effect=ValueError('gagal')):
+            with self.assertRaises(ValueError):
+                self._replace([leave_row(2, '2026-09-11')])
+
+        self.assertEqual(
+            self.Leave.search_count([]), 1,
+            'baris lama tidak boleh ikut terhapus',
+        )
+        self.assertEqual(self.Leave.search([]).external_id, 1)
+
+    def test_penulisan_yang_berhasil_tetap_mengganti(self):
+        self._replace([leave_row(1, '2026-09-10')])
+
+        self.assertEqual(self._replace([leave_row(2, '2026-09-11')]), 1)
+
+        self.assertEqual(self.Leave.search_count([]), 1)
+        self.assertEqual(self.Leave.search([]).external_id, 2)

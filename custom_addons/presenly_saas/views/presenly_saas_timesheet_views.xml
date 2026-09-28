@@ -13,13 +13,12 @@
             <list create="false" edit="false" delete="false" default_order="date desc">
                 <field name="date"/>
                 <field name="employee_name"/>
+                <field name="project_code"/>
                 <field name="project_name"/>
-                <field name="project_code" optional="hide"/>
                 <field name="category"/>
                 <field name="start_time"/>
                 <field name="end_time"/>
                 <field name="hours" sum="Total hours"/>
-                <field name="rating" optional="hide"/>
                 <field name="shift_name" optional="hide"/>
                 <field name="status" widget="badge" decoration-success="status == 'approved'"
                        decoration-info="status == 'submitted'"
@@ -36,17 +35,14 @@
             <search>
                 <field name="employee_name"/>
                 <field name="employee_nopeg"/>
-                <field name="project_name"/>
                 <field name="project_code"/>
+                <field name="project_name"/>
                 <field name="category"/>
                 <separator/>
                 <filter name="approved" string="Approved" domain="[('status', '=', 'approved')]"/>
                 <filter name="submitted" string="Submitted" domain="[('status', '=', 'submitted')]"/>
                 <filter name="rejected" string="Rejected" domain="[('status', '=', 'rejected')]"/>
                 <filter name="draft" string="Draft" domain="[('status', '=', 'draft')]"/>
-                <separator/>
-                <filter name="rated" string="Rated" domain="[('rating', '&gt;', 0)]"/>
-                <filter name="unrated" string="Not Rated Yet" domain="[('rating', '=', 0)]"/>
                 <separator/>
                 <filter name="this_month" string="This Month"
                         domain="[('date', '&gt;=', (context_today()).replace(day=1).strftime('%Y-%m-%d'))]"/>
@@ -56,7 +52,11 @@
                 <group>
                     <filter name="group_employee" string="Employee"
                             context="{'group_by': 'employee_name'}"/>
-                    <filter name="group_project" string="Project"
+                    <!-- Kode dulu, baru nama: kode yang membedakan dua proyek,
+                         namanya bisa sama. -->
+                    <filter name="group_project_code" string="Project Code"
+                            context="{'group_by': 'project_code'}"/>
+                    <filter name="group_project" string="Project Name"
                             context="{'group_by': 'project_name'}"/>
                     <filter name="group_category" string="Category"
                             context="{'group_by': 'category'}"/>
@@ -79,7 +79,6 @@
                 <field name="employee_name" type="row"/>
                 <field name="date" interval="month" type="col"/>
                 <field name="hours" type="measure"/>
-                <field name="rating" type="measure"/>
             </pivot>
         </field>
     </record>
@@ -89,6 +88,7 @@
         <field name="model">presenly.saas.timesheet</field>
         <field name="arch" type="xml">
             <graph type="bar" string="Timesheet">
+                <field name="project_code"/>
                 <field name="project_name"/>
                 <field name="hours" type="measure"/>
             </graph>
@@ -106,8 +106,8 @@
                             <field name="date"/>
                             <field name="employee_name"/>
                             <field name="employee_nopeg"/>
-                            <field name="project_name"/>
                             <field name="project_code"/>
+                            <field name="project_name"/>
                             <field name="category"/>
                         </group>
                         <group>
@@ -116,13 +116,11 @@
                             <field name="end_time"/>
                             <field name="hours"/>
                             <field name="shift_name"/>
-                            <field name="rating"/>
                             <field name="approver_name"/>
                         </group>
                     </group>
                     <group>
                         <field name="description"/>
-                        <field name="comment"/>
                     </group>
                     <group string="Data Source" colspan="2">
                         <field name="fetched_at"/>

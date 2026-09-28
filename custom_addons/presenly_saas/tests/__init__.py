@@ -5,6 +5,8 @@ from . import test_i18n_file
 from . import test_map_widget_options
 from . import test_map_widget_registration
 from . import test_guard_contract
+from . import test_guard_gate
+from . import test_guard_http
 from . import test_res_config_settings
 from . import test_plan_features
 from . import test_presenly_endpoints
@@ -15,3 +17,5 @@ from . import test_incremental_sync
 from . import test_approval
 from . import test_retention
 from . import test_timesheets
+from . import test_attachments
+from . import test_pivot_groupby_guard

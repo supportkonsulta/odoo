@@ -98,6 +98,35 @@ class ResConfigSettings(models.TransientModel):
         inverse='_inverse_presenly_saas_show_banner',
         groups=MANAGER_GROUP,
     )
+    presenly_saas_block_mode = fields.Selection(
+        [('off', 'Off'), ('dry_run', 'Dry run'), ('enforce', 'Enforce')],
+        string='Block Access',
+        compute='_compute_presenly_saas',
+        inverse='_inverse_presenly_saas_block_mode',
+        groups=MANAGER_GROUP,
+    )
+    presenly_saas_block_override_until = fields.Datetime(
+        string='Temporary Access Until',
+        compute='_compute_presenly_saas',
+        inverse='_inverse_presenly_saas_block_override_until',
+        groups=MANAGER_GROUP,
+    )
+    presenly_saas_block_override_reason = fields.Char(
+        string='Reason for Temporary Access',
+        compute='_compute_presenly_saas',
+        inverse='_inverse_presenly_saas_block_override_reason',
+        groups=MANAGER_GROUP,
+    )
+    presenly_saas_blocked_since = fields.Datetime(
+        string='Blocked Since',
+        compute='_compute_presenly_saas',
+        groups=MANAGER_GROUP,
+    )
+    presenly_saas_dry_run_blocked_count = fields.Integer(
+        string='Requests That Would Have Been Blocked',
+        compute='_compute_presenly_saas',
+        groups=MANAGER_GROUP,
+    )
 
     # ------------------------------------------------------------------
     # Penarikan terjadwal & jendela bergulir
@@ -189,6 +218,7 @@ class ResConfigSettings(models.TransientModel):
         config_fields = [
             'enabled', 'environment', 'base_url', 'tenant_code', 'api_key',
             'timeout_seconds', 'retry_count', 'guard_mode', 'grace_days', 'show_banner',
+            'block_mode', 'block_override_until', 'block_override_reason',
             'pull_months', 'retention_months', 'request_auto_refresh', 'request_attachments', 'sync_companies',
             'cron_sync_minutes',
         ]
@@ -217,6 +247,19 @@ class ResConfigSettings(models.TransientModel):
             settings.presenly_saas_guard_mode = values.get('guard_mode', 'warn')
             settings.presenly_saas_grace_days = values.get('grace_days', 7)
             settings.presenly_saas_show_banner = values.get('show_banner', True)
+            settings.presenly_saas_block_mode = values.get('block_mode', 'off')
+            settings.presenly_saas_block_override_until = values.get(
+                'block_override_until', False
+            )
+            settings.presenly_saas_block_override_reason = values.get(
+                'block_override_reason', False
+            )
+            settings.presenly_saas_blocked_since = (
+                config.blocked_since if config else False
+            )
+            settings.presenly_saas_dry_run_blocked_count = (
+                config.dry_run_blocked_count if config else 0
+            )
             settings.presenly_saas_pull_months = values.get('pull_months', 2)
             settings.presenly_saas_retention_months = values.get('retention_months', 12)
             settings.presenly_saas_request_auto_refresh = values.get(
@@ -331,6 +374,49 @@ class ResConfigSettings(models.TransientModel):
 
     def _inverse_presenly_saas_guard_mode(self):
         self._write_presenly_saas_config({'guard_mode': self.presenly_saas_guard_mode})
+
+    def _inverse_presenly_saas_block_mode(self):
+        self._write_presenly_saas_config({'block_mode': self.presenly_saas_block_mode})
+
+    def _inverse_presenly_saas_block_override_until(self):
+        """Beri akses sementara, dan tinggalkan jejaknya.
+
+        Yang menulis lewat sini adalah manajer. Waktu dan alasannya dicatat:
+        orang berikutnya yang menemukan instalasi ini terbuka padahal
+        langganannya hangus harus bisa mencari tahu kenapa.
+        """
+        until = self.presenly_saas_block_override_until
+        self._write_presenly_saas_config({
+            'block_override_until': until,
+            'block_override_user_id': self.env.user.id if until else False,
+        })
+        self._log_override(until)
+
+    def _inverse_presenly_saas_block_override_reason(self):
+        self._write_presenly_saas_config({
+            'block_override_reason': self.presenly_saas_block_override_reason,
+        })
+
+    def _log_override(self, until):
+        """Satu baris di log sinkronisasi, tempat operator memang sudah melihat."""
+        if not self.env.user.has_group(MANAGER_GROUP):
+            return
+        config = self._presenly_saas_config()
+        if not config:
+            return
+        self.env['presenly.saas.sync.log'].sudo()._record(
+            config.company_id,
+            'guard.override',
+            success=bool(until),
+            error_message=(
+                'Temporary access until %s by %s: %s' % (
+                    until, self.env.user.display_name,
+                    self.presenly_saas_block_override_reason or '-',
+                )
+                if until else
+                'Temporary access cleared by %s' % self.env.user.display_name
+            ),
+        )
 
     def _inverse_presenly_saas_grace_days(self):
         self._write_presenly_saas_config({'grace_days': self.presenly_saas_grace_days})

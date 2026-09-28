@@ -13,6 +13,17 @@ from .presenly_saas_payload import parse_date, person_ref as _person
 
 _logger = logging.getLogger(__name__)
 
+# Urutan bawaan kelima pengajuan: yang paling baru **dibuat** di Presenly di
+# atas, bukan yang tanggal kejadiannya paling akhir.
+#
+# Kolom tanggalnya sendiri bukan patokan yang benar untuk itu. Cuti diajukan
+# untuk tanggal yang bisa jauh di depan, koreksi presensi untuk tanggal yang
+# sudah lewat, dan tukar shift untuk tanggal yang belum tentu disetujui — jadi
+# daftar yang diurutkan dengan tanggal kejadiannya terlihat acak bagi orang yang
+# baru saja mengirim pengajuan. `source_created_at` adalah `created_at` dari
+# server: kapan pengajuannya dibuat.
+ORDER_PENGAJUAN = 'source_created_at desc, id desc'
+
 
 class PresenlySaasLeave(models.Model):
     """Cermin `GET /v1/leaves` — pengajuan cuti."""
@@ -21,7 +32,7 @@ class PresenlySaasLeave(models.Model):
     _inherit = ['presenly.saas.mirror.mixin', 'presenly.saas.submission.mixin',
                 'presenly.saas.attachment.mixin', 'mail.thread']
     _description = 'Presenly Leave Request (mirror)'
-    _order = 'leave_date desc, id desc'
+    _order = ORDER_PENGAJUAN
 
     _mirror_resource = 'leaves'
     _mirror_date_field = 'leave_date'
@@ -96,7 +107,7 @@ class PresenlySaasOvertime(models.Model):
     _name = 'presenly.saas.overtime'
     _inherit = ['presenly.saas.mirror.mixin', 'presenly.saas.submission.mixin']
     _description = 'Presenly Overtime Request (mirror)'
-    _order = 'overtime_date desc, id desc'
+    _order = ORDER_PENGAJUAN
 
     _mirror_resource = 'overtimes'
     _mirror_date_field = 'overtime_date'
@@ -170,7 +181,7 @@ class PresenlySaasMedicalCertificate(models.Model):
     _inherit = ['presenly.saas.mirror.mixin', 'presenly.saas.submission.mixin',
                 'presenly.saas.attachment.mixin', 'mail.thread']
     _description = 'Presenly Medical Certificate (mirror)'
-    _order = 'certificate_date desc, id desc'
+    _order = ORDER_PENGAJUAN
 
     _mirror_resource = 'medical-certificates'
     _mirror_date_field = 'certificate_date'
@@ -238,7 +249,7 @@ class PresenlySaasAttendanceCorrection(models.Model):
     _name = 'presenly.saas.attendance.correction'
     _inherit = ['presenly.saas.mirror.mixin', 'presenly.saas.submission.mixin']
     _description = 'Presenly Attendance Correction (mirror)'
-    _order = 'date desc, id desc'
+    _order = ORDER_PENGAJUAN
 
     _mirror_resource = 'attendance-corrections'
     _mirror_date_field = 'date'
@@ -321,7 +332,7 @@ class PresenlySaasShiftSwap(models.Model):
     _name = 'presenly.saas.shift.swap'
     _inherit = ['presenly.saas.mirror.mixin', 'presenly.saas.submission.mixin']
     _description = 'Presenly Shift Swap (mirror)'
-    _order = 'requester_date desc, id desc'
+    _order = ORDER_PENGAJUAN
 
     _mirror_resource = 'shift-swaps'
     _mirror_date_field = 'requester_date'

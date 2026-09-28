@@ -51,9 +51,12 @@ class TestPresenlyPlacementConflict(TransactionCase):
         cermin.hr_employee_id = hr.id
         # Seolah nilainya pernah diterapkan, lalu diubah orang di Odoo.
         hr.presenly_synced_values = {
-            'placement_company_id': perusahaan.id,
+            'placement_client_id': perusahaan.presenly_client_id,
             'placement_work_location_id': lokasi.id,
         }
+        # Seolah nilainya diubah orang di Odoo sesudah diterapkan — itulah yang
+        # membuat penimpaan perlu dilaporkan.
+        hr.presenly_client_id = 999
         hr.company_id = self.env.company
 
         # Kliennya ikut dipalsukan: argumen bawaan lambda penarikan dievaluasi
@@ -70,19 +73,88 @@ class TestPresenlyPlacementConflict(TransactionCase):
             'pegawainya harus ketemu; kalau tidak, ujiannya berhenti sebelum sampai',
         )
         self.assertEqual(len(ringkas['conflicts']), 1, 'bentroknya harus dilaporkan')
-        self.assertEqual(hr.company_id, perusahaan, 'nilai Presenly yang dipakai')
+        self.assertEqual(
+            hr.presenly_client_id, perusahaan.presenly_client_id,
+            'nilai Presenly yang dipakai',
+        )
+        self.assertEqual(hr.company_id, self.config.company_id, 'perusahaan tetap milik integrasi')
 
     def test_snapshot_penempatan_tidak_dihapus_sinkronisasi_pegawai(self):
         """Kalau kuncinya hilang, pemeriksaan berikutnya kehilangan dasarnya."""
         self._cermin('uji-snapshot')
         hr = self.Hr.create({'name': 'Pegawai Uji', 'presenly_nopeg': 'uji-snapshot'})
-        hr.presenly_synced_values = {'placement_company_id': 99}
+        hr.presenly_synced_values = {'placement_client_id': 99}
         cermin = self.Mirror.search([('nopeg', '=', 'uji-snapshot')], limit=1)
 
         snapshot = self.Mirror._snapshot_untuk(hr, cermin)
 
         self.assertEqual(
-            snapshot.get('placement_company_id'), 99,
+            snapshot.get('placement_client_id'), 99,
             'kunci milik penarikan lain tidak boleh terhapus',
         )
         self.assertIn('manager_nopeg', snapshot, 'kunci miliknya sendiri tetap ditulis')
+
+    # ------------------------------------------------------------------
+    # Penempatan yang sudah tidak ada lagi
+    # ------------------------------------------------------------------
+    def _lokasi(self, nama, external_id):
+        alamat = self.env['res.partner'].create({'name': nama})
+        return self.env['hr.work.location'].create({
+            'name': nama, 'address_id': alamat.id,
+            'company_id': self.config.company_id.id,
+            'presenly_external_id': external_id,
+        })
+
+    def _tarik_tanpa_penempatan(self):
+        """Penarikan yang tidak memuat penempatan siapa pun."""
+        with mock.patch.object(type(self.config), '_client', lambda self: mock.Mock()), \
+             mock.patch.object(type(self.config), '_fetch_pages',
+                               lambda *a, **k: ([], {'total': 0}, 1)):
+            return self.config._pull_placements()
+
+    def test_penempatan_yang_hilang_mengembalikan_lokasi_kerja(self):
+        """Lokasi kerja dikembalikan ketika penempatannya tidak ada lagi.
+
+        Tanpa ini, pegawai tetap menunjuk lokasi dari penempatan yang sudah
+        dihapus di Presenly — dan tidak ada tarikan mana pun yang memperbaikinya,
+        karena penarikan hanya tahu penempatan yang **ada**.
+        """
+        lokasi = self._lokasi('Lokasi Bekas', 5151)
+        self._cermin('uji-hilang')
+        hr = self.Hr.create({'name': 'Pegawai Uji', 'presenly_nopeg': 'uji-hilang'})
+        hr.with_context(presenly_skip_push=True).write({
+            'work_location_id': lokasi.id,
+            'presenly_saas_config_id': self.config.id,
+            'presenly_synced_values': {'placement_work_location_id': lokasi.id},
+        })
+
+        ringkas, error = self._tarik_tanpa_penempatan()
+
+        self.assertFalse(error)
+        self.assertFalse(hr.work_location_id, 'lokasi dari penempatan yang hilang dikosongkan')
+        self.assertGreaterEqual(ringkas['cleared'], 1)
+
+    def test_lokasi_yang_sudah_diubah_orang_tidak_dikosongkan(self):
+        """Suntingan di Odoo dipertahankan, dan keadaannya dilaporkan.
+
+        Mengosongkannya berarti menghapus pilihan orang tanpa jejak — persis yang
+        dihindari di seluruh modul ini.
+        """
+        lokasi = self._lokasi('Lokasi Dipilih Orang', 5252)
+        self._cermin('uji-diubah')
+        hr = self.Hr.create({'name': 'Pegawai Uji', 'presenly_nopeg': 'uji-diubah'})
+        hr.with_context(presenly_skip_push=True).write({
+            'work_location_id': lokasi.id,
+            'presenly_saas_config_id': self.config.id,
+            # Yang pernah dipasang penempatan adalah lokasi lain.
+            'presenly_synced_values': {'placement_work_location_id': 999999},
+        })
+
+        ringkas, error = self._tarik_tanpa_penempatan()
+
+        self.assertFalse(error)
+        self.assertEqual(hr.work_location_id, lokasi, 'suntingan di Odoo dipertahankan')
+        self.assertTrue(
+            [c for c in ringkas['conflicts'] if 'uji-diubah' in c],
+            'keadaannya harus dilaporkan, bukan didiamkan',
+        )

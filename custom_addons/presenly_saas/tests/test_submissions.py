@@ -1,3 +1,4 @@
+from datetime import date
 from unittest.mock import patch
 
 from odoo.exceptions import UserError
@@ -231,8 +232,7 @@ class TestPresenlySubmissionRangePull(TransactionCase):
             return {'data': [leave_row(id=11)], 'meta': {'total': 1, 'total_pages': 1}}
 
         with patch.object(PresenlySaasClient, 'get_resource', side_effect=fake_resource), \
-             patch.object(PresenlySaasClient, 'get_attendance_logs', return_value=EMPTY_PAGE), \
-             patch.object(PresenlySaasClient, 'get_attendance_recap', return_value=EMPTY_PAGE):
+             patch.object(PresenlySaasClient, 'get_attendance_logs', return_value=EMPTY_PAGE):
             summary, error = self.config._pull_period_datasets(9, 2026)
 
         self.assertFalse(error)
@@ -257,6 +257,50 @@ class TestPresenlySubmissionRangePull(TransactionCase):
         for resource, params in captured:
             self.assertEqual(params['since'], '2026-09-01', resource)
             self.assertEqual(params['until'], '2026-09-30', resource)
+
+    def test_baris_tanpa_tanggal_ikut_diganti(self):
+        """Baris tanpa tanggal tidak boleh tertinggal sebagai salinan basi.
+
+        Baris yang tidak punya tanggal tidak masuk rentang mana pun, jadi tanpa
+        aturan ini ia tidak pernah ikut diganti — dan pengajuan yang sudah
+        dihapus di aplikasi tetap terlihat di sini. Server yang sudah diperbaiki
+        mengirimkannya di setiap rentang.
+        """
+        self.Leave._mirror_replace(self.company, [
+            leave_row(id=98, reference_number='CT/LAMA', leave_date=None,
+                      start_date=None, end_date=None),
+        ])
+
+        self.Leave._mirror_replace_range(
+            self.company,
+            [leave_row(id=11),
+             leave_row(id=97, reference_number='CT/BARU', leave_date=None,
+                       start_date=None, end_date=None)],
+            date(2026, 9, 1), date(2026, 9, 30),
+        )
+
+        self.assertEqual(
+            sorted(self.Leave.search([]).mapped('reference_number')),
+            ['CT/2026/00001', 'CT/BARU'],
+        )
+
+    def test_baris_tanpa_tanggal_tidak_hilang_bila_server_belum_mengirimnya(self):
+        """Sisi aman: server yang belum menyertakannya tidak membuat baris hilang.
+
+        Kalau baris tanpa tanggal dihapus tanpa penggantinya, salinan yang masih
+        ada di aplikasi justru ikut terbuang. Karena itu penghapusannya hanya
+        dilakukan kalau tarikannya sendiri memuat baris seperti itu.
+        """
+        self.Leave._mirror_replace(self.company, [
+            leave_row(id=98, reference_number='CT/LAMA', leave_date=None,
+                      start_date=None, end_date=None),
+        ])
+
+        self.Leave._mirror_replace_range(
+            self.company, [leave_row(id=11)], date(2026, 9, 1), date(2026, 9, 30),
+        )
+
+        self.assertTrue(self.Leave.search([('reference_number', '=', 'CT/LAMA')]))
 
     def test_galat_dikembalikan_sebagai_nilai_dan_tidak_diklaim_berhasil(self):
         failure = SaasClientError('down', code='NETWORK_ERROR')
@@ -338,8 +382,7 @@ class TestPresenlyPeriodRangeCombined(TransactionCase):
             return EMPTY_PAGE
 
         with patch.object(PresenlySaasClient, 'get_resource', side_effect=fake_resource), \
-             patch.object(PresenlySaasClient, 'get_attendance_logs', return_value=EMPTY_PAGE), \
-             patch.object(PresenlySaasClient, 'get_attendance_recap', return_value=EMPTY_PAGE):
+             patch.object(PresenlySaasClient, 'get_attendance_logs', return_value=EMPTY_PAGE):
             summary, error = self.config._pull_period_range(9, 2026, months_back=2)
 
         self.assertFalse(error)
@@ -359,8 +402,7 @@ class TestPresenlyPeriodRangeCombined(TransactionCase):
             return EMPTY_PAGE
 
         with patch.object(PresenlySaasClient, 'get_resource', side_effect=fake_resource), \
-             patch.object(PresenlySaasClient, 'get_attendance_logs', return_value=EMPTY_PAGE), \
-             patch.object(PresenlySaasClient, 'get_attendance_recap', return_value=EMPTY_PAGE):
+             patch.object(PresenlySaasClient, 'get_attendance_logs', return_value=EMPTY_PAGE):
             summary, error = self.config._pull_period_range(9, 2026, months_back=2)
 
         self.assertTrue(error)

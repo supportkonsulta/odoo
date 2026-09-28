@@ -657,6 +657,54 @@ Komponen OWL yang terdaftar di `main_components`. Muncul hanya bila:
 
 ---
 
+## 8b. Penutupan akses
+
+`Tutup Akses` (`presenly.saas.config.block_mode`) menentukan apa yang terjadi pada
+backend saat langganan tidak aktif. Bawaannya `Nonaktif`: pemutakhiran modul tidak
+pernah mengunci instalasi yang sudah berjalan.
+
+| Nilai | Yang benar-benar terjadi |
+| --- | --- |
+| `Nonaktif` | Tidak ada yang ditutup. Banner tetap menjelaskan keadaannya |
+| `Uji coba` | Setiap permintaan yang AKAN ditolak dihitung dan dicatat, lalu tetap diloloskan |
+| `Wajibkan` | Backend ditutup untuk perusahaan itu, kecuali yang ada di daftar di bawah |
+
+Siapa yang ditutup: pengguna internal (`base.group_user`). Portal dan publik tidak,
+karena mereka pelanggan tenant, bukan stafnya. `uid 1` tidak pernah ditutup, dan
+manajer tetap bisa memakai halaman blokir walau backendnya tertutup untuknya.
+Perusahaan yang diperiksa adalah perusahaan yang sedang dipakai sesi itu.
+
+Yang tetap hidup saat ditutup:
+
+| Jalur | Alasan |
+| --- | --- |
+| `/web/login`, `/web/session/*` | cara masuk dan keluar, termasuk untuk memperbaiki |
+| `/web/assets/*`, `/web/static/*`, `/logo`, `/favicon.ico` | halaman blokir harus tampil utuh |
+| `/presenly_saas/blocked*` | halaman penjelasan dan dua jalur perbaikannya |
+| `/presenly_saas/webhook/<token>` | cermin tetap segar, dan itu pintu masuk server, bukan manusia |
+
+Yang ditutup termasuk laporan, `/web/dataset/call_kw`, panggilan dengan kunci API,
+dan API aplikasi `/api/presenly/v1/*`. Cron tidak tersentuh karena ia bukan
+permintaan HTTP, jadi penarikan data tetap berjalan.
+
+Alasan blokirnya konservatif, sama seperti API guard: hanya jawaban nyata dari
+server yang menutup akses. Snapshot yang tidak terkonfirmasi baru menutup setelah
+`Masa Tenggang` lewat, dan hanya bila tenggangnya diisi. Snapshot yang belum
+pernah ada tidak menutup apa pun.
+
+Tiga jalan keluar, dan ketiganya perlu diketahui sebelum menyalakan `Wajibkan`:
+
+| Jalur | Cara | Untuk |
+| --- | --- | --- |
+| Halaman blokir | **Segarkan langganan**, dan **Ubah koneksi** untuk alamat, tenant code, atau kunci API | manajer, keadaan normal |
+| Akses sementara | `Akses Sementara Sampai` + alasannya, dicatat di log sinkronisasi | pendampingan selagi perpanjangan diselesaikan |
+| Sekoci | `ir.config_parameter` bernama `presenly_saas_block_disabled` diisi `1` | operator, saat insiden |
+
+Operasi sistem (impor, migrasi, cron internal, tes) lewat dengan context
+`presenly_saas_skip_guard=True`. Sekoci `uid 1` juga berlaku untuk itu.
+
+---
+
 ## 9. Pengujian
 
 ```bash
@@ -666,13 +714,16 @@ odoo-bin -d <db> -i presenly_saas \
   --stop-after-init --no-http
 ```
 
-337 kasus uji (modul inti + `presenly_saas_hr`):
+474 kasus uji pada basis data yang memasang `presenly_saas` **dan**
+`presenly_saas_hr` (0 gagal, 0 error):
 
 | Berkas                         | Cakupan                                                                                                  |
 | ------------------------------ | -------------------------------------------------------------------------------------------------------- |
 | `tests/test_saas_client.py`    | normalisasi URL, header, retry vs tidak retry, skema, redaksi kunci API                                  |
 | `tests/test_config.py`         | singleton per perusahaan, constraint, penyegaran, kegagalan tidak mengubah status, cron, pemangkasan log |
 | `tests/test_guard_contract.py` | seluruh matriks mode × status, grace, kontrak full access, payload banner                                |
+| `tests/test_guard_gate.py` | fungsi keputusan blokir tanpa basis data, kebijakan gerbang (jalur, peran, sekoci, mode), anggaran query, penanda blokir, dan nilai halaman blokir tanpa rahasia |
+| `tests/test_guard_http.py` | gerbang lewat HTTP sungguhan: pengalihan `/odoo`, galat JSON-RPC, laporan, jalur yang tetap hidup, halaman blokir untuk staf dan manajer, akses sementara |
 | `tests/test_res_config_settings.py` | blok Settings native, pintasan menu Configuration |                                                  
 | `tests/test_plan_features.py` | konsumsi paket & fitur, `has_feature()`, `missing_features()` |                                            
 | `tests/test_presenly_endpoints.py` | cermin presensi & rekap, paginasi, wizard |                                            
@@ -942,7 +993,7 @@ presenly_saas/
 ├── security/       group, ACL, record rule multi-company
 ├── services/       klien HTTP (tanpa dependensi Odoo, mudah diuji)
 ├── static/         ikon + komponen OWL banner dan peta
-├── tests/          337 kasus uji
+├── tests/          474 kasus uji (kedua modul)
 ├── views/          form, list, search, menu
 └── wizard/         pemilih periode penarikan (presensi + pengajuan)
 ```

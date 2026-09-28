@@ -72,12 +72,7 @@ class SyncTestBase(TransactionCase):
                 raise hasil
             return hasil
 
-        def palsu_recap(params=None):
-            dicatat.append(('/api/external/v1/presenly/attendance-recap', params or {}))
-            return EMPTY_PAGE
-
-        with patch.object(PresenlySaasClient, 'get_envelope', side_effect=palsu), \
-             patch.object(PresenlySaasClient, 'get_attendance_recap', side_effect=palsu_recap):
+        with patch.object(PresenlySaasClient, 'get_envelope', side_effect=palsu):
             summary, error = self.config._pull_recent_data()
         return summary, error, dicatat
 
@@ -241,12 +236,7 @@ class TestPresenlyRefreshGuard(SyncTestBase):
                 return {'data': dict(waktu), 'meta': {'server_time': '2026-09-23T03:00:00.000Z'}}
             return EMPTY_PAGE
 
-        def recap(params=None):
-            dicatat.append('/v1/presenly/attendance-recap')
-            return EMPTY_PAGE
-
-        with patch.object(PresenlySaasClient, 'get_envelope', side_effect=envelope), \
-             patch.object(PresenlySaasClient, 'get_attendance_recap', side_effect=recap):
+        with patch.object(PresenlySaasClient, 'get_envelope', side_effect=envelope):
             dijalankan = self._segar()
         return dijalankan, dicatat
 
@@ -301,8 +291,7 @@ class TestPresenlyRefreshGuard(SyncTestBase):
             return EMPTY_PAGE
 
         with patch.object(PresenlySaasClient, 'get_envelope', return_value=EMPTY_PAGE), \
-             patch.object(PresenlySaasClient, 'get_resource', side_effect=palsu_resource), \
-             patch.object(PresenlySaasClient, 'get_attendance_recap', return_value=EMPTY_PAGE):
+             patch.object(PresenlySaasClient, 'get_resource', side_effect=palsu_resource):
             self.config._pull_recent_data()
             pertama = len(referensi)
             self.config._pull_recent_data()
@@ -378,8 +367,7 @@ class TestPresenlyPullEntryPoint(SyncTestBase):
             return halaman([leave_row()]) if resource == 'leaves' else EMPTY_PAGE
 
         with patch.object(PresenlySaasClient, 'get_resource', side_effect=palsu), \
-             patch.object(PresenlySaasClient, 'get_attendance_logs', return_value=EMPTY_PAGE), \
-             patch.object(PresenlySaasClient, 'get_attendance_recap', return_value=EMPTY_PAGE):
+             patch.object(PresenlySaasClient, 'get_attendance_logs', return_value=EMPTY_PAGE):
             wizard.action_pull()
 
         self.assertTrue(self.Leave.search_count([]))

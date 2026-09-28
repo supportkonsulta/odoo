@@ -224,8 +224,8 @@ msgstr "Nilai Tersinkron Terakhir"
 
 #. module: presenly_saas_hr
 #: model:ir.model.fields,field_description:presenly_saas_hr.field_hr_employee__presenly_synced_at
-msgid "Last Synced from Presenly"
-msgstr "Terakhir Disinkronkan dari Presenly"
+msgid "Last Written by Sync"
+msgstr "Terakhir Ditulis Sinkronisasi"
 
 #. module: presenly_saas_hr
 #: model:ir.model.fields,field_description:presenly_saas_hr.field_presenly_saas_employee__write_uid

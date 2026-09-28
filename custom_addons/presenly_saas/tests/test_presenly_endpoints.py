@@ -6,6 +6,8 @@ from odoo.tests.common import TransactionCase
 
 from ..services.saas_client import PresenlySaasClient, SaasClientError
 
+EMPTY_PAGE = {'data': [], 'meta': {'total': 0, 'total_pages': 0}}
+
 
 def log_row(**overrides):
     row = {
@@ -36,20 +38,6 @@ def log_row(**overrides):
     return row
 
 
-def recap_row(**overrides):
-    row = {
-        'user_id': 2,
-        'user': {'id': 2, 'name': 'rangga', 'nopeg': 'iksg-rangga', 'project': 'Proyek A'},
-        'month': 9,
-        'year': 2026,
-        'attendance_count': 1,
-        'total_late_minutes': 571,
-        'absent_count': 0,
-    }
-    row.update(overrides)
-    return row
-
-
 @tagged('post_install', '-at_install')
 class TestPresenlyAttendanceMirror(TransactionCase):
     """Cermin log dan rekap presensi."""
@@ -60,14 +48,52 @@ class TestPresenlyAttendanceMirror(TransactionCase):
         cls.company = cls.env.company
         cls.config = cls.env['presenly.saas.config']._get_or_create(cls.company)
         cls.Log = cls.env['presenly.saas.attendance.log']
-        cls.Recap = cls.env['presenly.saas.attendance.recap']
 
     def setUp(self):
         super().setUp()
         self.config.write({'enabled': True, 'base_url': 'https://x', 'tenant_code': 'demo',
                            'api_key': 'k', 'retry_count': 0})
         self.Log.search([]).unlink()
-        self.Recap.search([]).unlink()
+
+    # ------------------------------------------------------------------
+    # Penyegaran satu jenis (dipicu webhook)
+    # ------------------------------------------------------------------
+    def _tanpa_jeda(self):
+        """Buang riwayat percobaan supaya jeda minimum tidak menahan tarikan."""
+        self.env['presenly.saas.sync.log'].search([]).unlink()
+
+    def test_pull_dataset_referensi_hanya_menarik_jenisnya(self):
+        self._tanpa_jeda()
+        with patch.object(PresenlySaasClient, 'get_resource', return_value=EMPTY_PAGE) as panggil:
+            error = self.config._pull_dataset('holidays')
+
+        self.assertFalse(error)
+        self.assertEqual([c[0][0] for c in panggil.call_args_list], ['holidays'])
+
+    def test_pull_dataset_periode_mengganti_seluruh_jendela(self):
+        self._tanpa_jeda()
+        terlihat = []
+
+        def fake_resource(resource, params=None):
+            terlihat.append(resource)
+            return EMPTY_PAGE
+
+        with patch.object(PresenlySaasClient, 'get_resource', side_effect=fake_resource):
+            error = self.config._pull_dataset('leaves')
+
+        self.assertFalse(error)
+        self.assertEqual(set(terlihat), {'leaves'})
+        # Satu permintaan per bulan di jendela tarikan.
+        self.assertEqual(len(terlihat), len(self.config._pull_window()))
+
+    def test_pull_dataset_menghormati_jeda_minimum(self):
+        self._tanpa_jeda()
+        with patch.object(PresenlySaasClient, 'get_resource', return_value=EMPTY_PAGE) as panggil:
+            self.config._pull_dataset('holidays')
+            # Panggilan kedua langsung sesudahnya: jeda minimum menahannya.
+            self.config._pull_dataset('holidays')
+
+        self.assertEqual(len(panggil.call_args_list), 1)
 
     # ------------------------------------------------------------------
     # Pemetaan payload
@@ -105,15 +131,6 @@ class TestPresenlyAttendanceMirror(TransactionCase):
         values = self.Log._values_from_payload(self.company, log_row(status='tepat waktu'))
         self.assertFalse(values['status'])
 
-    def test_recap_mapping(self):
-        values = self.Recap._values_from_payload(self.company, recap_row())
-
-        self.assertEqual(values['user_id'], 2)
-        self.assertEqual(values['employee_name'], 'rangga')
-        self.assertEqual(values['month'], 9)
-        self.assertEqual(values['attendance_count'], 1)
-        self.assertEqual(values['total_late_minutes'], 571)
-
     # ------------------------------------------------------------------
     # Cermin diganti, bukan ditumpuk
     # ------------------------------------------------------------------
@@ -136,11 +153,6 @@ class TestPresenlyAttendanceMirror(TransactionCase):
         remaining = self.Log.search([])
         self.assertEqual(len(remaining), 1)
         self.assertEqual(remaining.external_id, 1)
-
-    def test_replace_scope_recap_per_bulan(self):
-        self.Recap._upsert_rows(self.company, [recap_row(month=8), recap_row(month=9)])
-        self.Recap._replace_scope(self.company, 9, 2026)
-        self.assertEqual(self.Recap.search([]).mapped('month'), [8])
 
     # ------------------------------------------------------------------
     # Penarikan berhalaman
@@ -170,27 +182,22 @@ class TestPresenlyAttendanceMirror(TransactionCase):
         self.assertEqual(len(rows), 3)
         self.assertEqual(meta['total'], 9999)
 
-    def test_pull_attendance_menulis_dua_dataset_dan_melaporkan_terpotong(self):
+    def test_pull_attendance_menulis_log_dan_melaporkan_terpotong(self):
         logs_envelope = {'data': [log_row()], 'meta': {'total': 50, 'total_pages': 50}}
-        recap_envelope = {'data': [recap_row()], 'meta': {'total': 1, 'schema_version': '1.0.0'}}
 
-        with patch.object(PresenlySaasClient, 'get_attendance_logs', return_value=logs_envelope), \
-             patch.object(PresenlySaasClient, 'get_attendance_recap', return_value=recap_envelope):
+        with patch.object(PresenlySaasClient, 'get_attendance_logs', return_value=logs_envelope):
             summary, error = self.config._pull_attendance(9, 2026)
 
         self.assertFalse(error)
         self.assertEqual(summary['logs'], 1)
-        self.assertEqual(summary['recap'], 1)
         self.assertEqual(summary['period'], '09/2026')
         self.assertTrue(summary['truncated'], 'hasil terpotong harus dilaporkan')
 
         self.assertEqual(len(self.Log.search([])), 1)
-        self.assertEqual(len(self.Recap.search([])), 1)
 
         endpoints = self.env['presenly.saas.sync.log'].search(
             [('company_id', '=', self.company.id)]).mapped('endpoint')
         self.assertIn('/api/external/v1/presenly/attendance-logs', endpoints)
-        self.assertIn('/api/external/v1/presenly/attendance-recap', endpoints)
 
     def test_pull_attendance_gagal_dikembalikan_sebagai_nilai(self):
         failure = SaasClientError('down', code='NETWORK_ERROR')
@@ -237,7 +244,6 @@ class TestPresenlyPullWizard(TransactionCase):
         empty = {'data': [], 'meta': {'total': 0, 'schema_version': '1.0.0'}}
 
         with patch.object(PresenlySaasClient, 'get_attendance_logs', return_value=empty), \
-             patch.object(PresenlySaasClient, 'get_attendance_recap', return_value=empty), \
              patch.object(PresenlySaasClient, 'get_resource', return_value=empty):
             result = wizard.action_pull()
 

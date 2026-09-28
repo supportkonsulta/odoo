@@ -2,6 +2,7 @@ import logging
 import secrets
 
 from odoo import _, api, fields, models
+from odoo.exceptions import UserError
 
 from odoo.addons.presenly_saas.models.presenly_saas_config import MANAGER_GROUP, redact
 from odoo.addons.presenly_saas.services.saas_client import SaasClientError
@@ -11,6 +12,32 @@ _logger = logging.getLogger(__name__)
 # Kontrak: docs/external-webhooks.md di repo backend_presenly.
 WEBHOOKS_PATH = "/api/external/v1/webhooks"
 EMPLOYEES_PATH = "/api/external/v1/employees"
+
+# Peristiwa yang ditangani Odoo, dalam satu tempat.
+#
+# Daftar ini ditulis ke server saat pendaftaran, dan server menyimpannya apa
+# adanya: peristiwa yang tidak ada di situ tidak pernah dikirim. Server tidak
+# menambahkannya sendiri saat Odoo mulai menangani peristiwa baru. Karena itu
+# pendaftaran yang sudah berjalan harus diperiksa ulang — kalau tidak, kode yang
+# sudah menangani sebuah peristiwa tidak akan pernah menerimanya, dan tidak ada
+# yang tahu. Itu yang terjadi pada jadwal kerja: pengendalinya sudah ada,
+# tetapi pendaftarannya masih memuat daftar lama, sehingga perubahan slot tidak
+# pernah sampai ke Odoo.
+WEBHOOK_EVENTS = [
+    'employee.created', 'employee.updated',
+    # Klien dan lokasi kerja membentuk perusahaan serta `hr.work.location` di
+    # sisi ini.
+    'client.created', 'client.updated', 'client.deleted',
+    'work_location.created', 'work_location.updated', 'work_location.deleted',
+    # Pola kerja pegawai: jadwal mingguan dan slotnya.
+    'weekly_schedule.created', 'weekly_schedule.updated', 'weekly_schedule.deleted',
+    # Seluruh cermin lain — pengajuan, timesheet, presensi, dan data acuan.
+    # Jenisnya disebut di badan permintaan, jadi satu nama cukup. Yang perlu
+    # peristiwa ini adalah **penghapusan**: baris yang hilang di aplikasi tidak
+    # muncul di daftar perubahan mana pun, sehingga tanpa ini salinannya
+    # tertinggal di sini sampai cron harian berjalan.
+    'sync.changed',
+]
 
 
 class PresenlySaasConfig(models.Model):
@@ -68,6 +95,13 @@ class PresenlySaasConfig(models.Model):
         """
         self.ensure_one()
         self._require_enabled()
+
+        # Daftar peristiwa yang tersimpan di server tidak ikut bertambah saat
+        # Odoo mulai menangani peristiwa baru, dan peristiwa yang tidak
+        # terdaftar tidak pernah dikirim. Diperiksa di sini — bukan hanya saat
+        # pendaftaran — supaya perubahan jadwal kerja benar-benar sampai.
+        self.ensure_webhook_registration()
+
         started = fields.Datetime.now()
 
         client = self._client()
@@ -195,6 +229,91 @@ class PresenlySaasConfig(models.Model):
             self.sudo().webhook_token = secrets.token_urlsafe(32)
         return '%s/presenly_saas/webhook/%s' % (self._webhook_base_url(), self.webhook_token)
 
+    def _register_webhook(self, timeout=None):
+        """Kirim alamat dan daftar peristiwa ke server, lalu simpan jawabannya.
+
+        Mengembalikan ``(data, error)``. Dipakai dua jalur yang berbeda
+        niatnya: tombol Register — yang hasilnya diberitahukan ke operator — dan
+        pemeriksaan mandiri sebelum tarikan, yang cukup dicatat di log.
+        """
+        self.ensure_one()
+        url = self._webhook_callback_url()
+        try:
+            hasil = self._client(timeout=timeout, retry_count=0 if timeout else None) \
+                .register_webhook({
+                    'url': url,
+                    'events': list(WEBHOOK_EVENTS),
+                    'label': '%s (%s)' % (self.env.cr.dbname, self.tenant_code or 'no tenant'),
+                })
+        except (SaasClientError, UserError) as exc:
+            self._log_pull(WEBHOOKS_PATH, False, exc, fields.Datetime.now())
+            return {}, redact(exc, self.api_key)
+
+        data = hasil.get('data') or {}
+        self.sudo().write({
+            'webhook_url': data.get('url') or url,
+            # Mendaftar ulang tidak mengganti rahasia, dan jawaban yang tidak
+            # memuatnya tidak boleh menghapus yang lama: rahasia yang hilang
+            # memutus penerima sampai ada yang menyadarinya.
+            'webhook_secret': data.get('secret') or self.webhook_secret,
+            'webhook_enabled': True,
+        })
+        self._log_pull(WEBHOOKS_PATH, True, None, fields.Datetime.now())
+        return data, False
+
+    def ensure_webhook_registration(self, timeout=None):
+        """Pastikan server mengirim setiap peristiwa yang ditangani Odoo.
+
+        Daftar peristiwa ditulis sekali saat mendaftar; server tidak
+        memperbaruinya saat Odoo mulai menangani peristiwa baru. Karena itu
+        pendaftaran yang sudah berjalan diperiksa di sini, dan didaftarkan ulang
+        hanya bila ada peristiwa yang belum terdaftar — tanpa memutar rahasia,
+        sehingga penerima yang sedang berjalan tidak terputus.
+
+        Mengembalikan benar bila pendaftarannya diperbarui. Kegagalan diperiksa
+        gagal **tidak** dianggap alasan mendaftar ulang: alamat yang benar bisa
+        tertimpa alamat yang salah hanya karena servernya sedang tidak
+        terjangkau. Yang gagal dilaporkan, bukan ditebak.
+
+        `timeout` dipakai jalur yang tidak boleh menunggu lama, yaitu saat
+        upgrade modul: di sana server yang tidak menjawab hanya menunda
+        pemasangan, bukan sesuatu yang perlu ditunggu.
+        """
+        self.ensure_one()
+        if not (self.enabled and self.webhook_enabled and self.webhook_url):
+            # Belum pernah didaftarkan: itu urusan tombol Register, yang tahu
+            # alamat mana yang sedang dipakai sekarang.
+            return False
+        try:
+            data = self._client(timeout=timeout, retry_count=0 if timeout else None) \
+                .get_webhook().get('data') or {}
+        except (SaasClientError, UserError) as exc:
+            _logger.info(
+                "Presenly SaaS: webhook registration could not be read for "
+                "company %s: %s",
+                self.company_id.display_name, redact(exc, self.api_key),
+            )
+            return False
+
+        terdaftar = set(data.get('events') or [])
+        if set(WEBHOOK_EVENTS).issubset(terdaftar) and data.get('is_active', True):
+            return False
+
+        _data, error = self._register_webhook(timeout=timeout)
+        if error:
+            _logger.warning(
+                "Presenly SaaS: webhook registration could not be refreshed for "
+                "company %s: %s",
+                self.company_id.display_name, error,
+            )
+            return False
+        _logger.info(
+            "Presenly SaaS: webhook registration refreshed for company %s — "
+            "%s event(s) now registered.",
+            self.company_id.display_name, len(WEBHOOK_EVENTS),
+        )
+        return True
+
     def action_register_webhook(self):
         """Daftarkan alamat penerima instalasi ini ke server Presenly."""
         self.ensure_one()
@@ -210,31 +329,11 @@ class PresenlySaasConfig(models.Model):
                   'address to call. Set it in Settings first.'),
             )
 
-        try:
-            hasil = self._client().register_webhook({
-                'url': url,
-                'events': [
-                    'employee.created', 'employee.updated',
-                    # Klien dan lokasi kerja membentuk perusahaan serta
-                    # `hr.work.location` di sisi ini.
-                    'client.created', 'client.updated',
-                    'work_location.created', 'work_location.updated',
-                ],
-                'label': '%s (%s)' % (self.env.cr.dbname, self.tenant_code or 'no tenant'),
-            })
-        except SaasClientError as exc:
-            self._log_pull(WEBHOOKS_PATH, False, exc, fields.Datetime.now())
+        _data, error = self._register_webhook()
+        if error:
             return self._notify(
-                'danger', _('Webhook not registered'), redact(exc, self.api_key),
+                'danger', _('Webhook not registered'), error,
             )
-
-        data = hasil.get('data') or {}
-        self.sudo().write({
-            'webhook_url': data.get('url') or url,
-            'webhook_secret': data.get('secret') or False,
-            'webhook_enabled': True,
-        })
-        self._log_pull(WEBHOOKS_PATH, True, None, fields.Datetime.now())
 
         # Alamatnya diuji sekarang, selagi orangnya masih di depan layar. Uji ini
         # membuktikan tiga hal sekaligus: alamatnya terjangkau, tanda tangannya

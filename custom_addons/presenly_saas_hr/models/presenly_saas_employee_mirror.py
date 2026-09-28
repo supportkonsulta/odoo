@@ -37,11 +37,14 @@ class PresenlySaasEmployee(models.Model):
     # Kolom yang tidak punya padanan di Odoo. Disimpan di sini supaya tidak ada
     # informasi yang hilang, dan supaya bisa dilihat saat memutuskan pemetaan.
     bagian = fields.Char()
-    grup = fields.Char(string='SIK Group')
+    grup = fields.Char(string='Grup')
     address = fields.Text()
     birth_date = fields.Date(string='Birth Date')
     birth_place = fields.Char(string='Birth Place')
     can_approve = fields.Boolean(string='Can Approve')
+    # Hak menyetujui yang **efektif** — dihitung server, bukan flag tersimpan.
+    # Flag tersimpan bisa nol untuk orang yang justru approver di alurnya.
+    can_approve_effective = fields.Boolean(string='May Approve')
     role_name = fields.Char(string='Role')
 
     # Atasan langsung, apa adanya dari payload. Inilah yang membuat level
@@ -51,17 +54,15 @@ class PresenlySaasEmployee(models.Model):
     manager_nopeg = fields.Char(string='Manager Nopeg', index=True)
     manager_name = fields.Char(string='Manager')
 
-    shift_id = fields.Integer(string='Shift ID')
     shift_name = fields.Char(string='Shift')
 
     internal_company_id = fields.Integer(string='Internal Company ID')
     internal_company_name = fields.Char(string='Internal Company')
 
-    # PII hanya terisi bila penarikannya meminta `include_pii`.
-    no_npwp = fields.Char(string='NPWP')
-    no_rekening = fields.Char(string='Bank Account')
-    no_bpjs = fields.Char(string='BPJS Kesehatan')
-    no_bpjs_kes = fields.Char(string='BPJS Ketenagakerjaan')
+    # PII — NPWP, rekening, dan BPJS — tidak disimpan di sini. Odoo HR tidak
+    # membutuhkannya, dan setiap salinan adalah satu tempat lagi yang harus
+    # dijaga kerahasiaannya. Datanya tetap di aplikasi Presenly, di sana ia
+    # memang berada.
 
     hr_employee_id = fields.Many2one(
         'hr.employee',
@@ -122,17 +123,13 @@ class PresenlySaasEmployee(models.Model):
             'birth_date': parse_date(row.get('birth_date')),
             'birth_place': row.get('birth_place') or False,
             'can_approve': bool(row.get('can_approve')),
+            'can_approve_effective': bool(row.get('can_approve_effective')),
             'role_name': (role.get('name') if isinstance(role, dict) else None) or False,
             'manager_nopeg': (manager.get('nopeg') if isinstance(manager, dict) else None) or False,
             'manager_name': (manager.get('name') if isinstance(manager, dict) else None) or False,
-            'shift_id': int((shift or {}).get('id') or 0) if isinstance(shift, dict) else 0,
             'shift_name': (shift.get('name') if isinstance(shift, dict) else None) or False,
             'internal_company_id': int(internal_company.get('id') or 0),
             'internal_company_name': internal_company.get('name') or False,
-            'no_npwp': row.get('no_npwp') or False,
-            'no_rekening': row.get('no_rekening') or False,
-            'no_bpjs': row.get('no_bpjs') or False,
-            'no_bpjs_kes': row.get('no_bpjs_kes') or False,
             'source_created_at': parse_datetime(row.get('created_at')),
             'source_updated_at': parse_datetime(row.get('updated_at')),
             'fetched_at': fields.Datetime.now(),
@@ -189,7 +186,8 @@ class PresenlySaasEmployee(models.Model):
                      # Kolom yang tadinya hanya ada di cermin, kini punya rumah
                      # di `hr.employee`. Ruang nilainya sama dengan cermin, jadi
                      # ikut dibandingkan dan bentroknya ikut dilaporkan.
-                     'bagian', 'grup', 'can_approve', 'role_name', 'shift_name')
+                     'bagian', 'grup', 'can_approve', 'can_approve_effective',
+                     'role_name', 'shift_name')
 
     # Kolom milik Presenly yang **tidak** dikirim balik. Perubahannya tetap
     # dilaporkan kalau Odoo juga menyentuhnya, karena nilainya akan tertimpa —
@@ -219,6 +217,7 @@ class PresenlySaasEmployee(models.Model):
         'bagian': 'job_title',
         'grup': 'presenly_group',
         'can_approve': 'presenly_can_approve',
+        'can_approve_effective': 'presenly_may_approve',
         'role_name': 'presenly_role',
         'shift_name': 'presenly_shift',
     }
@@ -244,32 +243,40 @@ class PresenlySaasEmployee(models.Model):
             'job_title': employee.bagian or False,
         }
 
-        # Klien Presenly menjadi perusahaan Odoo. Kalau kliennya belum dibuat
-        # (setelannya mati, atau pegawai ini belum punya klien), tautannya
-        # dilewati dan keadaannya terlihat dari `internal_company_name` di cermin.
-        perusahaan = self._presenly_company(employee.internal_company_id)
-        if perusahaan:
-            nilai['company_id'] = perusahaan.id
+        # Pegawai berada di perusahaan tempat integrasi dipasang, dan kliennya
+        # disimpan sebagai kolom tersendiri.
+        #
+        # Sebelumnya klien dijadikan perusahaan pegawai, dan akibatnya daftar
+        # pegawai Odoo terpencar ke perusahaan-perusahaan klien: dengan pemilih
+        # perusahaan di posisi satu perusahaan, sebagian besar pegawai tidak
+        # terlihat — dan itu terbaca sebagai "tarikannya gagal", padahal datanya
+        # ada. Menyatukannya di satu perusahaan membuat daftarnya utuh, tanpa
+        # kehilangan keterangan kliennya.
+        nilai['company_id'] = employee.company_id.id
+        # Klien ditulis hanya bila payload pegawai memang membawanya. Sebagian
+        # besar tidak membawanya — klien datang dari penempatan — dan menulis
+        # kosong di sini akan menghapus nilai yang baru saja diisi penempatan.
+        if employee.internal_company_id:
+            nilai['presenly_client_id'] = employee.internal_company_id
+            nilai['presenly_client_name'] = employee.internal_company_name or False
 
         # Atasan dicari lewat nopeg, kunci yang sama dengan penautan pegawai.
         # Kalau atasannya belum tertaut di Odoo, dibiarkan kosong dan keadaannya
         # terlihat dari cermin — menebak dari nama akan salah orang.
+        #
         # Kolom yang tidak punya padanan native di Odoo. Disimpan apa adanya:
         # `role` sengaja BUKAN grup Odoo — kalau peran di aplikasi menjadi hak
         # akses di sini, satu perubahan di sana bisa memberi orang izin yang tidak
         # pernah disetujui siapa pun di Odoo.
         nilai['presenly_group'] = employee.grup or False
         nilai['presenly_can_approve'] = bool(employee.can_approve)
+        nilai['presenly_may_approve'] = bool(employee.can_approve_effective)
         nilai['presenly_role'] = employee.role_name or False
         nilai['presenly_shift'] = employee.shift_name or False
 
-        # PII hanya ditulis bila cermin memang memilikinya. Tarikan tanpa
-        # `include_pii` tidak memuat kolom ini, dan menulisnya sebagai kosong akan
-        # menghapus data yang sudah ada — bukan karena berubah, hanya karena tidak
-        # ditanyakan.
-        for kolom in ('no_npwp', 'no_rekening', 'no_bpjs', 'no_bpjs_kes'):
-            if employee[kolom]:
-                nilai['presenly_%s' % kolom] = employee[kolom]
+        # PII tidak disalin ke `hr.employee`. Nomor NPWP, rekening, dan BPJS tetap
+        # ada di aplikasi; Odoo HR tidak membutuhkannya, dan menaruhnya di sini
+        # berarti satu lagi tempat yang harus dijaga kerahasiaannya.
 
         atasan = self._hr_oleh_nopeg(employee.manager_nopeg)
         if atasan:
@@ -480,6 +487,10 @@ class PresenlySaasEmployee(models.Model):
             row.hr_employee_id = hr.id
             self._stamp_synced(row, hr)
 
+        # Keanggotaan kelompok Approver mengikuti hak efektif, sekali per
+        # tarikan — bukan per pegawai, supaya tidak ada query berulang.
+        self._sync_approver_groups(rows)
+
         return summary
 
     @api.model
@@ -516,6 +527,18 @@ class PresenlySaasEmployee(models.Model):
         return value or False
 
     @staticmethod
+    def _nilai_banding(nilai):
+        """Nilai yang bisa dibandingkan lintas penyimpanan.
+
+        Relasi dibaca sebagai id; angka dan teks dibiarkan apa adanya. Tanpa ini,
+        `hr[kolom].id` dipakai untuk kolom yang bukan relasi dan gagal di situ —
+        dan itu hanya muncul saat nilainya benar-benar berbeda.
+        """
+        if hasattr(nilai, 'ids'):
+            return nilai.id or False
+        return nilai or False
+
+    @staticmethod
     def _beda_nilai(sekarang, baru):
         """Apakah nilainya berbeda — termasuk untuk kolom relasi.
 
@@ -524,11 +547,35 @@ class PresenlySaasEmployee(models.Model):
         muncul saat nilainya benar-benar berubah. Karena itu relasinya
         dibandingkan lewat id — bentuk yang sama dengan yang ditulis ke database.
         """
-        if hasattr(sekarang, 'ids') or hasattr(baru, 'ids'):
-            id_sekarang = sekarang.id if hasattr(sekarang, 'ids') else (sekarang or False)
-            id_baru = baru.id if hasattr(baru, 'ids') else (baru or False)
-            return (id_sekarang or False) != (id_baru or False)
-        return sekarang != baru
+        return PresenlySaasEmployee._nilai_banding(sekarang) != PresenlySaasEmployee._nilai_banding(baru)
+
+    @api.model
+    def _sync_approver_groups(self, rows):
+        """Samakan keanggotaan kelompok Approver dengan hak yang efektif.
+
+        Kelompok ini **dikelola sinkronisasi**, bukan diisi tangan: yang berhak
+        ditentukan konfigurasi alur di Presenly, dan salinan aturan itu di sini
+        akan cepat atau lambat berbeda pendapat dengan aslinya. Karena itu juga
+        pencabutannya disengaja — kalau seseorang dikeluarkan dari alur, menunya
+        ikut hilang.
+
+        Yang tidak punya akun Odoo dilewati: tanpa akun, tidak ada yang bisa
+        diberi kelompok.
+        """
+        kumpulan = self.env.ref(
+            'presenly_saas_hr.group_presenly_saas_approver', raise_if_not_found=False
+        )
+        if not kumpulan:
+            return
+        for row in rows:
+            pengguna = row.hr_employee_id.user_id
+            if not pengguna:
+                continue
+            punya = kumpulan in pengguna.group_ids
+            if row.can_approve_effective and not punya:
+                pengguna.sudo().write({'group_ids': [(4, kumpulan.id)]})
+            elif not row.can_approve_effective and punya:
+                pengguna.sudo().write({'group_ids': [(3, kumpulan.id)]})
 
     @api.model
     def _snapshot_untuk(self, hr, row):

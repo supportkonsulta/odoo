@@ -115,6 +115,19 @@ class PresenlySaasSubscription(models.Model):
     schema_version = fields.Char()
     server_time = fields.Datetime()
 
+    # ----------------------------------------------------------------
+    # Penegakan, dibaca dari konfigurasi supaya halaman ini menjawab
+    # "apakah akses sedang ditutup" tanpa membuka halaman lain.
+    # ----------------------------------------------------------------
+    block_mode = fields.Selection(related='config_id.block_mode')
+    blocked_since = fields.Datetime(related='config_id.blocked_since')
+    dry_run_blocked_count = fields.Integer(related='config_id.dry_run_blocked_count')
+    dry_run_noted_at = fields.Datetime(related='config_id.dry_run_noted_at')
+    blocked_reason = fields.Char(
+        compute='_compute_blocked_reason',
+        string='Access Paused Because',
+    )
+
     last_sync_at = fields.Datetime()
     state_source = fields.Selection(
         STATE_SOURCE_SELECTION,
@@ -147,6 +160,20 @@ class PresenlySaasSubscription(models.Model):
                 )
             else:
                 subscription.seat_usage_percent = 0.0
+
+    @api.depends('status', 'state_source', 'is_trial', 'trial_ends_at',
+                 'last_sync_at', 'config_id.block_mode', 'config_id.grace_days',
+                 'config_id.block_override_until')
+    def _compute_blocked_reason(self):
+        """Apa yang gerbang katakan sekarang, dalam bahasa manusia.
+
+        Dihitung, bukan disimpan: itu keputusan yang berubah karena waktu, dan
+        nilai tersimpan akan berbohong setelah tenggangnya lewat.
+        """
+        guard = self.env['presenly.saas.guard']
+        for subscription in self:
+            reason = guard.block_reason(subscription.company_id)
+            subscription.blocked_reason = guard.reason_label(reason) if reason else False
 
     @api.depends('last_sync_at', 'config_id.grace_days')
     def _compute_grace_until(self):
@@ -280,6 +307,13 @@ class PresenlySaasSubscription(models.Model):
             subscription.write(values)
         else:
             subscription = self.sudo().create(values)
+
+        # Jawaban baru selalu membatalkan penanda blokir. Kalau statusnya memang
+        # negatif, gerbang akan menandainya lagi pada permintaan berikutnya,
+        # dengan waktu yang benar. `blocked_since` hidup di konfigurasi, bukan di
+        # snapshot, karena ia bertahan melewati penyegaran.
+        if config.blocked_since:
+            config.sudo().write({'blocked_since': False})
         return subscription
 
     @api.model

@@ -151,8 +151,11 @@ class PresenlySaasTimesheet(models.Model):
         ],
         index=True,
     )
-    rating = fields.Float(string='Rating', digits=(2, 1), help='Manager rating, 1.0 to 5.0.')
-    comment = fields.Text(string='Manager Comment')
+    # Penilaian manajer (`rating` dan `comment`) sengaja tidak dicerminkan.
+    # Keduanya menilai pekerjaannya, bukan mencatat pekerjaannya, dan tidak ada
+    # satu pun bagian di Odoo yang memakainya — payroll membaca jam dan proyek.
+    # Setiap kolom yang dicerminkan harus punya alasan untuk ada; kolom yang
+    # hanya menambah permukaan tidak.
     approver_name = fields.Char(string='Approver')
     shift_name = fields.Char(string='Shift')
 
@@ -187,8 +190,6 @@ class PresenlySaasTimesheet(models.Model):
             'end_time': row.get('end_time') or False,
             'hours': hours_between(row.get('start_time'), row.get('end_time')),
             'status': row.get('status') or False,
-            'rating': float(row.get('rating') or 0.0),
-            'comment': row.get('comment') or False,
             'approver_name': person_ref(row.get('approver')).get('name') or False,
             'shift_name': named_ref(row.get('shift')).get('name') or False,
             'source_created_at': parse_datetime(row.get('created_at')),

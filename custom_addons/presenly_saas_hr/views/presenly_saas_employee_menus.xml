@@ -10,4 +10,13 @@
               action="action_presenly_saas_employee"
               sequence="70"/>
 
+    <!--
+        Dikunci ke Manager. Menu tanpa grup tetap lolos saring walaupun induknya
+        terkunci, dan muncul sebagai butir lepas — jadi grupnya disebut sendiri.
+    -->
+    <record id="menu_presenly_saas_employee" model="ir.ui.menu">
+        <field name="group_ids"
+               eval="[(6, 0, [ref('presenly_saas.group_presenly_saas_manager')])]"/>
+    </record>
+
 </odoo>

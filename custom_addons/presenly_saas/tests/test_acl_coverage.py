@@ -7,7 +7,7 @@ class TestPresenlyAclCoverage(TransactionCase):
     """Setiap model kita harus punya hak akses.
 
     Ini pernah terlewat: empat model Fase 1 (`attendance.log`,
-    `attendance.recap`, `pull.wizard`) tidak punya baris ACL
+    `pull.wizard`) tidak punya baris ACL
     sama sekali. Akibatnya bukan galat, melainkan **menu yang hilang** — Odoo
     menyembunyikan menu yang modelnya tidak boleh dibaca pengguna — dan wizard
     penarikan tidak bisa dipakai siapa pun selain superuser.
@@ -42,7 +42,6 @@ class TestPresenlyAclCoverage(TransactionCase):
         group_user = self.env.ref('base.group_user')
         for nama in (
             'presenly.saas.attendance.log',
-            'presenly.saas.attendance.recap',
             'presenly.saas.subscription',
             'presenly.saas.timesheet',
             'presenly.saas.project',
@@ -74,7 +73,7 @@ class TestPresenlyAclCoverage(TransactionCase):
         # Cermin hanya boleh diubah oleh sinkronisasi, dan sinkronisasi berjalan
         # sebagai superuser. Pengguna biasa tidak perlu hak tulis.
         group_user = self.env.ref('base.group_user')
-        for nama in ('presenly.saas.attendance.log', 'presenly.saas.attendance.recap'):
+        for nama in ('presenly.saas.attendance.log',):
             model = self.env['ir.model'].search([('model', '=', nama)], limit=1)
             menulis = self.env['ir.model.access'].search_count([
                 ('model_id', '=', model.id),

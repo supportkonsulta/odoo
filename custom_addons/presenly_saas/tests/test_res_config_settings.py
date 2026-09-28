@@ -254,7 +254,7 @@ class TestPresenlySaasMenuStructure(TransactionCase):
         self.assertEqual(presensi.parent_id, root)
         self.assertEqual(
             presensi.child_id.sorted(lambda m: m.sequence).mapped('name'),
-            ['Attendance Data', 'Monitoring', 'Recap'],
+            ['Attendance Data', 'Monitoring'],
         )
 
     def test_setiap_menu_membuka_action_atau_punya_anak(self):

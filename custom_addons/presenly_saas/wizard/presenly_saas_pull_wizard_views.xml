@@ -17,10 +17,9 @@
                     </group>
                 </group>
                 <div class="text-muted">
-                    The attendance log and the recap for this period will <b>replace</b> the
-                    existing data for the same month. Other months are left untouched.
-                    When it finishes, the result is cross-checked against the server
-                    recap, and any difference is reported.
+                    The attendance log and the requests for this period will
+                    <b>replace</b> the existing data for the same month. Other months
+                    are left untouched.
                 </div>
                 <footer>
                     <button name="action_pull"

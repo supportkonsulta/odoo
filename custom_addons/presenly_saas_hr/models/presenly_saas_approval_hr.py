@@ -203,7 +203,35 @@ class PresenlySaasSubmissionMixin(models.AbstractModel):
         # Jendela tarikan disegarkan supaya keadaan barunya terlihat. Bukan hanya
         # baris ini: tarikan bekerja per jendela, dan menyempitkannya untuk satu
         # baris akan menjadi jalur kedua yang harus dijaga sama.
-        config._pull_recent_data()
+        #
+        # Kegagalannya **dilaporkan**, bukan ditelan. Kalau tarikannya gagal,
+        # layarnya akan tetap menunjukkan keadaan lama setelah dimuat ulang — dan
+        # tanpa pesan, itu terbaca sebagai "keputusannya tidak berpengaruh".
+        _ringkas, error_tarik = config._pull_recent_data()
+
+        catatan = ''
+        if error_tarik:
+            _logger.warning(
+                'Presenly SaaS: keputusan terkirim, tetapi penyegarannya gagal: %s',
+                error_tarik,
+            )
+            catatan = _(' The refresh failed, so this screen may still show the old '
+                        'state: %(error)s', error=error_tarik)
+
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'type': 'warning' if error_tarik else 'success',
+                'message': _('Decision sent to Presenly.%(catatan)s', catatan=catatan),
+                # Formulirnya dimuat ulang supaya status dan langkah barunya
+                # terlihat. Tanpa ini keputusannya berhasil tetapi layarnya tetap
+                # menunjukkan keadaan lama — dan itu terbaca sebagai tombol yang
+                # tidak bekerja.
+                'next': {'type': 'ir.actions.client', 'tag': 'reload'},
+            },
+        }
+
 
         return {
             'type': 'ir.actions.client',

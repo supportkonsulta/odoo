@@ -16,6 +16,10 @@
                                      help="Keep a native hr.work.location (and its address) for every Presenly work location. Turn this on before applying employee placements.">
                                 <field name="presenly_saas_sync_work_locations"/>
                             </setting>
+                            <setting string="Fill Usual Work Location from the Pattern"
+                                     help="When an employee has no work location from their placement, take it from the location they work at most often in their weekly pattern. Off by default: the placement owns that field.">
+                                <field name="presenly_saas_fill_usual_location"/>
+                            </setting>
                             <setting string="Apply Employee Placements"
                                      help="Point each employee at the company and work location of their primary placement in Presenly. Requires Work Location sync, because the placement names a work location that must exist in Odoo first.">
                                 <field name="presenly_saas_sync_employee_placements"/>
@@ -25,22 +29,44 @@
                                 <field name="presenly_saas_push_work_locations"/>
                             </setting>
                         </block>
+                        <block title="Approvals" name="presenly_saas_approval">
+                            <setting string="Decide Requests from Odoo"
+                                     help="Show approve and reject buttons on requests, so a decision can be taken here instead of in the app. The Approver group (and the Requests menu that comes with it) is granted automatically to whoever Presenly says may approve, and taken back when they leave the flow.">
+                                <field name="presenly_saas_allow_approval_from_odoo"/>
+                            </setting>
+                        </block>
+
                         <block title="Change Notifications" name="presenly_saas_webhook">
-                        <setting string="Send Change Notifications"
+                            <setting string="Send Change Notifications"
                                      help="Register this Odoo with the Presenly server, so it is told when an employee changes there instead of waiting for the next pull. The address must be reachable from the server, so it comes from the `web.base.url` parameter.">
                                 <field name="presenly_saas_webhook_enabled"/>
-                                <div class="mt16" invisible="not presenly_saas_webhook_enabled">
-                                    <field name="presenly_saas_webhook_url" readonly="1" class="text-break"/>
-                                    <button name="%(action_presenly_saas_register_webhook)d"
-                                            type="action"
-                                            string="Register This Odoo"
-                                            class="btn-primary"/>
-                                    <button name="%(action_presenly_saas_unregister_webhook)d"
-                                            type="action"
-                                            string="Stop Notifications"/>
-                                </div>
-                                <div class="text-muted mt8">
-                                    <field name="presenly_saas_webhook_last_received_at" readonly="1"/>
+                                <div class="content-group" invisible="not presenly_saas_webhook_enabled">
+                                    <!-- Alamatnya memuat token acak, dan pada lebar separuh
+                                         ia terpotong di tengah token. Karena itu ia
+                                         mengambil lebar penuh. -->
+                                    <div class="mt-2">
+                                        <field name="presenly_saas_webhook_url" readonly="1" class="w-100 text-break"/>
+                                    </div>
+                                    <!-- Dua tindakan yang berbeda, jadi dua tombol di
+                                         satu baris: mendaftarkan alamat, dan
+                                         menghentikan pemberitahuan. Yang kedua adalah
+                                         pilihan kedua, bukan tindakan utama.
+                                         Jaraknya eksplisit, dan barisnya boleh
+                                         melipat: di layar sempit dua label ini tidak
+                                         muat berdampingan. -->
+                                    <div class="d-flex flex-wrap gap-1 action_buttons mt-2">
+                                        <button name="%(action_presenly_saas_register_webhook)d"
+                                                type="action"
+                                                string="Register This Odoo"
+                                                class="btn-primary me-1"/>
+                                        <button name="%(action_presenly_saas_unregister_webhook)d"
+                                                type="action"
+                                                string="Stop Notifications"
+                                                class="btn-secondary me-1"/>
+                                    </div>
+                                    <div class="mt-2 text-muted">
+                                        <field name="presenly_saas_webhook_last_received_at" readonly="1"/>
+                                    </div>
                                 </div>
                             </setting>
                         </block>

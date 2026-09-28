@@ -68,6 +68,9 @@ class PresenlySaasWebhook(http.Controller):
 
         event = payload.get('event') or request.httprequest.headers.get('X-Presenly-Event')
         nopeg = payload.get('nopeg')
+        # Cermin mana yang berubah, untuk peristiwa yang membawa satu jenis saja.
+        # Isinya penanda, bukan data: yang ditarik tetap lewat API terautentikasi.
+        dataset = payload.get('dataset')
 
         if event == 'test.ping':
             # Panggilan uji dari tombol Register: dijawab tanpa menarik apa pun,
@@ -80,7 +83,7 @@ class PresenlySaasWebhook(http.Controller):
             return self._json(200, {'received': True, 'test': True})
 
         try:
-            ringkas, error, ditangani = self._pull_for_event(config, event)
+            ringkas, error, ditangani = self._pull_for_event(config, event, dataset)
         except Exception as exc:  # noqa: BLE001 - dijawab 500 supaya pengirim mencoba lagi
             _logger.exception("Presenly SaaS: webhook sync failed: %s", exc)
             return self._json(500, {'error': 'sync_failed'})
@@ -102,7 +105,7 @@ class PresenlySaasWebhook(http.Controller):
             'pushed': push.get('pushed', 0),
         })
 
-    def _pull_for_event(self, config, event):
+    def _pull_for_event(self, config, event, dataset=None):
         """Tarik hanya yang berubah, sesuai peristiwa yang datang.
 
         Mengembalikan ``(ringkasan, error, sumber)``. Sebelumnya semua peristiwa
@@ -111,9 +114,30 @@ class PresenlySaasWebhook(http.Controller):
         tersalin ke `hr.work.location` sampai cron berjalan.
         """
         nama = event or ''
+        if nama == 'sync.changed':
+            # Satu peristiwa untuk seluruh cermin yang bukan pegawai, klien, atau
+            # jadwal mingguan. Jenisnya disebut di badan permintaan, jadi yang
+            # ditarik hanya jenis itu — termasuk kalau barisnya **dihapus**,
+            # yang tidak bisa diketahui dari daftar perubahan.
+            error = config._pull_dataset(dataset)
+            return {'pulled': 0}, error, 'sync:%s' % (dataset or '?')
         if nama.startswith('client.'):
             ringkas, error = config._pull_clients()
             return ringkas, error, 'clients'
+        if nama.startswith('weekly_schedule.'):
+            # Pola kerja berubah. Tidak lewat tarikan pegawai: yang berubah bukan
+            # pegawainya, dan menarik pegawai hanya menambah pekerjaan yang tidak
+            # ada hubungannya.
+            ringkas = {}
+            for nama_tarik, metode in (
+                ('schedules', config._pull_schedules),
+                ('slots', config._pull_slots),
+            ):
+                hasil, error = metode()
+                if error:
+                    return hasil, error, 'weekly_schedule'
+                ringkas[nama_tarik] = hasil
+            return ringkas, False, 'weekly_schedule'
         if nama.startswith('work_location.'):
             # Cermin acuan diganti sekaligus, dan penyalinan ke `hr.work.location`
             # ikut berjalan di dalamnya bila setelannya menyala.

@@ -6,6 +6,17 @@ from .presenly_saas_attendance_log import parse_datetime
 
 _logger = logging.getLogger(__name__)
 
+# Dua belas bulan, dipakai dua kali: sebagai nama kolom di cermin
+# `work-day-setups` dan sebagai pilihan di baris rinciannya. Kuncinya sama
+# dengan nama kolom yang dikirim server (`jan`..`dec`), supaya pemetaannya
+# tinggal dibaca, bukan diterjemahkan.
+MONTHS = [
+    ('jan', 'January'), ('feb', 'February'), ('mar', 'March'),
+    ('apr', 'April'), ('may', 'May'), ('jun', 'June'),
+    ('jul', 'July'), ('aug', 'August'), ('sep', 'September'),
+    ('oct', 'October'), ('nov', 'November'), ('dec', 'December'),
+]
+
 
 class PresenlySaasWorkLocation(models.Model):
     """Cermin `GET /v1/work-locations`."""
@@ -212,6 +223,15 @@ class PresenlySaasWorkDaySetup(models.Model):
     dec = fields.Integer(string='Dec')
     total_days = fields.Integer(string='Total Working Days')
 
+    # Rincian per bulan. Server mengirim dua belas kolom dalam satu baris; di
+    # sini kolomnya dipecah menjadi baris supaya rinciannya bisa dibaca dan
+    # dijumlahkan seperti daftar, bukan seperti tabel selebar dua belas kolom.
+    # Barisnya dibuat ulang bersama induknya setiap penarikan.
+    month_ids = fields.One2many(
+        'presenly.saas.work.day.setup.month', 'setup_id',
+        string='Months', readonly=True,
+    )
+
     location_id = fields.Integer(string='Location ID')
     location_name = fields.Char(string='Location')
 
@@ -227,8 +247,7 @@ class PresenlySaasWorkDaySetup(models.Model):
         location = row.get('location') if isinstance(row.get('location'), dict) else {}
         months = {
             month: int(row.get(month) or 0)
-            for month in ('jan', 'feb', 'mar', 'apr', 'may', 'jun',
-                          'jul', 'aug', 'sep', 'oct', 'nov', 'dec')
+            for month, _label in MONTHS
         }
         return {
             'company_id': company.id,
@@ -238,8 +257,50 @@ class PresenlySaasWorkDaySetup(models.Model):
             'total_days': int(row.get('total_days') or 0),
             'location_id': int(location.get('id') or 0),
             'location_name': location.get('name') or False,
+            'month_ids': [(5, 0, 0)] + [
+                (0, 0, {'sequence': sequence, 'month': month, 'days': months[month]})
+                for sequence, (month, _label) in enumerate(MONTHS, start=1)
+            ],
             'source_created_at': parse_datetime(row.get('created_at')),
             'source_updated_at': parse_datetime(row.get('updated_at')),
             'fetched_at': fields.Datetime.now(),
             'raw_payload': row,
         }
+
+
+class PresenlySaasWorkDaySetupMonth(models.Model):
+    """Satu bulan pada satu Work Day Setup.
+
+    Dibuat sebagai baris, bukan kolom, supaya rincian per bulannya bisa dibaca
+    dan dijumlahkan seperti daftar. Isinya tidak ditarik sendiri: server tidak
+    punya endpoint per bulan, ia mengirim dua belas kolom sekaligus — jadi
+    barisnya lahir dari pemetaan `work-day-setups`, bukan dari penarikan
+    terpisah.
+    """
+
+    _name = 'presenly.saas.work.day.setup.month'
+    _description = 'Presenly Work Day Setup Month (mirror)'
+    _order = 'sequence, id'
+
+    setup_id = fields.Many2one(
+        'presenly.saas.work.day.setup',
+        string='Setup',
+        required=True,
+        ondelete='cascade',
+        index=True,
+    )
+    sequence = fields.Integer(default=10)
+    month = fields.Selection(MONTHS, string='Month', required=True)
+    days = fields.Integer(string='Working Days')
+
+    @api.depends('month', 'days', 'setup_id.year', 'setup_id.location_name')
+    def _compute_display_name(self):
+        label = dict(MONTHS)
+        for line in self:
+            bagian = [label.get(line.month, line.month or '?')]
+            if line.setup_id.year:
+                bagian.append(str(line.setup_id.year))
+            if line.setup_id.location_name:
+                bagian.append(line.setup_id.location_name)
+            line.display_name = ' · '.join(bagian)
+

@@ -197,24 +197,35 @@ class PresenlySaasConfig(models.Model):
              'is a decision, not a side effect.',
     )
 
-    def _pull_reference_data(self):
+    def _pull_reference_data(self, resources=None, timeout=None, retry_count=None):
         """Setelah cermin referensi segar, lokasinya disalin ke model native.
 
         Dipanggil di sini karena lokasi kerja termasuk cermin referensi: seluruh
         isinya diganti setiap penarikan, jadi ini titik paling murah untuk
         menyusul dengan salinan native-nya.
+
+        `resources`, `timeout`, dan `retry_count` diteruskan apa adanya: halaman
+        yang membuka satu cermin referensi memakai jalur ini juga, dan ia tidak
+        boleh menunggu lebih lama daripada satu halaman daftar.
         """
-        summary, error = super()._pull_reference_data()
+        summary, error = super()._pull_reference_data(
+            resources=resources, timeout=timeout, retry_count=retry_count,
+        )
         if error or not self.sync_work_locations:
             return summary, error
+        # Salinan native hanya perlu disusul kalau lokasinya memang ikut ditarik.
+        if resources and 'work-locations' not in resources:
+            return summary, error
 
-        ringkas, error_lokasi = self._pull_work_locations()
+        ringkas, error_lokasi = self._pull_work_locations(
+            timeout=timeout, retry_count=retry_count,
+        )
         if error_lokasi:
             return summary, error_lokasi
         summary['work_locations'] = ringkas
         return summary, error
 
-    def _pull_work_locations(self):
+    def _pull_work_locations(self, timeout=None, retry_count=None):
         """Selaraskan lokasi kerja Presenly ke `res.partner` + `hr.work.location`.
 
         Mengembalikan ``(ringkasan, error)``. Lokasi yang tidak punya klien
@@ -223,9 +234,10 @@ class PresenlySaasConfig(models.Model):
         """
         self.ensure_one()
         started = fields.Datetime.now()
+        client = self._client(timeout=timeout, retry_count=retry_count)
         try:
             rows, _meta, _pages = self._fetch_pages(
-                lambda params, _client=self._client().get_resource:
+                lambda params, _client=client.get_resource:
                     _client('work-locations', params),
                 {'limit': 500},
             )

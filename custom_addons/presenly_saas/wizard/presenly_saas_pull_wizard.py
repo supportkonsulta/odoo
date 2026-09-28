@@ -76,15 +76,14 @@ class PresenlySaasPullWizard(models.TransientModel):
 
         dataset_total = sum(summary['datasets'].values())
         message = _(
-            "%(months)s months: %(logs)s attendance log rows, %(recap)s recap rows, "
+            "%(months)s months: %(logs)s attendance log rows, "
             "%(datasets)s requests and timesheet rows.",
-            months=summary['months'], logs=summary['logs'], recap=summary['recap'],
+            months=summary['months'], logs=summary['logs'],
             datasets=dataset_total,
         )
 
         # Diberitahukan, bukan disembunyikan: cermin yang terpotong harus
-        # terlihat sebagai terpotong, dan angka yang tidak cocok dengan rekap
-        # server harus terlihat sebagai tidak cocok.
+        # terlihat sebagai terpotong.
         notices = list(summary['truncated'])
 
         # Rentang yang lebih tua dari jendela bergulir akan ditarik sekarang,
@@ -102,11 +101,6 @@ class PresenlySaasPullWizard(models.TransientModel):
                     "again; raise Retention in Settings to keep it.",
                     months=self.config_id.retention_months,
                 ))
-        if summary['mismatches']:
-            notices.append(
-                _("Cross-check against the server recap does not match:\n%s",
-                  '\n'.join(summary['mismatches'][:10]))
-            )
         if notices:
             message = '%s\n\n%s' % (message, '\n'.join(notices))
 

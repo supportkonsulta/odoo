@@ -78,6 +78,18 @@
                         </group>
                     </group>
 
+                    <group>
+                        <group string="Access">
+                            <field name="block_mode"/>
+                            <field name="blocked_since"/>
+                            <field name="blocked_reason"/>
+                        </group>
+                        <group string="Dry Run" invisible="block_mode != 'dry_run'">
+                            <field name="dry_run_blocked_count"/>
+                            <field name="dry_run_noted_at"/>
+                        </group>
+                    </group>
+
                     <notebook>
                         <page string="Company" name="company">
                             <group>

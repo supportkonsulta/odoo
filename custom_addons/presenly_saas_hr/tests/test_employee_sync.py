@@ -744,19 +744,60 @@ class TestPresenlyEmployeeFullMapping(TestPresenlyEmployeeSyncBase):
         self.assertEqual(len(ringkas['conflicts']), 1)
         self.assertEqual(hr.presenly_group, 'Grup dari Presenly', 'Presenly yang dipakai')
 
-    def test_pii_tidak_terhapus_tarikan_tanpa_include_pii(self):
-        """Tarikan yang tidak meminta PII tidak memuat kolomnya. Menulisnya
-        sebagai kosong akan menghapus data yang sudah ada — bukan karena berubah,
-        hanya karena tidak ditanyakan."""
-        hr = self._tarik_lengkap()
-        hr.write({'presenly_no_npwp': '09.123.456.7-890.000'})
+    def test_pii_tidak_disalin_ke_hr_employee(self):
+        """NPWP, rekening, dan BPJS tetap di aplikasi.
 
-        # Tarikan berikutnya tanpa PII di payload.
-        self._tarik([employee_row(shift={'id': 2, 'name': 'Normal 2'})])
+        Odoo HR tidak membutuhkannya, dan setiap salinan adalah satu tempat lagi
+        yang harus dijaga kerahasiaannya.
+        """
+        hr = self._tarik_lengkap(no_npwp='09.999.888.7-777.000', no_rekening='1234567890')
 
-        self.assertEqual(hr.presenly_no_npwp, '09.123.456.7-890.000')
+        bidang = self.env['hr.employee']._fields
+        for nama in ('presenly_no_npwp', 'presenly_no_rekening',
+                     'presenly_no_bpjs', 'presenly_no_bpjs_kes'):
+            self.assertNotIn(nama, bidang, 'kolom PII tidak boleh ada di hr.employee')
+        self.assertFalse(getattr(hr, 'presenly_no_npwp', False))
 
-    def test_pii_terisi_bila_memang_dikirim(self):
-        hr = self._tarik_lengkap(no_npwp='09.999.888.7-777.000')
+    def test_klien_disimpan_sebagai_kolom_bukan_perusahaan(self):
+        """Pegawai milik perusahaan integrasi, kliennya kolom tersendiri.
 
-        self.assertEqual(hr.presenly_no_npwp, '09.999.888.7-777.000')
+        Kalau klien dijadikan perusahaan pegawai, daftar pegawai terpencar ke
+        perusahaan klien dan sebagian besar tidak terlihat saat pemilih perusahaan
+        berada di satu perusahaan — terbaca sebagai tarikan yang gagal.
+        """
+        self._tarik([employee_row(
+            id=21, nopeg='uji-klien', name='Pegawai Klien',
+            internal_company={'id': 77, 'name': 'Klien Uji'},
+        )])
+
+        hr = self._hr('uji-klien')
+        self.assertEqual(hr.presenly_client_id, 77)
+        self.assertEqual(hr.presenly_client_name, 'Klien Uji')
+        self.assertEqual(
+            hr.company_id, self.config.company_id,
+            'perusahaan pegawai tetap milik integrasi',
+        )
+
+
+@tagged('post_install', '-at_install')
+class TestPresenlyNoPiiAnywhere(TransactionCase):
+    """PII tidak disalin ke mana pun di modul ini.
+
+    NPWP, nomor rekening, dan BPJS tetap di aplikasi Presenly — di sana ia memang
+    berada. Setiap salinan di Odoo adalah satu tempat lagi yang harus dijaga
+    kerahasiaannya, dan tidak satu pun fitur di sini membutuhkannya.
+    """
+
+    def test_tidak_ada_kolom_pii_di_model_mana_pun(self):
+        terlarang = ('npwp', 'rekening', 'bpjs')
+        tersangka = []
+        for nama_model in (
+            'presenly.saas.employee',
+            'presenly.saas.employee.schedule',
+            'hr.employee',
+        ):
+            for nama in self.env[nama_model]._fields:
+                if any(kata in nama.lower() for kata in terlarang):
+                    tersangka.append('%s.%s' % (nama_model, nama))
+
+        self.assertFalse(tersangka, 'kolom PII ditemukan: %s' % tersangka)

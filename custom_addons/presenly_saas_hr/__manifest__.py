@@ -1,6 +1,6 @@
 {
     'name': 'Presenly SaaS: HR Integration',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.1.0',
     'category': 'Productivity',
     'summary': 'Sinkronkan pegawai antara Presenly SaaS dan hr.employee',
     'description': """
@@ -14,6 +14,10 @@ pemasangan HR pada instalasi yang tidak membutuhkannya.
   termasuk kolom yang tidak punya padanan di Odoo.
 - Sinkronisasi dua arah dengan `hr.employee` lewat `nopeg`.
 - Pemberitahuan perubahan (webhook) dari server Presenly.
+- Jadwal kerja pegawai: pola per hari dan slot waktunya, hanya baca, di tab
+  **Presenly**. Di tab Work bawaan, grup *Usual Work Location* milik
+  `hr_homeworking` dan kolom **Work Address** dihilangkan, sedangkan **Work
+  Location** dibuat hanya baca — ketiganya dimiliki Presenly.
 
 Karena modul ini bergantung pada `hr`, modul ini juga **menolak dipasang
 bersama `hr_attendance` dan `hr_holidays`**: absensi dan cuti sudah dicerminkan
@@ -23,10 +27,11 @@ Rincian pemetaan kolom dan aturan konflik ada di `PLAN_HR_SYNC.md`.
     """,
     'author': 'Presenly',
     'license': 'LGPL-3',
-    'depends': ['presenly_saas', 'hr'],
+    'depends': ['presenly_saas', 'hr', 'hr_homeworking'],
     'excludes': ['hr_attendance', 'hr_holidays'],
     'data': [
         'security/ir.model.access.csv',
+        'security/presenly_saas_approver.xml',
         'data/ir_cron_data.xml',
         'views/presenly_saas_employee_views.xml',
         'views/presenly_saas_employee_menus.xml',

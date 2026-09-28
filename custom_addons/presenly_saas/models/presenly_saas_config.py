@@ -19,7 +19,6 @@ SUBSCRIPTION_PATH = "/api/external/v1/subscription"
 # Kontrak: docs/external-presenly-api.md di repo backend_presenly.
 FEATURES_PATH = "/api/external/v1/presenly/features"
 ATTENDANCE_LOGS_PATH = "/api/external/v1/presenly/attendance-logs"
-ATTENDANCE_RECAP_PATH = "/api/external/v1/presenly/attendance-recap"
 
 # Pengajuan berperiode yang ikut ditarik bersama presensi. Setiap entri adalah
 # (resource di API, model cermin). Semuanya punya kolom tanggal, jadi
@@ -74,7 +73,6 @@ REQUEST_DATASETS = tuple(
 RECENT_DATASETS = tuple(
     (resource, '/v1/%s' % resource, model_name)
     for resource, model_name in PERIOD_DATASETS
-    if resource != 'attendance-recap'
 ) + (
     # Endpoint presensi berbentuk halaman, bukan resource, tetapi bisa disaring
     # dengan `updated_since` yang sama.
@@ -86,6 +84,20 @@ RECENT_DATASETS = tuple(
 # harian: sebelumnya hanya bisa ditarik dengan tombol. Sekarang ikut disegarkan
 # saat halamannya dibuka, paling sering sekali sejam.
 REFERENCE_REFRESH_MINUTES = 60
+
+# Jeda minimum sebelum satu cermin referensi ditarik lagi dari halamannya.
+# Halamannya memang menarik sendiri saat dibuka — itu yang membuat perubahannya
+# langsung terlihat — tetapi tanpa jeda ini, memindah bulan di kalender atau
+# mengurutkan ulang daftar berarti satu penarikan utuh setiap kali. Sepuluh
+# detik cukup untuk menahan itu dan masih terasa langsung bagi yang membukanya.
+INLINE_REFERENCE_MIN_SECONDS = 10
+
+# Jeda minimum per jenis untuk penyegaran yang dipicu webhook. Presensi berubah
+# setiap kali orang masuk dan keluar; menarik rentang berbulan-bulan pada tiap
+# ketukan jauh lebih mahal daripada manfaatnya, sedangkan perubahannya sendiri
+# sudah ditangani tarikan tambahan yang berjalan tiap 15 menit. Yang perlu jalur
+# ini adalah penghapusan, dan ia tidak perlu secepat itu.
+WEBHOOK_PULL_MIN_SECONDS = 120
 
 # Batas waktu untuk penarikan yang dipicu dari halaman pengguna. Bawaannya 10
 # detik terlalu lama untuk sebuah halaman daftar, dan percobaan ulang tidak
@@ -189,22 +201,71 @@ class PresenlySaasConfig(models.Model):
         ],
         default='warn',
         required=True,
-        help='Off: status is visible on the dashboard only.\n'
+        help='What the guard API does when the status is negative.\n'
+             'Off: status is visible on the dashboard only.\n'
              'Warn only: the dashboard plus a warning banner in the backend.\n'
              'Enforce: the banner plus presenly.saas.guard.check() raising for '
-             'the modules that call it.',
+             'the modules that call it. It does not close the backend by '
+             'itself; Block Access does that.',
     )
     grace_days = fields.Integer(
         string='Grace Period (days)',
         default=7,
-        help='How long a cached status stays acceptable after the last '
-             'successful sync. A network failure never blocks on its own.',
+        help='How long a snapshot that the Presenly server has not confirmed '
+             'stays acceptable. Zero turns the offline part of the check off '
+             'entirely. A network failure never blocks on its own before this '
+             'many days have passed, and only when Block Access is enforced.',
     )
     show_banner = fields.Boolean(
         string='Show Banner',
         default=True,
         help='Display the subscription banner in the backend when the status '
              'needs attention.',
+    )
+    block_mode = fields.Selection(
+        [
+            ('off', 'Off'),
+            ('dry_run', 'Dry run'),
+            ('enforce', 'Enforce'),
+        ],
+        string='Block Access',
+        default='off',
+        required=True,
+        help='What happens to the Odoo backend when the subscription is not '
+             'active. Off: nothing is closed, the banner still tells the '
+             'story. Dry run: every request that would be refused is counted '
+             'and logged, and let through. Enforce: the backend is closed for '
+             'this company, except signing in, the blocked page, and the '
+             'webhook receiver.\n'
+             'This is independent of Guard Mode: Guard Mode governs the API '
+             'other modules call, this governs the gate.',
+    )
+    block_override_until = fields.Datetime(
+        string='Temporary Access Until',
+        help='Let this company keep working until this moment, even when the '
+             'subscription is not active. Meant for support while a renewal is '
+             'being settled, not as a second way to run without paying. Every '
+             'use is recorded in the sync log.',
+    )
+    block_override_reason = fields.Char(
+        string='Reason for Temporary Access',
+        help='Why the temporary access was granted. Read back by whoever finds '
+             'the installation open when they expected it closed.',
+    )
+    block_override_user_id = fields.Many2one(
+        'res.users',
+        string='Temporary Access Granted By',
+        readonly=True,
+        copy=False,
+    )
+    dry_run_blocked_count = fields.Integer(
+        string='Requests That Would Have Been Blocked',
+        readonly=True,
+        copy=False,
+    )
+    dry_run_noted_at = fields.Datetime(readonly=True, copy=False)
+    blocked_since = fields.Datetime(
+        string='Blocked Since', readonly=True, copy=False,
     )
 
     # ------------------------------------------------------------------
@@ -457,14 +518,23 @@ class PresenlySaasConfig(models.Model):
             retry_count=self.retry_count if retry_count is None else retry_count,
         )
 
-    def _pull_reference_data(self):
-        """Tarik seluruh resource referensi. Mengembalikan ``(summary, error)``."""
+    def _pull_reference_data(self, resources=None, timeout=None, retry_count=None):
+        """Tarik resource referensi. Mengembalikan ``(summary, error)``.
+
+        `resources` memilih sebagian saja — dipakai halaman yang membuka satu
+        cermin referensi dan hanya perlu cermin itu yang segar, bukan keenamnya.
+        Tanpa argumen, seluruhnya ditarik seperti sebelumnya.
+        """
         self.ensure_one()
         self._require_enabled()
-        client = self._client()
+        client = self._client(timeout=timeout, retry_count=retry_count)
         summary = {}
+        dipilih = [
+            (resource, model_name) for resource, model_name in REFERENCE_MIRRORS
+            if not resources or resource in resources
+        ]
 
-        for resource, model_name in REFERENCE_MIRRORS:
+        for resource, model_name in dipilih:
             started = fields.Datetime.now()
             try:
                 rows, _meta, _pages = self._fetch_pages(
@@ -484,63 +554,73 @@ class PresenlySaasConfig(models.Model):
 
         return summary, False
 
-    def _crosscheck_attendance(self, month, year):
-        """Bandingkan agregat cermin log dengan cermin rekap untuk bulan yang sama.
+    def _pull_window(self):
+        """(bulan, tahun) yang dicakup penarikan periodik, yang terlama dulu."""
+        self.ensure_one()
+        today = fields.Date.context_today(self)
+        months = max(1, int(self.pull_months or 1))
+        akhir = date(today.year, today.month, 1)
+        hasil = []
+        for offset in range(months - 1, -1, -1):
+            bulan = akhir - relativedelta(months=offset)
+            hasil.append((bulan.month, bulan.year))
+        return hasil
 
-        Keduanya berasal dari server, tetapi dihitung oleh service yang berbeda.
-        Kalau angkanya berbeda, salah satu tidak lengkap, dan itu harus terlihat
-        bukan diam-diam dianggap benar.
+    def _pull_dataset(self, resource):
+        """Segarkan satu cermin karena server memberi tahu ada perubahan di sana.
+
+        Yang penting di sini bukan perubahannya — itu sudah ditangani tarikan
+        tambahan yang murah — melainkan **penghapusan**. Baris yang hilang dari
+        server hanya ketahuan dengan mengganti rentangnya, bukan dengan
+        menyisipkan yang berubah. Tanpa jalur ini, menghapus pengajuan di
+        aplikasi menyisakan salinannya di Odoo sampai cron harian berjalan.
+
+        Ada jeda minimum per jenis. Presensi berubah setiap kali orang masuk dan
+        keluar, dan menarik rentang berbulan-bulan pada tiap ketukan jauh lebih
+        mahal daripada manfaatnya; perubahannya sendiri tetap terambil oleh
+        tarikan tambahan yang berjalan tiap 15 menit.
         """
         self.ensure_one()
-        first_day = date(year, month, 1)
-        last_day = date(year, month, monthrange(year, month)[1])
+        if not resource:
+            return False
+        jalur = '/api/external/v1/%s' % resource
+        sejak = self._seconds_since_attempt([jalur])
+        if sejak is not None and sejak < WEBHOOK_PULL_MIN_SECONDS:
+            return False
 
-        logs = self.env['presenly.saas.attendance.log'].search([
-            ('company_id', '=', self.company_id.id),
-            ('work_date', '>=', first_day),
-            ('work_date', '<=', last_day),
-        ])
-        recap = self.env['presenly.saas.attendance.recap'].search([
-            ('company_id', '=', self.company_id.id),
-            ('month', '=', month),
-            ('year', '=', year),
-        ])
+        if resource in dict(REFERENCE_MIRRORS):
+            _ringkas, error = self._pull_reference_data(
+                resources=[resource], timeout=INLINE_PULL_TIMEOUT, retry_count=0,
+            )
+            return error
 
-        def key_of(record):
-            return record.employee_nopeg or 'id:%s' % record.user_id
+        if resource == 'attendance-logs':
+            # Presensi yang baru dihapus hampir selalu yang terbaru, jadi bulan
+            # berjalan saja. Menarik seluruh jendela pada tiap ketukan absen
+            # terlalu mahal untuk sesuatu yang jarang terjadi — sedangkan
+            # perubahannya sendiri sudah diambil tarikan tambahan.
+            bulan, tahun = self._pull_window()[-1]
+            _ringkas, error = self._pull_attendance(bulan, tahun)
+            return error
 
-        local = {}
-        for log in logs:
-            bucket = local.setdefault(key_of(log), [0, 0])
-            bucket[0] += 1
-            bucket[1] += log.late_minutes
+        if resource not in dict(PERIOD_DATASETS):
+            # Jenis yang tidak dikenal: tarikan biasa yang menanganinya.
+            return False
 
-        server = {
-            key_of(row): [row.attendance_count, row.total_late_minutes]
-            for row in recap
-        }
-
-        mismatches = []
-        for key in sorted(set(local) | set(server)):
-            local_pair = local.get(key, [0, 0])
-            server_pair = server.get(key, [0, 0])
-            if local_pair != server_pair:
-                mismatches.append(_(
-                    '%(key)s: the mirrored log has %(lcount)s sessions/'
-                    '%(llate)s minutes, the server recap has %(scount)s sessions/'
-                    '%(slate)s minutes',
-                    key=key,
-                    lcount=local_pair[0], llate=local_pair[1],
-                    scount=server_pair[0], slate=server_pair[1],
-                ))
-        return mismatches
+        for bulan, tahun in self._pull_window():
+            _ringkas, error = self._pull_period_datasets(
+                bulan, tahun, resources=[resource],
+            )
+            if error:
+                return error
+        return False
 
     def _pull_period_range(self, end_month, end_year, months_back=1):
         """Tarik beberapa bulan ke belakang, berakhir di bulan yang dipilih.
 
-        Satu bulan berisi presensi (log + rekap) dan lima jenis pengajuan.
-        Mengembalikan ``(summary, error)`` dengan total gabungan, daftar bulan
-        yang terpotong, dan daftar ketidakcocokan uji silang.
+        Satu bulan berisi log presensi dan lima jenis pengajuan. Mengembalikan
+        ``(summary, error)`` dengan total gabungan dan daftar bulan yang
+        terpotong.
         """
         self.ensure_one()
         self._require_enabled()
@@ -548,9 +628,8 @@ class PresenlySaasConfig(models.Model):
         months = max(1, int(months_back or 1))
         end = date(int(end_year), int(end_month), 1)
 
-        total = {'logs': 0, 'recap': 0, 'months': 0, 'datasets': {}}
+        total = {'logs': 0, 'months': 0, 'datasets': {}}
         truncated = []
-        mismatches = []
         periods = []
 
         for offset in range(months - 1, -1, -1):
@@ -559,7 +638,6 @@ class PresenlySaasConfig(models.Model):
             if error:
                 return total, error
             total['logs'] += summary['logs']
-            total['recap'] += summary['recap']
             truncated.extend(summary['truncated'])
 
             datasets, error = self._pull_period_datasets(current.month, current.year)
@@ -571,17 +649,15 @@ class PresenlySaasConfig(models.Model):
 
             total['months'] += 1
             periods.append(summary['period'])
-            mismatches.extend(self._crosscheck_attendance(current.month, current.year))
 
         total['periods'] = periods
         total['truncated'] = truncated
-        total['mismatches'] = mismatches
         return total, False
 
     def _pull_attendance(self, month, year):
-        """Tarik log dan rekap presensi untuk satu bulan.
+        """Tarik log presensi untuk satu bulan.
 
-        Mengembalikan ringkasan berisi jumlah baris per dataset, dan catatan
+        Mengembalikan ringkasan berisi jumlah baris yang ditulis, dan catatan
         bila penarikan berhenti karena batas halaman. Cermin yang tidak lengkap
         tidak boleh tampak seperti data yang lengkap.
         """
@@ -590,7 +666,7 @@ class PresenlySaasConfig(models.Model):
         first_day = date(year, month, 1)
         last_day = date(year, month, monthrange(year, month)[1])
 
-        summary = {'period': '%02d/%s' % (month, year), 'logs': 0, 'recap': 0, 'truncated': []}
+        summary = {'period': '%02d/%s' % (month, year), 'logs': 0, 'truncated': []}
 
         # --- Log presensi: berhalaman, diganti per rentang tanggal ---
         started = fields.Datetime.now()
@@ -621,26 +697,13 @@ class PresenlySaasConfig(models.Model):
                   fetched=len(rows), total=total, pages=MAX_PULL_PAGES)
             )
 
-        # --- Rekap: satu halaman, diganti per bulan ---
-        started = fields.Datetime.now()
-        try:
-            envelope = self._client().get_attendance_recap({'month': month, 'year': year})
-        except SaasClientError as exc:
-            # Log presensi sudah tersimpan; hanya rekapnya yang gagal. Itu
-            # dilaporkan apa adanya, bukan dianggap gagal total.
-            error = redact(exc, self.api_key)
-            self._log_pull(ATTENDANCE_RECAP_PATH, False, exc, started)
-            return summary, error
-
-        recap_model = self.env['presenly.saas.attendance.recap']
-        recap_model._replace_scope(self.company_id, month, year)
-        summary['recap'] = recap_model._upsert_rows(self.company_id, envelope.get('data') or [])
-        self._log_pull(ATTENDANCE_RECAP_PATH, True, None, started)
-
         return summary, False
 
-    def _pull_period_datasets(self, month, year):
+    def _pull_period_datasets(self, month, year, resources=None):
         """Tarik pengajuan dan timesheet untuk satu bulan.
+
+        `resources` memilih sebagian saja — dipakai webhook, yang hanya perlu
+        satu jenis yang berubah.
 
         Kalau satu jenis gagal, penarikan bulan itu berhenti dan galatnya
         dikembalikan. Jenis yang sudah tersimpan tetap tersimpan, dan yang
@@ -658,7 +721,11 @@ class PresenlySaasConfig(models.Model):
         }
 
         client = self._client()
-        for resource, model_name in PERIOD_DATASETS:
+        dipilih = [
+            (resource, model_name) for resource, model_name in PERIOD_DATASETS
+            if not resources or resource in resources
+        ]
+        for resource, model_name in dipilih:
             started = fields.Datetime.now()
             path = '/api/external/v1/%s' % resource
             params = {
@@ -675,21 +742,31 @@ class PresenlySaasConfig(models.Model):
                         _client.get_resource(_resource, page_params),
                     params,
                 )
+                model = self.env[model_name]
+                model._mirror_replace_range(self.company_id, rows, first_day, last_day)
+                jumlah = len(rows)
+                if self.request_attachments and model_name in ATTACHMENT_FIELDS:
+                    # Penarikan rentang mengganti barisnya, jadi lampirannya perlu
+                    # dipasang ulang. Isi berkasnya sendiri diambil dari cache.
+                    jumlah += self.env['presenly.saas.attachment.sync'].sync_attachments(
+                        self.company_id, model_name, rows,
+                        lambda satu_path: client.download_file(satu_path),
+                    )
             except SaasClientError as exc:
                 error = redact(exc, self.api_key)
                 self._log_pull(path, False, exc, started)
                 return summary, error
-
-            model = self.env[model_name]
-            model._mirror_replace_range(self.company_id, rows, first_day, last_day)
-            jumlah = len(rows)
-            if self.request_attachments and model_name in ATTACHMENT_FIELDS:
-                # Penarikan rentang mengganti barisnya, jadi lampirannya perlu
-                # dipasang ulang. Isi berkasnya sendiri diambil dari cache.
-                jumlah += self.env['presenly.saas.attachment.sync'].sync_attachments(
-                    self.company_id, model_name, rows,
-                    lambda satu_path: client.download_file(satu_path),
+            except Exception as exc:  # noqa: BLE001 - dicatat, bukan dibiarkan hilang
+                # Galat tak terduga di satu jenis tidak boleh lewat tanpa jejak:
+                # tanpa catatan ini, jenis yang gagal hanya terlihat sebagai
+                # daftar yang kosong, dan tidak ada yang tahu ke mana mencarinya.
+                _logger.exception(
+                    'Presenly SaaS: penarikan %s untuk %02d/%s gagal',
+                    resource, month, year,
                 )
+                self._log_pull(path, False, exc, started)
+                return summary, redact(exc, self.api_key)
+
             summary['rows'][resource] = jumlah
             self._log_pull(path, True, None, started)
 
@@ -726,7 +803,7 @@ class PresenlySaasConfig(models.Model):
         client = client or self._client(timeout=timeout, retry_count=retry_count)
 
         diminta = set(datasets) if datasets else None
-        summary = {'datasets': {}, 'server_time': None, 'recap': 0,
+        summary = {'datasets': {}, 'server_time': None,
                    'references': 0, 'clients': {}}
         for kunci, path, model_name in RECENT_DATASETS:
             if diminta is not None and kunci not in diminta:
@@ -773,25 +850,8 @@ class PresenlySaasConfig(models.Model):
             summary['server_time'] = server_time
 
         # Rekap: dihitung server per bulan, isinya beberapa baris per pegawai.
-        # Mengganti satu bulan lebih murah daripada menyimpannya basi.
-        #
-        # Tidak ikut diperiksa `changes` — rekap dihitung server, bukan tabel —
-        # jadi ia ikut ditarik ketika ada yang berubah, atau ketika penarikan ini
-        # memang menarik semuanya (cron dan penarikan periode).
         if diminta is not None and not diminta:
             return summary, False
-        today = fields.Date.context_today(self)
-        started = fields.Datetime.now()
-        path = ATTENDANCE_RECAP_PATH
-        try:
-            envelope = client.get_attendance_recap({'month': today.month, 'year': today.year})
-        except SaasClientError as exc:
-            self._log_pull(path, False, exc, started)
-            return summary, redact(exc, self.api_key)
-        Recap = self.env['presenly.saas.attendance.recap']
-        Recap._replace_scope(self.company_id, today.month, today.year)
-        summary['recap'] = Recap._upsert_rows(self.company_id, envelope.get('data') or [])
-        self._log_pull(path, True, None, started)
 
         # Klien: menjadi perusahaan Odoo, kalau memang diizinkan. Dilakukan
         # sebelum referensi supaya lokasi kerja punya perusahaan tujuan.
@@ -824,6 +884,16 @@ class PresenlySaasConfig(models.Model):
         """Endpoint cermin referensi, untuk mengenali barisnya di log."""
         return ['/api/external/v1/%s' % resource for resource, _model in REFERENCE_MIRRORS]
 
+    @api.model
+    def _reference_resource_names(self):
+        """Nama resource yang cerminnya adalah cermin referensi.
+
+        Dipakai cermin untuk tahu apakah halamannya perlu menarik dirinya
+        sendiri; disediakan sebagai metode supaya daftarnya cuma ada di
+        `REFERENCE_MIRRORS`, bukan disalin ke tempat lain.
+        """
+        return {resource for resource, _model in REFERENCE_MIRRORS}
+
     def _seconds_since_attempt(self, paths):
         """Berapa detik sejak endpoint tersebut terakhir **dicoba** ditarik.
 
@@ -846,8 +916,13 @@ class PresenlySaasConfig(models.Model):
         return (fields.Datetime.now() - terakhir.create_date).total_seconds()
 
     @api.model
-    def _refresh_from_page(self):
+    def _refresh_from_page(self, resource=None):
         """Segarkan cermin karena ada yang membuka halamannya.
+
+        `resource` menyebut cermin yang halamannya sedang dibuka. Cermin
+        referensi memakainya untuk menarik dirinya sendiri — tanpa itu, satu-
+        satunya yang menyegarkannya adalah cron, dan halamannya bisa menampilkan
+        hari libur yang sudah diubah di aplikasi.
 
         Dijalankan di transaksi tersendiri, dan transaksi itu di-commit sendiri.
 
@@ -867,7 +942,9 @@ class PresenlySaasConfig(models.Model):
         try:
             with self.env.registry.cursor() as cr:
                 env = api.Environment(cr, SUPERUSER_ID, {})
-                dijalankan = env['presenly.saas.config']._refresh_requests_now(company_id)
+                dijalankan = env['presenly.saas.config']._refresh_requests_now(
+                    company_id, resource,
+                )
                 cr.commit()
         except Exception:                      # noqa: BLE001 - halaman tidak boleh gagal
             _logger.exception(
@@ -1036,7 +1113,34 @@ class PresenlySaasConfig(models.Model):
                 berubah.append(kunci)
         return berubah
 
-    def _refresh_requests_now(self, company_id):
+    def _pull_reference_now(self, resource):
+        """Tarik satu cermin referensi karena halamannya dibuka.
+
+        Tidak melempar: pemanggilnya adalah pembacaan daftar, dan halaman tidak
+        boleh gagal karena server Presenly sedang tidak bisa dihubungi.
+        """
+        self.ensure_one()
+        path = '/api/external/v1/%s' % resource
+        sejak = self._seconds_since_attempt([path])
+        if sejak is not None and sejak < INLINE_REFERENCE_MIN_SECONDS:
+            return False
+        try:
+            _summary, error = self._pull_reference_data(
+                resources=[resource], timeout=INLINE_PULL_TIMEOUT, retry_count=0,
+            )
+        except Exception:                      # noqa: BLE001 - halaman tidak boleh gagal
+            _logger.exception(
+                'presenly_saas: penyegaran cermin %s dari halaman gagal', resource,
+            )
+            return False
+        if error:
+            _logger.warning(
+                'Presenly SaaS: penyegaran cermin %s dari halaman melaporkan '
+                'masalah: %s', resource, error,
+            )
+        return True
+
+    def _refresh_requests_now(self, company_id, resource=None):
         """Segarkan cermin karena halamannya dibuka.
 
         Dijalankan dari pembacaan daftar, jadi seluruh kegagalannya ditelan:
@@ -1063,6 +1167,13 @@ class PresenlySaasConfig(models.Model):
         )
         if not self.env.cr.fetchone()[0]:
             return False
+
+        if resource and resource in dict(REFERENCE_MIRRORS):
+            # Halaman cermin referensi menarik dirinya sendiri. Jenis yang lain
+            # tidak punya penanda perubahan yang murah, dan tabelnya kecil —
+            # jadi yang dibandingkan bukan "ada perubahan?", melainkan "kapan
+            # terakhir dicoba?", supaya tidak ditarik berulang-ulang.
+            return config._pull_reference_now(resource)
 
         try:
             berubah = config._changed_datasets()
@@ -1252,17 +1363,6 @@ class PresenlySaasConfig(models.Model):
             if old_rows:
                 removed[model_name] = len(old_rows)
                 old_rows.unlink()
-
-        # Rekap tidak punya kolom tanggal: periodenya adalah pasangan
-        # (bulan, tahun). Dibandingkan sebagai nomor bulan berjalan supaya
-        # Desember 2025 < Januari 2026.
-        batas = cutoff.year * 12 + cutoff.month
-        recap = self.env['presenly.saas.attendance.recap'].sudo().search([
-            ('company_id', '=', self.company_id.id),
-        ]).filtered(lambda row: row.year * 12 + row.month < batas)
-        if recap:
-            removed['presenly.saas.attendance.recap'] = len(recap)
-            recap.unlink()
 
         return removed
 

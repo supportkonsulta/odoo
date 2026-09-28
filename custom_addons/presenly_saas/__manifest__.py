@@ -1,6 +1,6 @@
 {
     'name': 'Presenly SaaS',
-    'version': '19.0.2.0.0',
+    'version': '19.0.2.2.0',
     'category': 'Productivity',
     'summary': 'Langganan Presenly SaaS untuk instalasi Odoo ini',
     'description': """
@@ -15,6 +15,8 @@ Menghubungkan instalasi Odoo ini dengan control plane SaaS Presenly.
   menyimpannya sebagai snapshot per company.
 - Menampilkan banner peringatan di backend saat langganan mendekati atau
   melewati masa berlaku.
+- Menutup akses ke backend saat langganan tidak aktif, dengan halaman penjelasan
+  dan dua jalur perbaikan untuk manajer (lihat README §8b).
 - Menyediakan ``presenly.saas.guard`` sebagai API Python bagi modul lain yang
   ingin menegakkan kebijakan langganan.
 
@@ -52,14 +54,20 @@ Kebijakan produk: full access, tanpa gating fitur per paket.
         # harus dimuat SETELAHNYA, kalau tidak `parent="menu_presenly_saas_root"`
         # tidak ditemukan.
         'views/presenly_saas_menus.xml',
-        'views/presenly_saas_reconciliation_views.xml',
         'views/presenly_saas_reference_menus.xml',
         # Settings native memakai action dari menus, dan form langganan memakai
         # action settings, jadi urutannya harus begini.
         'views/res_config_settings_views.xml',
         'views/presenly_saas_subscription_views.xml',
+        # Halaman blokir: template mandiri, tidak bergantung pada berkas di atas.
+        'views/presenly_saas_blocked_templates.xml',
     ],
     'assets': {
+        # Halaman blokir memakai `web.login_layout`, jadi gayanya ikut bundel
+        # depan, bukan bundel backend.
+        'web.assets_frontend': [
+            'presenly_saas/static/src/blocked/blocked.scss',
+        ],
         'web.assets_backend': [
             # Leaflet TIDAK didaftarkan di sini. Pustaka itu UMD dan menetapkan
             # `window.L` saat dijalankan; kalau digabung sebagai aset, penetapan
@@ -74,6 +82,10 @@ Kebijakan produk: full access, tanpa gating fitur per paket.
             'presenly_saas/static/src/approval/presenly_approval_steps.js',
             'presenly_saas/static/src/approval/presenly_approval_steps.xml',
             'presenly_saas/static/src/approval/presenly_approval_steps.scss',
+            # Pivot: kolom yang sudah dipakai tidak ditawarkan lagi. Tanpa ini,
+            # satu baris bisa dibuka berulang kali dengan hasil yang sama.
+            'presenly_saas/static/src/pivot/presenly_pivot_groupby.js',
+            'presenly_saas/static/src/pivot/presenly_pivot_groupby.xml',
         ],
     },
     'installable': True,

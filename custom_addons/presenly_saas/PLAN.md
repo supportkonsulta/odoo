@@ -90,6 +90,29 @@ Yang tetap berlaku:
 Form koneksi milik modul sendiri kini hanya-baca dan tidak punya menu, sehingga
 hanya ada satu tempat mengubah konfigurasi.
 
+### 1.2c Pembalikan batasan: penegakan langganan secara global
+
+Batasan "tidak ada penegakan otomatis di titik check-in / pengajuan izin / cuti /
+lembur" **dibatalkan atas permintaan produk**, karena kontraknya tidak pernah
+dipanggil siapa pun: langganan yang hangus tidak menutup apa pun. Yang menggantinya:
+
+- Gerbang di `ir.http._pre_dispatch` (`models/ir_http.py`). Ini menyentuh
+  infrastruktur permintaan Odoo, bukan model bisnis.
+- Halaman blokir dan jalur perbaikannya (`controllers/blocked.py`,
+  `views/presenly_saas_blocked_templates.xml`).
+- Satu kunci `ir.config_parameter` (`presenly_saas_block_disabled`) sebagai
+  sekoci darurat, karena keadaan darurat tidak boleh menuntut halaman yang
+  sedang ditutup.
+
+Yang tetap berlaku:
+
+- Tidak mengubah addon `presenly`. **Nol berkas.**
+- Tidak mewarisi model bisnis native. Yang di-inherit hanya `ir.http`.
+- Setelan tetap di `presenly.saas.config`; `ir.config_parameter` hanya untuk
+  sekoci, bukan penyimpanan setelan.
+
+Rincian, keputusan, dan angka ujinya ada di `PLAN_GLOBAL_GUARD.md`.
+
 ### 1.3 Batas yang tidak bisa dihindari
 
 | Dipakai                              | Alasan                              |

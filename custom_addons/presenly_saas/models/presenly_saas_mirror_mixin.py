@@ -91,32 +91,60 @@ class PresenlySaasMirrorMixin(models.AbstractModel):
         Dipakai data berperiode seperti pengajuan cuti atau lembur: menarik
         September tidak boleh menghapus isi Agustus. Baris di luar rentang
         dibiarkan apa adanya.
+
+        Baris **tanpa tanggal** diperlakukan sebagai bagian dari rentang, tetapi
+        hanya kalau server memang mengirimkannya. Sebuah baris yang tidak punya
+        tanggal tidak bisa dikatakan berada di luar rentang mana pun, jadi
+        membiarkannya di luar berarti ia tidak pernah ikut diganti — dan ketika
+        pengajuannya dihapus di aplikasi, salinannya tertinggal selamanya.
+
+        Syaratnya "kalau server mengirimkannya" dan bukan sekadar selalu: server
+        yang belum menyertakan baris tanpa tanggal akan kehilangan baris itu
+        kalau di sini ia dihapus tanpa penggantinya. Yang dipakai sebagai tanda
+        adalah isi tarikannya sendiri, bukan versi server.
         """
         if not self._mirror_date_field:
             raise UserError(
                 'Model %s belum mengisi _mirror_date_field, jadi tidak bisa '
                 'mengganti per rentang.' % self._name
             )
-        domain = [
-            ('company_id', '=', company.id),
-            (self._mirror_date_field, '>=', date_from),
-            (self._mirror_date_field, '<=', date_to),
-        ]
+        medan = self._mirror_date_field
+        domain = [('company_id', '=', company.id)]
+        ada_kosong = any(
+            not (self._mirror_values(company, row) or {}).get(medan)
+            for row in rows
+        )
+        if ada_kosong:
+            # (tanggal di dalam rentang) ATAU (tanggal kosong)
+            domain += [
+                '|',
+                '&', (medan, '>=', date_from), (medan, '<=', date_to),
+                (medan, '=', False),
+            ]
+        else:
+            domain += [(medan, '>=', date_from), (medan, '<=', date_to)]
         return self._mirror_write(company, rows, domain=domain)
 
     def unlink(self):
-        """Hapus lampiran bersama barisnya.
+        """Hapus lampiran bersama barisnya, tanpa menabrak lampiran yang sudah hilang.
 
-        `ir.attachment` tidak ikut terhapus bersama record yang ditunjuknya, dan
-        cermin berperiode diganti per rentang setiap kali ditarik — jadi tanpa ini
-        setiap penarikan meninggalkan lampiran yang menunjuk baris yang sudah
-        tidak ada. Akibatnya bukan sekadar sampah: penampil lampiran Odoo menolak
-        berkas yang record-nya hilang, dan berkasnya tampil kosong.
+        Lampiran yang menunjuk baris ini **sudah** ikut terhapus oleh Odoo:
+        `BaseModel.unlink` membuang `ir.attachment` yang `res_model`/`res_id`-nya
+        menunjuk baris yang dihapus. Karena itu di sini hanya sisa yang benar-
+        benar masih ada yang perlu dibuang.
+
+        Penyaring `exists()` bukan kehati-hatian berlebihan: memanggil `unlink`
+        pada recordset yang barisnya sudah hilang melempar `MissingError`, dan
+        galat itu membatalkan **seluruh** penarikan — bukan sekadar
+        meninggalkan lampiran yatim. Akibatnya data yang sudah dihapus di
+        Presenly tidak pernah ikut hilang di sini, dan tombol tarik manual gagal
+        dengan pesan yang tidak menyebut sebabnya.
         """
         lampiran = self.mapped('attachment_id') if 'attachment_id' in self._fields else self.browse()
         hasil = super().unlink()
-        if lampiran:
-            lampiran.unlink()
+        sisa = lampiran.exists()
+        if sisa:
+            sisa.unlink()
         return hasil
 
     @api.model
@@ -161,7 +189,16 @@ class PresenlySaasMirrorMixin(models.AbstractModel):
 
     @api.model
     def _mirror_write(self, company, rows, domain):
-        """Petakan semua baris, hapus yang lama pada `domain`, lalu buat baru."""
+        """Petakan semua baris, hapus yang lama pada `domain`, lalu buat baru.
+
+        Penghapusan dan penulisannya dijadikan satu savepoint dengan sengaja.
+        Urutannya memang hapus dulu, baru tulis — baris lama memakai
+        `external_id` yang sama, jadi menulis lebih dulu akan menabrak
+        constraint-nya. Tanpa savepoint, kegagalan di tengah (galat Python
+        sebelum penulisan sempat berjalan) meninggalkan penghapusan yang sudah
+        jadi, dan transaksi yang akhirnya di-commit menyimpan kehilangan itu:
+        barisnya hilang tanpa penggantinya, tanpa satu pun catatan gagal.
+        """
         Mirror = self.sudo()
         values_list = []
         for row in rows:
@@ -169,12 +206,13 @@ class PresenlySaasMirrorMixin(models.AbstractModel):
             if values:
                 values_list.append(values)
 
-        stale = Mirror.search(domain)
-        if stale:
-            stale.unlink()
+        with self.env.cr.savepoint():
+            stale = Mirror.search(domain)
+            if stale:
+                stale.unlink()
 
-        if values_list:
-            Mirror.create(values_list)
+            if values_list:
+                Mirror.create(values_list)
         return len(values_list)
 
     @api.model
@@ -193,10 +231,31 @@ class PresenlySaasMirrorMixin(models.AbstractModel):
         # memanggil metode ini; tanpa syarat ini satu kali membuka daftar yang
         # panjang bisa memicu belasan penarikan.
         if not offset:
-            self.env['presenly.saas.config']._refresh_from_page()
+            self.env['presenly.saas.config']._refresh_from_page(self._mirror_resource)
         return super().web_search_read(
             domain, specification, offset=offset, limit=limit, order=order,
             count_limit=count_limit,
+        )
+
+    @api.model
+    def search_read(self, domain=None, fields=None, offset=0, limit=None, order=None,
+                    **read_kwargs):
+        """Segarkan cermin referensi sebelum kalender membacanya.
+
+        Kalender memakai `search_read`, bukan `web_search_read` yang dipakai
+        daftar. Tanpa penimpaan ini, halaman kalender — Public Holidays — hanya
+        segar saat cron kebetulan berjalan.
+
+        Hanya cermin referensi yang memicunya: yang berperiode sudah punya jalur
+        sendiri di `web_search_read`, dan `search_read` juga dipakai hal lain
+        yang tidak sedang membuka halaman.
+        """
+        config = self.env['presenly.saas.config']
+        if self._mirror_resource in config._reference_resource_names():
+            config._refresh_from_page(self._mirror_resource)
+        return super().search_read(
+            domain=domain, fields=fields, offset=offset, limit=limit, order=order,
+            **read_kwargs,
         )
     @api.depends(
         'approval_has_workflow',

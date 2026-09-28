@@ -109,11 +109,6 @@ msgid "Absence"
 msgstr "Alpha"
 
 #. module: presenly_saas
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_recap__absent_count
-msgid "Absent Count"
-msgstr "Jumlah Alpha"
-
-#. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_config__active
 #: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_subscription__status__active
 #: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_work_location_search
@@ -130,11 +125,6 @@ msgstr "Alamat"
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_leave__leave_address
 msgid "Address During Leave"
 msgstr "Alamat Selama Cuti"
-
-#. module: presenly_saas
-#: model:ir.model.constraint,message:presenly_saas.constraint_presenly_saas_attendance_recap_company_period_user_uniq
-msgid "An employee may only appear once per month per company."
-msgstr "Satu pegawai hanya boleh muncul sekali per bulan per company."
 
 #. module: presenly_saas
 #: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_leave__status__approved
@@ -179,11 +169,6 @@ msgid "Attendance Corrections"
 msgstr "Koreksi Presensi"
 
 #. module: presenly_saas
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_recap__attendance_count
-msgid "Attendance Count"
-msgstr "Jumlah Kehadiran"
-
-#. module: presenly_saas
 #: model:ir.actions.act_window,name:presenly_saas.action_presenly_saas_attendance_log
 #: model:ir.ui.menu,name:presenly_saas.menu_presenly_saas_attendance_log
 msgid "Attendance Data"
@@ -213,13 +198,6 @@ msgstr "Mode Absen"
 #: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_pivot
 msgid "Attendance Monitoring"
 msgstr "Monitoring Presensi"
-
-#. module: presenly_saas
-#: model:ir.actions.act_window,name:presenly_saas.action_presenly_saas_attendance_recap
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_recap_list
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_recap_search
-msgid "Attendance Recap"
-msgstr "Rekap Presensi"
 
 #. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_location__attendance_type
@@ -629,12 +607,6 @@ msgid "Employee"
 msgstr "Karyawan"
 
 #. module: presenly_saas
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__user_id
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_recap__user_id
-msgid "Employee ID (SaaS)"
-msgstr "ID Pegawai (SaaS)"
-
-#. module: presenly_saas
 #: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
 msgid "Enable Connection"
 msgstr "Aktifkan Koneksi"
@@ -771,16 +743,6 @@ msgstr "Tenggang Hingga"
 #: model:ir.model.fields,field_description:presenly_saas.field_res_config_settings__presenly_saas_guard_mode
 msgid "Guard Mode"
 msgstr "Mode Penegakan"
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_recap_search
-msgid "Has Absence"
-msgstr "Ada Alpha"
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_recap_search
-msgid "Has Lateness"
-msgstr "Ada Keterlambatan"
 
 #. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_project__has_timesheet
@@ -1086,16 +1048,6 @@ msgid "Manager Approver"
 msgstr "Penyetuju Manajer"
 
 #. module: presenly_saas
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_timesheet__comment
-msgid "Manager Comment"
-msgstr "Komentar Manajer"
-
-#. module: presenly_saas
-#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_timesheet__rating
-msgid "Manager rating, 1.0 to 5.0."
-msgstr "Penilaian manajer, 1,0 sampai 5,0."
-
-#. module: presenly_saas
 #: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_pull_wizard__month__3
 msgid "March"
 msgstr "Maret"
@@ -1180,11 +1132,6 @@ msgid "No attendance logs yet"
 msgstr "Belum ada log presensi"
 
 #. module: presenly_saas
-#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_attendance_recap
-msgid "No attendance recaps yet"
-msgstr "Belum ada rekap presensi"
-
-#. module: presenly_saas
 #. odoo-javascript
 #: code:addons/presenly_saas/static/src/map/presenly_map_field.xml:0
 msgid "No coordinates were recorded for this entry."
@@ -1224,11 +1171,6 @@ msgstr "Belum ada entri sinkronisasi"
 #: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_timesheet
 msgid "No timesheets mirrored yet"
 msgstr "Belum ada timesheet tercermin"
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_timesheet_search
-msgid "Not Rated Yet"
-msgstr "Belum Dinilai"
 
 #. module: presenly_saas
 #: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
@@ -1431,11 +1373,6 @@ msgid "Presenly Attendance Mode (mirror)"
 msgstr "Presenly Attendance Mode (cermin)"
 
 #. module: presenly_saas
-#: model:ir.model,name:presenly_saas.model_presenly_saas_attendance_recap
-msgid "Presenly Attendance Recap (mirror)"
-msgstr "Rekap Presensi Presenly (cermin)"
-
-#. module: presenly_saas
 #: model:ir.model,name:presenly_saas.model_presenly_saas_holiday
 msgid "Presenly Holiday (mirror)"
 msgstr "Presenly Holiday (cermin)"
@@ -1596,40 +1533,11 @@ msgid "Purpose"
 msgstr "Keperluan"
 
 #. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_timesheet_search
-msgid "Rated"
-msgstr "Sudah Dinilai"
-
-#. module: presenly_saas
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__raw_payload
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__raw_payload
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_mode__raw_payload
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_recap__raw_payload
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_holiday__raw_payload
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_leave__raw_payload
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_medical_certificate__raw_payload
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_mirror_mixin__raw_payload
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_overtime__raw_payload
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_project__raw_payload
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift__raw_payload
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift_swap__raw_payload
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_timesheet__raw_payload
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_day_setup__raw_payload
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_location__raw_payload
-msgid "Raw Payload"
-msgstr "Payload Mentah"
-
-#. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__reason
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_medical_certificate__reason
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift_swap__reason
 msgid "Reason"
 msgstr "Alasan"
-
-#. module: presenly_saas
-#: model:ir.ui.menu,name:presenly_saas.menu_presenly_saas_attendance_recap
-msgid "Recap"
-msgstr "Rekap"
 
 #. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__original_check_in_time
@@ -2057,19 +1965,6 @@ msgid "Test and Refresh"
 msgstr "Uji dan Segarkan"
 
 #. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_pull_wizard_form
-msgid ""
-"The attendance log and the recap for this period will <b>replace</b> the\n"
-"                    existing data for the same month. Other months are left untouched.\n"
-"                    When it finishes, the result is cross-checked against the server\n"
-"                    recap, and any difference is reported."
-msgstr ""
-"Log presensi dan rekap untuk periode ini akan <b>menggantikan</b> data\n"
-"                    yang sudah ada pada bulan yang sama. Bulan lain tidak tersentuh.\n"
-"                    Setelah selesai, hasilnya diuji silang dengan rekap server, dan\n"
-"                    selisihnya diberitahukan."
-
-#. module: presenly_saas
 #: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_correction_search
 #: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_search
 #: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_leave_search
@@ -2150,24 +2045,9 @@ msgid "Timezone"
 msgstr "Zona Waktu"
 
 #. module: presenly_saas
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_recap__total_late_minutes
-msgid "Total Late (minutes)"
-msgstr "Total Terlambat (menit)"
-
-#. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_day_setup__total_days
 msgid "Total Working Days"
 msgstr "Total Hari Kerja"
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_recap_list
-msgid "Total absent"
-msgstr "Total alpha"
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_recap_list
-msgid "Total attendance"
-msgstr "Total kehadiran"
 
 #. module: presenly_saas
 #: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_leave_list
@@ -2180,11 +2060,6 @@ msgstr "Total hari"
 #: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_timesheet_list
 msgid "Total hours"
 msgstr "Total jam"
-
-#. module: presenly_saas
-#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_recap_list
-msgid "Total late"
-msgstr "Total terlambat"
 
 #. module: presenly_saas
 #: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_list
@@ -2337,22 +2212,6 @@ msgstr "Tahun"
 
 #. module: presenly_saas
 msgid ""
-"%(key)s: the mirrored log has %(lcount)s sessions/%(llate)s minutes, the "
-"server recap has %(scount)s sessions/%(slate)s minutes"
-msgstr ""
-"%(key)s: cermin log %(lcount)s sesi/%(llate)s menit, rekap server %(scount)s"
-" sesi/%(slate)s menit"
-
-#. module: presenly_saas
-msgid ""
-"%(months)s months: %(logs)s attendance log rows, %(recap)s recap rows, "
-"%(datasets)s requests and timesheet rows."
-msgstr ""
-"%(months)s bulan: log presensi %(logs)s baris, rekap %(recap)s baris, "
-"pengajuan & timesheet %(datasets)s baris."
-
-#. module: presenly_saas
-msgid ""
 "%(resource)s: %(fetched)s of %(total)s rows fetched (%(pages)s page limit)."
 msgstr ""
 "%(resource)s: %(fetched)s dari %(total)s baris terambil (batas %(pages)s "
@@ -2385,14 +2244,6 @@ msgstr "Koneksi gagal"
 #. module: presenly_saas
 msgid "Connection ok"
 msgstr "Koneksi berhasil"
-
-#. module: presenly_saas
-msgid ""
-"Cross-check against the server recap does not match:\n"
-"%s"
-msgstr ""
-"Uji silang dengan rekap server tidak cocok:\n"
-"%s"
 
 #. module: presenly_saas
 msgid "Dismiss subscription notice"
@@ -2533,7 +2384,8 @@ msgid ""
 ". Those fields are named in the widget options but are not in this view, so "
 "Odoo never loads them. Add them as hidden fields, e.g. <field "
 "name=\"check_in_longitude\" invisible=\"1\"/>."
-msgstr ". Field itu disebut di opsi widget tapi tidak ada di view ini, jadi Odoo\n"
+msgstr ""
+". Field itu disebut di opsi widget tapi tidak ada di view ini, jadi Odoo\n"
 "tidak pernah memuatnya. Tambahkan sebagai field tersembunyi, mis.\n"
 "<field name=\"check_in_longitude\" invisible=\"1\"/>."
 
@@ -2736,11 +2588,6 @@ msgid "Radius (m)"
 msgstr "Radius (m)"
 
 #. module: presenly_saas
-#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_timesheet__rating
-msgid "Rating"
-msgstr "Penilaian"
-
-#. module: presenly_saas
 #. odoo-javascript
 #: code:addons/presenly_saas/static/src/map/presenly_map_field.xml:0
 msgid "Reset view"
@@ -2763,7 +2610,8 @@ msgstr "Kembalikan tampilan"
 msgid ""
 "Row id on the Presenly side. Used by the sync to match records. Not shown in"
 " any view: for a user it is a number that cannot be used for anything."
-msgstr "ID baris di sisi Presenly. Dipakai sinkronisasi untuk mencocokkan\n"
+msgstr ""
+"ID baris di sisi Presenly. Dipakai sinkronisasi untuk mencocokkan\n"
 "catatan. Tidak ditampilkan di view mana pun: bagi pengguna ini hanya\n"
 "angka yang tidak bisa dipakai untuk apa pun."
 
@@ -2831,7 +2679,8 @@ msgstr "Tenant"
 msgid ""
 "The office location is not mirrored yet, so its position and radius cannot be\n"
 "                shown. Run"
-msgstr "Lokasi kantor belum dicerminkan, jadi posisi dan radiusnya belum bisa\n"
+msgstr ""
+"Lokasi kantor belum dicerminkan, jadi posisi dan radiusnya belum bisa\n"
 "ditampilkan. Jalankan "
 
 #. module: presenly_saas
@@ -2858,7 +2707,8 @@ msgstr "https://presensi.example.com"
 msgid ""
 "map tile(s) could not be loaded. This Odoo may not have internet access to "
 "tile.openstreetmap.org."
-msgstr " ubin peta gagal dimuat. Odoo ini mungkin tidak punya akses internet ke\n"
+msgstr ""
+" ubin peta gagal dimuat. Odoo ini mungkin tidak punya akses internet ke\n"
 "tile.openstreetmap.org."
 
 #. module: presenly_saas
@@ -2994,7 +2844,8 @@ msgid ""
 "Decision status, in this module's vocabulary. Presenly sends overtime with "
 "an older Y/N/T vocabulary; it is mapped here so the same filters work on "
 "every request type."
-msgstr "Status keputusan, dalam kosakata modul ini. Presenly mengirim lembur dengan\n"
+msgstr ""
+"Status keputusan, dalam kosakata modul ini. Presenly mengirim lembur dengan\n"
 "kosakata lama Y/N/T; nilainya dipetakan di sini supaya penyaring yang sama\n"
 "berlaku untuk semua jenis pengajuan."
 
@@ -3151,7 +3002,8 @@ msgid ""
 "Role or permission name. Empty for the other approver types: a selected user"
 " is named by their own field, and a direct manager needs no reference at "
 "all."
-msgstr "Nama peran atau izin akses. Kosong untuk jenis penyetuju lain: pengguna\n"
+msgstr ""
+"Nama peran atau izin akses. Kosong untuk jenis penyetuju lain: pengguna\n"
 "terpilih dinamai oleh fieldnya sendiri, dan atasan langsung tidak perlu\n"
 "rujukan sama sekali."
 
@@ -3210,7 +3062,8 @@ msgstr "Jumlah Level"
 msgid ""
 "True when Presenly has an approval flow for this request. False means no "
 "flow is configured for its type, so there are no levels to show."
-msgstr "True kalau Presenly punya alur persetujuan untuk pengajuan ini. False berarti\n"
+msgstr ""
+"True kalau Presenly punya alur persetujuan untuk pengajuan ini. False berarti\n"
 "jenisnya belum punya alur, jadi tidak ada level yang bisa ditampilkan."
 
 #. module: presenly_saas
@@ -3223,7 +3076,8 @@ msgstr "True kalau Presenly punya alur persetujuan untuk pengajuan ini. False be
 msgid ""
 "Value exactly as sent by Presenly, kept so a status this module does not "
 "recognise stays visible instead of silently becoming an empty status."
-msgstr "Nilai apa adanya seperti dikirim Presenly, disimpan supaya status yang belum\n"
+msgstr ""
+"Nilai apa adanya seperti dikirim Presenly, disimpan supaya status yang belum\n"
 "dikenal modul ini tetap terlihat, bukan diam-diam menjadi status kosong."
 
 #. module: presenly_saas
@@ -3254,7 +3108,8 @@ msgstr "Siapa yang diharapkan memutuskan level yang sedang berjalan sekarang."
 #: model:ir.model.fields,help:presenly_saas.field_presenly_saas_approval_step_overtime__approver_type
 #: model:ir.model.fields,help:presenly_saas.field_presenly_saas_approval_step_shift_swap__approver_type
 msgid "Who is expected to decide this level, as configured in Presenly."
-msgstr "Siapa yang diharapkan memutuskan level ini, sesuai konfigurasi di Presenly."
+msgstr ""
+"Siapa yang diharapkan memutuskan level ini, sesuai konfigurasi di Presenly."
 
 #. module: presenly_saas
 #. odoo-python
@@ -3333,7 +3188,8 @@ msgid ""
 "Distance from the office and the allowed radius, in units a person reads. "
 "Both numbers are the server's own; only the unit and the rounding are chosen"
 " here."
-msgstr "Jarak dari kantor dan radius yang diizinkan, dalam satuan yang dibaca orang.\n"
+msgstr ""
+"Jarak dari kantor dan radius yang diizinkan, dalam satuan yang dibaca orang.\n"
 "Kedua angkanya milik server; hanya satuannya dan pembulatannya yang dipilih di sini."
 
 #. module: presenly_saas
@@ -3347,7 +3203,8 @@ msgstr "Di dalam"
 msgid ""
 "Inside when the check-in point falls within the allowed radius. Unknown when"
 " either number is missing — being unknown is not the same as being outside."
-msgstr "Di dalam kalau titik masuknya jatuh di dalam radius yang diizinkan. Tidak diketahui\n"
+msgstr ""
+"Di dalam kalau titik masuknya jatuh di dalam radius yang diizinkan. Tidak diketahui\n"
 "kalau salah satu angkanya tidak ada — tidak diketahui bukan berarti di luar."
 
 #. module: presenly_saas
@@ -3360,7 +3217,8 @@ msgstr "Keterlambatan"
 msgid ""
 "Lateness as hours and minutes. The raw minute count stays in its own column "
 "for sums and pivots."
-msgstr "Keterlambatan dalam jam dan menit. Jumlah menit mentahnya tetap ada di kolomnya\n"
+msgstr ""
+"Keterlambatan dalam jam dan menit. Jumlah menit mentahnya tetap ada di kolomnya\n"
 "sendiri untuk penjumlahan dan pivot."
 
 #. module: presenly_saas
@@ -3368,7 +3226,8 @@ msgstr "Keterlambatan dalam jam dan menit. Jumlah menit mentahnya tetap ada di k
 msgid ""
 "Length of the session as hours and minutes. The raw hour count stays in its "
 "own column for sums and pivots."
-msgstr "Lama sesi dalam jam dan menit. Jumlah jam mentahnya tetap ada di kolomnya sendiri\n"
+msgstr ""
+"Lama sesi dalam jam dan menit. Jumlah jam mentahnya tetap ada di kolomnya sendiri\n"
 "untuk penjumlahan dan pivot."
 
 #. module: presenly_saas
@@ -3421,7 +3280,8 @@ msgstr "Belum ada persetujuan yang tercatat untuk pengajuan ini."
 msgid ""
 "No approval levels are recorded for this request. Only the\n"
 "                        decision stored on the request itself is shown."
-msgstr "Tidak ada level persetujuan yang tercatat untuk pengajuan ini. Yang\n"
+msgstr ""
+"Tidak ada level persetujuan yang tercatat untuk pengajuan ini. Yang\n"
 "ditampilkan hanya keputusan yang tersimpan pada pengajuannya sendiri."
 
 #. module: presenly_saas
@@ -3467,14 +3327,16 @@ msgstr "<span> menit</span>"
 #. module: presenly_saas
 #: model:ir.model.constraint,message:presenly_saas.constraint_presenly_saas_sync_mark_company_dataset_uniq
 msgid "A dataset may only have one sync mark per company."
-msgstr "Satu jenis hanya boleh punya satu penanda sinkronisasi per perusahaan."
+msgstr ""
+"Satu jenis hanya boleh punya satu penanda sinkronisasi per perusahaan."
 
 #. module: presenly_saas
 #: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_attendance_log
 msgid ""
 "Attendance is pulled once a day. Use <b>Pull Period Data</b> on the\n"
 "               Subscription page to fetch a single month right away."
-msgstr "Presensi ditarik sekali sehari. Pakai <b>Pull Period Data</b> di halaman\n"
+msgstr ""
+"Presensi ditarik sekali sehari. Pakai <b>Pull Period Data</b> di halaman\n"
 "Langganan untuk menarik satu bulan tertentu saat itu juga."
 
 #. module: presenly_saas
@@ -3493,7 +3355,8 @@ msgid ""
 "Monitoring is computed from the mirrored attendance log, which is pulled\n"
 "               once a day. Use <b>Pull Period Data</b> on the Subscription page to\n"
 "               fetch a month right away."
-msgstr "Monitoring dihitung dari cermin log presensi, yang ditarik sekali sehari.\n"
+msgstr ""
+"Monitoring dihitung dari cermin log presensi, yang ditarik sekali sehari.\n"
 "Pakai <b>Pull Period Data</b> di halaman Langganan untuk menarik satu bulan\n"
 "tertentu saat itu juga."
 
@@ -3506,7 +3369,8 @@ msgid ""
 "New and changed requests appear on their own when this list is opened.\n"
 "               Use <b>Pull Period Data</b> on the Subscription page to fill in\n"
 "               an older month."
-msgstr "Pengajuan baru dan yang berubah muncul sendiri saat daftar ini dibuka.\n"
+msgstr ""
+"Pengajuan baru dan yang berubah muncul sendiri saat daftar ini dibuka.\n"
 "Pakai <b>Pull Period Data</b> di halaman Langganan untuk melengkapi bulan\n"
 "yang lebih lama."
 
@@ -3525,23 +3389,17 @@ msgstr "Presenly SaaS: Sinkronkan Data Terbaru"
 msgid ""
 "Server time up to which changes have been picked up. The next incremental "
 "pull asks for everything changed after this."
-msgstr "Waktu server sampai kapan perubahan sudah terambil. Penarikan tambahan\n"
+msgstr ""
+"Waktu server sampai kapan perubahan sudah terambil. Penarikan tambahan\n"
 "berikutnya meminta semua yang berubah setelah waktu ini."
-
-#. module: presenly_saas
-#: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_attendance_recap
-msgid ""
-"The recap is fetched together with the attendance log, by the daily\n"
-"               pull or by <b>Pull Period Data</b> on the Subscription page."
-msgstr "Rekapnya diambil bersama log presensi, oleh penarikan harian atau oleh\n"
-"<b>Pull Period Data</b> di halaman Langganan."
 
 #. module: presenly_saas
 #: model_terms:ir.actions.act_window,help:presenly_saas.action_presenly_saas_project
 msgid ""
 "Timesheets are pulled once a day, together with the attendance log. Use\n"
 "               <b>Pull Period Data</b> on the Subscription page for an older month."
-msgstr "Timesheet ditarik sekali sehari, bersama log presensi. Pakai\n"
+msgstr ""
+"Timesheet ditarik sekali sehari, bersama log presensi. Pakai\n"
 "<b>Pull Period Data</b> di halaman Langganan untuk bulan yang lebih lama."
 
 #. module: presenly_saas
@@ -3551,7 +3409,8 @@ msgid ""
 "               <b>Pull Period Data</b> on the Subscription page for an older month.\n"
 "               The <b>Hours</b> column is derived in Odoo from the start and end\n"
 "               times, not sent by the server."
-msgstr "Timesheet ditarik sekali sehari, bersama log presensi. Pakai\n"
+msgstr ""
+"Timesheet ditarik sekali sehari, bersama log presensi. Pakai\n"
 "<b>Pull Period Data</b> di halaman Langganan untuk bulan yang lebih lama.\n"
 "Kolom <b>Hours</b> diturunkan di Odoo dari jam mulai dan selesai, bukan\n"
 "dikirim server."
@@ -3569,7 +3428,8 @@ msgid ""
 "How often the scheduled pull of recent data runs. 0 turns that cron off: "
 "data is still refreshed when its list is opened, but nothing keeps data "
 "nobody looks at up to date."
-msgstr "Seberapa sering penarikan terjadwal data terbaru berjalan. 0 mematikan cron\n"
+msgstr ""
+"Seberapa sering penarikan terjadwal data terbaru berjalan. 0 mematikan cron\n"
 "itu: data tetap disegarkan saat daftarnya dibuka, tetapi tidak ada yang\n"
 "menjaga data yang tidak pernah dilihat."
 
@@ -3598,7 +3458,8 @@ msgid ""
 "When a mirror list is opened, ask the Presenly server in one cheap request "
 "whether anything changed, and pull only what did. Off means data is only "
 "refreshed by the scheduled pull."
-msgstr "Saat daftar cermin dibuka, tanyakan ke server Presenly dalam satu permintaan\n"
+msgstr ""
+"Saat daftar cermin dibuka, tanyakan ke server Presenly dalam satu permintaan\n"
 "murah apakah ada yang berubah, lalu tarik hanya yang berubah. Kalau dimatikan,\n"
 "data hanya disegarkan oleh penarikan terjadwal."
 
@@ -3623,105 +3484,351 @@ msgid "Synced from Presenly At"
 msgstr "Disinkronkan dari Presenly Pada"
 
 #. module: presenly_saas
-msgid "Presenly Synchronisation Reconciliation"
-msgstr "Rekonsiliasi Sinkronisasi Presenly"
-
-#. module: presenly_saas
-msgid "Reconciliation"
-msgstr "Rekonsiliasi"
-
-#. module: presenly_saas
-msgid "Discrepancies"
-msgstr "Perbedaan"
-
-#. module: presenly_saas
-msgid "Discrepancy"
-msgstr "Perbedaan"
-
-#. module: presenly_saas
-msgid "In Presenly"
-msgstr "Di Presenly"
-
-#. module: presenly_saas
 msgid "In Odoo"
 msgstr "Di Odoo"
 
 #. module: presenly_saas
-msgid "Differs"
-msgstr "Berbeda"
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_day_setup__month_ids
+msgid "Months"
+msgstr "Bulan"
 
 #. module: presenly_saas
-msgid "Changed on Both Sides"
-msgstr "Berubah di Kedua Sisi"
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_day_setup_month__setup_id
+msgid "Setup"
+msgstr "Pengaturan"
 
 #. module: presenly_saas
-msgid "Missing in Odoo"
-msgstr "Tidak Ada di Odoo"
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_day_setup_month__days
+msgid "Working Days"
+msgstr "Hari Kerja"
 
 #. module: presenly_saas
-msgid "Missing in Presenly"
-msgstr "Tidak Ada di Presenly"
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_work_day_setup_form
+msgid "Working Days per Month"
+msgstr "Hari Kerja per Bulan"
 
 #. module: presenly_saas
-msgid "Check Now"
-msgstr "Periksa Sekarang"
+#: model_terms:ir.ui.view,arch_db:presenly_saas.blocked_page
+msgid ", and the grace period is"
+msgstr ", dan masa tenggangnya"
 
 #. module: presenly_saas
-msgid "Nothing to reconcile"
-msgstr "Tidak ada yang perlu direkonsiliasi"
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_subscription_form
+msgid "Access"
+msgstr "Akses"
 
 #. module: presenly_saas
-msgid "Open Discrepancies"
-msgstr "Perbedaan Terbuka"
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_subscription__blocked_reason
+msgid "Access Paused Because"
+msgstr "Akses Dihentikan Karena"
 
 #. module: presenly_saas
-msgid "Last Reconciled"
-msgstr "Terakhir Direkonsiliasi"
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid "Access has been paused since"
+msgstr "Akses dihentikan sejak"
 
 #. module: presenly_saas
-msgid "Presenly Key"
-msgstr "Kunci Presenly"
+#: model_terms:ir.ui.view,arch_db:presenly_saas.blocked_page
+msgid ""
+"Access to Odoo returns as soon as the subscription is active\n"
+"                again. Records already stored here are kept."
+msgstr ""
+"Akses ke Odoo kembali begitu langganan aktif lagi. Data yang sudah tersimpan"
+" di sini tetap disimpan."
 
 #. module: presenly_saas
-msgid "Odoo Model"
-msgstr "Model Odoo"
+#: code:addons/presenly_saas/models/presenly_saas_guard.py:0
+msgid ""
+"Access to this Odoo is paused: the Presenly subscription is not active "
+"(reason: %(reason)s). A Presenly SaaS manager can refresh the subscription "
+"from the blocked page."
+msgstr ""
+"Akses ke Odoo ini dihentikan: langganan Presenly tidak aktif (alasan: "
+"%(reason)s). Manajer Presenly SaaS dapat menyegarkan langganan dari halaman "
+"blokir."
 
 #. module: presenly_saas
-msgid "Odoo Record"
-msgstr "Rekaman Odoo"
+#: model_terms:ir.ui.view,arch_db:presenly_saas.blocked_page
+msgid "Ask your Presenly administrator to renew the subscription."
+msgstr "Minta administrator Presenly Anda memperpanjang langganan ini."
 
 #. module: presenly_saas
-msgid "Odoo Last Changed"
-msgstr "Terakhir Berubah di Odoo"
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_config__block_mode
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_subscription__block_mode
+#: model:ir.model.fields,field_description:presenly_saas.field_res_config_settings__presenly_saas_block_mode
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid "Block Access"
+msgstr "Tutup Akses"
 
 #. module: presenly_saas
-msgid "Presenly Value Read At"
-msgstr "Nilai Presenly Dibaca Pada"
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_config__blocked_since
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_subscription__blocked_since
+#: model:ir.model.fields,field_description:presenly_saas.field_res_config_settings__presenly_saas_blocked_since
+msgid "Blocked Since"
+msgstr "Ditutup Sejak"
 
 #. module: presenly_saas
-msgid "Record"
-msgstr "Rekaman"
+#: model_terms:ir.ui.view,arch_db:presenly_saas.blocked_page
+msgid "Change the connection"
+msgstr "Ubah koneksi"
 
 #. module: presenly_saas
-msgid "Nature"
-msgstr "Sifat"
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_subscription_form
+msgid "Dry Run"
+msgstr "Uji Coba"
 
 #. module: presenly_saas
-msgid "Timing"
-msgstr "Waktu"
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_config__dry_run_noted_at
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_subscription__dry_run_noted_at
+msgid "Dry Run Noted At"
+msgstr "Uji Coba Dicatat Pada"
 
 #. module: presenly_saas
-msgid "Missing"
-msgstr "Tidak Ada"
+#: model:ir.model.fields.selection,name:presenly_saas.selection__presenly_saas_config__block_mode__dry_run
+#: model:ir.model.fields.selection,name:presenly_saas.selection__res_config_settings__presenly_saas_block_mode__dry_run
+msgid "Dry run"
+msgstr "Uji coba"
 
 #. module: presenly_saas
-msgid "No longer differs as of the last check."
-msgstr "Tidak lagi berbeda pada pemeriksaan terakhir."
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid ""
+"How long a snapshot that the Presenly server has not confirmed stays "
+"acceptable. A network failure never blocks on its own before this many days "
+"have passed, and only when Block Access is enforced."
+msgstr ""
+"Berapa lama snapshot yang belum dikonfirmasi server Presenly masih dianggap "
+"sah. Kegagalan jaringan tidak pernah menutup akses sebelum jumlah hari ini "
+"lewat, dan hanya bila Tutup Akses ditegakkan."
 
 #. module: presenly_saas
-msgid "Client or location id, or the employee nopeg, on the Presenly side."
-msgstr "Id klien atau lokasi, atau nopeg pegawai di sisi Presenly."
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_config__grace_days
+msgid ""
+"How long a snapshot that the Presenly server has not confirmed stays "
+"acceptable. Zero turns the offline part of the check off entirely. A network"
+" failure never blocks on its own before this many days have passed, and only"
+" when Block Access is enforced."
+msgstr ""
+"Berapa lama snapshot yang belum dikonfirmasi server Presenly masih dianggap "
+"sah. Nol mematikan bagian luring pemeriksaan ini sepenuhnya. Kegagalan "
+"jaringan tidak pernah menutup akses sebelum jumlah hari ini lewat, dan hanya"
+" bila Tutup Akses ditegakkan."
 
 #. module: presenly_saas
-msgid "Name at the time of the check, so the report stays readable if the record is later deleted."
-msgstr "Nama pada saat pemeriksaan, supaya laporannya masih terbaca bila rekamannya kemudian dihapus."
+#: model_terms:ir.ui.view,arch_db:presenly_saas.blocked_page
+msgid "Last answer from the Presenly server:"
+msgstr "Jawaban terakhir dari server Presenly:"
+
+#. module: presenly_saas
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_config__block_override_until
+msgid ""
+"Let this company keep working until this moment, even when the subscription "
+"is not active. Meant for support while a renewal is being settled, not as a "
+"second way to run without paying. Every use is recorded in the sync log."
+msgstr ""
+"Biarkan perusahaan ini tetap bekerja sampai waktu tersebut, walaupun "
+"langganannya tidak aktif. Untuk pendampingan selagi perpanjangan "
+"diselesaikan, bukan cara kedua menjalankan tanpa membayar. Setiap pemakaian "
+"dicatat di log sinkronisasi."
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.blocked_page
+msgid "Log out"
+msgstr "Keluar"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.blocked_page
+msgid "Odoo is paused for"
+msgstr "Odoo dihentikan untuk"
+
+#. module: presenly_saas
+#: code:addons/presenly_saas/controllers/blocked.py:0
+msgid "Only a Presenly SaaS manager can change the connection here."
+msgstr "Hanya manajer Presenly SaaS yang dapat mengubah koneksi di sini."
+
+#. module: presenly_saas
+#: code:addons/presenly_saas/controllers/blocked.py:0
+msgid "Only a Presenly SaaS manager can refresh the subscription here."
+msgstr "Hanya manajer Presenly SaaS yang dapat menyegarkan langganan di sini."
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.blocked_page
+msgid "Paused since"
+msgstr "Dihentikan sejak"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.blocked_page
+msgid "Presenly contact:"
+msgstr "Kontak Presenly:"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_config__block_override_reason
+#: model:ir.model.fields,field_description:presenly_saas.field_res_config_settings__presenly_saas_block_override_reason
+msgid "Reason for Temporary Access"
+msgstr "Alasan Akses Sementara"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.blocked_page
+msgid "Refresh subscription"
+msgstr "Segarkan langganan"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_config__dry_run_blocked_count
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_subscription__dry_run_blocked_count
+#: model:ir.model.fields,field_description:presenly_saas.field_res_config_settings__presenly_saas_dry_run_blocked_count
+msgid "Requests That Would Have Been Blocked"
+msgstr "Permintaan Yang Akan Ditutup"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.blocked_page
+msgid "Save and refresh"
+msgstr "Simpan dan segarkan"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_config__block_override_user_id
+msgid "Temporary Access Granted By"
+msgstr "Akses Sementara Diberikan Oleh"
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_config__block_override_until
+#: model:ir.model.fields,field_description:presenly_saas.field_res_config_settings__presenly_saas_block_override_until
+msgid "Temporary Access Until"
+msgstr "Akses Sementara Sampai"
+
+#. module: presenly_saas
+#: code:addons/presenly_saas/controllers/blocked.py:0
+msgid ""
+"The Presenly server answered, and the subscription is still not active."
+msgstr "Server Presenly menjawab, dan langganannya masih belum aktif."
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.blocked_page
+msgid "The Presenly server has not confirmed this subscription since"
+msgstr "Server Presenly belum mengonfirmasi langganan ini sejak"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.blocked_page
+msgid "The Presenly server reports this subscription as"
+msgstr "Server Presenly melaporkan langganan ini sebagai"
+
+#. module: presenly_saas
+#: code:addons/presenly_saas/controllers/blocked.py:0
+msgid "The connection is saved, and the subscription is still not active."
+msgstr "Koneksi tersimpan, dan langganannya masih belum aktif."
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.blocked_page
+msgid "The trial period of this subscription has ended."
+msgstr "Masa uji langganan ini sudah berakhir."
+
+#. module: presenly_saas
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_config__block_mode
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_subscription__block_mode
+msgid ""
+"What happens to the Odoo backend when the subscription is not active. Off: nothing is closed, the banner still tells the story. Dry run: every request that would be refused is counted and logged, and let through. Enforce: the backend is closed for this company, except signing in, the blocked page, and the webhook receiver.\n"
+"This is independent of Guard Mode: Guard Mode governs the API other modules call, this governs the gate."
+msgstr ""
+"Apa yang terjadi pada backend Odoo saat langganan tidak aktif. Nonaktif: "
+"tidak ada yang ditutup, banner tetap menjelaskan keadaannya. Uji coba: "
+"setiap permintaan yang akan ditolak dihitung dan dicatat, lalu tetap "
+"diloloskan. Wajibkan: backend ditutup untuk perusahaan ini, kecuali masuk, "
+"halaman blokir, dan penerima webhook. Ini terpisah dari Mode Penegakan: Mode"
+" Penegakan mengatur API yang dipanggil modul lain, yang ini mengatur "
+"gerbangnya."
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid ""
+"What happens to the backend when the subscription is not active. Off: "
+"nothing is closed, the banner still tells the story. Dry run: every request "
+"that would be refused is counted and logged, and let through. Enforce: the "
+"backend is closed for this company, except signing in, the blocked page, and"
+" the webhook receiver."
+msgstr ""
+"Apa yang terjadi pada backend saat langganan tidak aktif. Nonaktif: tidak "
+"ada yang ditutup, banner tetap menjelaskan keadaannya. Uji coba: permintaan "
+"yang akan ditolak dihitung di bawah dan dicatat, lalu tetap diloloskan. "
+"Wajibkan: backend ditutup untuk perusahaan ini, kecuali masuk, halaman "
+"blokir, dan penerima webhook."
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid ""
+"What the guard API does when the status is negative. Off: the status is only"
+" shown on the Subscription page. Warn only: adds a banner in the backend. "
+"Enforce: the banner, and the guard API raising for the modules that call it."
+" It does not close the backend by itself; Block Access does that."
+msgstr ""
+"Apa yang dilakukan API guard saat statusnya negatif. Nonaktif: status hanya "
+"terlihat di halaman Langganan. Peringatan saja: ditambah banner di backend. "
+"Wajibkan: banner, dan API guard menaikkan galat untuk modul yang "
+"memanggilnya. Ia tidak menutup backend sendiri; Tutup Akses yang "
+"melakukannya."
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid "Why access was granted"
+msgstr "Kenapa akses diberikan"
+
+#. module: presenly_saas
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_config__block_override_reason
+msgid ""
+"Why the temporary access was granted. Read back by whoever finds the "
+"installation open when they expected it closed."
+msgstr ""
+"Kenapa akses sementara diberikan. Dibaca oleh siapa pun yang menemukan "
+"instalasi ini terbuka padahal ia mengharapkannya tertutup."
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.blocked_page
+msgid "days."
+msgstr "hari."
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid ""
+"requests would have been refused. Counted at most\n"
+"                                once a minute while Dry run is on, so read the\n"
+"                                number as an order of magnitude."
+msgstr ""
+"permintaan akan ditolak. Dihitung paling banyak sekali semenit selama Uji "
+"coba menyala, jadi baca angkanya sebagai perkiraan besar."
+
+#. module: presenly_saas
+#: code:addons/presenly_saas/models/presenly_saas_guard.py:0
+msgid "the Presenly server could not be reached in time"
+msgstr "server Presenly tidak terjangkau tepat waktu"
+
+#. module: presenly_saas
+#: code:addons/presenly_saas/models/presenly_saas_guard.py:0
+msgid "the subscription has expired"
+msgstr "langganan sudah kedaluwarsa"
+
+#. module: presenly_saas
+#: code:addons/presenly_saas/models/presenly_saas_guard.py:0
+msgid "the subscription is suspended"
+msgstr "langganan ditangguhkan"
+
+#. module: presenly_saas
+#: code:addons/presenly_saas/models/presenly_saas_guard.py:0
+msgid "the trial period has ended"
+msgstr "masa uji sudah berakhir"
+
+#. module: presenly_saas
+#: code:addons/presenly_saas/models/presenly_saas_guard.py:0
+msgid "unknown"
+msgstr "tidak diketahui"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.res_config_settings_view_form
+msgid "<span>Access until</span>"
+msgstr "<span>Akses sampai</span>"
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.blocked_page
+msgid "Leave empty to keep the current key."
+msgstr "Kosongkan untuk memakai kunci yang sekarang."
+
+#. module: presenly_saas
+#: model_terms:ir.ui.view,arch_db:presenly_saas.blocked_page
+msgid "Paste the key from the Presenly integration page."
+msgstr "Tempel kunci dari halaman integrasi Presenly."

@@ -40,9 +40,11 @@ class HrEmployee(models.Model):
     # dipakai untuk mencocokkan approver, bukan untuk memberi akses.
     # ------------------------------------------------------------------
     presenly_group = fields.Char(
-        string='SIK Group',
+        string='Presenly Group',
         readonly=True,
-        help='Group as recorded in Presenly. Informational only.',
+        help='Group as recorded in Presenly. The field is called `grup` there; '
+             'this label says where it comes from, because the app two-letter '
+             'prefix it used before did not explain anything to a reader here.',
     )
     presenly_can_approve = fields.Boolean(
         string='Approval Flag in Presenly', readonly=True,
@@ -53,6 +55,13 @@ class HrEmployee(models.Model):
              'Never use this field to decide who may approve: ask the approval '
              'step instead.',
     )
+    presenly_may_approve = fields.Boolean(
+        string='May Approve in Presenly', readonly=True,
+        help='The right to approve, as Presenly computes it: the stored flag, an '
+             'admin role, being listed in an active approval flow, or managing '
+             'someone while a direct-manager flow is active. This — not the '
+             'stored flag — is what grants the Approver group here.',
+    )
     presenly_role = fields.Char(
         string='Presenly Role', readonly=True,
         help='Role as recorded in Presenly. Deliberately not an Odoo group: it '
@@ -60,30 +69,32 @@ class HrEmployee(models.Model):
     )
     presenly_shift = fields.Char(
         string='Presenly Shift', readonly=True,
-        help='Shift as recorded in Presenly. Informational only.',
+        help='Shift as recorded in Presenly. Informational only. The weekly '
+             'pattern of shifts and locations is in the schedule list below.',
+    )
+    presenly_client_id = fields.Integer(
+        string='Presenly Client ID', readonly=True, index=True,
+        help='The client this employee is placed at in Presenly.',
+    )
+    presenly_client_name = fields.Char(
+        string='Presenly Client', readonly=True,
+        help='The client this employee is placed at in Presenly. Kept as a field '
+             'of its own instead of making the employee belong to the client '
+             'company, so the employee list stays in one company and remains '
+             'visible without the multi-company selector.',
     )
 
-    # PII. Dibatasi grup supaya hanya yang berhak membacanya, dan hanya terisi
-    # bila tarikan memang meminta `include_pii`.
-    presenly_no_npwp = fields.Char(
-        string='NPWP', readonly=True, groups='presenly_saas.group_presenly_saas_manager',
-    )
-    presenly_no_rekening = fields.Char(
-        string='Bank Account', readonly=True, groups='presenly_saas.group_presenly_saas_manager',
-    )
-    presenly_no_bpjs = fields.Char(
-        string='BPJS Kesehatan', readonly=True, groups='presenly_saas.group_presenly_saas_manager',
-    )
-    presenly_no_bpjs_kes = fields.Char(
-        string='BPJS Ketenagakerjaan', readonly=True,
-        groups='presenly_saas.group_presenly_saas_manager',
-    )
+    # PII dari Presenly — NPWP, nomor rekening, BPJS — sengaja TIDAK disalin ke
+    # sini. Odoo HR tidak membutuhkannya, dan menaruhnya di sini berarti satu lagi
+    # tempat yang harus dijaga kerahasiaannya. Datanya tetap ada di aplikasi.
 
     presenly_source_updated_at = fields.Datetime(
         string='Changed in Presenly At',
         readonly=True,
         copy=False,
-        help='The `updated_at` Presenly last reported for this employee.',
+        help='When Presenly last changed this employee: the `updated_at` it '
+             'reports. It is Presenly\'s clock, not this server\'s, and it does '
+             'not move when a pull here finds nothing new.',
     )
     # ------------------------------------------------------------------
     # Kirim balik saat disimpan
@@ -236,10 +247,13 @@ class HrEmployee(models.Model):
              'without relying on comparing clocks across two servers.',
     )
     presenly_synced_at = fields.Datetime(
-        string='Last Synced from Presenly',
+        string='Last Written by Sync',
         readonly=True,
         copy=False,
-        help='When this record was last written by the Presenly sync.',
+        help='When this record was last written by the Presenly sync — this '
+             'server\'s clock, not Presenly\'s. A pull that finds nothing to '
+             'change does not update it, so read it as "last applied", not '
+             '"last checked".',
     )
 
 

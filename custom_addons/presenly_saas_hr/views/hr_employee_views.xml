@@ -2,10 +2,22 @@
 <odoo>
 
     <!--
-        Kolom nopeg di form pegawai, supaya pegawai yang tidak berhasil
-        dicocokkan tarikan bisa ditautkan manual. Yang bisa melihat dan
-        mengisinya hanya manajer: menyunting nopeg berarti menautkan data
-        kepegawaian ke orang di sistem lain.
+        Data yang datang dari Presenly, di tabnya sendiri.
+
+        Sebelumnya kolom-kolom ini berjejal setelah Job Title, tanpa pengelompokan
+        dan tanpa penjelasan: nopeg yang bisa diketik bercampur dengan keterangan
+        yang hanya bisa dibaca, dan riwayat sinkronisasi tercampur dengan jadwal
+        kerja. Di sini dipisah menurut pertanyaan yang orang bawa saat membukanya:
+
+          Identity         — pegawai ini siapa di Presenly
+          Work Pattern     — peran, grup, shift, dan flag persetujuannya
+          Synchronisation  — kapan terakhir disinkronkan, dan oleh koneksi mana
+
+        Jadwal kerjanya ada di tab **Work Slots**, bersama slot waktunya. Dulu
+        jadwal hariannya di sini, dan itu membuat satu pertanyaan terbelah dua
+        halaman: "biasa kerja di mana" di sini, "jam berapa" di sana.
+
+        Seluruhnya dibatasi grup Presenly Manager, sama seperti sebelumnya.
     -->
 
     <record id="view_employee_form_presenly" model="ir.ui.view">
@@ -13,55 +25,145 @@
         <field name="model">hr.employee</field>
         <field name="inherit_id" ref="hr.view_employee_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='job_title']" position="after">
-                <field name="presenly_nopeg"
-                       placeholder="e.g. iksg-rangga"
-                       groups="presenly_saas.group_presenly_saas_manager"/>
-                <field name="presenly_synced_at"
-                       readonly="1"
-                       groups="presenly_saas.group_presenly_saas_manager"/>
-                <field name="presenly_saas_config_id"
-                       readonly="1"
-                       groups="presenly_saas.group_presenly_saas_manager"/>
-                <field name="presenly_group"
-                       readonly="1"
-                       groups="presenly_saas.group_presenly_saas_manager"/>
-                <field name="presenly_role"
-                       readonly="1"
-                       groups="presenly_saas.group_presenly_saas_manager"/>
-                <field name="presenly_shift"
-                       readonly="1"
-                       groups="presenly_saas.group_presenly_saas_manager"/>
-                <field name="presenly_can_approve"
-                       readonly="1"
-                       groups="presenly_saas.group_presenly_saas_manager"/>
-                <field name="presenly_no_npwp"
-                       readonly="1"
-                       groups="presenly_saas.group_presenly_saas_manager"/>
-                <field name="presenly_no_rekening"
-                       readonly="1"
-                       groups="presenly_saas.group_presenly_saas_manager"/>
-                <field name="presenly_no_bpjs"
-                       readonly="1"
-                       groups="presenly_saas.group_presenly_saas_manager"/>
-                <field name="presenly_no_bpjs_kes"
-                       readonly="1"
-                       groups="presenly_saas.group_presenly_saas_manager"/>
-                <field name="presenly_schedule_ids"
-                       readonly="1"
-                       groups="presenly_saas.group_presenly_saas_manager">
-                    <list create="false" edit="false" delete="false">
-                        <field name="day_of_week"/>
-                        <field name="is_workday"/>
-                        <field name="location_name"/>
-                        <field name="shift_name"/>
-                        <field name="status" optional="show"/>
-                        <field name="valid_from" optional="hide"/>
-                        <field name="valid_until" optional="hide"/>
-                    </list>
-                </field>
-                <field name="presenly_synced_values" invisible="1"/>
+            <xpath expr="//notebook" position="inside">
+                <page string="Presenly" name="presenly"
+                      groups="presenly_saas.group_presenly_saas_manager">
+                    <group>
+                        <group string="Identity">
+                            <field name="presenly_nopeg"
+                                   placeholder="e.g. iksg-rangga"/>
+                            <field name="presenly_client_name"/>
+                            <field name="presenly_role"/>
+                        </group>
+                        <group string="Work Pattern">
+                            <field name="presenly_group"/>
+                            <field name="presenly_shift"/>
+                            <field name="presenly_can_approve"/>
+                            <field name="presenly_may_approve"/>
+                        </group>
+                    </group>
+                    <group string="Synchronisation">
+                        <field name="presenly_synced_at" readonly="1"/>
+                        <field name="presenly_source_updated_at" readonly="1"/>
+                        <field name="presenly_saas_config_id" readonly="1"/>
+                    </group>
+                    <!-- Teknis, tidak perlu dilihat. -->
+                    <field name="presenly_client_id" invisible="1"/>
+                    <field name="presenly_synced_values" invisible="1"/>
+                </page>
+
+                <!--
+                    Kerja pegawai: lokasi biasanya, pola hariannya, lalu slot
+                    waktunya. Urutannya dari yang paling umum ke yang paling rinci,
+                    sesuai pertanyaan yang orang bawa: "biasa kerja di mana" →
+                    "hari itu di mana" → "jam berapa".
+
+                    Lokasi kerja biasanya adalah kolom bawaan Odoo
+                    (`work_location_id`) — ditampilkan di sini supaya jawabannya ada
+                    di satu tempat, tetapi tidak bisa disunting: yang mengisinya
+                    penempatan pegawai dari Presenly.
+                -->
+                <page string="Work Slots" name="presenly_slots"
+                      groups="presenly_saas.group_presenly_saas_manager">
+                    <group>
+                        <group string="Usual Work Location">
+                            <field name="work_location_id" readonly="1"/>
+                        </group>
+                        <group string="Schedule Mode">
+                            <field name="presenly_uses_slots" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Work Location by Day">
+                        <!-- Hanya baris yang berlaku. Cerminnya menyimpan seluruh
+                             pola dari masa ke masa — aktif dan nonaktif — dan
+                             menampilkan semuanya membuatnya terlihat seperti
+                             duplikat: tujuh hari menjadi empat belas baris. -->
+                        <field name="presenly_schedule_ids" nolabel="1" colspan="2"
+                               domain="[('status', '=', 'active')]">
+                            <list create="false" edit="false" delete="false"
+                                  default_order="day_of_week">
+                                <field name="day_of_week"/>
+                                <field name="is_workday"/>
+                                <field name="location_name"/>
+                                <field name="shift_name"/>
+                                <field name="slot_summary"/>
+                                <field name="status" optional="show"/>
+                                <field name="valid_from" optional="hide"/>
+                                <field name="valid_until" optional="hide"/>
+                            </list>
+                        </field>
+                    </group>
+                    <group string="Slots">
+                        <field name="presenly_slot_ids" nolabel="1" colspan="2" readonly="1">
+                            <list create="false" edit="false" delete="false"
+                                  default_order="day_of_week, sequence">
+                                <field name="day_of_week"/>
+                                <field name="sequence"/>
+                                <field name="start_time"/>
+                                <field name="end_time"/>
+                                <field name="location_name"/>
+                                <field name="shift_name"/>
+                                <field name="late_index" optional="show"/>
+                                <field name="status" optional="show"/>
+                            </list>
+                        </field>
+                    </group>
+                </page>
             </xpath>
+        </field>
+    </record>
+
+    <!--
+        "Usual Work Location" bawaan Odoo dihilangkan dari tab Work.
+
+        Grup itu datang dari modul Remote Work (`hr_homeworking`) dan berisi
+        lokasi per hari Senin–Minggu yang bisa disunting langsung di pegawai.
+        Pertanyaan yang sama sudah dijawab Presenly — ditampilkan hanya baca
+        sebagai **Work Location by Day** di tab Presenly — dan yang mengisinya
+        penempatan serta pola kerja dari sana. Membiarkan keduanya berarti ada
+        dua tempat yang bisa mengisi hal yang sama, dan yang kalah adalah data
+        yang datang dari Presenly: suntingan di sini akan tertimpa pada tarikan
+        berikutnya tanpa satu pun catatan.
+
+        Kolomnya ditemukan lewat salah satu kolom harinya, bukan lewat judul
+        grupnya: judul tampilan bisa diterjemahkan, nama kolom tidak.
+    -->
+    <record id="view_employee_form_presenly_drop_homeworking" model="ir.ui.view">
+        <field name="name">hr.employee.form.inherit.presenly.saas.hr.drop.homeworking</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[field[@name='monday_location_id']]" position="replace"/>
+        </field>
+    </record>
+
+    <!--
+        Lokasi kerja biasa hanya baca, dan alamat kerjanya dihilangkan dari tab
+        Work bawaan.
+
+        Yang dipakai integrasi adalah **lokasi kerjanya**, bukan alamat di
+        tingkat pegawai: penempatan dari Presenly menunjuk lokasi kerja — dan,
+        bila setelannya menyala, pola kerja mingguannya — sedangkan alamatnya
+        menempel pada lokasi itu sendiri (`hr.work.location.address_id`).
+        `address_id` ("Work Address") di sini karena itu tidak pernah diisi
+        dari mana pun, dan membiarkannya hanya menawarkan tempat kedua untuk
+        menjawab pertanyaan yang sama — kali ini jawaban yang tidak dipakai.
+
+        Lokasi kerjanya sendiri dibiarkan terlihat, hanya tidak bisa disunting:
+        nilai yang diketik di sini akan tertimpa pada tarikan berikutnya, dan
+        penimpanya dilaporkan hanya sebagai catatan di log.
+    -->
+    <record id="view_employee_form_presenly_lock_work_location" model="ir.ui.view">
+        <field name="name">hr.employee.form.inherit.presenly.saas.hr.lock.work.location</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='work_information']//field[@name='work_location_id']"
+                   position="attributes">
+                <attribute name="readonly">1</attribute>
+            </xpath>
+            <xpath expr="//page[@name='work_information']//field[@name='address_id']"
+                   position="replace"/>
         </field>
     </record>
 

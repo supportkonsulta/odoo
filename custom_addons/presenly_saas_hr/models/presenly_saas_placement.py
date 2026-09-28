@@ -67,7 +67,7 @@ class PresenlySaasConfig(models.Model):
         self.ensure_one()
         started = fields.Datetime.now()
         try:
-            rows, _meta, _pages = self._fetch_pages(
+            rows, meta, _pages = self._fetch_pages(
                 lambda params, _client=self._client().get_resource:
                     _client('placements', params),
                 {'limit': 500},
@@ -75,6 +75,12 @@ class PresenlySaasConfig(models.Model):
         except SaasClientError as exc:
             self._log_pull(PENEMPATAN_PATH, False, exc, started)
             return {}, redact(exc, self.api_key)
+
+        # Tarikan yang terpotong tidak boleh dipakai untuk menyimpulkan bahwa
+        # penempatan seseorang sudah tidak ada: yang tidak terlihat bisa saja
+        # hanya belum ikut halaman, dan mengosongkan lokasinya karena itu
+        # membuang setelan yang sah.
+        terpotong = bool(meta.get('total')) and len(rows) < int(meta['total'])
 
         Perusahaan = self.env['res.company'].sudo()
         Lokasi = self.env['hr.work.location'].sudo()
@@ -126,7 +132,8 @@ class PresenlySaasConfig(models.Model):
                     [('presenly_client_id', '=', int(klien['id']))], limit=1
                 )
                 if perusahaan:
-                    nilai['company_id'] = perusahaan.id
+                    nilai['presenly_client_id'] = perusahaan.presenly_client_id
+                    nilai['presenly_client_name'] = perusahaan.name
                 else:
                     ringkasan['unknown_company'] += 1
 
@@ -142,6 +149,11 @@ class PresenlySaasConfig(models.Model):
 
             if hr.presenly_saas_config_id != self:
                 nilai['presenly_saas_config_id'] = self.id
+            # Perusahaan pegawai tetap milik integrasi, bukan kliennya — sama
+            # seperti yang dilakukan tarikan pegawai, supaya keduanya tidak
+            # berebut kolom yang sama.
+            if self.company_id and hr.company_id != self.company_id:
+                nilai['company_id'] = self.company_id.id
 
             # Bentrok: nilainya sudah diubah orang di Odoo sejak pemeriksaan
             # terakhir, dan Presenly sekarang mengirim nilai lain. Yang di Odoo
@@ -150,13 +162,13 @@ class PresenlySaasConfig(models.Model):
             # perusahaan hilang tanpa satu pun catatan.
             snapshot = hr.presenly_synced_values or {}
             for kolom, kunci in (
-                ('company_id', 'placement_company_id'),
+                ('presenly_client_id', 'placement_client_id'),
                 ('work_location_id', 'placement_work_location_id'),
             ):
                 if kolom not in nilai:
                     continue
                 dasar = snapshot.get(kunci)
-                sekarang = hr[kolom].id or False
+                sekarang = self.env['presenly.saas.employee']._nilai_banding(hr[kolom])
                 if dasar and sekarang and dasar != sekarang:
                     ringkasan['conflicts'].append(
                         _('%(name)s (nopeg %(nopeg)s): %(field)s was changed in Odoo '
@@ -164,13 +176,17 @@ class PresenlySaasConfig(models.Model):
                           name=hr.name or nopeg, nopeg=nopeg, field=kolom)
                     )
 
-            berubah = {k: v for k, v in nilai.items() if hr[k].id != v}
+            # Pembanding yang sama dengan sinkronisasi pegawai: sebagian kolom di
+            # sini relasi (`work_location_id`), sebagian angka biasa
+            # (`presenly_client_id`), dan `hr[k].id` gagal untuk yang kedua.
+            beda = self.env['presenly.saas.employee']._beda_nilai
+            berubah = {k: v for k, v in nilai.items() if beda(hr[k], v)}
             if berubah:
                 # Nilai yang baru diterapkan dicatat, supaya pemeriksaan berikutnya
                 # bisa membedakan "diubah orang" dari "memang belum pernah diisi".
                 snapshot_baru = dict(
                     snapshot,
-                    placement_company_id=nilai.get('company_id', hr.company_id.id),
+                    placement_client_id=nilai.get('presenly_client_id', hr.presenly_client_id),
                     placement_work_location_id=nilai.get(
                         'work_location_id', hr.work_location_id.id or False
                     ),
@@ -182,6 +198,48 @@ class PresenlySaasConfig(models.Model):
             else:
                 ringkasan['unchanged'] += 1
 
+        # Penempatan yang sudah tidak ada lagi: lokasi kerja yang dulu dipasang
+        # dikembalikan, bukan dibiarkan menunjuk tempat yang bukan penempatan
+        # orangnya lagi.
+        #
+        # Yang dikosongkan hanya nilai yang **masih sama dengan yang dipasang**.
+        # Kalau sudah diubah orang di Odoo, perubahan itulah yang dipertahankan,
+        # dan keadaannya dilaporkan — bukan dihilangkan tanpa catatan.
+        #
+        # Tarikan yang terpotong melewatinya sama sekali: daftar yang belum
+        # lengkap bukan bukti bahwa penempatannya hilang.
+        ringkasan['cleared'] = 0
+        ringkasan['truncated'] = terpotong
+        Pegawai = self.env['hr.employee'].sudo().with_context(active_test=False)
+        if terpotong:
+            kandidat = Pegawai.browse()
+            _logger.warning(
+                'Presenly SaaS: tarikan penempatan terpotong (%s dari %s baris), '
+                'jadi lokasi kerja yang penempatannya tidak terlihat dibiarkan.',
+                len(rows), meta.get('total'),
+            )
+        else:
+            kandidat = Pegawai.search([('presenly_saas_config_id', '=', self.id)])
+        for hr in kandidat:
+            if not hr.presenly_nopeg or hr.presenly_nopeg in terpilih:
+                continue
+            snapshot = hr.presenly_synced_values or {}
+            dipasang = snapshot.get('placement_work_location_id')
+            if not dipasang:
+                continue
+            if (hr.work_location_id.id or False) != dipasang:
+                ringkasan['conflicts'].append(
+                    _('%(name)s (nopeg %(nopeg)s): the placement is gone, but the '
+                      'work location was changed in Odoo, so it was left as it is.',
+                      name=hr.name or hr.presenly_nopeg, nopeg=hr.presenly_nopeg)
+                )
+                continue
+            hr.with_context(presenly_skip_push=True).write({
+                'work_location_id': False,
+                'presenly_synced_values': dict(snapshot, placement_work_location_id=False),
+            })
+            ringkasan['cleared'] += 1
+
         if ringkasan['conflicts']:
             _logger.warning(
                 'Presenly SaaS: %s penempatan menimpa nilai yang sudah diubah di '
@@ -190,8 +248,10 @@ class PresenlySaasConfig(models.Model):
         self._log_pull(PENEMPATAN_PATH, True, None, started)
         _logger.info(
             'Presenly SaaS: penempatan pegawai diterapkan (%s diperbarui, %s sama, '
-            '%s dilewati, %s pegawai/perusahaan/lokasi tak dikenal).',
-            ringkasan['applied'], ringkasan['unchanged'], ringkasan['skipped'],
+            '%s lokasi dikembalikan, %s dilewati, %s pegawai/perusahaan/lokasi tak '
+            'dikenal).',
+            ringkasan['applied'], ringkasan['unchanged'], ringkasan['cleared'],
+            ringkasan['skipped'],
             ringkasan['unknown_employee'] + ringkasan['unknown_company']
             + ringkasan['unknown_location'],
         )

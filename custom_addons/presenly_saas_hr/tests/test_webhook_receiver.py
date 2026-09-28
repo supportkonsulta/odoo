@@ -8,6 +8,8 @@ from unittest import mock
 from odoo.tests import tagged
 from odoo.tests.common import TransactionCase
 
+from odoo.addons.presenly_saas.services.saas_client import SaasClientError
+
 from ..controllers.presenly_saas_webhook import SIGNATURE_TOLERANCE_SECONDS
 
 
@@ -171,13 +173,20 @@ class TestPresenlyWebhookRouting(TestPresenlyWebhookVerification):
         Config = type(self.config)
         with mock.patch.object(Config, '_pull_employees', lambda self: ({'pulled': 0}, False)), \
              mock.patch.object(Config, '_pull_clients', lambda self: ({'created': 0}, False)), \
-             mock.patch.object(Config, '_pull_reference_data', lambda self: ({'work_locations': {}}, False)):
+             mock.patch.object(Config, '_pull_reference_data', lambda self: ({'work_locations': {}}, False)), \
+             mock.patch.object(Config, '_pull_schedules', lambda self: ({'created': 0}, False)), \
+             mock.patch.object(Config, '_pull_slots', lambda self: ({'created': 0}, False)):
             _ringkas, _error, sumber = self.controller._pull_for_event(self.config, event)
         return sumber
 
     def test_klien_menarik_klien(self):
         self.assertEqual(self._sumber_untuk('client.created'), 'clients')
         self.assertEqual(self._sumber_untuk('client.updated'), 'clients')
+
+    def test_jadwal_kerja_menarik_jadwal_dan_slotnya(self):
+        """Yang berubah bukan pegawainya, jadi tidak lewat tarikan pegawai."""
+        self.assertEqual(self._sumber_untuk('weekly_schedule.created'), 'weekly_schedule')
+        self.assertEqual(self._sumber_untuk('weekly_schedule.updated'), 'weekly_schedule')
 
     def test_lokasi_kerja_menarik_cermin_acuan(self):
         self.assertEqual(self._sumber_untuk('work_location.created'), 'work_locations')
@@ -189,3 +198,110 @@ class TestPresenlyWebhookRouting(TestPresenlyWebhookVerification):
         # yang paling penting, jadi itu yang dijalankan.
         self.assertEqual(self._sumber_untuk(None), 'employees')
         self.assertEqual(self._sumber_untuk('sesuatu.yang.baru'), 'employees')
+
+    def test_sinkron_menarik_jenis_yang_disebut(self):
+        """Satu peristiwa untuk seluruh cermin lain; jenisnya di badan permintaan.
+
+        Yang dibawa peristiwa ini terutama **penghapusan**, dan penghapusan
+        tidak muncul di daftar perubahan mana pun — jadi yang ditarik harus jenis
+        yang disebut, bukan pegawai.
+        """
+        Config = type(self.config)
+        with mock.patch.object(Config, '_pull_dataset', mock.Mock(return_value=False)) as tarik:
+            _ringkas, _error, sumber = self.controller._pull_for_event(
+                self.config, 'sync.changed', 'holidays',
+            )
+
+        self.assertEqual(sumber, 'sync:holidays')
+        tarik.assert_called_once_with('holidays')
+
+
+@tagged('post_install', '-at_install')
+class TestPresenlyWebhookRegistrationRefresh(TransactionCase):
+    """Pendaftaran yang sudah berjalan ikut bertambah saat peristiwa baru ditangani.
+
+    Daftar peristiwa ditulis sekali saat mendaftar, dan server tidak
+    memperbaruinya sendiri. Kalau tidak diperiksa, peristiwa yang kodenya sudah
+    ditangani — jadwal kerja dan slotnya — tidak pernah dikirim, tanpa galat di
+    mana pun: yang terlihat hanya data yang tidak ikut berubah.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        from ..models.presenly_saas_config_hr import WEBHOOK_EVENTS
+
+        cls.events = list(WEBHOOK_EVENTS)
+        cls.config = cls.env['presenly.saas.config']._get_or_create(cls.env.company)
+        cls.config.sudo().write({
+            'enabled': True,
+            'webhook_enabled': True,
+            'webhook_url': 'http://contoh.test/presenly_saas/webhook/token-uji',
+            'webhook_token': 'token-uji-pendaftaran',
+        })
+
+    def _client(self, terdaftar, aktif=True):
+        client = mock.Mock()
+        client.get_webhook.return_value = {
+            'data': {'events': list(terdaftar), 'is_active': aktif},
+        }
+        client.register_webhook.return_value = {
+            'data': {
+                'url': 'http://contoh.test/presenly_saas/webhook/token-uji',
+                'secret': 'rahasia-yang-sama',
+            },
+        }
+        return client
+
+    def _periksa(self, client):
+        with mock.patch.object(type(self.config), '_client', lambda self, **k: client):
+            return self.config.ensure_webhook_registration()
+
+    def test_peristiwa_yang_belum_terdaftar_didaftarkan_ulang(self):
+        client = self._client(['employee.created', 'employee.updated'])
+
+        self.assertTrue(self._periksa(client))
+
+        dikirim = client.register_webhook.call_args[0][0]
+        self.assertEqual(dikirim['events'], self.events)
+        self.assertIn('weekly_schedule.created', dikirim['events'])
+        self.assertIn('weekly_schedule.updated', dikirim['events'])
+
+    def test_peristiwa_yang_sudah_lengkap_tidak_didaftarkan_ulang(self):
+        client = self._client(self.events)
+
+        self.assertFalse(self._periksa(client))
+
+        client.register_webhook.assert_not_called()
+
+    def test_pendaftaran_yang_nonaktif_dihidupkan_lagi(self):
+        """Tujuan yang dimatikan di server harus dinyalakan, bukan dibiarkan."""
+        client = self._client(self.events, aktif=False)
+
+        self.assertTrue(self._periksa(client))
+
+        client.register_webhook.assert_called_once()
+
+    def test_server_yang_tidak_menjawab_tidak_menimpa_alamat(self):
+        """Pemeriksaan yang gagal bukan alasan mendaftar ulang.
+
+        Kalau dipaksa, alamat yang benar bisa tertimpa alamat yang salah hanya
+        karena servernya sedang tidak terjangkau.
+        """
+        client = self._client(self.events)
+        client.get_webhook.side_effect = SaasClientError('tidak terjangkau')
+
+        self.assertFalse(self._periksa(client))
+
+        client.register_webhook.assert_not_called()
+
+    def test_rahasia_yang_tidak_dikirim_tidak_menghapus_yang_lama(self):
+        """Mendaftar ulang tidak mengganti rahasia, dan jawaban yang tidak
+        memuatnya tidak boleh menghapus yang lama."""
+        self.config.sudo().write({'webhook_secret': 'rahasia-lama'})
+        client = self._client(['employee.created'])
+        client.register_webhook.return_value = {'data': {'url': 'http://contoh.test/x'}}
+
+        self._periksa(client)
+
+        self.assertEqual(self.config.webhook_secret, 'rahasia-lama')

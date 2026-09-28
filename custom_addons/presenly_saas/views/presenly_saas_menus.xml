@@ -51,12 +51,6 @@
               action="action_presenly_saas_monitoring"
               sequence="20"/>
 
-    <menuitem id="menu_presenly_saas_attendance_recap"
-              name="Recap"
-              parent="menu_presenly_saas_attendance"
-              action="action_presenly_saas_attendance_recap"
-              sequence="30"/>
-
     <!-- Pengajuan: cuti, lembur, surat dokter, koreksi presensi, tukar shift.
          Semuanya hanya baca. -->
     <menuitem id="menu_presenly_saas_submission"

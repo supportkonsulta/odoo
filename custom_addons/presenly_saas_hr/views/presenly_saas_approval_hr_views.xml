@@ -2,11 +2,17 @@
 <odoo>
 
     <!--
-        Tombol keputusan pada form pengajuan cuti. Hanya muncul untuk pengguna
-        yang menurut langkah persetujuan berhak memutuskan level yang berjalan,
-        dan hanya kalau arah tulisnya dinyalakan di koneksi.
+        Tombol keputusan pada form pengajuan cuti.
 
-        Tombol ini kenyamanan, bukan pengaman: server tetap memeriksa haknya, dan
+        Diletakkan **di dalam kelompok Approval** yang sudah ada, bukan di
+        `<header>` tersendiri. Form ini tidak punya status bar, jadi header
+        tambahan hanya menghasilkan bilah kosong berisi satu tombol di atas kartu —
+        dan sekaligus memisahkan tombol dari rangkaian langkah yang menjelaskan
+        kenapa tombolnya ada di sana.
+
+        Yang menentukannya bukan layout, melainkan `presenly_can_decide`: tombol
+        hanya muncul untuk pengguna yang menurut langkah persetujuan berhak
+        memutuskan level yang berjalan. Server tetap memeriksa hal yang sama, dan
         penolakannya ditampilkan.
     -->
 
@@ -15,8 +21,12 @@
         <field name="model">presenly.saas.leave</field>
         <field name="inherit_id" ref="presenly_saas.view_presenly_saas_leave_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//form" position="inside">
-                <header>
+            <!-- Penandanya field, bukan atribut `string`: Odoo melarang `string`
+                 sebagai pemilih xpath karena bisa diterjemahkan. -->
+            <xpath expr="//field[@name='approval_step_ids']" position="before">
+                <div class="d-flex justify-content-end align-items-center gap-2">
+                    <field name="presenly_can_decide" invisible="1"/>
+                    <field name="presenly_decidable" invisible="1"/>
                     <button name="action_presenly_approve"
                             type="object"
                             string="Approve"
@@ -26,12 +36,7 @@
                             type="object"
                             string="Reject"
                             invisible="not presenly_can_decide"/>
-                    <field name="presenly_can_decide" invisible="1"/>
-                    <field name="presenly_decidable" invisible="1"/>
-                    <field name="presenly_odoo_approver_id"
-                           readonly="1"
-                           invisible="not presenly_decidable"/>
-                </header>
+                </div>
             </xpath>
         </field>
     </record>
