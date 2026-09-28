@@ -16,7 +16,6 @@
                 <field name="name"/>
                 <field name="project_id"/>
                 <field name="scope"/>
-                <field name="rab_id"/>
                 <field name="tanggal_hpp"/>
                 <field name="total_hpp_bulanan"/>
                 <field name="total_hpp_tahunan"/>
@@ -115,13 +114,6 @@
 
                         <group>
 
-                            <field name="rab_id"/>
-
-                            <field
-                                name="used_rab_ids"
-                                invisible="1"
-                            />
-
                             <field
                                 name="currency_id"
                                 invisible="1"
@@ -150,6 +142,9 @@
 
                         Kebutuhan Operational dan Engineering
                         digunakan sesuai scope proyek.
+
+                        HPP menjadi dasar perhitungan sebelum
+                        digunakan dalam proses pembuatan RAB.
 
                     </div>
 

@@ -14,11 +14,6 @@ class KsgSalesHpp(models.Model):
             "unique(name)",
             "Nomor HPP harus unik.",
         ),
-        (
-            "ksg_sales_hpp_rab_unique",
-            "unique(rab_id)",
-            "Satu RAB hanya dapat digunakan untuk satu HPP.",
-        ),
     ]
 
     # =========================================================
@@ -38,14 +33,6 @@ class KsgSalesHpp(models.Model):
         string="Proyek",
         required=True,
         ondelete="cascade",
-        index=True,
-        tracking=True,
-    )
-
-    rab_id = fields.Many2one(
-        comodel_name="ksg.sales.rab",
-        string="RAB",
-        ondelete="set null",
         index=True,
         tracking=True,
     )
@@ -91,6 +78,7 @@ class KsgSalesHpp(models.Model):
     # =========================================================
     # DETAIL HPP
     # =========================================================
+    #
     # Detail HPP menjadi tabel utama yang digunakan
     # untuk perhitungan HPP.
     #
@@ -125,6 +113,7 @@ class KsgSalesHpp(models.Model):
     # =========================================================
     # KEBUTUHAN ENGINEERING
     # =========================================================
+
     engineering_ids = fields.One2many(
         comodel_name="ksg.sales.hpp.engineering",
         inverse_name="hpp_id",
@@ -172,16 +161,6 @@ class KsgSalesHpp(models.Model):
     )
 
     # =========================================================
-    # RAB FILTER
-    # =========================================================
-
-    used_rab_ids = fields.Many2many(
-        comodel_name="ksg.sales.rab",
-        compute="_compute_used_rab_ids",
-        string="RAB yang Sudah Digunakan",
-    )
-
-    # =========================================================
     # CREATE
     # =========================================================
 
@@ -197,19 +176,6 @@ class KsgSalesHpp(models.Model):
                 )
 
         return super().create(vals_list)
-
-    # =========================================================
-    # RAB FILTER
-    # =========================================================
-
-    @api.depends("rab_id")
-    def _compute_used_rab_ids(self):
-        used_rabs = self.env["ksg.sales.hpp"].search([
-            ("rab_id", "!=", False),
-        ]).mapped("rab_id")
-
-        for hpp in self:
-            hpp.used_rab_ids = used_rabs - hpp.rab_id
 
     # =========================================================
     # TOTAL HPP
@@ -250,6 +216,7 @@ class KsgSalesHpp(models.Model):
             # -------------------------------------------------
             # Ini hanya sebagai informasi total kebutuhan,
             # bukan ditambahkan lagi ke Total HPP.
+
             hpp.total_tenaga_kerja = sum(
                 hpp.tenaga_kerja_ids.mapped("subtotal")
             )
@@ -261,6 +228,7 @@ class KsgSalesHpp(models.Model):
             # -------------------------------------------------
             # Total HPP berasal dari Detail HPP
             # -------------------------------------------------
+
             total_bulanan = sum(
                 hpp.line_ids.mapped("jumlah_bulan")
             )
@@ -269,31 +237,12 @@ class KsgSalesHpp(models.Model):
 
             # Sementara menggunakan 12 bulan.
             # Nanti dapat disesuaikan dengan durasi kontrak.
+
             hpp.total_hpp_tahunan = total_bulanan * 12
 
             # Compatibility dengan field lama.
+
             hpp.total_hpp = hpp.total_hpp_tahunan
-
-    # =========================================================
-    # VALIDATION RAB
-    # =========================================================
-
-    @api.constrains("rab_id")
-    def _check_rab_unique(self):
-        for hpp in self:
-            if not hpp.rab_id:
-                continue
-
-            duplicate = self.search_count([
-                ("rab_id", "=", hpp.rab_id.id),
-                ("id", "!=", hpp.id),
-            ])
-
-            if duplicate:
-                raise ValidationError(
-                    f"RAB {hpp.rab_id.name} sudah digunakan "
-                    "untuk HPP lain."
-                )
 
     # =========================================================
     # WORKFLOW
@@ -310,6 +259,7 @@ class KsgSalesHpp(models.Model):
             # -------------------------------------------------
             # Detail HPP wajib diisi untuk semua scope
             # -------------------------------------------------
+
             if not hpp.line_ids:
                 raise ValidationError(
                     "Isi minimal satu Detail HPP sebelum "
@@ -319,6 +269,7 @@ class KsgSalesHpp(models.Model):
             # -------------------------------------------------
             # Validasi tambahan untuk Operational
             # -------------------------------------------------
+
             if hpp.scope == "operational":
                 if (
                     not hpp.tenaga_kerja_ids
@@ -335,7 +286,10 @@ class KsgSalesHpp(models.Model):
             })
 
             hpp.message_post(
-                body=f"HPP {hpp.name} telah diajukan untuk persetujuan.",
+                body=(
+                    f"HPP {hpp.name} telah diajukan "
+                    "untuk persetujuan."
+                ),
                 subtype_xmlid="mail.mt_note",
             )
 
