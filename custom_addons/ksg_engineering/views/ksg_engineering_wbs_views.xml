@@ -13,7 +13,7 @@
                   decoration-bf="not parent_id">
                 <field name="project_id"/>
                 <field name="parent_id" string="Induk" optional="show"/>
-                <field name="nama_pekerjaan"/>
+                <field name="display_name" string="Nama Pekerjaan"/>
                 <field name="nilai_pekerjaan" string="Nilai (Rp)" sum="Total"/>
                 <field name="bobot" string="Bobot (%)" sum="Total"/>
                 <field name="tanggal_mulai"/>
@@ -73,20 +73,27 @@
                                    invisible="not otorisasi_luar_periode"
                                    groups="ksg_engineering.group_kepala_unit,base.group_system"/>
                         </group>
-                        <group string="Progress">
-                            <field name="planned_progress_mingguan" readonly="1" string="Rencana / Minggu (%)"/>
+                        <group string="Progress Target &amp; Realisasi">
+                            <field name="mode_distribusi" widget="radio" options="{'horizontal': true}"/>
                             <field name="planned_progress_kumulatif" readonly="1" string="Rencana Kumulatif (%)"/>
                             <field name="actual_progress_kumulatif" readonly="1" string="Realisasi Kumulatif (%)"/>
                         </group>
                     </group>
                     <notebook>
-                        <page string="Periode Minggu">
+                        <page string="Target Mingguan">
                             <div class="alert alert-info mb-2" role="alert">
-                                Pilih minggu-minggu (dari Master Schedule) dimana pekerjaan ini akan dilaksanakan. 
-                                Bobot Rencana (%) akan didistribusikan secara merata ke minggu-minggu yang dipilih.
+                                <strong>Mode Otomatis:</strong> Akan otomatis mengisi dan membagi rata bobot sesuai tanggal pelaksanaan.<br/>
+                                <strong>Mode Manual:</strong> Anda bisa menambahkan dan mengisi target progress (%) secara spesifik untuk minggu tertentu.
                             </div>
-                            <field name="periode_minggu_ids" widget="many2many_tags"
-                                   domain="[('project_id', '=', project_id)]"/>
+                            <field name="target_ids" nolabel="1"
+                                   readonly="mode_distribusi == 'otomatis'">
+                                <list editable="bottom">
+                                    <field name="periode_minggu_id" string="Periode Minggu"
+                                           domain="[('project_id', '=', parent.project_id)]"
+                                           options="{'no_create': 1}"/>
+                                    <field name="target_progress" sum="Total Rencana (%)"/>
+                                </list>
+                            </field>
                         </page>
                         <page string="Sub-Pekerjaan (WBS Anak)">
                             <div class="text-muted mb-2">

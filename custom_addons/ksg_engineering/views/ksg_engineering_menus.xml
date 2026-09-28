@@ -66,10 +66,9 @@
         <field name="view_mode">list,form</field>
         <field name="search_view_id" ref="view_wbs_search"/>
         <field name="context">{'search_default_group_project': 1}</field>
-        <field name="domain">[('parent_id', '=', False)]</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">Belum ada Rincian Pekerjaan.</p>
-            <p>Hanya menampilkan pekerjaan Induk (Utama). Sub-pekerjaan bisa dilihat/ditambah di dalam form Induk tersebut.</p>
+            <p>Buat rincian pekerjaan (WBS) untuk mulai merencanakan proyek.</p>
         </field>
     </record>
 

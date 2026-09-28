@@ -42,33 +42,44 @@
                     </group>
 
                     <notebook>
-                        <!-- ===== Tab 1: Engineering Overview ===== -->
-                        <page string="Engineering" name="engineering_tab">
-                            <group>
-                                <group string="Prasyarat Keselamatan (Wajib)">
-                                    <div class="text-muted mb-2" colspan="2">
-                                        Centang kedua item di bawah setelah dokumen keselamatan lengkap.
-                                        Daily Report tidak bisa disubmit jika belum dicentang.
-                                    </div>
-                                    <field name="working_permit_ok" string="Working Permit Lengkap"/>
-                                    <field name="safety_induction_ok" string="Safety Induction Lengkap"/>
-                                </group>
-                                <group string="Status">
-                                    <field name="bapbast_approved" readonly="1" string="BAP/BAST Disetujui"/>
-                                    <field name="notify_email_enabled" string="Kirim Notifikasi Email"/>
-                                </group>
-                            </group>
-                            <group string="Progress Proyek (Kurva-S)">
-                                <group>
-                                    <field name="kurva_s_planned" string="Rencana (%)"/>
-                                    <field name="kurva_s_actual" string="Realisasi (%)"/>
-                                    <field name="kurva_s_variance" string="Selisih (%)"/>
-                                </group>
-                            </group>
-                            <field name="kurva_s_planned" widget="kurva_s_chart" nolabel="1"/>
-                            <separator string="Dokumen Teknis Proyek"/>
-                            <field name="document_ids" widget="many2many_binary" nolabel="1"/>
-                        </page>
+                <!-- ===== Tab 1: Engineering Overview ===== -->
+                <page string="Engineering" name="engineering_tab">
+                    <group>
+                        <group string="Informasi Kontrak (Read-Only)">
+                            <field name="klien" readonly="1"/>
+                            <field name="tanggal_po_diterima" readonly="1"/>
+                            <field name="no_pk" readonly="1"/>
+                            <field name="awal_kontrak" readonly="1"/>
+                            <field name="akhir_kontrak" readonly="1"/>
+                            <field name="nilai_kontrak_awal" readonly="1"/>
+                            <field name="nilai_kontrak_terkini" readonly="1"/>
+                            <field name="sistem_penagihan" readonly="1"/>
+                        </group>
+                        <group string="Prasyarat Keselamatan (Wajib)">
+                            <div class="text-muted mb-2" colspan="2">
+                                Centang kedua item di bawah setelah dokumen keselamatan lengkap.
+                                Daily Report tidak bisa disubmit jika belum dicentang.
+                            </div>
+                            <field name="working_permit_ok" string="Working Permit Lengkap"/>
+                            <field name="safety_induction_ok" string="Safety Induction Lengkap"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Progress Proyek (Kurva-S)">
+                            <field name="kurva_s_planned" string="Rencana (%)"/>
+                            <field name="kurva_s_actual" string="Realisasi (%)"/>
+                            <field name="kurva_s_variance" string="Selisih (%)"/>
+                        </group>
+                        <group string="Status &amp; Notifikasi">
+                            <field name="bapbast_approved" readonly="1" string="BAP/BAST Disetujui"/>
+                            <field name="notify_email_enabled" string="Kirim Notifikasi Email"/>
+                        </group>
+                    </group>
+                    <separator string="Grafik Kurva-S"/>
+                    <field name="kurva_s_planned" widget="kurva_s_chart" nolabel="1"/>
+                    <separator string="Dokumen Teknis Proyek"/>
+                    <field name="document_ids" widget="many2many_binary" nolabel="1"/>
+                </page>
 
                         <!-- ===== Tab 2: Struktur Personel / Assignment ===== -->
                         <page string="Struktur Personel" name="assignment_tab">
@@ -86,15 +97,15 @@
                             </field>
                         </page>
 
-                        <!-- ===== Tab 3: WBS (Rincian Pekerjaan) ===== -->
-                        <page string="WBS (Rincian Pekerjaan)" name="wbs_tab">
-                            <div class="text-muted mb-2">
-                                Buat rincian pekerjaan proyek. Klik "Tambah baris" untuk menambah item. Untuk sub-pekerjaan, isi kolom "Induk".
-                            </div>
-                            <field name="wbs_ids" nolabel="1">
-                                <list editable="bottom" default_order="parent_path">
-                                    <field name="nama_pekerjaan" string="Nama Pekerjaan"/>
-                                    <field name="parent_id" string="Induk"
+                <!-- ===== Tab 3: WBS (Rincian Pekerjaan) ===== -->
+                <page string="WBS (Rincian Pekerjaan)" name="wbs_tab">
+                    <div class="text-muted mb-2">
+                        Buat rincian pekerjaan proyek. Klik "Tambah baris" untuk menambah item. Untuk sub-pekerjaan, isi kolom "Induk".
+                    </div>
+                    <field name="wbs_ids" nolabel="1">
+                        <list default_order="parent_path">
+                            <field name="display_name" string="Nama Pekerjaan"/>
+                            <field name="parent_id" string="Induk"
                                            domain="[('project_id', '=', parent.id)]"
                                            optional="show"/>
                                     <field name="nilai_pekerjaan" string="Nilai (Rp)" sum="Total"/>

@@ -9,6 +9,20 @@ from odoo import models, fields, api
 from odoo.exceptions import ValidationError
 
 
+class KsgEngineeringWbsTarget(models.Model):
+    _name = 'ksg.engineering.wbs.target'
+    _description = 'Target Mingguan WBS'
+    _order = 'periode_minggu_id'
+
+    wbs_id = fields.Many2one('ksg.engineering.wbs', string='WBS', required=True, ondelete='cascade')
+    periode_minggu_id = fields.Many2one('ksg.engineering.schedule.week', string='Minggu', required=True, ondelete='restrict')
+    target_progress = fields.Float(string='Target Progres (%)', digits=(5, 2), required=True, default=0.0)
+
+    _sql_constraints = [
+        ('wbs_minggu_unik', 'unique(wbs_id, periode_minggu_id)', 'Setiap WBS hanya boleh memiliki satu target per minggu.')
+    ]
+
+
 class KsgEngineeringWbs(models.Model):
     _name = 'ksg.engineering.wbs'
     _description = 'WBS Engineering'
@@ -48,20 +62,31 @@ class KsgEngineeringWbs(models.Model):
         string='Bobot (%)', compute='_compute_bobot',
         store=True, digits=(5, 2), tracking=True)
 
-    # Periode minggu (FR-004) - Manual selection
-    periode_minggu_ids = fields.Many2many(
-        'ksg.engineering.schedule.week', string='Periode Minggu', tracking=True)
+    # Mode Distribusi & Target (S-Curve Parity)
+    mode_distribusi = fields.Selection([
+        ('otomatis', 'Dibagi Rata (Otomatis)'),
+        ('manual', 'Manual (Sesuai Excel)')
+    ], string='Mode Distribusi Progres', default='otomatis', required=True, tracking=True)
+
+    target_ids = fields.One2many(
+        'ksg.engineering.wbs.target', 'wbs_id', string='Target Per Minggu')
 
     # Progress (FR-004, FR-010)
-    planned_progress_mingguan = fields.Float(
-        string='Planned Progress Mingguan (%)',
-        compute='_compute_planned', store=True, digits=(5, 2))
     planned_progress_kumulatif = fields.Float(
         string='Planned Progress Kumulatif (%)',
         compute='_compute_planned', store=True, digits=(5, 2))
     actual_progress_kumulatif = fields.Float(
         string='Actual Progress Kumulatif (%)',
         compute='_compute_actual', digits=(5, 2))
+
+    # Backward compatibility helper for reports
+    periode_minggu_ids = fields.Many2many(
+        'ksg.engineering.schedule.week', compute='_compute_periode_minggu_ids', store=True)
+
+    @api.depends('target_ids.periode_minggu_id')
+    def _compute_periode_minggu_ids(self):
+        for rec in self:
+            rec.periode_minggu_ids = [(6, 0, rec.target_ids.mapped('periode_minggu_id').ids)]
 
     # Otorisasi luar periode (FR-004A)
     otorisasi_luar_periode = fields.Boolean(
@@ -101,10 +126,15 @@ class KsgEngineeringWbs(models.Model):
     # COMPUTES & OVERRIDES
     # ==================================================================
     
-    @api.depends('nama_pekerjaan')
+    @api.depends('nama_pekerjaan', 'parent_id', 'parent_path')
     def _compute_display_name(self):
         for rec in self:
-            rec.display_name = rec.nama_pekerjaan
+            if rec.parent_path:
+                level = len(rec.parent_path.strip('/').split('/')) - 1
+                indent = "   " * level
+                rec.display_name = f"{indent}└ {rec.nama_pekerjaan}" if level > 0 else rec.nama_pekerjaan
+            else:
+                rec.display_name = rec.nama_pekerjaan
 
     @api.depends('nilai_pekerjaan', 'project_id.nilai_kontrak_terkini')
     def _compute_bobot(self):
@@ -117,17 +147,33 @@ class KsgEngineeringWbs(models.Model):
             else:
                 rec.bobot = 0.0
 
-    @api.depends('bobot', 'periode_minggu_ids')
+    @api.depends('target_ids.target_progress')
     def _compute_planned(self):
-        """Distribusi bobot merata per minggu yang di-assign."""
+        """Hitung planned progress kumulatif berdasarkan tabel target."""
         for rec in self:
-            n_weeks = len(rec.periode_minggu_ids)
-            if n_weeks and rec.bobot:
-                rec.planned_progress_mingguan = rec.bobot / n_weeks
-                rec.planned_progress_kumulatif = rec.bobot
-            else:
-                rec.planned_progress_mingguan = 0.0
-                rec.planned_progress_kumulatif = 0.0
+            rec.planned_progress_kumulatif = sum(rec.target_ids.mapped('target_progress'))
+
+    @api.onchange('tanggal_mulai', 'tanggal_selesai', 'mode_distribusi', 'bobot')
+    def _onchange_generate_targets(self):
+        """Otomatis generate target mingguan jika mode=otomatis."""
+        if self.mode_distribusi != 'otomatis' or not self.tanggal_mulai or not self.tanggal_selesai or not self.project_id:
+            return
+            
+        weeks = self.project_id.schedule_week_ids.filtered(
+            lambda w: (w.tanggal_mulai <= self.tanggal_selesai and w.tanggal_selesai >= self.tanggal_mulai)
+        )
+        
+        target_cmds = [(5, 0, 0)] # Clear existing
+        n_weeks = len(weeks)
+        if n_weeks and self.bobot:
+            progress_per_week = self.bobot / n_weeks
+            for w in weeks:
+                target_cmds.append((0, 0, {
+                    'periode_minggu_id': w.id,
+                    'target_progress': progress_per_week
+                }))
+        
+        self.target_ids = target_cmds
 
     def _compute_actual(self):
         """Actual progress dari daily report lines yang terkait WBS ini

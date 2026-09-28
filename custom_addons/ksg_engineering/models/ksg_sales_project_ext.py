@@ -143,11 +143,12 @@ class KsgSalesProjectExt(models.Model):
             labels.append(f"W{w.no_minggu}")
             
             # Hitung Rencana Kumulatif s/d minggu ini
-            # Bobot WBS yang dialokasikan s/d minggu ini
+            # Bobot WBS yang dialokasikan s/d minggu ini dari wbs.target
             week_planned = 0.0
             for wbs in top_wbs:
-                if w.id in wbs.periode_minggu_ids.ids:
-                    week_planned += wbs.planned_progress_mingguan * (wbs.bobot / total_bobot)
+                target = wbs.target_ids.filtered(lambda t: t.periode_minggu_id.id == w.id)
+                if target:
+                    week_planned += sum(target.mapped('target_progress'))
             cum_planned += week_planned
             planned.append(round(min(cum_planned, 100.0), 2))
             
