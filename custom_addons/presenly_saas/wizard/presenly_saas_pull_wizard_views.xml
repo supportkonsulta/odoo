@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_presenly_saas_pull_wizard_form" model="ir.ui.view">
+        <field name="name">presenly.saas.pull.wizard.form</field>
+        <field name="model">presenly.saas.pull.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Pull Period Data">
+                <group>
+                    <group string="Period">
+                        <field name="month"/>
+                        <field name="year"/>
+                        <field name="months_back"/>
+                    </group>
+                    <group string="Connection">
+                        <field name="config_id" readonly="1"/>
+                    </group>
+                </group>
+                <div class="text-muted">
+                    The attendance log and the requests for this period will
+                    <b>replace</b> the existing data for the same month. Other months
+                    are left untouched.
+                </div>
+                <footer>
+                    <button name="action_pull"
+                            type="object"
+                            string="Pull Now"
+                            class="btn-primary"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Pintu masuk wizard. Sebelum ini modelnya punya form tetapi tidak ada
+         satu pun act_window, menu, atau tombol yang membukanya, sehingga bantuan
+         di layar menyuruh pengguna menjalankan perintah yang tidak ada. -->
+    <record id="action_presenly_saas_pull_period" model="ir.actions.act_window">
+        <field name="name">Pull Period Data</field>
+        <field name="res_model">presenly.saas.pull.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="group_ids" eval="[(4, ref('presenly_saas.group_presenly_saas_manager'))]"/>
+    </record>
+
+</odoo>

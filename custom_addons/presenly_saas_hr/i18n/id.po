@@ -1,0 +1,776 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* presenly_saas_hr
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 19.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-22 04:47+0000\n"
+"PO-Revision-Date: 2026-09-22 11:49+0000\n"
+"Last-Translator: Presenly <support@presenly.id>\n"
+"Language-Team: Indonesian\n"
+"Language: id\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#. module: presenly_saas_hr
+#. odoo-python
+#: code:addons/presenly_saas_hr/models/presenly_saas_employee_mirror.py:0
+msgid "%(name)s (nopeg %(nopeg)s): %(error)s"
+msgstr "%(name)s (nopeg %(nopeg)s): %(error)s"
+
+#. module: presenly_saas_hr
+#. odoo-python
+#: code:addons/presenly_saas_hr/models/presenly_saas_employee_mirror.py:0
+msgid ""
+"%(name)s (nopeg %(nopeg)s): changed in both systems; the Presenly value was "
+"kept. Review it in Odoo."
+msgstr ""
+"%(name)s (nopeg %(nopeg)s): berubah di kedua sisi; nilai dari Presenly yang "
+"dipakai. Periksa di Odoo."
+
+#. module: presenly_saas_hr
+#. odoo-python
+#: code:addons/presenly_saas_hr/models/presenly_saas_employee_mirror.py:0
+#: code:addons/presenly_saas_hr/tests/test_employee_sync.py:0
+msgid ""
+"%(name)s (nopeg %(nopeg)s): more than one Odoo employee carries this nopeg, "
+"so none was touched."
+msgstr ""
+"%(name)s (nopeg %(nopeg)s): lebih dari satu pegawai Odoo memakai nopeg ini, "
+"jadi tidak ada yang disentuh."
+
+#. module: presenly_saas_hr
+#. odoo-python
+#: code:addons/presenly_saas_hr/models/presenly_saas_employee_mirror.py:0
+#: code:addons/presenly_saas_hr/tests/test_employee_sync.py:0
+msgid ""
+"%(name)s: Presenly marks this employee inactive, but the Odoo employee has a"
+" user account. Deactivate it in Odoo if that is really intended."
+msgstr ""
+"%(name)s: Presenly menandai pegawai ini tidak aktif, tetapi pegawai Odoo-nya"
+" punya akun pengguna. Nonaktifkan di Odoo kalau memang itu yang diinginkan."
+
+#. module: presenly_saas_hr
+#. odoo-python
+#: code:addons/presenly_saas_hr/models/presenly_saas_employee_mirror.py:0
+msgid "%(name)s: could not be linked to an Odoo employee."
+msgstr "%(name)s: tidak bisa ditautkan ke pegawai Odoo."
+
+#. module: presenly_saas_hr
+#. odoo-python
+#: code:addons/presenly_saas_hr/models/presenly_saas_employee_mirror.py:0
+msgid "%(name)s: no nopeg, so there is no key to link on."
+msgstr "%(name)s: tanpa nopeg, jadi tidak ada kunci untuk menautkan."
+
+#. module: presenly_saas_hr
+#. odoo-python
+#: code:addons/presenly_saas_hr/models/presenly_saas_config_hr.py:0
+msgid ""
+"%(pulled)s employees pulled: %(created)s created, %(updated)s updated, "
+"%(unchanged)s unchanged. Sent back to Presenly: %(pushed)s."
+msgstr ""
+"%(pulled)s pegawai ditarik: %(created)s dibuat, %(updated)s diperbarui, "
+"%(unchanged)s tidak berubah. Dikirim balik ke Presenly: %(pushed)s."
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_presenly_saas_employee__is_active
+#: model_terms:ir.ui.view,arch_db:presenly_saas_hr.view_presenly_saas_employee_search
+msgid "Active in Presenly"
+msgstr "Aktif di Presenly"
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_presenly_saas_employee__address
+msgid "Address"
+msgstr "Alamat"
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_presenly_saas_employee__birth_date
+msgid "Birth Date"
+msgstr "Tanggal Lahir"
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_presenly_saas_employee__birth_place
+msgid "Birth Place"
+msgstr "Tempat Lahir"
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_presenly_saas_employee__can_approve
+msgid "Can Approve"
+msgstr "Boleh Menyetujui"
+
+#. module: presenly_saas_hr
+#: model_terms:ir.ui.view,arch_db:presenly_saas_hr.res_config_settings_view_form_hr
+msgid "Change Notifications"
+msgstr "Pemberitahuan Perubahan"
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_hr_employee__presenly_source_updated_at
+msgid "Changed in Presenly At"
+msgstr "Diubah di Presenly Pada"
+
+#. module: presenly_saas_hr
+#. odoo-python
+#: code:addons/presenly_saas_hr/models/presenly_saas_config_hr.py:0
+msgid ""
+"Changed in both systems:\n"
+"%s"
+msgstr ""
+"Berubah di kedua sisi:\n"
+"%s"
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_presenly_saas_employee__company_id
+msgid "Company"
+msgstr "Perusahaan"
+
+#. module: presenly_saas_hr
+#: model:ir.model,name:presenly_saas_hr.model_res_config_settings
+msgid "Config Settings"
+msgstr "Pengaturan Konfigurasi"
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_presenly_saas_employee__create_uid
+msgid "Created by"
+msgstr "Dibuat oleh"
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_presenly_saas_employee__create_date
+msgid "Created on"
+msgstr "Dibuat pada"
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_presenly_saas_employee__source_created_at
+msgid "Created on SaaS"
+msgstr "Dibuat di SaaS"
+
+#. module: presenly_saas_hr
+#: model_terms:ir.ui.view,arch_db:presenly_saas_hr.view_presenly_saas_employee_form
+msgid "Data Source"
+msgstr "Asal Data"
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_hr_employee__display_name
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_presenly_saas_config__display_name
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_presenly_saas_employee__display_name
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_res_config_settings__display_name
+msgid "Display Name"
+msgstr "Nama Tampilan"
+
+#. module: presenly_saas_hr
+#: model:ir.model,name:presenly_saas_hr.model_hr_employee
+msgid "Employee"
+msgstr "Karyawan"
+
+#. module: presenly_saas_hr
+#. odoo-python
+#: code:addons/presenly_saas_hr/models/presenly_saas_config_hr.py:0
+#: code:addons/presenly_saas_hr/tests/test_employee_sync.py:0
+msgid "Employee pull finished"
+msgstr "Penarikan pegawai selesai"
+
+#. module: presenly_saas_hr
+#: model:ir.actions.act_window,name:presenly_saas_hr.action_presenly_saas_employee
+#: model:ir.ui.menu,name:presenly_saas_hr.menu_presenly_saas_employee
+msgid "Employees (mirror)"
+msgstr "Pegawai (cermin)"
+
+#. module: presenly_saas_hr
+#. odoo-python
+#: code:addons/presenly_saas_hr/models/presenly_saas_config_hr.py:0
+msgid "Failed to pull employees"
+msgstr "Gagal menarik data pegawai"
+
+#. module: presenly_saas_hr
+#. odoo-python
+#: code:addons/presenly_saas_hr/models/presenly_saas_config_hr.py:0
+msgid "Fields sent: %s"
+msgstr "Kolom yang dikirim: %s"
+
+#. module: presenly_saas_hr
+#: model_terms:ir.ui.view,arch_db:presenly_saas_hr.view_presenly_saas_employee_search
+msgid "Inactive in Presenly"
+msgstr "Tidak Aktif di Presenly"
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_presenly_saas_employee__internal_company_name
+#: model_terms:ir.ui.view,arch_db:presenly_saas_hr.view_presenly_saas_employee_search
+msgid "Internal Company"
+msgstr "Perusahaan Internal"
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_presenly_saas_employee__internal_company_id
+msgid "Internal Company ID"
+msgstr "ID Perusahaan Internal"
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_presenly_saas_config__webhook_last_received_at
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_res_config_settings__presenly_saas_webhook_last_received_at
+msgid "Last Notification Received"
+msgstr "Pemberitahuan Terakhir Diterima"
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_presenly_saas_employee__fetched_at
+msgid "Last Pulled"
+msgstr "Terakhir Ditarik"
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_hr_employee__presenly_synced_values
+msgid "Last Synced Values"
+msgstr "Nilai Tersinkron Terakhir"
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_hr_employee__presenly_synced_at
+msgid "Last Written by Sync"
+msgstr "Terakhir Ditulis Sinkronisasi"
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_presenly_saas_employee__write_uid
+msgid "Last Updated by"
+msgstr "Terakhir Diubah oleh"
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_presenly_saas_employee__write_date
+msgid "Last Updated on"
+msgstr "Terakhir Diubah pada"
+
+#. module: presenly_saas_hr
+#: model_terms:ir.ui.view,arch_db:presenly_saas_hr.view_presenly_saas_employee_search
+msgid "Linked to an Odoo Employee"
+msgstr "Tertaut ke Pegawai Odoo"
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_presenly_saas_employee__name
+msgid "Name"
+msgstr "Nama"
+
+#. module: presenly_saas_hr
+#. odoo-python
+#: code:addons/presenly_saas_hr/models/presenly_saas_config_hr.py:0
+#: code:addons/presenly_saas_hr/tests/test_employee_sync.py:0
+msgid ""
+"Needs a decision in Odoo:\n"
+"%s"
+msgstr ""
+"Perlu keputusan di Odoo:\n"
+"%s"
+
+#. module: presenly_saas_hr
+#: model_terms:ir.ui.view,arch_db:presenly_saas_hr.view_presenly_saas_employee_form
+msgid "No Home in Odoo"
+msgstr "Tidak Ada Padanan di Odoo"
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields.selection,name:presenly_saas_hr.selection__presenly_saas_employee__synced_state__no_nopeg
+#: model_terms:ir.ui.view,arch_db:presenly_saas_hr.view_presenly_saas_employee_search
+msgid "No Nopeg"
+msgstr "Tanpa Nopeg"
+
+#. module: presenly_saas_hr
+#: model_terms:ir.actions.act_window,help:presenly_saas_hr.action_presenly_saas_employee
+msgid "No employees mirrored yet"
+msgstr "Belum ada pegawai tercermin"
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields.selection,name:presenly_saas_hr.selection__presenly_saas_employee__synced_state__unlinked
+msgid "Not Linked"
+msgstr "Belum Tertaut"
+
+#. module: presenly_saas_hr
+#: model_terms:ir.ui.view,arch_db:presenly_saas_hr.view_presenly_saas_employee_search
+msgid "Not Linked Yet"
+msgstr "Belum Tertaut"
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_presenly_saas_employee__hr_employee_id
+msgid "Odoo Employee"
+msgstr "Pegawai Odoo"
+
+#. module: presenly_saas_hr
+#: model_terms:ir.ui.view,arch_db:presenly_saas_hr.view_presenly_saas_employee_form
+msgid "PII (only with include_pii)"
+msgstr "Data Pribadi (hanya dengan include_pii)"
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_presenly_saas_employee__phone
+msgid "Phone"
+msgstr "Telepon"
+
+#. module: presenly_saas_hr
+#: model:ir.model,name:presenly_saas_hr.model_presenly_saas_employee
+msgid "Presenly Employee (mirror)"
+msgstr "Presenly Pegawai (cermin)"
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_hr_employee__presenly_nopeg
+msgid "Presenly Nopeg"
+msgstr "Nopeg Presenly"
+
+#. module: presenly_saas_hr
+#: model:ir.model,name:presenly_saas_hr.model_presenly_saas_config
+msgid "Presenly SaaS Connection"
+msgstr "Koneksi Presenly SaaS"
+
+#. module: presenly_saas_hr
+#: model:ir.actions.server,name:presenly_saas_hr.ir_cron_presenly_saas_sync_employees_ir_actions_server
+msgid "Presenly SaaS: Sync Employees"
+msgstr "Presenly SaaS: Sinkronkan Pegawai"
+
+#. module: presenly_saas_hr
+#: model:ir.actions.server,name:presenly_saas_hr.action_presenly_saas_pull_employees
+#: model_terms:ir.ui.view,arch_db:presenly_saas_hr.view_presenly_saas_subscription_form_hr
+msgid "Pull Employees"
+msgstr "Tarik Pegawai"
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_presenly_saas_employee__raw_payload
+msgid "Raw Payload"
+msgstr "Payload Mentah"
+
+#. module: presenly_saas_hr
+#: model:ir.actions.server,name:presenly_saas_hr.action_presenly_saas_register_webhook
+#: model_terms:ir.ui.view,arch_db:presenly_saas_hr.res_config_settings_view_form_hr
+msgid "Register This Odoo"
+msgstr "Daftarkan Odoo Ini"
+
+#. module: presenly_saas_hr
+#: model_terms:ir.ui.view,arch_db:presenly_saas_hr.res_config_settings_view_form_hr
+msgid ""
+"Register this Odoo with the Presenly server, so it is told when an employee "
+"changes there instead of waiting for the next pull. The address must be "
+"reachable from the server, so it comes from the `web.base.url` parameter."
+msgstr ""
+"Daftarkan Odoo ini ke server Presenly, supaya diberi tahu saat pegawai "
+"berubah di sana tanpa menunggu tarikan berikutnya. Alamatnya harus bisa "
+"dijangkau server, jadi diambil dari parameter `web.base.url`."
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_presenly_saas_employee__grup
+msgid "SIK Group"
+msgstr "Grup SIK"
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_presenly_saas_config__webhook_enabled
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_res_config_settings__presenly_saas_webhook_enabled
+#: model_terms:ir.ui.view,arch_db:presenly_saas_hr.res_config_settings_view_form_hr
+msgid "Send Change Notifications"
+msgstr "Kirim Pemberitahuan Perubahan"
+
+#. module: presenly_saas_hr
+#. odoo-python
+#: code:addons/presenly_saas_hr/models/presenly_saas_config_hr.py:0
+msgid ""
+"Send failed:\n"
+"%s"
+msgstr ""
+"Gagal mengirim:\n"
+"%s"
+
+#. module: presenly_saas_hr
+#. odoo-python
+#: code:addons/presenly_saas_hr/models/presenly_saas_config_hr.py:0
+msgid ""
+"Skipped:\n"
+"%s"
+msgstr ""
+"Dilewati:\n"
+"%s"
+
+#. module: presenly_saas_hr
+#: model:ir.actions.server,name:presenly_saas_hr.action_presenly_saas_unregister_webhook
+#: model_terms:ir.ui.view,arch_db:presenly_saas_hr.res_config_settings_view_form_hr
+msgid "Stop Notifications"
+msgstr "Hentikan Pemberitahuan"
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_presenly_saas_employee__synced_state
+msgid "Sync"
+msgstr "Sinkronisasi"
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_presenly_saas_employee__source_updated_at
+msgid "Updated on SaaS"
+msgstr "Diubah di SaaS"
+
+#. module: presenly_saas_hr
+#: model_terms:ir.actions.act_window,help:presenly_saas_hr.action_presenly_saas_employee
+msgid ""
+"Use <b>Pull Employees</b> on the Subscription page. The real employee\n"
+"               records live in the Employees app; this page shows what Presenly sent,\n"
+"               including the columns that have no home in Odoo."
+msgstr ""
+"Gunakan <b>Tarik Pegawai</b> di halaman Langganan. Record pegawai yang\n"
+"               sesungguhnya ada di aplikasi Employees; halaman ini menampilkan apa\n"
+"               yang dikirim Presenly, termasuk kolom yang tidak punya padanan di Odoo."
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_presenly_saas_config__webhook_secret
+msgid "Webhook Secret"
+msgstr "Rahasia Webhook"
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_presenly_saas_config__webhook_token
+msgid "Webhook Token"
+msgstr "Token Webhook"
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_presenly_saas_config__webhook_url
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_res_config_settings__presenly_saas_webhook_url
+msgid "Webhook URL"
+msgstr "Alamat Webhook"
+
+#. module: presenly_saas_hr
+#. odoo-python
+#: code:addons/presenly_saas_hr/models/presenly_saas_config_hr.py:0
+msgid "Webhook disabled"
+msgstr "Webhook dimatikan"
+
+#. module: presenly_saas_hr
+#. odoo-python
+#: code:addons/presenly_saas_hr/models/presenly_saas_config_hr.py:0
+msgid "Webhook not disabled"
+msgstr "Webhook tidak bisa dimatikan"
+
+#. module: presenly_saas_hr
+#. odoo-python
+#: code:addons/presenly_saas_hr/models/presenly_saas_config_hr.py:0
+#: code:addons/presenly_saas_hr/tests/test_webhook_receiver.py:0
+msgid "Webhook not registered"
+msgstr "Webhook tidak terdaftar"
+
+#. module: presenly_saas_hr
+#. odoo-python
+#: code:addons/presenly_saas_hr/models/presenly_saas_config_hr.py:0
+msgid "Webhook registered"
+msgstr "Webhook terdaftar"
+
+#. module: presenly_saas_hr
+msgid "%(count)s features, %(available)s available."
+msgstr "%(count)s fitur, %(available)s tersedia."
+
+#. module: presenly_saas_hr
+msgid ""
+"%(key)s: the mirrored log has %(lcount)s sessions/%(llate)s minutes, the "
+"server recap has %(scount)s sessions/%(slate)s minutes"
+msgstr ""
+"%(key)s: cermin log %(lcount)s sesi/%(llate)s menit, rekap server %(scount)s"
+" sesi/%(slate)s menit"
+
+#. module: presenly_saas_hr
+msgid ""
+"%(months)s months: %(logs)s attendance log rows, %(recap)s recap rows, "
+"%(datasets)s requests and timesheet rows."
+msgstr ""
+"%(months)s bulan: log presensi %(logs)s baris, rekap %(recap)s baris, "
+"pengajuan & timesheet %(datasets)s baris."
+
+#. module: presenly_saas_hr
+msgid ""
+"%(resource)s: %(fetched)s of %(total)s rows fetched (%(pages)s page limit)."
+msgstr ""
+"%(resource)s: %(fetched)s dari %(total)s baris terambil (batas %(pages)s "
+"halaman)."
+
+#. module: presenly_saas_hr
+msgid ""
+"Attendance log: %(fetched)s of %(total)s rows fetched (%(pages)s page "
+"limit)."
+msgstr ""
+"Log presensi: %(fetched)s dari %(total)s baris terambil (batas %(pages)s "
+"halaman)."
+
+#. module: presenly_saas_hr
+msgid "Base URL must start with http:// or https:// (got %s)."
+msgstr "Base URL harus diawali http:// atau https:// (diterima: %s)."
+
+#. module: presenly_saas_hr
+msgid ""
+"Base URL, Tenant Code and API Key must be filled in before contacting the "
+"Presenly SaaS server."
+msgstr ""
+"Base URL, Kode Tenant, dan Kunci API harus diisi sebelum menghubungi server "
+"Presenly SaaS."
+
+#. module: presenly_saas_hr
+msgid "Connection failed"
+msgstr "Koneksi gagal"
+
+#. module: presenly_saas_hr
+msgid "Connection ok"
+msgstr "Koneksi berhasil"
+
+#. module: presenly_saas_hr
+msgid ""
+"Cross-check against the server recap does not match:\n"
+"%s"
+msgstr ""
+"Uji silang dengan rekap server tidak cocok:\n"
+"%s"
+
+#. module: presenly_saas_hr
+msgid "Dismiss subscription notice"
+msgstr "Tutup pemberitahuan langganan"
+
+#. module: presenly_saas_hr
+msgid "External"
+msgstr "Eksternal"
+
+#. module: presenly_saas_hr
+msgid "Failed to pull period data"
+msgstr "Gagal menarik data periode"
+
+#. module: presenly_saas_hr
+msgid "Failed to pull reference data"
+msgstr "Gagal menarik data referensi"
+
+#. module: presenly_saas_hr
+msgid "Feature catalog updated"
+msgstr "Katalog fitur diperbarui"
+
+#. module: presenly_saas_hr
+msgid "Grace period cannot be negative."
+msgstr "Masa tenggang tidak boleh negatif."
+
+#. module: presenly_saas_hr
+msgid "Included"
+msgstr "Termasuk"
+
+#. module: presenly_saas_hr
+msgid "Not included"
+msgstr "Tidak termasuk"
+
+#. module: presenly_saas_hr
+msgid ""
+"Not confirmed by the Presenly SaaS server since %s. Last reported status: "
+"%s."
+msgstr ""
+"Belum dikonfirmasi server Presenly SaaS sejak %s. Status terakhir yang "
+"dilaporkan: %s."
+
+#. module: presenly_saas_hr
+msgid "Only Presenly SaaS managers can perform this action."
+msgstr "Hanya manajer Presenly SaaS yang boleh menjalankan tindakan ini."
+
+#. module: presenly_saas_hr
+msgid "Open subscription"
+msgstr "Buka langganan"
+
+#. module: presenly_saas_hr
+msgid ""
+"Part of this range is older than the retention window (%(months)s months). "
+"The weekly cleanup will remove it again; raise Retention in Settings to keep"
+" it."
+msgstr ""
+"Sebagian rentang ini lebih tua dari jendela penyimpanan (%(months)s bulan). "
+"Pembersihan mingguan akan menghapusnya lagi; naikkan Penyimpanan di Settings"
+" untuk menyimpannya."
+
+#. module: presenly_saas_hr
+msgid ""
+"Presenly SaaS subscription is not active (status: %(status)s). Renew the "
+"subscription, or ask a Presenly SaaS manager to review the connection "
+"settings."
+msgstr ""
+"Langganan Presenly SaaS tidak aktif (status: %(status)s). Perpanjang "
+"langganannya, atau minta manajer Presenly SaaS memeriksa pengaturan "
+"koneksinya."
+
+#. module: presenly_saas_hr
+msgid "Pull finished: %s"
+msgstr "Penarikan selesai: %s"
+
+#. module: presenly_saas_hr
+msgid "Reference data updated"
+msgstr "Data referensi diperbarui"
+
+#. module: presenly_saas_hr
+msgid "Refresh failed"
+msgstr "Penyegaran gagal"
+
+#. module: presenly_saas_hr
+msgid "Retries cannot be negative."
+msgstr "Percobaan ulang tidak boleh negatif."
+
+#. module: presenly_saas_hr
+msgid "Subscription refreshed"
+msgstr "Langganan disegarkan"
+
+#. module: presenly_saas_hr
+msgid "Subscription renews in %s day(s)."
+msgstr "Langganan diperpanjang dalam %s hari."
+
+#. module: presenly_saas_hr
+msgid "The Presenly SaaS connection is disabled."
+msgstr "Koneksi Presenly SaaS dimatikan."
+
+#. module: presenly_saas_hr
+msgid "The Presenly SaaS server answered."
+msgstr "Server Presenly SaaS menjawab."
+
+#. module: presenly_saas_hr
+msgid "The Presenly SaaS server has never confirmed this subscription."
+msgstr "Server Presenly SaaS belum pernah mengonfirmasi langganan ini."
+
+#. module: presenly_saas_hr
+msgid "The number of months must be at least 1."
+msgstr "Jumlah bulan minimal 1."
+
+#. module: presenly_saas_hr
+msgid "The subscription snapshot is up to date."
+msgstr "Snapshot langganan sudah terbaru."
+
+#. module: presenly_saas_hr
+msgid "This snapshot has no connection record to refresh from."
+msgstr "Snapshot ini tidak punya record koneksi untuk disegarkan."
+
+#. module: presenly_saas_hr
+msgid "This subscription is %s."
+msgstr "Langganan ini %s."
+
+#. module: presenly_saas_hr
+msgid "Timeout must be greater than zero."
+msgstr "Batas waktu harus lebih dari nol."
+
+#. module: presenly_saas_hr
+msgid "Trial ends in %s day(s)."
+msgstr "Masa percobaan berakhir dalam %s hari."
+
+#. module: presenly_saas_hr
+msgid ""
+"Employee number from Presenly. This is the key the sync matches on, so it is"
+" only ever written by the sync. Changing it by hand makes the record "
+"unmatchable, and the next sync would create a duplicate."
+msgstr ""
+"Nomor pegawai dari Presenly. Ini kunci yang dipakai sinkronisasi, jadi hanya"
+" sinkronisasi yang menulisnya. Mengubahnya manual membuat record tidak bisa "
+"dicocokkan lagi, dan tarikan berikutnya akan membuat duplikat."
+
+#. module: presenly_saas_hr
+msgid ""
+"HMAC key used to verify incoming calls. Created by the Presenly server and "
+"shown only through the registration call."
+msgstr ""
+"Kunci HMAC untuk memeriksa panggilan yang masuk. Dibuat server Presenly dan "
+"hanya ditampilkan lewat panggilan pendaftaran."
+
+#. module: presenly_saas_hr
+msgid "Presenly will call %(url)s when an employee changes there."
+msgstr "Presenly akan memanggil %(url)s saat ada pegawai berubah di sana."
+
+#. module: presenly_saas_hr
+msgid ""
+"Presenly will no longer call this Odoo. Changes are picked up by the "
+"scheduled pull again."
+msgstr ""
+"Presenly tidak lagi memanggil Odoo ini. Perubahan kembali diambil oleh "
+"tarikan terjadwal."
+
+#. module: presenly_saas_hr
+msgid ""
+"Random part of the receiving URL. Without it, anyone who guesses the path "
+"could trigger a sync."
+msgstr ""
+"Bagian acak dari alamat penerima. Tanpa itu, siapa pun yang menebak "
+"alamatnya bisa memicu sinkronisasi."
+
+#. module: presenly_saas_hr
+msgid ""
+"Register this Odoo with the Presenly server so it is told when an employee "
+"changes there, instead of waiting for the next pull."
+msgstr ""
+"Daftarkan Odoo ini ke server Presenly supaya diberi tahu saat pegawai "
+"berubah di sana, tidak menunggu tarikan berikutnya."
+
+#. module: presenly_saas_hr
+msgid "The Odoo employee record this row is linked to."
+msgstr "Record pegawai Odoo yang tertaut ke baris ini."
+
+#. module: presenly_saas_hr
+msgid "The `updated_at` Presenly last reported for this employee."
+msgstr ""
+"Nilai `updated_at` yang terakhir dilaporkan Presenly untuk pegawai ini."
+
+#. module: presenly_saas_hr
+msgid ""
+"The `web.base.url` system parameter is empty, so Presenly has no address to "
+"call. Set it in Settings first."
+msgstr ""
+"Parameter sistem `web.base.url` masih kosong, jadi Presenly tidak punya "
+"alamat untuk dipanggil. Isi dulu di Settings."
+
+#. module: presenly_saas_hr
+msgid ""
+"The mapped fields as they were at the last successful sync. Used to tell an "
+"edit made in Odoo apart from an edit made in Presenly, without relying on "
+"comparing clocks across two servers."
+msgstr ""
+"Kolom yang dipetakan, sebagaimana adanya saat sinkronisasi terakhir yang "
+"berhasil. Dipakai untuk membedakan suntingan di Odoo dari suntingan di "
+"Presenly, tanpa membandingkan jam dua server."
+
+#. module: presenly_saas_hr
+msgid "This Odoo's receiving address, registered on the Presenly server."
+msgstr "Alamat penerima Odoo ini, sebagaimana terdaftar di server Presenly."
+
+#. module: presenly_saas_hr
+msgid "When this record was last written by the Presenly sync."
+msgstr "Kapan record ini terakhir ditulis oleh sinkronisasi Presenly."
+
+#. module: presenly_saas_hr
+msgid "Presenly SaaS: HR Integration"
+msgstr "Presenly SaaS: Integrasi HR"
+
+#. module: presenly_saas_hr
+msgid "Apply Employee Placements"
+msgstr "Terapkan Penempatan Pegawai"
+
+#. module: presenly_saas_hr
+msgid "Sync Work Locations to Odoo"
+msgstr "Sinkronkan Lokasi Kerja ke Odoo"
+
+#. module: presenly_saas_hr
+msgid "Send Work Location Edits to Presenly"
+msgstr "Kirim Suntingan Lokasi Kerja ke Presenly"
+
+#. module: presenly_saas_hr
+msgid "Presenly Work Location ID"
+msgstr "ID Lokasi Kerja Presenly"
+
+#. module: presenly_saas_hr
+msgid "Presenly Location ID"
+msgstr "ID Lokasi Presenly"
+
+#. module: presenly_saas_hr
+msgid "Allowed Radius (m)"
+msgstr "Radius yang Diizinkan (m)"
+
+#. module: presenly_saas_hr
+msgid "Attendance Type"
+msgstr "Jenis Presensi"
+
+#. module: presenly_saas_hr
+msgid "Timezone"
+msgstr "Zona Waktu"
+
+#. module: presenly_saas_hr
+msgid "Latitude"
+msgstr "Lintang"
+
+#. module: presenly_saas_hr
+msgid "Longitude"
+msgstr "Bujur"
+
+#. module: presenly_saas_hr
+msgid "One work location may only mirror one Presenly location."
+msgstr "Satu lokasi kerja hanya boleh mencerminkan satu lokasi Presenly."
+
+#. module: presenly_saas_hr
+msgid "One row per field per record; re-checking updates it instead of adding another."
+msgstr "Satu baris untuk satu kolom per rekaman; pemeriksaan ulang memperbaruinya, bukan menambah baris baru."
+
+#. module: presenly_saas_hr
+msgid "Presenly Work Location (mirror)"
+msgstr "Lokasi Kerja Presenly (cermin)"

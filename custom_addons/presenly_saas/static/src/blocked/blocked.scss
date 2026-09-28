@@ -1,0 +1,8 @@
+// Halaman blokir memuat penjelasan, dua formulir, dan tiga baris cap waktu,
+// bukan satu formulir masuk seperti kerangka `web.login_layout` yang dipakainya.
+// Kartu bawaan kerangka itu dibatasi 300px, dan pada lebar itu label serta
+// tombolnya berdesakan. Pelebaran ini satu-satunya gaya yang ditambahkan:
+// warna, radius, dan kontras tetap milik tema.
+.o_presenly_saas_blocked {
+    max-width: 460px !important;
+}

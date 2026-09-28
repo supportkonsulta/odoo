@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.presenly.saas</field>
+        <field name="model">res.config.settings</field>
+        <field name="priority" eval="90"/>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="Presenly SaaS"
+                     string="Presenly SaaS"
+                     name="presenly_saas"
+                     groups="presenly_saas.group_presenly_saas_manager">
+
+                    <block title="Connection" name="presenly_saas_connection">
+                        <setting string="Enable Connection"
+                                 help="When off, the module never calls the Presenly SaaS server and all subscription checks are skipped.">
+                            <field name="presenly_saas_enabled"/>
+                        </setting>
+                        <setting string="Base URL"
+                                 help="Origin of the Presenly SaaS server, for example https://presensi.example.com. The /api suffix is optional.">
+                            <field name="presenly_saas_base_url" placeholder="https://presensi.example.com"/>
+                        </setting>
+                        <setting string="Tenant Code"
+                                 help="Tenant identifier on the SaaS side, sent as the X-Tenant-ID header. Example: pelni.">
+                            <field name="presenly_saas_tenant_code" placeholder="pelni"/>
+                        </setting>
+                        <setting string="API Key"
+                                 help="Created in the Presenly web app on the Integration page. Shown once at creation, and valid only for this tenant.">
+                            <field name="presenly_saas_api_key" password="True"/>
+                        </setting>
+                        <setting string="Environment"
+                                 help="A label only, so a sandbox connection is never mistaken for production during support.">
+                            <field name="presenly_saas_environment"/>
+                        </setting>
+                    </block>
+
+                    <block title="Reliability" name="presenly_saas_reliability">
+                        <setting string="Timeout"
+                                 help="Timeout for a single request to the Presenly SaaS server.">
+                            <field name="presenly_saas_timeout_seconds" class="text-center o_input" style="width: 6ch;"/>
+                            <span> seconds</span>
+                        </setting>
+                        <setting string="Retries"
+                                 help="Retried on network errors and 5xx responses. Authentication failures are never retried.">
+                            <field name="presenly_saas_retry_count" class="text-center o_input" style="width: 6ch;"/>
+                            <span> times</span>
+                        </setting>
+                    </block>
+
+                    <block title="Scheduled Pull" name="presenly_saas_scheduled_pull">
+                        <setting string="Months Pulled by Cron"
+                                 help="How many months the daily pull covers, counting back from the current month. 2 means the current month and the one before it, so a shift that ends after midnight, or a correction filed the next day, is still captured.">
+                            <field name="presenly_saas_pull_months" class="text-center o_input" style="width: 6ch;"/>
+                            <span> months</span>
+                        </setting>
+                        <setting string="Create Companies from Clients"
+                                 help="Create an Odoo company for each Presenly client, and keep its name, email, and phone in step. Off by default: a company is an accounting entity, so creating one is a decision. Companies are never deleted automatically.">
+                            <field name="presenly_saas_sync_companies"/>
+                        </setting>
+                        <setting string="Pull Attachments"
+                                 help="Download the files attached to requests (leave dispensation, medical certificate, timesheet photo) so they can be viewed in Odoo. The files are always personal, so this is off by default.">
+                            <field name="presenly_saas_request_attachments"/>
+                        </setting>
+                        <setting string="Scheduled Refresh"
+                                 help="How often the scheduled pull of recent data runs. 0 turns that cron off: data is still refreshed when its list is opened, but nothing keeps data nobody looks at up to date.">
+                            <field name="presenly_saas_cron_sync_minutes" class="text-center o_input" style="width: 6ch;"/>
+                            <span> minutes</span>
+                        </setting>
+                        <setting string="Refresh on Open"
+                                 help="When a mirror list is opened, ask the Presenly server in one cheap request whether anything changed, and pull only what did. Off means data is only refreshed by the scheduled pull.">
+                            <field name="presenly_saas_request_auto_refresh"/>
+                        </setting>
+                        <setting string="Retention"
+                                 help="Mirrored period data older than this is removed by the weekly cleanup. 0 keeps everything. Reference data is never removed: it has no period.">
+                            <field name="presenly_saas_retention_months" class="text-center o_input" style="width: 6ch;"/>
+                            <span> months</span>
+                        </setting>
+                    </block>
+
+                    <block title="Policy" name="presenly_saas_policy">
+                        <setting string="Enforcement Mode"
+                                 help="What the guard API does when the status is negative. Off: the status is only shown on the Subscription page. Warn only: adds a banner in the backend. Enforce: the banner, and the guard API raising for the modules that call it. It does not close the backend by itself; Block Access does that.">
+                            <field name="presenly_saas_guard_mode" widget="radio"/>
+                        </setting>
+                        <setting string="Grace Period"
+                                 help="How long a snapshot that the Presenly server has not confirmed stays acceptable. A network failure never blocks on its own before this many days have passed, and only when Block Access is enforced.">
+                            <field name="presenly_saas_grace_days" class="text-center o_input" style="width: 6ch;"/>
+                            <span> days</span>
+                        </setting>
+                        <setting string="Show Banner"
+                                 help="Show a warning banner in the backend when the subscription status needs attention.">
+                            <field name="presenly_saas_show_banner"/>
+                        </setting>
+
+                        <setting string="Block Access"
+                                 help="What happens to the backend when the subscription is not active. Off: nothing is closed, the banner still tells the story. Dry run: every request that would be refused is counted and logged, and let through. Enforce: the backend is closed for this company, except signing in, the blocked page, and the webhook receiver.">
+                            <field name="presenly_saas_block_mode" widget="radio"/>
+                            <div class="mt-2 text-muted" invisible="not presenly_saas_blocked_since">
+                                Access has been paused since
+                                <field name="presenly_saas_blocked_since" readonly="1" nolabel="1"/>.
+                            </div>
+                            <div class="mt-2 text-muted" invisible="presenly_saas_block_mode != 'dry_run'">
+                                <field name="presenly_saas_dry_run_blocked_count" readonly="1" nolabel="1"/>
+                                requests would have been refused. Counted at most
+                                once a minute while Dry run is on, so read the
+                                number as an order of magnitude.
+                            </div>
+                        </setting>
+
+                        <setting string="Temporary Access"
+                                 help="Let this company keep working until this moment, even when the subscription is not active. Meant for support while a renewal is being settled, not as a second way to run without paying. Every use is written to the sync log.">
+                            <div class="o_row">
+                                <span>Access until</span>
+                                <field name="presenly_saas_block_override_until" nolabel="1"/>
+                            </div>
+                            <div class="mt-2">
+                                <field name="presenly_saas_block_override_reason"
+                                       nolabel="1"
+                                       placeholder="Why access was granted"/>
+                            </div>
+                        </setting>
+                    </block>
+
+                    <block title="Diagnostics" name="presenly_saas_diagnostics">
+                        <setting string="Test and Refresh"
+                                 help="Test Connection calls the server without writing a log. Refresh Subscription calls the server and then updates the snapshot and the log.">
+                            <!-- Satu baris untuk tindakan, satu baris untuk pintasan.
+                                 Jarak antartombolnya eksplisit: di dalam setting,
+                                 jarak tidak boleh bergantung pada spasi di berkas.
+                                 Barisnya boleh melipat supaya tidak melewati lebar
+                                 panel di layar sempit. -->
+                            <div class="d-flex flex-wrap gap-1 action_buttons mt-2">
+                                <button name="action_presenly_saas_test_connection"
+                                        type="object"
+                                        string="Test Connection"
+                                        class="btn-primary me-1"/>
+                                <button name="action_presenly_saas_refresh_subscription"
+                                        type="object"
+                                        string="Refresh Subscription"
+                                        class="btn-secondary me-1"/>
+                            </div>
+                            <div class="d-flex flex-wrap gap-1 action_buttons mt-2">
+                                <button name="action_presenly_saas_open_subscription"
+                                        type="object"
+                                        string="Open Subscription"
+                                        class="btn-link"
+                                        icon="fa-arrow-right"/>
+                                <button name="%(action_presenly_saas_sync_log)d"
+                                        type="action"
+                                        string="Open Sync Log"
+                                        class="btn-link"
+                                        icon="fa-list"/>
+                            </div>
+                        </setting>
+                        <setting string="Last Check Result">
+                            <div class="o_row">
+                                <field name="presenly_saas_last_check_at" readonly="1"/>
+                                <field name="presenly_saas_last_check_status"
+                                       widget="badge"
+                                       readonly="1"
+                                       decoration-success="presenly_saas_last_check_status == 'success'"
+                                       decoration-danger="presenly_saas_last_check_status == 'failed'"/>
+                            </div>
+                            <div class="mt8 text-muted">
+                                <field name="presenly_saas_last_check_message"
+                                       readonly="1"
+                                       nolabel="1"
+                                       placeholder="Not checked yet. Use Test Connection."/>
+                            </div>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_presenly_saas_settings" model="ir.actions.act_window">
+        <field name="name">Settings</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="context">{'module': 'presenly_saas'}</field>
+    </record>
+
+    <!-- Pintasan ke halaman Settings native.
+
+         Ini bukan form kedua: action di atas membuka blok "Presenly SaaS" yang
+         sama, hanya dari dalam aplikasi. Tanpa pintasan ini pengguna harus tahu
+         sendiri bahwa pengaturannya ada di aplikasi Settings global.
+         Konvensi yang sama dipakai hr_attendance. -->
+    <menuitem id="menu_presenly_saas_configuration"
+              name="Configuration"
+              parent="menu_presenly_saas_root"
+              sequence="90"
+              groups="presenly_saas.group_presenly_saas_manager"/>
+
+    <menuitem id="menu_presenly_saas_settings"
+              name="Settings"
+              parent="menu_presenly_saas_configuration"
+              action="action_presenly_saas_settings"
+              sequence="10"/>
+
+</odoo>

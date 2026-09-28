@@ -1,0 +1,306 @@
+import logging
+
+from odoo import api, fields, models
+
+from .presenly_saas_attendance_log import parse_datetime
+
+_logger = logging.getLogger(__name__)
+
+# Dua belas bulan, dipakai dua kali: sebagai nama kolom di cermin
+# `work-day-setups` dan sebagai pilihan di baris rinciannya. Kuncinya sama
+# dengan nama kolom yang dikirim server (`jan`..`dec`), supaya pemetaannya
+# tinggal dibaca, bukan diterjemahkan.
+MONTHS = [
+    ('jan', 'January'), ('feb', 'February'), ('mar', 'March'),
+    ('apr', 'April'), ('may', 'May'), ('jun', 'June'),
+    ('jul', 'July'), ('aug', 'August'), ('sep', 'September'),
+    ('oct', 'October'), ('nov', 'November'), ('dec', 'December'),
+]
+
+
+class PresenlySaasWorkLocation(models.Model):
+    """Cermin `GET /v1/work-locations`."""
+
+    _name = 'presenly.saas.work.location'
+    _inherit = ['presenly.saas.mirror.mixin']
+    _description = 'Presenly Work Location (mirror)'
+    _order = 'name'
+
+    _mirror_resource = 'work-locations'
+
+    name = fields.Char(required=True)
+    address = fields.Char()
+    latitude = fields.Float(digits=(10, 7))
+    longitude = fields.Float(digits=(10, 7))
+    radius_meters = fields.Integer(string='Radius (m)')
+    timezone = fields.Char()
+    attendance_type = fields.Char(string='Attendance Type')
+    is_active = fields.Boolean()
+
+    internal_company_id = fields.Integer(string='Internal Company ID')
+    internal_company_name = fields.Char(string='Internal Company')
+    project_id = fields.Integer(string='Project ID')
+    project_name = fields.Char(string='Project')
+
+    @api.depends('name')
+    def _compute_display_name(self):
+        for location in self:
+            location.display_name = location.name
+
+    @api.model
+    def _mirror_values(self, company, row):
+        if not isinstance(row, dict) or not row.get('id'):
+            return None
+        company_ref = row.get('internal_company') if isinstance(row.get('internal_company'), dict) else {}
+        project = row.get('project') if isinstance(row.get('project'), dict) else {}
+        return {
+            'company_id': company.id,
+            'external_id': int(row['id']),
+            'name': row.get('name') or '',
+            'address': row.get('address') or False,
+            'latitude': float(row.get('latitude') or 0.0),
+            'longitude': float(row.get('longitude') or 0.0),
+            'radius_meters': int(row.get('radius_meters') or 0),
+            'timezone': row.get('timezone') or False,
+            'attendance_type': row.get('attendance_type') or False,
+            'is_active': bool(row.get('is_active')),
+            'internal_company_id': int(company_ref.get('id') or 0),
+            'internal_company_name': company_ref.get('name') or False,
+            'project_id': int(project.get('id') or 0),
+            'project_name': project.get('name') or False,
+            'source_created_at': parse_datetime(row.get('created_at')),
+            'source_updated_at': parse_datetime(row.get('updated_at')),
+            'fetched_at': fields.Datetime.now(),
+            'raw_payload': row,
+        }
+
+
+class PresenlySaasShift(models.Model):
+    """Cermin `GET /v1/shifts`."""
+
+    _name = 'presenly.saas.shift'
+    _inherit = ['presenly.saas.mirror.mixin']
+    _description = 'Presenly Shift (mirror)'
+    _order = 'shift_name'
+
+    _mirror_resource = 'shifts'
+
+    shift_name = fields.Char(required=True)
+    # Jam dikirim sebagai teks "07:30:00", apa adanya dari server.
+    start_time = fields.Char(string='Start Time')
+    end_time = fields.Char(string='End Time')
+    late_index = fields.Integer(string='Lateness Index')
+
+    location_id = fields.Integer(string='Location ID')
+    location_name = fields.Char(string='Location')
+
+    @api.depends('shift_name', 'location_name')
+    def _compute_display_name(self):
+        for shift in self:
+            shift.display_name = '%s - %s' % (shift.shift_name or '?', shift.location_name or '?')
+
+    @api.model
+    def _mirror_values(self, company, row):
+        if not isinstance(row, dict) or not row.get('id'):
+            return None
+        location = row.get('location') if isinstance(row.get('location'), dict) else {}
+        return {
+            'company_id': company.id,
+            'external_id': int(row['id']),
+            'shift_name': row.get('shift_name') or '',
+            'start_time': row.get('start_time') or False,
+            'end_time': row.get('end_time') or False,
+            'late_index': int(row.get('late_index') or 0),
+            'location_id': int(location.get('id') or 0),
+            'location_name': location.get('name') or False,
+            'source_created_at': parse_datetime(row.get('created_at')),
+            'source_updated_at': parse_datetime(row.get('updated_at')),
+            'fetched_at': fields.Datetime.now(),
+            'raw_payload': row,
+        }
+
+
+class PresenlySaasAttendanceMode(models.Model):
+    """Cermin `GET /v1/attendance-modes`.
+
+    Mode absen menentukan penegakan radius: hanya mode yang bernama "Work From
+    Office" yang diwajibkan berada dalam geofence.
+    """
+
+    _name = 'presenly.saas.attendance.mode'
+    _inherit = ['presenly.saas.mirror.mixin']
+    _description = 'Presenly Attendance Mode (mirror)'
+    _order = 'name'
+
+    _mirror_resource = 'attendance-modes'
+
+    name = fields.Char(required=True)
+
+    @api.depends('name')
+    def _compute_display_name(self):
+        for mode in self:
+            mode.display_name = mode.name
+
+    @api.model
+    def _mirror_values(self, company, row):
+        if not isinstance(row, dict) or not row.get('id'):
+            return None
+        return {
+            'company_id': company.id,
+            'external_id': int(row['id']),
+            'name': row.get('name') or '',
+            'source_created_at': parse_datetime(row.get('created_at')),
+            'source_updated_at': parse_datetime(row.get('updated_at')),
+            'fetched_at': fields.Datetime.now(),
+            'raw_payload': row,
+        }
+
+
+class PresenlySaasHoliday(models.Model):
+    """Cermin `GET /v1/holidays`."""
+
+    _name = 'presenly.saas.holiday'
+    _inherit = ['presenly.saas.mirror.mixin']
+    _description = 'Presenly Holiday (mirror)'
+    _order = 'date desc'
+
+    _mirror_resource = 'holidays'
+
+    date = fields.Date(required=True)
+    name = fields.Char(required=True)
+    holiday_type = fields.Char(string='Type')
+
+    location_id = fields.Integer(string='Location ID')
+    location_name = fields.Char(string='Location')
+
+    @api.depends('name', 'date')
+    def _compute_display_name(self):
+        for holiday in self:
+            holiday.display_name = '%s (%s)' % (holiday.name or '?', holiday.date or '?')
+
+    @api.model
+    def _mirror_values(self, company, row):
+        if not isinstance(row, dict) or not row.get('id'):
+            return None
+        location = row.get('location') if isinstance(row.get('location'), dict) else {}
+        return {
+            'company_id': company.id,
+            'external_id': int(row['id']),
+            'date': row.get('date') or False,
+            'name': row.get('name') or '',
+            'holiday_type': row.get('type') or False,
+            'location_id': int(location.get('id') or 0),
+            'location_name': location.get('name') or False,
+            'source_created_at': parse_datetime(row.get('created_at')),
+            'source_updated_at': parse_datetime(row.get('updated_at')),
+            'fetched_at': fields.Datetime.now(),
+            'raw_payload': row,
+        }
+
+
+class PresenlySaasWorkDaySetup(models.Model):
+    """Cermin `GET /v1/work-day-setups`."""
+
+    _name = 'presenly.saas.work.day.setup'
+    _inherit = ['presenly.saas.mirror.mixin']
+    _description = 'Presenly Work Day Setup (mirror)'
+    _order = 'year desc, location_name'
+
+    _mirror_resource = 'work-day-setups'
+
+    year = fields.Integer(required=True)
+    jan = fields.Integer(string='Jan')
+    feb = fields.Integer(string='Feb')
+    mar = fields.Integer(string='Mar')
+    apr = fields.Integer(string='Apr')
+    may = fields.Integer(string='May')
+    jun = fields.Integer(string='Jun')
+    jul = fields.Integer(string='Jul')
+    aug = fields.Integer(string='Aug')
+    sep = fields.Integer(string='Sep')
+    oct = fields.Integer(string='Oct')
+    nov = fields.Integer(string='Nov')
+    dec = fields.Integer(string='Dec')
+    total_days = fields.Integer(string='Total Working Days')
+
+    # Rincian per bulan. Server mengirim dua belas kolom dalam satu baris; di
+    # sini kolomnya dipecah menjadi baris supaya rinciannya bisa dibaca dan
+    # dijumlahkan seperti daftar, bukan seperti tabel selebar dua belas kolom.
+    # Barisnya dibuat ulang bersama induknya setiap penarikan.
+    month_ids = fields.One2many(
+        'presenly.saas.work.day.setup.month', 'setup_id',
+        string='Months', readonly=True,
+    )
+
+    location_id = fields.Integer(string='Location ID')
+    location_name = fields.Char(string='Location')
+
+    @api.depends('year', 'location_name')
+    def _compute_display_name(self):
+        for setup in self:
+            setup.display_name = '%s - %s' % (setup.location_name or '?', setup.year or '?')
+
+    @api.model
+    def _mirror_values(self, company, row):
+        if not isinstance(row, dict) or not row.get('id'):
+            return None
+        location = row.get('location') if isinstance(row.get('location'), dict) else {}
+        months = {
+            month: int(row.get(month) or 0)
+            for month, _label in MONTHS
+        }
+        return {
+            'company_id': company.id,
+            'external_id': int(row['id']),
+            'year': int(row.get('year') or 0),
+            **months,
+            'total_days': int(row.get('total_days') or 0),
+            'location_id': int(location.get('id') or 0),
+            'location_name': location.get('name') or False,
+            'month_ids': [(5, 0, 0)] + [
+                (0, 0, {'sequence': sequence, 'month': month, 'days': months[month]})
+                for sequence, (month, _label) in enumerate(MONTHS, start=1)
+            ],
+            'source_created_at': parse_datetime(row.get('created_at')),
+            'source_updated_at': parse_datetime(row.get('updated_at')),
+            'fetched_at': fields.Datetime.now(),
+            'raw_payload': row,
+        }
+
+
+class PresenlySaasWorkDaySetupMonth(models.Model):
+    """Satu bulan pada satu Work Day Setup.
+
+    Dibuat sebagai baris, bukan kolom, supaya rincian per bulannya bisa dibaca
+    dan dijumlahkan seperti daftar. Isinya tidak ditarik sendiri: server tidak
+    punya endpoint per bulan, ia mengirim dua belas kolom sekaligus — jadi
+    barisnya lahir dari pemetaan `work-day-setups`, bukan dari penarikan
+    terpisah.
+    """
+
+    _name = 'presenly.saas.work.day.setup.month'
+    _description = 'Presenly Work Day Setup Month (mirror)'
+    _order = 'sequence, id'
+
+    setup_id = fields.Many2one(
+        'presenly.saas.work.day.setup',
+        string='Setup',
+        required=True,
+        ondelete='cascade',
+        index=True,
+    )
+    sequence = fields.Integer(default=10)
+    month = fields.Selection(MONTHS, string='Month', required=True)
+    days = fields.Integer(string='Working Days')
+
+    @api.depends('month', 'days', 'setup_id.year', 'setup_id.location_name')
+    def _compute_display_name(self):
+        label = dict(MONTHS)
+        for line in self:
+            bagian = [label.get(line.month, line.month or '?')]
+            if line.setup_id.year:
+                bagian.append(str(line.setup_id.year))
+            if line.setup_id.location_name:
+                bagian.append(line.setup_id.location_name)
+            line.display_name = ' · '.join(bagian)
+

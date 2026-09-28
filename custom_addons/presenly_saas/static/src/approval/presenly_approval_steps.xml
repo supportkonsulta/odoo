@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates xml:space="preserve">
+    <!--
+        Rangkaian langkah persetujuan. Tiap langkah: nomor di dalam lingkaran,
+        siapa yang diharapkan memutuskan, statusnya, dan keterangan waktunya.
+        Rel penghubungnya digambar oleh SCSS (`::before`), bukan oleh templat:
+        garis itu tidak membawa informasi apa pun sendiri.
+
+        Bentuknya sengaja dangkal — satu `t-out` per elemen bersyarat, teks
+        dirakit di JavaScript. Lihat catatan di presenly_map_field.xml.
+    -->
+    <t t-name="presenly_saas.ApprovalSteps">
+        <div class="o_presenly_steps">
+            <div t-foreach="steps" t-as="step" t-key="step.level"
+                 t-att-class="'o_presenly_step o_presenly_step_' + step.keadaan">
+                <span t-att-class="'o_presenly_step_marker o_presenly_marker_' + step.keadaan"
+                      t-out="step.level"/>
+                <div class="o_presenly_step_body">
+                    <div class="o_presenly_step_head">
+                        <span class="o_presenly_step_who" t-out="step.siapa"/>
+                        <span t-if="step.label"
+                              t-att-class="'o_presenly_step_label o_presenly_label_' + step.keadaan"
+                              t-out="step.label"/>
+                    </div>
+                    <div t-if="step.keterangan" class="o_presenly_step_note" t-out="step.keterangan"/>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

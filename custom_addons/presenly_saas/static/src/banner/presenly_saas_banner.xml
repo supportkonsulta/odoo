@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="presenly_saas.Banner">
+        <div t-if="visible"
+             t-att-class="'alert alert-' + severityClass + ' presenly-saas-banner'"
+             role="status"
+             aria-live="polite">
+            <div class="presenly-saas-banner-text">
+                <span class="presenly-saas-banner-title">Presenly SaaS</span>
+                <span t-esc="message"/>
+            </div>
+            <div class="presenly-saas-banner-actions">
+                <button t-if="hasDetails"
+                        type="button"
+                        class="btn btn-sm btn-link"
+                        t-on-click="openDetails"
+                        t-esc="openLabel"/>
+                <button type="button"
+                        class="btn-close"
+                        t-on-click="dismiss"
+                        t-att-aria-label="dismissLabel"
+                        t-att-title="dismissLabel"/>
+            </div>
+        </div>
+    </t>
+
+</templates>

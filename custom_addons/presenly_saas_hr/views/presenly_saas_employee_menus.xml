@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Cermin pegawai, bukan daftar pegawai. Data kepegawaian yang
+         sesungguhnya ada di aplikasi Employees; halaman ini untuk memeriksa
+         apa yang dikirim server. Menu induknya dari modul inti. -->
+    <menuitem id="menu_presenly_saas_employee"
+              name="Employees (mirror)"
+              parent="presenly_saas.menu_presenly_saas_reference"
+              action="action_presenly_saas_employee"
+              sequence="70"/>
+
+    <!--
+        Dikunci ke Manager. Menu tanpa grup tetap lolos saring walaupun induknya
+        terkunci, dan muncul sebagai butir lepas — jadi grupnya disebut sendiri.
+    -->
+    <record id="menu_presenly_saas_employee" model="ir.ui.menu">
+        <field name="group_ids"
+               eval="[(6, 0, [ref('presenly_saas.group_presenly_saas_manager')])]"/>
+    </record>
+
+</odoo>

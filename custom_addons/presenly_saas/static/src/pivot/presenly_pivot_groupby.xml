@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates xml:space="preserve">
+
+    <!--
+        Ikon buka-baris dan buka-kolom hanya ditampilkan kalau masih ada kelompok
+        yang bisa dipakai di sisi itu.
+
+        Sebelumnya ikonnya selalu ada: di lapis terdalam ia tetap muncul, dan
+        mengkliknya hanya membuka menu yang tidak berisi apa pun. Yang terlihat
+        seperti "masih bisa dibuka tanpa henti" itu, dan memang begitu —
+        pilihannya kosong, tetapi ikonnya menjanjikan sebaliknya.
+
+        Ikon tutup (`minus-square-o`) tidak disentuh: menutup lapisan yang sudah
+        terbuka selalu punya arti, walaupun tidak ada pilihan baru.
+    -->
+    <t t-name="presenly_saas.PivotHeaderTitle"
+       t-inherit="web.PivotHeader.title">
+        <xpath expr="//th/i" position="attributes">
+            <attribute name="t-if">!cell.isLeaf or this.bisaDibuka(isXAxis)</attribute>
+        </xpath>
+    </t>
+
+</templates>

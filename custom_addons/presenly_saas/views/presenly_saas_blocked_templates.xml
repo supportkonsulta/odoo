@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Halaman yang dilihat pengguna saat akses ditutup.
+
+        Memakai `web.login_layout`, yaitu kerangka halaman mandiri milik Odoo
+        sendiri (dipakai halaman masuk, TOTP, dan pendaftaran). Alasannya: ia
+        sudah membawa logo perusahaan, lebar kartu, kontras, mode gelap, dan
+        susunan papan ketik dari tema. Palet sendiri tidak diperlukan, dan
+        halaman ini tidak boleh menjadi backend kedua yang harus dirawat.
+
+        Yang tetap harus terbaca meski sekilas: kenapa ditutup, sejak kapan,
+        dan apa yang bisa dilakukan sekarang. Karena itu sebabnya diberi kotak
+        peringatan, bukan kalimat abu-abu di tengah paragraf.
+    -->
+    <template id="blocked_page" name="Presenly SaaS: access paused">
+        <t t-call="web.login_layout">
+            <t t-set="login_card_classes" t-value="'o_presenly_saas_blocked'"/>
+            <!-- Tautan "Manage Databases" bawaan kerangka itu menuju halaman
+                 yang juga ditutup. Tautan yang tidak bisa dibuka lebih buruk
+                 daripada tidak ada tautan. -->
+            <t t-set="disable_database_manager" t-value="True"/>
+
+            <h4 class="mb-3">Odoo is paused for <t t-esc="company_name"/></h4>
+
+            <p class="alert alert-danger" role="alert">
+                <t t-if="reason == 'unconfirmed'">
+                    The Presenly server has not confirmed this subscription since
+                    <t t-esc="last_sync_at"/>, and the grace period is
+                    <t t-esc="grace_days"/> days.
+                </t>
+                <t t-elif="reason == 'trial_ended'">
+                    The trial period of this subscription has ended.
+                </t>
+                <t t-else="">
+                    The Presenly server reports this subscription as
+                    <strong t-esc="status_label"/>.
+                </t>
+            </p>
+
+            <p t-if="error" class="alert alert-warning" role="alert" t-esc="error"/>
+            <p t-if="message" class="alert alert-info" role="status" t-esc="message"/>
+
+            <p>
+                Access to Odoo returns as soon as the subscription is active
+                again. Records already stored here are kept.
+            </p>
+
+            <p t-if="blocked_since" class="text-muted small">
+                Paused since <t t-esc="blocked_since"/>.
+            </p>
+            <p t-if="last_sync_at" class="text-muted small">
+                Last answer from the Presenly server:
+                <t t-esc="last_sync_at"/>.
+            </p>
+
+            <form t-if="is_manager" method="post"
+                  t-attf-action="/presenly_saas/blocked/refresh" class="mt-3">
+                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                <button type="submit" class="btn btn-primary w-100">
+                    Refresh subscription
+                </button>
+            </form>
+
+            <details t-if="is_manager" class="mt-3">
+                <summary>Change the connection</summary>
+                <form method="post" t-attf-action="/presenly_saas/blocked/repair"
+                      class="mt-3">
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                    <div class="mb-2">
+                        <label class="form-label" for="base_url">Base URL</label>
+                        <input type="text" class="form-control" id="base_url"
+                               name="base_url" t-att-value="base_url or ''"
+                               placeholder="https://presensi.example.com"/>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label" for="tenant_code">Tenant Code</label>
+                        <input type="text" class="form-control" id="tenant_code"
+                               name="tenant_code" t-att-value="tenant_code_setting or ''"
+                               placeholder="pelni"/>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label" for="api_key">API Key</label>
+                        <!-- Selalu kosong: kunci yang sedang dipakai tidak
+                             dirender, dan kolom kosong berarti "jangan ubah".
+                             Petunjuknya ditaruh sebagai teks, bukan sebagai
+                             placeholder bersyarat: teks bisa diterjemahkan,
+                             ekspresi bersyarat di atribut tidak. -->
+                        <input type="password" class="form-control" id="api_key"
+                               name="api_key" value="" autocomplete="new-password"
+                               placeholder="API Key"/>
+                        <div t-if="api_key_set" class="form-text">
+                            Leave empty to keep the current key.
+                        </div>
+                        <div t-if="not api_key_set" class="form-text">
+                            Paste the key from the Presenly integration page.
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-secondary w-100">
+                        Save and refresh
+                    </button>
+                </form>
+            </details>
+
+            <p t-if="not is_manager" class="mt-3">
+                Ask your Presenly administrator to renew the subscription.
+            </p>
+
+            <p t-if="contact_email or contact_whatsapp" class="mt-3 small">
+                Presenly contact:
+                <t t-if="contact_email">
+                    <a t-attf-href="mailto:{{ contact_email }}" t-esc="contact_email"/>
+                </t>
+                <t t-if="contact_email and contact_whatsapp">, </t>
+                <t t-if="contact_whatsapp" t-esc="contact_whatsapp"/>
+            </p>
+
+            <p class="mt-3 mb-0 small">
+                <a href="/web/session/logout">Log out</a>
+            </p>
+        </t>
+    </template>
+
+</odoo>
