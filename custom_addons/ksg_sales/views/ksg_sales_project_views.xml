@@ -18,13 +18,8 @@
                 <field name="kategori"/>
 
                 <field
-                    name="scope_engineering"
-                    string="Engineering"
-                />
-
-                <field
-                    name="scope_operational"
-                    string="Operational"
+                    name="scope"
+                    string="Scope"
                 />
 
                 <field
@@ -122,13 +117,10 @@
                             <separator string="Scope Proyek"/>
 
                             <field
-                                name="scope_engineering"
-                                string="Engineering"
-                            />
-
-                            <field
-                                name="scope_operational"
-                                string="Operational"
+                                name="scope"
+                                string="Scope Proyek"
+                                widget="radio"
+                                options="{'horizontal': true}"
                             />
 
                             <field
@@ -512,13 +504,10 @@
                             <separator string="Scope Proyek"/>
 
                             <field
-                                name="scope_engineering"
-                                string="Engineering"
-                            />
-
-                            <field
-                                name="scope_operational"
-                                string="Operational"
+                                name="scope"
+                                string="Scope Proyek"
+                                widget="radio"
+                                options="{'horizontal': true}"
                             />
 
                             <field
@@ -586,7 +575,6 @@
                     ================================================== -->
 
                     <notebook>
-
 
                         <!-- =================================================
                              CHECKLIST DOKUMEN
@@ -814,7 +802,6 @@
                             />
 
                         </page>
-
 
                     </notebook>
 

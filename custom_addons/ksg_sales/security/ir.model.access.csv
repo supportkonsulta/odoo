@@ -1,24 +1,43 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_ksg_sales_category_user,ksg.sales.category user,model_ksg_sales_category,ksg_sales.group_sales_user,1,1,1,0
 access_ksg_sales_category_manager,ksg.sales.category manager,model_ksg_sales_category,ksg_sales.group_sales_manager,1,1,1,1
+
 access_ksg_sales_document_checklist_user,ksg.sales.document.checklist user,model_ksg_sales_document_checklist,ksg_sales.group_sales_user,1,1,1,0
 access_ksg_sales_document_checklist_manager,ksg.sales.document.checklist manager,model_ksg_sales_document_checklist,ksg_sales.group_sales_manager,1,1,1,1
+
 access_ksg_sales_project_user,ksg.sales.project user,model_ksg_sales_project,ksg_sales.group_sales_user,1,1,1,0
 access_ksg_sales_project_manager,ksg.sales.project manager,model_ksg_sales_project,ksg_sales.group_sales_manager,1,1,1,1
+
 access_ksg_sales_project_addendum_user,ksg.sales.project.addendum user,model_ksg_sales_project_addendum,ksg_sales.group_sales_user,1,1,1,0
 access_ksg_sales_project_addendum_manager,ksg.sales.project.addendum manager,model_ksg_sales_project_addendum,ksg_sales.group_sales_manager,1,1,1,1
+
 access_ksg_sales_project_term_user,ksg.sales.project.term user,model_ksg_sales_project_term,ksg_sales.group_sales_user,1,1,1,0
 access_ksg_sales_project_term_manager,ksg.sales.project.term manager,model_ksg_sales_project_term,ksg_sales.group_sales_manager,1,1,1,1
+
 access_ksg_sales_rab_user,ksg.sales.rab user,model_ksg_sales_rab,ksg_sales.group_sales_user,1,1,1,0
 access_ksg_sales_rab_manager,ksg.sales.rab manager,model_ksg_sales_rab,ksg_sales.group_sales_manager,1,1,1,1
+
 access_ksg_sales_rab_line_user,ksg.sales.rab.line user,model_ksg_sales_rab_line,ksg_sales.group_sales_user,1,1,1,0
 access_ksg_sales_rab_line_manager,ksg.sales.rab.line manager,model_ksg_sales_rab_line,ksg_sales.group_sales_manager,1,1,1,1
+
 access_ksg_sales_hpp_user,ksg.sales.hpp user,model_ksg_sales_hpp,ksg_sales.group_sales_user,1,1,1,0
 access_ksg_sales_hpp_manager,ksg.sales.hpp manager,model_ksg_sales_hpp,ksg_sales.group_sales_manager,1,1,1,1
+
 access_ksg_sales_hpp_line_user,ksg.sales.hpp.line user,model_ksg_sales_hpp_line,ksg_sales.group_sales_user,1,1,1,0
 access_ksg_sales_hpp_line_manager,ksg.sales.hpp.line manager,model_ksg_sales_hpp_line,ksg_sales.group_sales_manager,1,1,1,1
+
+access_ksg_sales_hpp_tenaga_kerja_user,ksg.sales.hpp.tenaga.kerja user,model_ksg_sales_hpp_tenaga_kerja,ksg_sales.group_sales_user,1,1,1,0
+access_ksg_sales_hpp_tenaga_kerja_manager,ksg.sales.hpp.tenaga.kerja manager,model_ksg_sales_hpp_tenaga_kerja,ksg_sales.group_sales_manager,1,1,1,1
+
+access_ksg_sales_hpp_perlengkapan_user,ksg.sales.hpp.perlengkapan user,model_ksg_sales_hpp_perlengkapan,ksg_sales.group_sales_user,1,1,1,0
+access_ksg_sales_hpp_perlengkapan_manager,ksg.sales.hpp.perlengkapan manager,model_ksg_sales_hpp_perlengkapan,ksg_sales.group_sales_manager,1,1,1,1
+
 access_ksg_sales_dashboard_user,ksg.sales.dashboard user,model_ksg_sales_dashboard,ksg_sales.group_sales_user,1,1,1,1
 access_ksg_sales_dashboard_manager,ksg.sales.dashboard manager,model_ksg_sales_dashboard,ksg_sales.group_sales_manager,1,1,1,1
 access_ksg_sales_dashboard_internal,ksg.sales.dashboard internal user,model_ksg_sales_dashboard,base.group_user,1,1,1,1
+
 access_ksg_sales_project_checklist_user,ksg.sales.project.checklist user,model_ksg_sales_project_checklist,ksg_sales.group_sales_user,1,1,1,1
 access_ksg_sales_project_checklist_manager,ksg.sales.project.checklist manager,model_ksg_sales_project_checklist,ksg_sales.group_sales_manager,1,1,1,1
+
+access_ksg_sales_hpp_engineering_user,ksg.sales.hpp.engineering user,model_ksg_sales_hpp_engineering,ksg_sales.group_sales_user,1,1,1,0
+access_ksg_sales_hpp_engineering_manager,ksg.sales.hpp.engineering manager,model_ksg_sales_hpp_engineering,ksg_sales.group_sales_manager,1,1,1,1

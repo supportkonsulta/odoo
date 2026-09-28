@@ -18,7 +18,7 @@ class KsgSalesProject(models.Model):
     ]
 
     # =========================================================
-    # IDENTITAS PROYEK
+    # INFORMASI PROYEK
     # =========================================================
 
     kode_proyek = fields.Char(
@@ -64,30 +64,58 @@ class KsgSalesProject(models.Model):
 
     # =========================================================
     # SCOPE PROYEK
+    #
+    # Satu proyek hanya boleh memiliki satu scope:
+    # Engineering ATAU Operational.
+    #
+    # Field lama scope_engineering dan scope_operational
+    # tetap dipertahankan sebagai compatibility field.
     # =========================================================
+
+    scope = fields.Selection(
+        selection=[
+            ("engineering", "Engineering"),
+            ("operational", "Operational"),
+        ],
+        string="Scope Proyek",
+        tracking=True,
+        help=(
+            "Tentukan scope utama proyek. "
+            "Satu proyek hanya dapat memiliki satu scope, "
+            "yaitu Engineering atau Operational."
+        ),
+    )
 
     scope_engineering = fields.Boolean(
         string="Engineering",
-        default=False,
+        compute="_compute_scope_compatibility",
+        store=True,
         tracking=True,
         help=(
-            "Centang jika proyek ini membutuhkan proses "
-            "atau pekerjaan dalam scope Engineering."
+            "Compatibility field untuk module lain. "
+            "Bernilai True jika Scope Proyek adalah Engineering."
         ),
     )
 
     scope_operational = fields.Boolean(
         string="Operational",
-        default=False,
+        compute="_compute_scope_compatibility",
+        store=True,
         tracking=True,
         help=(
-            "Centang jika proyek ini membutuhkan proses "
-            "atau pekerjaan dalam scope Operational."
+            "Compatibility field untuk module lain. "
+            "Bernilai True jika Scope Proyek adalah Operational."
         ),
     )
 
+    @api.depends("scope")
+    def _compute_scope_compatibility(self):
+        for project in self:
+            project.scope_engineering = project.scope == "engineering"
+            project.scope_operational = project.scope == "operational"
+
     # =========================================================
-    # DOKUMEN & KONTRAK
+    # KONTRAK
     # =========================================================
 
     tanggal_po_diterima = fields.Date(
@@ -117,10 +145,6 @@ class KsgSalesProject(models.Model):
         required=True,
         tracking=True,
     )
-
-    # =========================================================
-    # NILAI KONTRAK
-    # =========================================================
 
     currency_id = fields.Many2one(
         comodel_name="res.currency",
@@ -153,7 +177,7 @@ class KsgSalesProject(models.Model):
     )
 
     # =========================================================
-    # ADDENDUM
+    # RELATION
     # =========================================================
 
     addendum_ids = fields.One2many(
@@ -162,39 +186,23 @@ class KsgSalesProject(models.Model):
         string="Addendum Kontrak",
     )
 
-    # =========================================================
-    # RAB
-    # =========================================================
-
     rab_ids = fields.One2many(
         comodel_name="ksg.sales.rab",
         inverse_name="project_id",
         string="RAB",
     )
 
-    # =========================================================
-    # HPP
-    # =========================================================
-
     hpp_ids = fields.One2many(
-        "ksg.sales.hpp",
-        "project_id",
+        comodel_name="ksg.sales.hpp",
+        inverse_name="project_id",
         string="HPP",
     )
-
-    # =========================================================
-    # TERMIN PENAGIHAN
-    # =========================================================
 
     term_ids = fields.One2many(
         comodel_name="ksg.sales.project.term",
         inverse_name="project_id",
         string="Termin Penagihan",
     )
-
-    # =========================================================
-    # CHECKLIST ENGINEERING
-    # =========================================================
 
     checklist_dokumen_ids = fields.One2many(
         comodel_name="ksg.sales.project.checklist",
@@ -203,7 +211,7 @@ class KsgSalesProject(models.Model):
     )
 
     # =========================================================
-    # PENAGIHAN
+    # SISTEM PENAGIHAN
     # =========================================================
 
     sistem_penagihan = fields.Selection(
@@ -218,10 +226,6 @@ class KsgSalesProject(models.Model):
         tracking=True,
     )
 
-    # =========================================================
-    # KETERANGAN
-    # =========================================================
-
     keterangan = fields.Text(
         string="Keterangan",
     )
@@ -235,9 +239,7 @@ class KsgSalesProject(models.Model):
         for vals in vals_list:
             if not vals.get("kode_proyek"):
                 vals["kode_proyek"] = (
-                    self.env["ir.sequence"].next_by_code(
-                        "ksg.sales.project"
-                    )
+                    self.env["ir.sequence"].next_by_code("ksg.sales.project")
                     or "/"
                 )
 
@@ -266,7 +268,7 @@ class KsgSalesProject(models.Model):
         ]
 
     # =========================================================
-    # COMPUTE NILAI KONTRAK TERKINI
+    # NILAI KONTRAK TERKINI
     # =========================================================
 
     @api.depends(
@@ -284,8 +286,7 @@ class KsgSalesProject(models.Model):
             if approved_addenda:
                 latest_addendum = approved_addenda.sorted(
                     key=lambda addendum: (
-                        addendum.tanggal_perubahan
-                        or fields.Date.today(),
+                        addendum.tanggal_perubahan or fields.Date.today(),
                         addendum.id,
                     ),
                     reverse=True,
@@ -295,12 +296,10 @@ class KsgSalesProject(models.Model):
                     latest_addendum.nilai_kontrak_baru
                 )
             else:
-                project.nilai_kontrak_terkini = (
-                    project.nilai_kontrak_awal
-                )
+                project.nilai_kontrak_terkini = project.nilai_kontrak_awal
 
     # =========================================================
-    # COMPUTE SISA NILAI KONTRAK
+    # SISA NILAI KONTRAK
     # =========================================================
 
     @api.depends(
@@ -311,9 +310,9 @@ class KsgSalesProject(models.Model):
     def _compute_sisa_nilai_kontrak(self):
         for project in self:
             total_ditagih = sum(
-                project.term_ids.filtered(
-                    lambda term: term.state == "sudah_ditagih"
-                ).mapped("nominal")
+                project.term_ids
+                .filtered(lambda term: term.state == "sudah_ditagih")
+                .mapped("nominal")
             )
 
             project.sisa_nilai_kontrak = (
@@ -332,20 +331,12 @@ class KsgSalesProject(models.Model):
                 "Sistem Penagihan harus dipilih terlebih dahulu."
             )
 
-        # -----------------------------------------------------
-        # CEGAH GENERATE ULANG
-        # -----------------------------------------------------
-
         if self.term_ids:
             raise ValidationError(
                 "Termin sudah tersedia pada proyek ini. "
                 "Hapus termin yang ada terlebih dahulu jika ingin "
                 "melakukan generate ulang."
             )
-
-        # -----------------------------------------------------
-        # VALIDASI TANGGAL KONTRAK
-        # -----------------------------------------------------
 
         if not self.awal_kontrak or not self.akhir_kontrak:
             raise ValidationError(
@@ -359,42 +350,19 @@ class KsgSalesProject(models.Model):
                 "dari Tanggal Awal Kontrak."
             )
 
-        # -----------------------------------------------------
-        # PER TERMIN
-        # -----------------------------------------------------
-        #
-        # Per Termin diisi manual oleh user.
-        #
-
         if self.sistem_penagihan == "per_termin":
             raise ValidationError(
                 "Untuk sistem Per Termin, data termin diisi secara manual."
             )
 
-        # -----------------------------------------------------
-        # PELUNASAN 100%
-        # -----------------------------------------------------
-
         if self.sistem_penagihan == "pelunasan_100":
             return self._generate_pelunasan_100()
 
-        # -----------------------------------------------------
-        # PER BULAN
-        # -----------------------------------------------------
-
         if self.sistem_penagihan == "per_bulan":
-            return self._generate_termin_berkala(
-                month_interval=1
-            )
-
-        # -----------------------------------------------------
-        # PER 3 BULAN
-        # -----------------------------------------------------
+            return self._generate_termin_berkala(month_interval=1)
 
         if self.sistem_penagihan == "per_3_bulan":
-            return self._generate_termin_berkala(
-                month_interval=3
-            )
+            return self._generate_termin_berkala(month_interval=3)
 
         raise ValidationError(
             "Sistem Penagihan tidak dikenali."
@@ -438,16 +406,10 @@ class KsgSalesProject(models.Model):
 
         tanggal = self.awal_kontrak
         tanggal_akhir = self.akhir_kontrak
-
         tanggal_list = []
-
-        # -----------------------------------------------------
-        # BUAT DAFTAR TANGGAL TERMIN
-        # -----------------------------------------------------
 
         while tanggal <= tanggal_akhir:
             tanggal_list.append(tanggal)
-
             tanggal = tanggal + relativedelta(
                 months=month_interval
             )
@@ -460,22 +422,13 @@ class KsgSalesProject(models.Model):
 
         jumlah_termin = len(tanggal_list)
 
-        # -----------------------------------------------------
-        # BAGI PERSENTASE
-        # -----------------------------------------------------
-
         persentase_dasar = round(
             100.0 / jumlah_termin,
             2,
         )
 
         terms = []
-
         total_persentase = 0.0
-
-        # -----------------------------------------------------
-        # BUAT TERMIN
-        # -----------------------------------------------------
 
         for index, tanggal_jatuh_tempo in enumerate(
             tanggal_list,
@@ -490,10 +443,6 @@ class KsgSalesProject(models.Model):
                 persentase = persentase_dasar
 
             total_persentase += persentase
-
-            # -------------------------------------------------
-            # DESKRIPSI
-            # -------------------------------------------------
 
             if month_interval == 1:
                 deskripsi = f"Termin Bulan ke-{index}"
@@ -510,30 +459,19 @@ class KsgSalesProject(models.Model):
                 }
             )
 
-        # -----------------------------------------------------
-        # CREATE SEMUA TERMIN
-        # -----------------------------------------------------
-
         self.env["ksg.sales.project.term"].create(terms)
 
-        # -----------------------------------------------------
-        # LABEL SISTEM PENAGIHAN
-        # -----------------------------------------------------
-
-        if month_interval == 1:
-            sistem_label = "Per Bulan"
-        else:
-            sistem_label = "Per 3 Bulan"
-
-        # -----------------------------------------------------
-        # CHATTER
-        # -----------------------------------------------------
+        sistem_label = (
+            "Per Bulan"
+            if month_interval == 1
+            else "Per 3 Bulan"
+        )
 
         self.message_post(
             body=(
                 f"Generate Termin {sistem_label} berhasil. "
                 f"{jumlah_termin} termin berhasil dibuat "
-                f"dengan total persentase "
+                "dengan total persentase "
                 f"{total_persentase:.2f}%."
             ),
             subtype_xmlid="mail.mt_note",
@@ -545,10 +483,7 @@ class KsgSalesProject(models.Model):
     # VALIDASI TANGGAL KONTRAK
     # =========================================================
 
-    @api.constrains(
-        "awal_kontrak",
-        "akhir_kontrak",
-    )
+    @api.constrains("awal_kontrak", "akhir_kontrak")
     def _check_contract_dates(self):
         for project in self:
             if (
