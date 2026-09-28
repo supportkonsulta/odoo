@@ -21,7 +21,7 @@ class KsgSalesHppLine(models.Model):
     )
 
     # =========================================================
-    # DATA DASAR DARI RAB
+    # DATA DASAR HPP
     # =========================================================
 
     kategori = fields.Selection(

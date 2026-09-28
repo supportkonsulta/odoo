@@ -21,10 +21,22 @@ class KsgSalesHppPerlengkapan(models.Model):
     )
 
     item = fields.Char(
-        string="Item",
+        string="Nama Barang / Alat",
         required=True,
         tracking=True,
-        help="Nama perlengkapan atau chemical yang dibutuhkan.",
+        help="Nama barang, alat, perlengkapan, atau chemical yang dibutuhkan.",
+    )
+
+    spesifikasi = fields.Char(
+        string="Spesifikasi",
+        tracking=True,
+    )
+
+    satuan = fields.Char(
+        string="Satuan",
+        required=True,
+        default="Unit",
+        tracking=True,
     )
 
     jumlah = fields.Float(
@@ -34,42 +46,10 @@ class KsgSalesHppPerlengkapan(models.Model):
         tracking=True,
     )
 
-    satuan = fields.Char(
-        string="Satuan",
-        tracking=True,
-    )
-
-    currency_id = fields.Many2one(
-        related="hpp_id.currency_id",
-        string="Mata Uang",
-        store=True,
-        readonly=True,
-    )
-
-    harga = fields.Monetary(
-        string="Harga",
-        currency_field="currency_id",
-        default=0.0,
-        tracking=True,
-        help="Harga diisi oleh Operational.",
-    )
-
-    subtotal = fields.Monetary(
-        string="Subtotal",
-        currency_field="currency_id",
-        compute="_compute_subtotal",
-        store=True,
-    )
-
     keterangan = fields.Text(
         string="Keterangan",
         tracking=True,
     )
-
-    @api.depends("jumlah", "harga")
-    def _compute_subtotal(self):
-        for line in self:
-            line.subtotal = line.jumlah * line.harga
 
     @api.constrains("jumlah")
     def _check_jumlah(self):
@@ -79,14 +59,6 @@ class KsgSalesHppPerlengkapan(models.Model):
                     "Jumlah perlengkapan/chemical harus lebih besar dari 0."
                 )
 
-    @api.constrains("harga")
-    def _check_harga(self):
-        for line in self:
-            if line.harga < 0:
-                raise ValidationError(
-                    "Harga perlengkapan/chemical tidak boleh bernilai negatif."
-                )
-
     def write(self, vals):
         for line in self:
             if (
@@ -94,8 +66,8 @@ class KsgSalesHppPerlengkapan(models.Model):
                 and line.hpp_id.state == "approved"
             ):
                 raise ValidationError(
-                    "Detail perlengkapan/chemical pada HPP yang "
-                    "sudah Approved tidak dapat diubah."
+                    "Detail perlengkapan/chemical pada HPP "
+                    "yang sudah Approved tidak dapat diubah."
                 )
 
         return super().write(vals)
@@ -107,8 +79,8 @@ class KsgSalesHppPerlengkapan(models.Model):
                 and line.hpp_id.state == "approved"
             ):
                 raise ValidationError(
-                    "Detail perlengkapan/chemical pada HPP yang "
-                    "sudah Approved tidak dapat dihapus."
+                    "Detail perlengkapan/chemical pada HPP "
+                    "yang sudah Approved tidak dapat dihapus."
                 )
 
         return super().unlink()

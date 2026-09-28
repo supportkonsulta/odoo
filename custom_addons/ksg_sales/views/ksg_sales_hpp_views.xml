@@ -334,20 +334,31 @@
                                             widget="handle"
                                         />
 
-                                        <field name="posisi"/>
-
-                                        <field name="jumlah"/>
-
-                                        <field name="satuan"/>
-
-                                        <field name="harga"/>
+                                        <field
+                                            name="posisi"
+                                            string="Peran / Posisi"
+                                        />
 
                                         <field
-                                            name="subtotal"
+                                            name="jumlah"
+                                            string="Jumlah Pekerja"
+                                        />
+
+                                        <field
+                                            name="estimasi_biaya_satuan"
+                                            string="Estimasi Biaya / Orang (Inc. BPJS)"
+                                        />
+
+                                        <field
+                                            name="total_biaya"
+                                            string="Total Biaya"
                                             readonly="1"
                                         />
 
-                                        <field name="keterangan"/>
+                                        <field
+                                            name="keterangan"
+                                            string="Catatan Kebutuhan"
+                                        />
 
                                     </list>
 
@@ -381,20 +392,30 @@
                                             widget="handle"
                                         />
 
-                                        <field name="item"/>
-
-                                        <field name="jumlah"/>
-
-                                        <field name="satuan"/>
-
-                                        <field name="harga"/>
-
                                         <field
-                                            name="subtotal"
-                                            readonly="1"
+                                            name="item"
+                                            string="Nama Barang / Alat"
                                         />
 
-                                        <field name="keterangan"/>
+                                        <field
+                                            name="spesifikasi"
+                                            string="Spesifikasi"
+                                        />
+
+                                        <field
+                                            name="satuan"
+                                            string="Satuan"
+                                        />
+
+                                        <field
+                                            name="jumlah"
+                                            string="Jumlah"
+                                        />
+
+                                        <field
+                                            name="keterangan"
+                                            string="Keterangan"
+                                        />
 
                                     </list>
 
@@ -417,15 +438,6 @@
 
                                     <field
                                         name="total_tenaga_kerja"
-                                        readonly="1"
-                                    />
-
-                                </group>
-
-                                <group>
-
-                                    <field
-                                        name="total_perlengkapan"
                                         readonly="1"
                                     />
 

@@ -3,7 +3,6 @@ from . import ksg_sales_document_checklist
 from . import ksg_sales_project
 from . import ksg_sales_project_addendum
 from . import ksg_sales_project_term
-from . import ksg_sales_project
 from . import ksg_sales_rab
 from . import ksg_sales_rab_line
 from . import ksg_sales_hpp

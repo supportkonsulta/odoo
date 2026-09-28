@@ -132,13 +132,6 @@ class KsgSalesHpp(models.Model):
         store=True,
     )
 
-    total_perlengkapan = fields.Monetary(
-        string="Total Perlengkapan & Chemical / Bulan",
-        currency_field="currency_id",
-        compute="_compute_total_hpp",
-        store=True,
-    )
-
     total_hpp_bulanan = fields.Monetary(
         string="Total HPP / Bulan",
         currency_field="currency_id",
@@ -181,7 +174,7 @@ class KsgSalesHpp(models.Model):
     # TOTAL HPP
     # =========================================================
     #
-    # Total HPP diambil dari Detail HPP.
+    # Total HPP tetap berasal dari Detail HPP.
     #
     # Detail HPP:
     # Uang Pokok
@@ -200,29 +193,27 @@ class KsgSalesHpp(models.Model):
     # Jumlah / Bulan x 12
     # = HPP / Tahun
     #
-    # Kebutuhan Operational tidak dijumlahkan lagi
-    # di sini agar tidak terjadi double counting.
+    # Kebutuhan Operational tidak ditambahkan lagi
+    # ke Total HPP agar tidak terjadi double counting.
 
     @api.depends(
         "line_ids.jumlah_bulan",
-        "tenaga_kerja_ids.subtotal",
-        "perlengkapan_ids.subtotal",
+        "tenaga_kerja_ids.total_biaya",
     )
     def _compute_total_hpp(self):
         for hpp in self:
 
             # -------------------------------------------------
-            # Informasi kebutuhan Operational
+            # Informasi total kebutuhan tenaga kerja
             # -------------------------------------------------
-            # Ini hanya sebagai informasi total kebutuhan,
-            # bukan ditambahkan lagi ke Total HPP.
+            #
+            # Nilai ini hanya sebagai informasi dari tabel
+            # Kebutuhan Tenaga Kerja.
+            #
+            # Tidak ditambahkan kembali ke Total HPP.
 
             hpp.total_tenaga_kerja = sum(
-                hpp.tenaga_kerja_ids.mapped("subtotal")
-            )
-
-            hpp.total_perlengkapan = sum(
-                hpp.perlengkapan_ids.mapped("subtotal")
+                hpp.tenaga_kerja_ids.mapped("total_biaya")
             )
 
             # -------------------------------------------------

@@ -21,24 +21,18 @@ class KsgSalesHppTenagaKerja(models.Model):
     )
 
     posisi = fields.Char(
-        string="Posisi",
+        string="Peran / Posisi",
         required=True,
         tracking=True,
-        help="Posisi tenaga kerja yang dibutuhkan.",
+        help="Peran atau posisi tenaga kerja yang dibutuhkan.",
     )
 
     jumlah = fields.Float(
-        string="Jumlah",
+        string="Jumlah Pekerja",
         required=True,
         default=1.0,
         tracking=True,
-        help="Jumlah tenaga kerja yang dibutuhkan.",
-    )
-
-    satuan = fields.Char(
-        string="Satuan",
-        default="Orang",
-        tracking=True,
+        help="Jumlah pekerja yang dibutuhkan untuk proyek.",
     )
 
     currency_id = fields.Many2one(
@@ -48,45 +42,48 @@ class KsgSalesHppTenagaKerja(models.Model):
         readonly=True,
     )
 
-    harga = fields.Monetary(
-        string="Harga",
+    estimasi_biaya_satuan = fields.Monetary(
+        string="Estimasi Biaya / Orang (Inc. BPJS)",
         currency_field="currency_id",
+        required=True,
         default=0.0,
         tracking=True,
-        help="Harga diisi oleh Operational.",
+        help="Estimasi biaya per orang termasuk BPJS.",
     )
 
-    subtotal = fields.Monetary(
-        string="Subtotal",
+    total_biaya = fields.Monetary(
+        string="Total Biaya",
         currency_field="currency_id",
-        compute="_compute_subtotal",
+        compute="_compute_total_biaya",
         store=True,
     )
 
     keterangan = fields.Text(
-        string="Keterangan",
+        string="Catatan Kebutuhan",
         tracking=True,
     )
 
-    @api.depends("jumlah", "harga")
-    def _compute_subtotal(self):
+    @api.depends("jumlah", "estimasi_biaya_satuan")
+    def _compute_total_biaya(self):
         for line in self:
-            line.subtotal = line.jumlah * line.harga
+            line.total_biaya = (
+                line.jumlah * line.estimasi_biaya_satuan
+            )
 
     @api.constrains("jumlah")
     def _check_jumlah(self):
         for line in self:
             if line.jumlah <= 0:
                 raise ValidationError(
-                    "Jumlah tenaga kerja harus lebih besar dari 0."
+                    "Jumlah pekerja harus lebih besar dari 0."
                 )
 
-    @api.constrains("harga")
-    def _check_harga(self):
+    @api.constrains("estimasi_biaya_satuan")
+    def _check_estimasi_biaya_satuan(self):
         for line in self:
-            if line.harga < 0:
+            if line.estimasi_biaya_satuan < 0:
                 raise ValidationError(
-                    "Harga tenaga kerja tidak boleh bernilai negatif."
+                    "Estimasi biaya per orang tidak boleh bernilai negatif."
                 )
 
     def write(self, vals):
