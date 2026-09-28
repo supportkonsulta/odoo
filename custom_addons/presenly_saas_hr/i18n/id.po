@@ -768,9 +768,127 @@ msgid "One work location may only mirror one Presenly location."
 msgstr "Satu lokasi kerja hanya boleh mencerminkan satu lokasi Presenly."
 
 #. module: presenly_saas_hr
-msgid "One row per field per record; re-checking updates it instead of adding another."
-msgstr "Satu baris untuk satu kolom per rekaman; pemeriksaan ulang memperbaruinya, bukan menambah baris baru."
+msgid ""
+"One row per field per record; re-checking updates it instead of adding "
+"another."
+msgstr ""
+"Satu baris untuk satu kolom per rekaman; pemeriksaan ulang memperbaruinya, "
+"bukan menambah baris baru."
 
 #. module: presenly_saas_hr
 msgid "Presenly Work Location (mirror)"
 msgstr "Lokasi Kerja Presenly (cermin)"
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_hr_employee__presenly_other_company_names
+msgid "Also an Employee in"
+msgstr "Juga Pegawai di"
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_hr_employee__presenly_client_name
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_presenly_saas_employee__internal_company_name
+#: model_terms:ir.ui.view,arch_db:presenly_saas_hr.view_employee_form_presenly
+#: model_terms:ir.ui.view,arch_db:presenly_saas_hr.view_presenly_saas_employee_search
+msgid "Branch"
+msgstr "Cabang"
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_hr_employee__presenly_client_id
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_presenly_saas_employee__internal_company_id
+msgid "Branch Client ID"
+msgstr "ID Klien Cabang"
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,help:presenly_saas_hr.field_hr_employee__presenly_other_company_names
+msgid ""
+"Other companies where this same person is also an employee. Odoo keeps one "
+"employee per company, while Presenly keeps one person (one nopeg), so a "
+"person can appear here more than once. Shown so the reader knows the row "
+"they are looking at is not the only one."
+msgstr ""
+"Perusahaan lain tempat orang yang sama juga menjadi pegawai. Odoo menyimpan "
+"satu pegawai per perusahaan, sedangkan Presenly menyimpan satu orang (satu "
+"nopeg), jadi satu orang bisa muncul lebih dari sekali di sini. Ditampilkan "
+"supaya pembaca tahu baris yang sedang dilihat bukan satu-satunya."
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,help:presenly_saas_hr.field_hr_employee__presenly_client_id
+msgid ""
+"The branch this employee is placed at, as an id on the Presenly side. Kept "
+"next to the name so the branch stays readable even when no Odoo company "
+"carries that id."
+msgstr ""
+"Cabang tempat pegawai ini ditempatkan, sebagai id di sisi Presenly. Disimpan"
+" di samping namanya supaya cabangnya tetap terbaca walau tidak ada "
+"perusahaan Odoo yang memakai id itu."
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,help:presenly_saas_hr.field_presenly_saas_employee__internal_company_name
+msgid ""
+"Which branch this employee works for, as reported by Presenly. When Presenly"
+" does not name one, the branch is the main company: the installation that "
+"subscribes to Presenly."
+msgstr ""
+"Cabang tempat pegawai ini bekerja, menurut laporan Presenly. Kosong bila "
+"Presenly tidak menyebutkannya pada pegawai itu sendiri; cabang yang "
+"sebenarnya ada di resource penempatan, satu baris per pegawai dan klien, dan"
+" itu belum disimpan di sini."
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,help:presenly_saas_hr.field_hr_employee__presenly_client_name
+msgid ""
+"Which branch this employee works for, from their primary placement. Kept as "
+"a field of its own instead of making the employee belong to the client "
+"company, so the employee list stays in one company and remains visible "
+"without the multi-company selector. Empty until a placement names one."
+msgstr ""
+"Cabang tempat pegawai ini bekerja, dari penempatan utamanya. Disimpan "
+"sebagai kolom sendiri alih-alih menjadikan pegawai milik perusahaan klien, "
+"supaya daftar pegawai tetap di satu perusahaan dan tetap terlihat tanpa "
+"pemilih multi-company. Kosong sampai ada penempatan yang menyebutkannya."
+
+#. module: presenly_saas_hr
+#: code:addons/presenly_saas_hr/models/presenly_saas_placement.py:0
+msgid ""
+"%(user)s can now work in %(companies)s, from their placements in Presenly."
+msgstr ""
+"%(user)s sekarang dapat bekerja di %(companies)s, dari penempatannya di "
+"Presenly."
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_hr_employee__presenly_client_ids
+msgid "Branches"
+msgstr "Cabang"
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,help:presenly_saas_hr.field_hr_employee__presenly_client_ids
+msgid ""
+"Every branch company this employee is placed at right now, taken from their "
+"placements in Presenly. This is the current picture, so a branch leaves this"
+" list when its placement ends. Access to the company, once given, is never "
+"taken back by the sync."
+msgstr ""
+"Setiap perusahaan cabang tempat pegawai ini ditempatkan sekarang, diambil "
+"dari penempatannya di Presenly. Ini keadaan sekarang, jadi sebuah cabang "
+"keluar dari daftar ini begitu penempatannya berakhir. Akses ke "
+"perusahaannya, sekali diberikan, tidak pernah ditarik kembali oleh "
+"sinkronisasi."
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,help:presenly_saas_hr.field_presenly_saas_employee__branch_ids
+msgid ""
+"Branches that are actually in effect, taken from the placements of the Odoo "
+"employee this row is linked to. The employee payload only ever carries one "
+"client, so this is where the full picture is. Left as a related field on "
+"purpose: the list lives in one place, not two."
+msgstr ""
+"Cabang yang benar-benar berlaku, diambil dari penempatan pegawai Odoo yang "
+"tertaut ke baris ini. Payload pegawai hanya membawa satu klien, jadi di "
+"sinilah gambaran lengkapnya. Sengaja berupa field terkait: daftarnya hidup "
+"di satu tempat, bukan dua."
+
+#. module: presenly_saas_hr
+#: model_terms:ir.ui.view,arch_db:presenly_saas_hr.view_presenly_saas_employee_form
+#: model_terms:ir.ui.view,arch_db:presenly_saas_hr.view_presenly_saas_employee_list
+msgid "Integration Company"
+msgstr "Perusahaan Integrasi"

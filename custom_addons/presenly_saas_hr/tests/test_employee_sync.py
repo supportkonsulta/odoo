@@ -801,3 +801,62 @@ class TestPresenlyNoPiiAnywhere(TransactionCase):
                     tersangka.append('%s.%s' % (nama_model, nama))
 
         self.assertFalse(tersangka, 'kolom PII ditemukan: %s' % tersangka)
+
+
+@tagged('post_install', '-at_install')
+class TestPresenlyEmployeeMultiCompany(TestPresenlyEmployeeSyncBase):
+    """Orang yang sama sebagai pegawai di beberapa perusahaan.
+
+    Odoo menyimpan satu pegawai per perusahaan, sedangkan Presenly menyimpan satu
+    orang (satu nopeg). Selisih itu harus terbaca, atau baris yang sedang dibuka
+    terlihat seperti satu-satunya.
+    """
+
+    def _di_perusahaan(self, nama_perusahaan):
+        """Pegawai dengan nopeg uji di satu perusahaan.
+
+        Sengaja pencarian sendiri, tanpa `_hr()`: helper itu memakai `limit=1`,
+        dan begitu ada dua pegawai dengan nopeg sama di dua perusahaan, limit itu
+        bisa mengembalikan yang bukan dimaksud dan tesnya gagal karena sebab yang
+        tidak ada hubungannya dengan yang diuji.
+        """
+        return self.Hr.search([
+            ('presenly_nopeg', '=', 'iksg-rangga'),
+            ('company_id', '=', nama_perusahaan.id),
+        ])
+
+    def test_penanda_perusahaan_lain_terisi(self):
+        cabang = self.env['res.company'].create({'name': 'Cabang Lain'})
+        self._tarik([employee_row()])
+        sesama = self.Hr.create({
+            'name': 'rangga',
+            'presenly_nopeg': 'iksg-rangga',
+            'company_id': cabang.id,
+        })
+
+        utama = self._di_perusahaan(self.company)
+        self.assertEqual(len(utama), 1, 'prasyarat: satu baris di perusahaan utama')
+        self.assertEqual(utama.presenly_other_company_names, 'Cabang Lain')
+        self.assertEqual(sesama.presenly_other_company_names, self.company.name)
+
+    def test_penanda_kosong_bila_hanya_satu_perusahaan(self):
+        self._tarik([employee_row()])
+        utama = self._di_perusahaan(self.company)
+        self.assertFalse(
+            utama.presenly_other_company_names,
+            'tanpa perusahaan lain, tidak ada yang perlu disebut',
+        )
+
+    def test_penanda_tidak_menghitung_baris_di_perusahaan_yang_sama(self):
+        self._tarik([employee_row()])
+        self.Hr.create({
+            'name': 'rangga kedua',
+            'presenly_nopeg': 'iksg-rangga',
+            'company_id': self.company.id,
+        })
+        utama = self._di_perusahaan(self.company)
+        self.assertEqual(len(utama), 2, 'prasyarat: dua baris di perusahaan yang sama')
+        self.assertEqual(
+            set(utama.mapped('presenly_other_company_names')), {False},
+            'baris di perusahaan yang sama bukan perusahaan lain',
+        )

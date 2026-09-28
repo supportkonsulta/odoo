@@ -603,6 +603,17 @@ class PresenlySaasConfig(models.Model):
             _ringkas, error = self._pull_attendance(bulan, tahun)
             return error
 
+        if resource == 'placements' and hasattr(self, '_pull_placements'):
+            # Perubahan penempatan: yang berubah bukan pegawainya, melainkan
+            # penempatannya. Menarik pegawai hanya menambah pekerjaan yang tidak
+            # ada hubungannya, dan justru penempatan inilah yang menentukan
+            # cabang serta akses perusahaan seseorang.
+            #
+            # `hasattr` dipakai karena penempatan hanya ada bila `presenly_saas_hr`
+            # terpasang, sedangkan berkas ini milik modul tanpa `hr`.
+            _ringkas, error = self._pull_placements()
+            return error
+
         if resource not in dict(PERIOD_DATASETS):
             # Jenis yang tidak dikenal: tarikan biasa yang menanganinya.
             return False

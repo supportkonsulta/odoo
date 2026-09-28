@@ -42,6 +42,93 @@ class PresenlySaasConfig(models.Model):
              'employee field users also edit by hand.',
     )
 
+    # ------------------------------------------------------------------
+    # Cabang, dan akses perusahaan bagi pengguna
+    # ------------------------------------------------------------------
+    def _klien_dari_penempatan(self, rows):
+        """Perusahaan cabang per nopeg, dari penempatan yang berlaku hari ini.
+
+        Yang dihitung hanya penempatan yang aktif, sudah mulai, dan belum
+        berakhir. Penempatan yang belum mulai tidak memberi akses lebih awal,
+        dan penempatan yang sudah berakhir tidak memberi akses lagi.
+        """
+        hari_ini = fields.Date.to_string(fields.Date.context_today(self))
+        klien_ids = {
+            int(row['internal_company']['id'])
+            for row in rows
+            if isinstance(row.get('internal_company'), dict)
+            and row['internal_company'].get('id')
+        }
+        peta = {}
+        if klien_ids:
+            for perusahaan in self.env['res.company'].sudo().search(
+                    [('presenly_client_id', 'in', list(klien_ids))]):
+                peta[perusahaan.presenly_client_id] = perusahaan
+
+        per_pegawai = {}
+        for row in rows:
+            pegawai = row.get('employee') if isinstance(row.get('employee'), dict) else {}
+            nopeg = pegawai.get('nopeg')
+            if not nopeg:
+                continue
+            if row.get('status') and row['status'] != 'active':
+                continue
+            mulai = str(row.get('valid_from') or '')[:10]
+            if mulai and mulai > hari_ini:
+                continue
+            sampai = str(row.get('valid_until') or '')[:10]
+            if sampai and sampai < hari_ini:
+                continue
+            klien = row.get('internal_company') if isinstance(row.get('internal_company'), dict) else {}
+            perusahaan = peta.get(int(klien['id'])) if klien.get('id') else None
+            if perusahaan:
+                per_pegawai.setdefault(nopeg, set()).add(perusahaan.id)
+        return per_pegawai
+
+    def _pegawai_dari_nopeg(self, nopeg):
+        """`hr.employee` untuk satu nopeg, dibatasi perusahaan integrasi ini."""
+        cermin = self.env['presenly.saas.employee'].sudo().search([
+            ('nopeg', '=', nopeg),
+            ('company_id', '=', self.company_id.id),
+        ], limit=1)
+        return cermin.hr_employee_id
+
+    def _apply_branches(self, rows, ringkasan):
+        """Isi daftar cabang tiap pegawai, dan beri akses perusahaannya.
+
+        Daftar cabangnya adalah keadaan **sekarang**: penempatan yang berakhir
+        keluar dari daftar. Akses perusahaannya tidak ikut dicabut, dan itu
+        keputusan pemilik: yang sudah diberikan dibiarkan, supaya tidak ada yang
+        kehilangan perusahaan di tengah pekerjaan tanpa diminta.
+        """
+        per_pegawai = self._klien_dari_penempatan(rows)
+        for nopeg, perusahaan_ids in per_pegawai.items():
+            hr = self._pegawai_dari_nopeg(nopeg)
+            if not hr:
+                continue
+            if set(hr.presenly_client_ids.ids) != perusahaan_ids:
+                hr.with_context(presenly_skip_push=True).write({
+                    'presenly_client_ids': [(6, 0, sorted(perusahaan_ids))],
+                })
+                ringkasan['branches'] += 1
+            ringkasan['access_granted'] += hr._presenly_grant_branch_access()
+
+        # Pegawai yang penempatannya sudah tidak ada: daftar cabangnya
+        # dikosongkan, karena daftar itu menjawab "sekarang di cabang mana".
+        # Akses perusahaannya sengaja tidak ikut dicabut.
+        tertinggal = self.env['hr.employee'].sudo().search([
+            ('presenly_saas_config_id', '=', self.id),
+            ('presenly_client_ids', '!=', False),
+        ])
+        for hr in tertinggal:
+            if hr.presenly_nopeg and hr.presenly_nopeg in per_pegawai:
+                continue
+            hr.with_context(presenly_skip_push=True).write(
+                {'presenly_client_ids': [(5,)]}
+            )
+            ringkasan['branches_cleared'] += 1
+        return ringkasan
+
     def _pull_employees(self):
         """Setelah pegawai ditarik, penempatannya diterapkan.
 
@@ -127,15 +214,19 @@ class PresenlySaasConfig(models.Model):
 
             nilai = {}
             klien = row.get('internal_company') if isinstance(row.get('internal_company'), dict) else {}
+            perusahaan = Perusahaan.browse()
             if klien and klien.get('id'):
                 perusahaan = Perusahaan.search(
                     [('presenly_client_id', '=', int(klien['id']))], limit=1
                 )
-                if perusahaan:
-                    nilai['presenly_client_id'] = perusahaan.presenly_client_id
-                    nilai['presenly_client_name'] = perusahaan.name
-                else:
-                    ringkasan['unknown_company'] += 1
+            if perusahaan:
+                nilai['presenly_client_id'] = perusahaan.presenly_client_id
+                nilai['presenly_client_name'] = perusahaan.name
+            elif klien and klien.get('id'):
+                # Klien yang belum ada sebagai perusahaan Odoo dihitung, bukan
+                # ditebak. Mengisinya dengan perusahaan utama akan membuat
+                # cabangnya salah, dan salahnya tidak terlihat.
+                ringkasan['unknown_company'] += 1
 
             tempat = row.get('location') if isinstance(row.get('location'), dict) else {}
             if tempat and tempat.get('id'):
@@ -197,6 +288,20 @@ class PresenlySaasConfig(models.Model):
                 ringkasan['applied'] += 1
             else:
                 ringkasan['unchanged'] += 1
+
+        # Daftar cabang tiap pegawai, dari SELURUH penempatannya. Penempatan
+        # utama hanya satu per pegawai, sedangkan cabangnya bisa beberapa: satu
+        # baris `placements` per pegawai dan klien.
+        #
+        # Tarikan yang terpotong melewatinya: daftar yang belum lengkap akan
+        # menghapus cabang yang sah, dan itu justru yang tidak boleh terjadi.
+        ringkasan['branches'] = 0
+        ringkasan['branches_cleared'] = 0
+        ringkasan['access_granted'] = 0
+        if not terpotong:
+            self._apply_branches(rows, ringkasan)
+        else:
+            ringkasan['branches_truncated'] = True
 
         # Penempatan yang sudah tidak ada lagi: lokasi kerja yang dulu dipasang
         # dikembalikan, bukan dibiarkan menunjuk tempat yang bukan penempatan
