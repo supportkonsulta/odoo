@@ -100,12 +100,16 @@ class KsgEngineeringWeeklyReport(models.Model):
                     ('periode_minggu_id', '=', week.id),
                 ], limit=1)
                 if not existing:
-                    # Hitung planned progress dari WBS
+                    # Hitung planned progress dari WBS target
                     wbs_in_week = self.env['ksg.engineering.wbs'].search([
-                        ('project_id', '=', project.id),
-                        ('periode_minggu_ids', 'in', [week.id]),
+                        ('project_id', '=', project.id)
                     ])
-                    planned = sum(wbs_in_week.mapped('planned_progress_mingguan'))
+                    planned = 0.0
+                    for wbs in wbs_in_week:
+                        target = wbs.target_ids.filtered(lambda t: t.periode_minggu_id.id == week.id)
+                        if target:
+                            planned += sum(target.mapped('target_progress'))
+                            
                     existing = self.create({
                         'project_id': project.id,
                         'periode_minggu_id': week.id,
