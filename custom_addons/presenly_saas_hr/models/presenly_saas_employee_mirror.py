@@ -56,8 +56,29 @@ class PresenlySaasEmployee(models.Model):
 
     shift_name = fields.Char(string='Shift')
 
-    internal_company_id = fields.Integer(string='Internal Company ID')
-    internal_company_name = fields.Char(string='Internal Company')
+    # Presenly menamai ini `internal_company`; di sini sebutannya **cabang**,
+    # karena itulah pertanyaan yang dijawab kolom ini: pegawai ini bernaung di
+    # cabang mana. Angka `id`-nya adalah id klien di sisi Presenly, dan kolom
+    # nama sengaja terpisah supaya tetap terbaca walau perusahaan Odoo dengan
+    # id itu belum pernah dibuat.
+    internal_company_id = fields.Integer(string='Branch Client ID', index=True)
+    branch_ids = fields.Many2many(
+        'res.company',
+        related='hr_employee_id.presenly_client_ids',
+        string='Branches',
+        readonly=True,
+        help='Branches that are actually in effect, taken from the placements of '
+             'the Odoo employee this row is linked to. The employee payload only '
+             'ever carries one client, so this is where the full picture is. Left '
+             'as a related field on purpose: the list lives in one place, not two.',
+    )
+    internal_company_name = fields.Char(
+        string='Branch',
+        help='Which branch this employee works for, as reported by Presenly. '
+             'Empty when Presenly does not name one on the employee itself; the '
+             'placements carry the branches, one row per employee and client, and '
+             'those are not stored here yet.',
+    )
 
     # PII — NPWP, rekening, dan BPJS — tidak disimpan di sini. Odoo HR tidak
     # membutuhkannya, dan setiap salinan adalah satu tempat lagi yang harus
@@ -128,6 +149,12 @@ class PresenlySaasEmployee(models.Model):
             'manager_nopeg': (manager.get('nopeg') if isinstance(manager, dict) else None) or False,
             'manager_name': (manager.get('name') if isinstance(manager, dict) else None) or False,
             'shift_name': (shift.get('name') if isinstance(shift, dict) else None) or False,
+            # Cabang ditulis apa adanya dari Presenly, tanpa cadangan ke
+            # perusahaan utama. Sebelumnya ada cadangan begitu, dan itu keliru:
+            # perusahaan utama bukan cabang, dan mengisinya membuat laporan
+            # cabang terlihat lengkap padahal datanya tidak ada. Cabang yang
+            # sebenarnya ada di resource `placements`, satu baris per
+            # pegawai-dan-klien; pengisian dari sana belum dikerjakan.
             'internal_company_id': int(internal_company.get('id') or 0),
             'internal_company_name': internal_company.get('name') or False,
             'source_created_at': parse_datetime(row.get('created_at')),
