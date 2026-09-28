@@ -1,6 +1,6 @@
 {
     'name': 'Custom Payroll',
-    'version': '1.0.0',
+    'version': '1.0.3',
     'category': 'Human Resources/Payroll',
     'summary': 'Custom payroll management with payslip, allowances, and BPJS',
     'description': """

@@ -75,7 +75,14 @@ class CustomPayrollGenerateWizard(models.TransientModel):
 
     @api.model
     def _employee_locations_for_period(self, employee, period_start, period_end):
-        locations = employee._presenly_work_locations_for_period(period_start, period_end)
+        locations = self.env['hr.work.location']
+        if hasattr(employee, '_presenly_work_locations_for_period'):
+            try:
+                locations = employee._presenly_work_locations_for_period(
+                    period_start, period_end
+                )
+            except Exception:
+                locations = self.env['hr.work.location']
         if not locations and employee.work_location_id:
             locations = employee.work_location_id
         return locations

@@ -222,15 +222,23 @@ class CustomPayrollSlip(models.Model):
             except (ValueError, TypeError):
                 rec.work_location_count = 0
                 continue
-            locations = rec.employee_id._presenly_work_locations_for_period(
-                start_date, end_date
-            )
+            locations = self.env['hr.work.location']
+            if hasattr(rec.employee_id, '_presenly_work_locations_for_period'):
+                try:
+                    locations = rec.employee_id._presenly_work_locations_for_period(
+                        start_date, end_date
+                    )
+                except Exception:
+                    locations = self.env['hr.work.location']
+            if not locations and rec.employee_id.work_location_id:
+                locations = rec.employee_id.work_location_id
             rec.work_location_count = len(locations)
 
     @api.depends('payroll_batch_id.periode_bulan', 'payroll_batch_id.periode_tahun',
                  'employee_id', 'overtime_threshold_hours', 'overtime_override')
     def _compute_attendance_overtime(self):
-        Attendance = self.env['hr.attendance']
+        Attendance = self.env.get('hr.attendance')
+        AttendanceLog = self.env.get('presenly.saas.attendance.log')
         for rec in self:
             if rec.overtime_override and rec.overtime_override > 0:
                 rec.attendance_overtime_hours = rec.overtime_override
@@ -247,23 +255,51 @@ class CustomPayrollSlip(models.Model):
             except (ValueError, TypeError):
                 rec.attendance_overtime_hours = 0.0
                 continue
-            start_dt = datetime.combine(start_date, datetime.min.time())
-            end_dt = datetime.combine(end_date, datetime.max.time())
-            attendance_domain = [
-                ('employee_id', '=', rec.employee_id.id),
-                ('check_in', '>=', start_dt),
-                ('check_in', '<=', end_dt),
-            ]
-            if rec.work_location_id:
-                attendance_domain.append(
-                    ('presenly_work_location_id', '=', rec.work_location_id.id)
-                )
-            attendances = Attendance.search(attendance_domain)
-            overtime = 0.0
-            for att in attendances:
-                if att.worked_hours and att.worked_hours > rec.overtime_threshold_hours:
-                    overtime += att.worked_hours - rec.overtime_threshold_hours
-            rec.attendance_overtime_hours = overtime
+
+            if Attendance is not None:
+                start_dt = datetime.combine(start_date, datetime.min.time())
+                end_dt = datetime.combine(end_date, datetime.max.time())
+                attendance_domain = [
+                    ('employee_id', '=', rec.employee_id.id),
+                    ('check_in', '>=', start_dt),
+                    ('check_in', '<=', end_dt),
+                ]
+                if rec.work_location_id:
+                    attendance_domain.append(
+                        ('presenly_work_location_id', '=', rec.work_location_id.id)
+                    )
+                attendances = Attendance.search(attendance_domain)
+                overtime = 0.0
+                for att in attendances:
+                    if att.worked_hours and att.worked_hours > rec.overtime_threshold_hours:
+                        overtime += att.worked_hours - rec.overtime_threshold_hours
+                rec.attendance_overtime_hours = overtime
+                continue
+
+            if AttendanceLog is not None:
+                nopeg = getattr(rec.employee_id, 'presenly_nopeg', False) if rec.employee_id else False
+                if not nopeg:
+                    rec.attendance_overtime_hours = 0.0
+                    continue
+                logs = AttendanceLog.search([
+                    ('employee_nopeg', '=', nopeg),
+                    ('work_date', '>=', start_date),
+                    ('work_date', '<=', end_date),
+                ])
+                daily_totals = {}
+                for log in logs:
+                    wd = log.work_date
+                    if not wd:
+                        continue
+                    daily_totals[wd] = daily_totals.get(wd, 0.0) + (log.session_hours or 0.0)
+                overtime = 0.0
+                for total in daily_totals.values():
+                    if total > rec.overtime_threshold_hours:
+                        overtime += total - rec.overtime_threshold_hours
+                rec.attendance_overtime_hours = overtime
+                continue
+
+            rec.attendance_overtime_hours = 0.0
 
     @api.depends('total_gaji_pokok')
     def _compute_hourly_rate(self):
@@ -551,6 +587,8 @@ class CustomPayrollSlip(models.Model):
         work_location_id, summary hanya untuk lokasi tsb.
         """
         self.ensure_one()
+        if 'hr.attendance' not in self.env:
+            return []
         if not self.employee_id or not self.payroll_batch_id.periode_bulan \
                 or not self.payroll_batch_id.periode_tahun:
             return []
@@ -610,9 +648,16 @@ class CustomPayrollSlip(models.Model):
             end_date = date(year, month, last_day)
         except (ValueError, TypeError):
             raise UserError(_('Invalid payroll period on this slip.'))
-        locations = self.employee_id._presenly_work_locations_for_period(
-            start_date, end_date
-        )
+        locations = self.env['hr.work.location']
+        if hasattr(self.employee_id, '_presenly_work_locations_for_period'):
+            try:
+                locations = self.employee_id._presenly_work_locations_for_period(
+                    start_date, end_date
+                )
+            except Exception:
+                locations = self.env['hr.work.location']
+        if not locations and self.employee_id.work_location_id:
+            locations = self.employee_id.work_location_id
         if not locations:
             raise UserError(_(
                 'No work locations are configured for this employee in this period.'
