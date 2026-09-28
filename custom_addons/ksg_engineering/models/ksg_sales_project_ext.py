@@ -237,28 +237,14 @@ class KsgSalesProjectExt(models.Model):
         # Data Rows
         row += 1
         
-        def write_wbs(wbs_list, level, current_row):
+        def write_wbs(wbs_list, level, current_row, parent_idx_str=""):
             idx = 1
             for w in wbs_list:
-                prefix = ""
                 if level == 1:
-                    # Convert to Roman
-                    val = idx
-                    roman = ''
-                    num = [1, 4, 5, 9, 10, 40, 50, 90, 100, 400, 500, 900, 1000]
-                    sym = ["I", "IV", "V", "IX", "X", "XL", "L", "XC", "C", "CD", "D", "CM", "M"]
-                    i = 12
-                    while val:
-                        div = val // num[i]
-                        val %= num[i]
-                        while div:
-                            roman += sym[i]
-                            div -= 1
-                        i -= 1
-                    no_str = roman
-                else:
                     no_str = f"{idx}"
-                    prefix = "  " * level
+                else:
+                    no_str = f"{parent_idx_str}.{idx}"
+                prefix = "  " * (level - 1)
                     
                 sheet.write(current_row, 0, no_str, center_format)
                 sheet.write(current_row, 1, prefix + w.nama_pekerjaan, cell_format)
@@ -281,7 +267,7 @@ class KsgSalesProjectExt(models.Model):
                 # Children
                 children = w.child_ids.sorted('id')
                 if children:
-                    current_row = write_wbs(children, level + 1, current_row)
+                    current_row = write_wbs(children, level + 1, current_row, no_str)
                     
                 idx += 1
             return current_row
@@ -290,20 +276,79 @@ class KsgSalesProjectExt(models.Model):
         row = write_wbs(top_wbs, 1, row)
         
         # Footer
-        sheet.write(row, 1, 'GRAND TOTAL', workbook.add_format({'bold': True, 'align': 'right', 'border': 1}))
+        row += 1
+        sheet.write(row, 1, 'TARGET RENCANA (%)', workbook.add_format({'bold': True, 'align': 'right', 'border': 1}))
         sheet.write(row, 2, sum(top_wbs.mapped('bobot')) / 100.0, workbook.add_format({'bold': True, 'align': 'center', 'border': 1, 'num_format': '0.00%'}))
         
         c = 3
+        cum_p = 0.0
+        planned_vals = []
         for wk in weeks:
             total_wk = 0.0
             for w in top_wbs:
                 target = w.target_ids.filtered(lambda t: t.periode_minggu_id.id == wk.id)
                 if target:
                     total_wk += sum(target.mapped('target_progress'))
-            sheet.write(row, c, total_wk / 100.0, workbook.add_format({'bold': True, 'align': 'center', 'border': 1, 'num_format': '0.00%'}))
+            sheet.write(row, c, total_wk / 100.0, percent_format)
+            cum_p += total_wk
+            planned_vals.append(cum_p)
             c += 1
             
-        sheet.write(row, c, '', cell_format)
+        row += 1
+        sheet.write(row, 1, 'TARGET RENCANA KUMULATIF (%)', workbook.add_format({'bold': True, 'align': 'right', 'border': 1}))
+        sheet.write(row, 2, '', cell_format)
+        c = 3
+        for val in planned_vals:
+            sheet.write(row, c, val / 100.0, percent_format)
+            c += 1
+            
+        row += 1
+        sheet.write(row, 1, 'REALISASI PENCAPAIAN (%)', workbook.add_format({'bold': True, 'align': 'right', 'border': 1}))
+        sheet.write(row, 2, '', cell_format)
+        c = 3
+        actual_vals = []
+        cum_a = 0.0
+        
+        for wk in weeks:
+            # Cari dari laporan mingguan untuk minggu ini
+            weekly_rep = self.env['ksg.engineering.weekly.report'].search([
+                ('project_id', '=', self.id),
+                ('periode_minggu_id', '=', wk.id),
+                ('state', '=', 'done')
+            ], limit=1)
+            
+            actual_wk = weekly_rep.actual_progress if weekly_rep else 0.0
+            if actual_wk > 0 or weekly_rep:
+                sheet.write(row, c, actual_wk / 100.0, percent_format)
+                cum_a = weekly_rep.actual_progress_kumulatif
+                actual_vals.append(cum_a)
+            else:
+                sheet.write(row, c, '', cell_format)
+                actual_vals.append(None)
+            c += 1
+            
+        row += 1
+        sheet.write(row, 1, 'REALISASI PENCAPAIAN KUMULATIF (%)', workbook.add_format({'bold': True, 'align': 'right', 'border': 1}))
+        sheet.write(row, 2, '', cell_format)
+        c = 3
+        for val in actual_vals:
+            if val is not None:
+                sheet.write(row, c, val / 100.0, percent_format)
+            else:
+                sheet.write(row, c, '', cell_format)
+            c += 1
+            
+        row += 1
+        sheet.write(row, 1, 'SELISIH (+/-) (%)', workbook.add_format({'bold': True, 'align': 'right', 'border': 1}))
+        sheet.write(row, 2, '', cell_format)
+        c = 3
+        for i, val in enumerate(actual_vals):
+            if val is not None:
+                selisih = val - planned_vals[i]
+                sheet.write(row, c, selisih / 100.0, percent_format)
+            else:
+                sheet.write(row, c, '', cell_format)
+            c += 1
         
         workbook.close()
         output.seek(0)

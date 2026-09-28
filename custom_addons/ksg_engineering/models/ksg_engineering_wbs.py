@@ -27,7 +27,7 @@ class KsgEngineeringWbs(models.Model):
     _name = 'ksg.engineering.wbs'
     _description = 'WBS Engineering'
     _inherit = ['mail.thread', 'mail.activity.mixin']
-    _order = 'project_id, parent_id, id'
+    _order = 'project_id, parent_path, id'
     _parent_name = 'parent_id'
     _parent_store = True
 
@@ -131,7 +131,7 @@ class KsgEngineeringWbs(models.Model):
         for rec in self:
             if rec.parent_path:
                 level = len(rec.parent_path.strip('/').split('/')) - 1
-                indent = "   " * level
+                indent = "\u00A0\u00A0\u00A0\u00A0" * level
                 rec.display_name = f"{indent}└ {rec.nama_pekerjaan}" if level > 0 else rec.nama_pekerjaan
             else:
                 rec.display_name = rec.nama_pekerjaan
@@ -147,11 +147,16 @@ class KsgEngineeringWbs(models.Model):
             else:
                 rec.bobot = 0.0
 
-    @api.depends('target_ids.target_progress')
+    @api.depends('target_ids.target_progress', 'child_ids.planned_progress_kumulatif', 'child_ids.bobot')
     def _compute_planned(self):
-        """Hitung planned progress kumulatif berdasarkan tabel target."""
+        """Hitung planned progress kumulatif berdasarkan tabel target atau rata-rata anak."""
         for rec in self:
-            rec.planned_progress_kumulatif = sum(rec.target_ids.mapped('target_progress'))
+            if rec.child_ids:
+                total_bobot_anak = sum(rec.child_ids.mapped('bobot')) or 1.0
+                planned = sum(c.planned_progress_kumulatif * c.bobot for c in rec.child_ids) / total_bobot_anak
+                rec.planned_progress_kumulatif = min(planned, 100.0)
+            else:
+                rec.planned_progress_kumulatif = sum(rec.target_ids.mapped('target_progress'))
 
     @api.onchange('tanggal_mulai', 'tanggal_selesai', 'mode_distribusi', 'bobot')
     def _onchange_generate_targets(self):
@@ -176,14 +181,18 @@ class KsgEngineeringWbs(models.Model):
         self.target_ids = target_cmds
 
     def _compute_actual(self):
-        """Actual progress dari daily report lines yang terkait WBS ini
-        melalui konsolidasi approved.
-        Non-stored karena bergantung pada search query lintas model."""
+        """Actual progress agregat: jika punya anak, rata-rata tertimbang dari anak.
+        Jika leaf, dari daily report lines."""
         DailyLine = self.env['ksg.engineering.daily.report.line']
         for rec in self:
-            lines = DailyLine.search([
-                ('wbs_id', '=', rec.id),
-                ('report_id.state', '=', 'submitted'),
-            ])
-            total_actual = sum(lines.mapped('progress'))
-            rec.actual_progress_kumulatif = min(total_actual, 100.0)
+            if rec.child_ids:
+                total_bobot_anak = sum(rec.child_ids.mapped('bobot')) or 1.0
+                actual = sum(c.actual_progress_kumulatif * c.bobot for c in rec.child_ids) / total_bobot_anak
+                rec.actual_progress_kumulatif = min(actual, 100.0)
+            else:
+                lines = DailyLine.search([
+                    ('wbs_id', '=', rec.id),
+                    ('report_id.state', '=', 'submitted'),
+                ])
+                total_actual = sum(lines.mapped('progress'))
+                rec.actual_progress_kumulatif = min(total_actual, 100.0)

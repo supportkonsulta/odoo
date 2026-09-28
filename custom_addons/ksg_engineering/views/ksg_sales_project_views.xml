@@ -83,11 +83,12 @@
                         Buat rincian pekerjaan proyek. Klik "Tambah baris" untuk menambah item. Untuk sub-pekerjaan, isi kolom "Induk".
                     </div>
                     <field name="wbs_ids" nolabel="1">
-                        <list default_order="id">
+                        <list>
+                            <field name="parent_path" column_invisible="True"/>
                             <field name="display_name" string="Nama Pekerjaan"/>
                             <field name="parent_id" string="Induk"
                                            domain="[('project_id', '=', parent.id)]"
-                                           optional="show"/>
+                                           optional="hide"/>
                                     <field name="nilai_pekerjaan" string="Nilai (Rp)" sum="Total"/>
                                     <field name="bobot" string="Bobot (%)" sum="Total"/>
                                     <field name="tanggal_mulai"/>

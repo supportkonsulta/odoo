@@ -9,8 +9,8 @@
         <field name="name">ksg.engineering.wbs.list</field>
         <field name="model">ksg.engineering.wbs</field>
         <field name="arch" type="xml">
-            <list default_order="project_id, id"
-                  decoration-bf="not parent_id">
+            <list decoration-bf="not parent_id">
+                <field name="parent_path" column_invisible="True"/>
                 <field name="project_id"/>
                 <field name="parent_id" string="Induk" optional="show"/>
                 <field name="display_name" string="Nama Pekerjaan"/>
@@ -100,7 +100,7 @@
                                 Jika pekerjaan ini memiliki rincian tahapan, tambahkan di sini. (Total bobot otomatis menyesuaikan nilai).
                             </div>
                             <field name="child_ids" nolabel="1" context="{'default_project_id': project_id, 'default_parent_id': id}">
-                                <list>
+                                <list editable="bottom" default_order="id">
                                     <field name="nama_pekerjaan"/>
                                     <field name="nilai_pekerjaan" sum="Total"/>
                                     <field name="bobot" sum="Total (%)"/>
