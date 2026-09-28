@@ -6,12 +6,6 @@
         noupdate mencegah upgrade modul mengembalikan password yang sudah diganti.
     -->
     <data noupdate="1">
-        <record id="unit_uat_ppl" model="sifnext.unit">
-            <field name="name">Unit UAT PPL</field>
-            <field name="code">UAT</field>
-            <field name="company_id" ref="base.main_company"/>
-        </record>
-
         <record id="user_ppl_uat_employee" model="res.users" context="{'no_reset_password': True}">
             <field name="name">PPL UAT - Pegawai</field>
             <field name="login">ppl_user</field>
@@ -19,7 +13,7 @@
             <field name="email">ppl.user@example.invalid</field>
             <field name="company_id" ref="base.main_company"/>
             <field name="company_ids" eval="[Command.set([ref('base.main_company')])]"/>
-            <field name="unit_id" ref="unit_uat_ppl"/>
+            <field name="unit_id" ref="dept_uat_ppl"/>
             <field name="tz">Asia/Jakarta</field>
             <field name="group_ids" eval="[Command.set([ref('base.group_user')])]"/>
         </record>
@@ -31,7 +25,7 @@
             <field name="email">ppl.finance@example.invalid</field>
             <field name="company_id" ref="base.main_company"/>
             <field name="company_ids" eval="[Command.set([ref('base.main_company')])]"/>
-            <field name="unit_id" ref="unit_uat_ppl"/>
+            <field name="unit_id" ref="dept_uat_ppl"/>
             <field name="tz">Asia/Jakarta</field>
             <field name="group_ids" eval="[Command.set([ref('sifnext_ppl.group_ppl_finance')])]"/>
         </record>
@@ -43,7 +37,7 @@
             <field name="email">ppl.director@example.invalid</field>
             <field name="company_id" ref="base.main_company"/>
             <field name="company_ids" eval="[Command.set([ref('base.main_company')])]"/>
-            <field name="unit_id" ref="unit_uat_ppl"/>
+            <field name="unit_id" ref="dept_uat_ppl"/>
             <field name="tz">Asia/Jakarta</field>
             <field name="group_ids" eval="[Command.set([ref('sifnext_ppl.group_ppl_approver')])]"/>
         </record>

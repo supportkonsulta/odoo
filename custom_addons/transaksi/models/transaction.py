@@ -55,7 +55,7 @@ class TransaksiTransaction(models.Model):
         tracking=True,
     )
     unit_id = fields.Many2one(
-        "sifnext.unit",
+        "hr.department",
         string="Unit Kerja",
         default=lambda self: self.env.user.unit_id if hasattr(self.env.user, "unit_id") else False,
         tracking=True,

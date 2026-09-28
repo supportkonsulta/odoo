@@ -15,9 +15,9 @@ class SifnextPPL(models.Model):
         readonly=True, tracking=True,
     )
     unit_id = fields.Many2one(
-        "sifnext.unit",
+        "hr.department",
         string="Unit",
-        default=lambda self: self.env.user.unit_id,
+        default=lambda self: False if self.env.user.has_group("base.group_system") else self.env.user.unit_id,
         tracking=True,
         domain="[('company_id', '=', company_id)]",
         help="Wajib untuk PPL baru. Dibiarkan kosong hanya pada PPL lama sebelum master Unit diterapkan.",
@@ -97,9 +97,73 @@ class SifnextPPL(models.Model):
             else:
                 record.payment_source_domain_name = ""
 
+    can_assign_applicant = fields.Boolean(compute="_compute_can_assign_applicant")
+
+    @api.depends_context("uid")
+    def _compute_can_assign_applicant(self):
+        can = (
+            self.env.user.has_group("sifnext_ppl.group_ppl_finance")
+            or self.env.user.has_group("base.group_system")
+        )
+        for record in self:
+            record.can_assign_applicant = can
+
+    employee_bank_warning = fields.Boolean(compute="_compute_employee_bank_warning")
+
+    @api.depends("source_type", "applicant_id")
+    def _compute_employee_bank_warning(self):
+        for record in self:
+            if record.source_type != "manual":
+                record.employee_bank_warning = False
+                continue
+            employee = record.applicant_id.employee_id
+            if not employee:
+                record.employee_bank_warning = True
+                continue
+            bank_acc = record._get_employee_bank_account(employee)
+            record.employee_bank_warning = not bool(bank_acc)
+
+    def _get_employee_bank_account(self, employee):
+        if not employee:
+            return self.env["res.partner.bank"]
+        emp_sudo = employee.sudo()
+        bank_acc = (
+            getattr(emp_sudo, "primary_bank_account_id", False)
+            or (emp_sudo.bank_account_ids and emp_sudo.bank_account_ids[0])
+            or (emp_sudo.work_contact_id and emp_sudo.work_contact_id.bank_ids and emp_sudo.work_contact_id.bank_ids[0])
+            or False
+        )
+        if not bank_acc and emp_sudo.user_id and emp_sudo.user_id.partner_id and emp_sudo.user_id.partner_id.bank_ids:
+            bank_acc = emp_sudo.user_id.partner_id.bank_ids[0]
+        return bank_acc
+
     @api.onchange("payment_method")
     def _onchange_payment_method(self):
         self.payment_source_account_id = False
+
+    @api.onchange("applicant_id")
+    def _onchange_applicant_id_auto_detect(self):
+        if self.source_type != "manual":
+            return
+        user = self.applicant_id
+        if not user:
+            return
+        employee = user.employee_id
+        if not employee:
+            return
+        if not self.partner_id and employee.work_contact_id:
+            self.partner_id = employee.work_contact_id
+        bank_acc = self._get_employee_bank_account(employee)
+        if bank_acc:
+            self.payment_method = "bank"
+            self.payment_dest_bank = bank_acc.bank_id.name if bank_acc.bank_id else (bank_acc.bank_name or "")
+            self.payment_dest_account_number = bank_acc.acc_number or ""
+            self.payment_dest_account_name = bank_acc.acc_holder_name or employee.name
+
+    @api.onchange("applicant_id")
+    def _onchange_applicant_id_unit(self):
+        if self.applicant_id:
+            self.unit_id = self.applicant_id.unit_id
 
     mass_coa_id = fields.Many2one(
         "sif.coa",
@@ -126,15 +190,18 @@ class SifnextPPL(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         is_finance = self.env.user.has_group("sifnext_ppl.group_ppl_finance")
+        is_admin = self.env.user.has_group("base.group_system")
+        can_assign = is_finance or is_admin
         for vals in vals_list:
             applicant = self.env["res.users"].browse(vals.get("applicant_id", self.env.user.id))
-            if not is_finance and applicant != self.env.user:
+            if not can_assign and applicant != self.env.user:
                 raise AccessError(_("Pegawai hanya dapat membuat PPL atas nama sendiri."))
-            if not is_finance:
+            if not can_assign:
                 applicant = self.env.user
                 vals["applicant_id"] = applicant.id
                 vals["source_type"] = "manual"
-            unit = self.env["sifnext.unit"].browse(vals.get("unit_id") or applicant.unit_id.id)
+            unit_id = vals.get("unit_id") or applicant.unit_id.id
+            unit = self.env["hr.department"].browse(unit_id)
             if not unit:
                 raise ValidationError(_("Unit pemohon wajib ditentukan sebelum membuat PPL."))
             company = self.env["res.company"].browse(vals.get("company_id", self.env.company.id))
@@ -146,6 +213,22 @@ class SifnextPPL(models.Model):
                 "sifnext.ppl", sequence_date=request_date,
             ) or "New"
             vals["name"] = f"{unit.code}/{sequence}"
+            source_type = vals.get("source_type", "manual")
+            if source_type == "manual":
+                employee = applicant.employee_id
+                if employee:
+                    if not vals.get("partner_id") and employee.work_contact_id:
+                        vals["partner_id"] = employee.work_contact_id.id
+                    bank_acc = self._get_employee_bank_account(employee)
+                    if bank_acc:
+                        if not vals.get("payment_dest_bank"):
+                            vals["payment_dest_bank"] = bank_acc.bank_id.name if bank_acc.bank_id else (bank_acc.bank_name or "")
+                        if not vals.get("payment_dest_account_number"):
+                            vals["payment_dest_account_number"] = bank_acc.acc_number or ""
+                        if not vals.get("payment_dest_account_name"):
+                            vals["payment_dest_account_name"] = bank_acc.acc_holder_name or employee.name
+                        if not vals.get("payment_method"):
+                            vals["payment_method"] = "bank"
         return super().create(vals_list)
 
     def _is_submitted_coa_update(self, commands):
@@ -175,7 +258,11 @@ class SifnextPPL(models.Model):
         }
         if workflow_fields.intersection(vals) and not self.env.context.get("ppl_workflow_write"):
             raise AccessError(_("Status dan audit workflow hanya dapat diubah melalui tindakan PPL."))
-        if "applicant_id" in vals and not self.env.user.has_group("sifnext_ppl.group_ppl_finance"):
+        can_assign = (
+            self.env.user.has_group("sifnext_ppl.group_ppl_finance")
+            or self.env.user.has_group("base.group_system")
+        )
+        if "applicant_id" in vals and not can_assign:
             if vals["applicant_id"] != self.env.user.id:
                 raise AccessError(_("Pegawai tidak dapat mengubah pemohon PPL."))
         protected = {
