@@ -16,8 +16,10 @@ class KsgOperationalHpp(models.Model):
     currency_id = fields.Many2one('res.currency', string='Mata Uang', default=lambda self: self.env.company.currency_id)
     tanggal = fields.Date(string='Tanggal', default=fields.Date.context_today)
 
-    manpower_id = fields.Many2one('ksg.operational.manpower.request', string='Dokumen SDM Terkait', domain="[('project_id', '=', project_id)]")
-    supply_id = fields.Many2one('ksg.operational.supply.request', string='Dokumen Perlengkapan Terkait', domain="[('project_id', '=', project_id)]")
+    # Dihubungkan otomatis via project_id
+    manpower_id = fields.Many2one('ksg.operational.manpower.request', string='Dokumen SDM Terkait')
+    supply_id = fields.Many2one('ksg.operational.supply.request', string='Dokumen Perlengkapan Terkait')
+    source_status_info = fields.Char(string='Status Dokumen Terkait', compute='_compute_source_status_info')
 
     mk_bulan = fields.Integer(string='Masa Kontrak / MK (Bulan)', default=12)
     ovh_rate_hpp = fields.Float(string='Tarif OVH HPP', default=0.005, help='0.005 = 0.5% dari Uang Pokok')
@@ -26,7 +28,6 @@ class KsgOperationalHpp(models.Model):
 
     line_ids = fields.One2many('ksg.operational.hpp.line', 'hpp_id', string='Rincian Pos HPP')
 
-    # Ringkasan Finansial HPP vs Tagihan
     total_hpp_bulan = fields.Monetary(string='Total HPP / Bulan', compute='_compute_summary', store=True, currency_field='currency_id')
     total_hpp_tahun = fields.Monetary(string='Total HPP / Tahun', compute='_compute_summary', store=True, currency_field='currency_id')
 
@@ -42,6 +43,13 @@ class KsgOperationalHpp(models.Model):
         ('approved', 'Disetujui Direktur')
     ], string='Status', default='draft', tracking=True)
 
+    @api.depends('project_id', 'manpower_id', 'supply_id')
+    def _compute_source_status_info(self):
+        for rec in self:
+            sdm_txt = rec.manpower_id.name if rec.manpower_id else "Belum Dibuat"
+            sup_txt = rec.supply_id.name if rec.supply_id else "Belum Dibuat"
+            rec.source_status_info = f"SDM: {sdm_txt} | Perlengkapan: {sup_txt}"
+
     @api.depends('line_ids.jumlah_bulan', 'line_ids.hpp_tahun', 'line_ids.tagihan_bulan', 'line_ids.tagihan_tahun')
     def _compute_summary(self):
         for rec in self:
@@ -54,20 +62,45 @@ class KsgOperationalHpp(models.Model):
             rec.profit_tahun = rec.total_tagihan_tahun - rec.total_hpp_tahun
             rec.margin_percentage = (rec.profit_tahun / rec.total_tagihan_tahun * 100) if rec.total_tagihan_tahun > 0 else 0.0
 
-    @api.model_create_multi
-    def create(self, vals_list):
-        for vals in vals_list:
-            if vals.get('name', _('Draft HPP')) in [_('Draft HPP'), 'Draft HPP', False]:
-                vals['name'] = self.env['ir.sequence'].next_by_code('ksg.operational.hpp') or _('Draft HPP')
-        return super().create(vals_list)
+    @api.onchange('project_id')
+    def _onchange_project_id(self):
+        if self.project_id:
+            manpower = self.env['ksg.operational.manpower.request'].search([
+                ('project_id', '=', self.project_id.id)
+            ], order='id desc', limit=1)
+            self.manpower_id = manpower.id if manpower else False
 
-    def action_sync_from_sdm_and_supply(self):
+            supply = self.env['ksg.operational.supply.request'].search([
+                ('project_id', '=', self.project_id.id)
+            ], order='id desc', limit=1)
+            self.supply_id = supply.id if supply else False
+
+            self._sync_lines_data()
+        else:
+            self.manpower_id = False
+            self.supply_id = False
+            self.line_ids = [(5, 0, 0)]
+
+    def _sync_lines_data(self):
         self.ensure_one()
-        self.line_ids.unlink()
+        if self.project_id:
+            if not self.manpower_id or self.manpower_id.project_id != self.project_id:
+                manpower = self.env['ksg.operational.manpower.request'].search([
+                    ('project_id', '=', self.project_id.id)
+                ], order='id desc', limit=1)
+                self.manpower_id = manpower.id if manpower else False
+
+            if not self.supply_id or self.supply_id.project_id != self.project_id:
+                supply = self.env['ksg.operational.supply.request'].search([
+                    ('project_id', '=', self.project_id.id)
+                ], order='id desc', limit=1)
+                self.supply_id = supply.id if supply else False
+
+        self.line_ids = [(5, 0, 0)]
         new_lines = []
         mk = self.mk_bulan or 12
 
-        # 1. Baris SDM
+        # 1. Pos SDM
         if self.manpower_id:
             for cost in self.manpower_id.cost_line_ids:
                 is_tl = 'LEADER' in (cost.jabatan or '').upper() or 'TL' in (cost.jabatan or '').upper()
@@ -87,7 +120,7 @@ class KsgOperationalHpp(models.Model):
                     'tagihan_bulan': cost.total_biaya,
                 }))
 
-        # 2. Baris Alat dan Bahan (Sub A + Sub B)
+        # 2. Pos Alat dan Bahan (Sub A + Sub B)
         if self.supply_id:
             alat_bahan_bln = self.supply_id.total_alat_bahan_bulan
             new_lines.append((0, 0, {
@@ -101,7 +134,7 @@ class KsgOperationalHpp(models.Model):
                 'tagihan_tahun': alat_bahan_bln * mk,
             }))
 
-            # 3. Baris Jasa (Sub C)
+            # 3. Pos Jasa (Sub C)
             jasa_bln = self.supply_id.total_jasa_bulan
             new_lines.append((0, 0, {
                 'pos_type': 'jasa',
@@ -116,6 +149,35 @@ class KsgOperationalHpp(models.Model):
 
         self.line_ids = new_lines
 
+    def action_sync_from_sdm_and_supply(self):
+        self.ensure_one()
+        self._sync_lines_data()
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('name', _('Draft HPP')) in [_('Draft HPP'), 'Draft HPP', False]:
+                vals['name'] = self.env['ir.sequence'].next_by_code('ksg.operational.hpp') or _('Draft HPP')
+            p_id = vals.get('project_id')
+            if p_id:
+                if not vals.get('manpower_id'):
+                    mp = self.env['ksg.operational.manpower.request'].search([
+                        ('project_id', '=', p_id)
+                    ], order='id desc', limit=1)
+                    if mp:
+                        vals['manpower_id'] = mp.id
+                if not vals.get('supply_id'):
+                    sp = self.env['ksg.operational.supply.request'].search([
+                        ('project_id', '=', p_id)
+                    ], order='id desc', limit=1)
+                    if sp:
+                        vals['supply_id'] = sp.id
+        recs = super().create(vals_list)
+        for rec in recs:
+            if not rec.line_ids and (rec.manpower_id or rec.supply_id):
+                rec._sync_lines_data()
+        return recs
+
     def action_approve(self):
         self.write({'state': 'approved'})
 
@@ -129,8 +191,13 @@ class KsgOperationalHpp(models.Model):
         ws.title = "HPP"
 
         font_bold = Font(name="Calibri", size=10, bold=True)
+        font_title = Font(name="Calibri", size=11, bold=True)
         fill_header = PatternFill(start_color="D9E1F2", end_color="D9E1F2", fill_type="solid")
         border_thin = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
+
+        proj_name = self.project_id.display_name if self.project_id else ''
+        ws['B1'] = f"LEMBAR HPP OPERASIONAL: {proj_name}"
+        ws['B1'].font = font_title
 
         headers = ["NO", "BAGIAN", "MK", "TK", "UANG POKOK", "TUNJ", "THR", "SERAGAM", "OVH", "SISTEM", "BPJSTK", "BPJKES", "EX PENGELUARAN", "JUMLAH/BULAN", "HPP/Tahun", "TAGIHAN/Bulan", "TAGIHAN/TAHUN"]
 
@@ -164,7 +231,6 @@ class KsgOperationalHpp(models.Model):
             no += 1
             r += 1
 
-        # Summary Rows
         ws.cell(row=r, column=3, value="TOTAL").font = font_bold
         ws.cell(row=r, column=15, value=self.total_hpp_bulan).font = font_bold
         ws.cell(row=r, column=16, value=self.total_hpp_tahun).font = font_bold
@@ -245,7 +311,6 @@ class KsgOperationalHppLine(models.Model):
                 line.hpp_tahun = line.jumlah_bulan * m
                 line.tagihan_tahun = line.tagihan_bulan * m
             else:
-                # Alat Bahan & Jasa
                 line.thr = 0.0
                 line.ovh = 0.0
                 line.ex_pengeluaran = 0.0

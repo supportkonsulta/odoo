@@ -6,10 +6,10 @@
         <field name="arch" type="xml">
             <form string="Lembar HPP Operasional">
                 <header>
-                    <button name="action_sync_from_sdm_and_supply" type="object" string="Tarik &amp; Hitung HPP Otomatis" class="btn-primary" invisible="state != 'draft'" icon="fa-refresh"/>
+                    <button name="action_sync_from_sdm_and_supply" type="object" string="Tarik Ulang Data SDM &amp; Perlengkapan" class="btn-secondary" invisible="state != 'draft'" icon="fa-refresh"/>
                     <button name="action_export_excel" type="object" string="Cetak Excel HPP (.xlsx)" class="btn-success" icon="fa-file-excel-o"/>
                     <button name="action_approve" type="object" string="Setujui HPP" class="btn-success" invisible="state != 'draft'"/>
-                    <button name="action_reset_draft" type="object" string="Setel Draft" invisible="state in ['draft']"/>
+                    <button name="action_reset_draft" type="object" string="Setel Draft" invisible="state == 'draft'"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,approved"/>
                 </header>
                 <sheet>
@@ -18,12 +18,13 @@
                         <h1 class="text-primary"><field name="name" readonly="1"/></h1>
                     </div>
                     <group>
-                        <group string="Proyek &amp; Sumber Data">
+                        <group string="Informasi Proyek Terkait">
                             <field name="project_id" options="{'no_create': True}" readonly="state != 'draft'"/>
-                            <field name="manpower_id" options="{'no_create': True}" readonly="state != 'draft'"/>
-                            <field name="supply_id" options="{'no_create': True}" readonly="state != 'draft'"/>
                             <field name="tanggal" readonly="state != 'draft'"/>
+                            <field name="source_status_info" readonly="1"/>
                             <field name="currency_id" invisible="1"/>
+                            <field name="manpower_id" invisible="1"/>
+                            <field name="supply_id" invisible="1"/>
                         </group>
                         <group string="Parameter HPP">
                             <field name="mk_bulan" readonly="state != 'draft'"/>
@@ -37,7 +38,8 @@
                         <page string="Rincian Pos HPP" name="hpp_lines">
                             <field name="line_ids" readonly="state != 'draft'">
                                 <list editable="bottom">
-                                    <field name="pos_type" invisible="1"/>
+                                    <field name="currency_id" column_invisible="True"/>
+                                    <field name="pos_type" column_invisible="True"/>
                                     <field name="bagian"/>
                                     <field name="mk"/>
                                     <field name="tk"/>
@@ -78,6 +80,7 @@
         <field name="model">ksg.operational.hpp</field>
         <field name="arch" type="xml">
             <list string="Lembar HPP Operasional" decoration-success="state == 'approved'">
+                <field name="currency_id" column_invisible="True"/>
                 <field name="name"/>
                 <field name="project_id"/>
                 <field name="tanggal"/>
