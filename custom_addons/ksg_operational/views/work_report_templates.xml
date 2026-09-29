@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_laporan_pekerjaan" model="ir.actions.report">
+        <field name="name">Cetak Laporan Pekerjaan Bulanan</field>
+        <field name="model">ksg.operational.work.report</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ksg_operational.report_laporan_pekerjaan_document</field>
+        <field name="report_file">ksg_operational.report_laporan_pekerjaan_document</field>
+        <field name="print_report_name">'Laporan_Pekerjaan_%s' % (object.name.replace('/', '_'))</field>
+        <field name="binding_model_id" ref="model_ksg_operational_work_report"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_laporan_pekerjaan_document">
+        <t t-call="web.basic_layout">
+            <t t-foreach="docs" t-as="doc">
+                <div class="page" style="font-family: Arial, sans-serif; font-size: 11px;">
+                    <!-- Header Informasi Pekerjaan -->
+                    <table style="width: 100%; margin-bottom: 8px; font-weight: bold; font-size: 11px; border: none;">
+                        <tr>
+                            <td style="width: 15%; padding: 2px;">Pekerjaan</td>
+                            <td style="width: 2%; padding: 2px;">:</td>
+                            <td style="padding: 2px;"><span t-field="doc.pekerjaan"/></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 2px;">Kontraktor</td>
+                            <td style="padding: 2px;">:</td>
+                            <td style="padding: 2px;"><span t-field="doc.kontraktor"/></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 2px;">Nomor SPK</td>
+                            <td style="padding: 2px;">:</td>
+                            <td style="padding: 2px;"><span t-field="doc.no_pekerjaan"/></td>
+                        </tr>
+                    </table>
+
+                    <!-- Looping Berdasarkan Minggu 1 sampai 4 -->
+                    <t t-foreach="['1', '2', '3', '4']" t-as="m">
+                        <t t-set="lines_minggu" t-value="doc.line_ids.filtered(lambda l: l.minggu_ke == m)"/>
+                        
+                        <t t-if="lines_minggu">
+                            <table style="width: 100%; border-collapse: collapse; margin-top: 10px; border: 1.5px solid black; text-align: center;">
+                                <thead>
+                                    <tr style="background-color: #f2f2f2;">
+                                        <th colspan="5" style="border: 1px solid black; padding: 6px; font-size: 13px; text-transform: uppercase;">
+                                            LAPORAN MINGGUAN PEKERJAAN
+                                        </th>
+                                    </tr>
+                                    <tr style="text-align: left; font-size: 10px; background-color: #ffffff;">
+                                        <td colspan="5" style="border: 1px solid black; padding: 4px;">
+                                            <strong>Bulan:</strong> <span t-field="doc.bulan"/> <span t-field="doc.tahun"/> | 
+                                            <strong>Minggu ke:</strong> <span t-esc="m"/>
+                                        </td>
+                                    </tr>
+                                    <tr style="background-color: #f8f9fa;">
+                                        <th style="border: 1px solid black; width: 5%; padding: 4px;">No</th>
+                                        <th style="border: 1px solid black; width: 14%; padding: 4px;">Tanggal</th>
+                                        <th style="border: 1px solid black; width: 27%; padding: 4px;">BEFORE</th>
+                                        <th style="border: 1px solid black; width: 27%; padding: 4px;">PROGRESS</th>
+                                        <th style="border: 1px solid black; width: 27%; padding: 4px;">AFTER</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-set="no_urut" t-value="1"/>
+                                    <t t-foreach="lines_minggu" t-as="line">
+                                        <tr style="vertical-align: middle;">
+                                            <td style="border: 1px solid black; padding: 4px;"><t t-esc="no_urut"/></td>
+                                            <td style="border: 1px solid black; padding: 4px; font-size: 10px;">
+                                                <span t-field="line.tanggal" t-options='{"format": "dd MMM yyyy"}'/><br/>
+                                                <small style="color: #555;"><span t-field="line.deskripsi"/></small>
+                                            </td>
+                                            <!-- Foto Before -->
+                                            <td style="border: 1px solid black; padding: 4px; height: 110px;">
+                                                <t t-if="line.foto_before">
+                                                    <img t-att-src="image_data_uri(line.foto_before)" style="max-height: 100px; max-width: 100%; object-fit: cover;"/>
+                                                </t>
+                                            </td>
+                                            <!-- Foto Progress -->
+                                            <td style="border: 1px solid black; padding: 4px; height: 110px;">
+                                                <t t-if="line.foto_progress">
+                                                    <img t-att-src="image_data_uri(line.foto_progress)" style="max-height: 100px; max-width: 100%; object-fit: cover;"/>
+                                                </t>
+                                            </td>
+                                            <!-- Foto After -->
+                                            <td style="border: 1px solid black; padding: 4px; height: 110px;">
+                                                <t t-if="line.foto_after">
+                                                    <img t-att-src="image_data_uri(line.foto_after)" style="max-height: 100px; max-width: 100%; object-fit: cover;"/>
+                                                </t>
+                                            </td>
+                                        </tr>
+                                        <t t-set="no_urut" t-value="no_urut + 1"/>
+                                    </t>
+                                </tbody>
+                            </table>
+                            <div style="page-break-after: always;"/>
+                        </t>
+                    </t>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>

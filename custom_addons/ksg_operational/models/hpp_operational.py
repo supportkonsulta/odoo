@@ -3,7 +3,6 @@ import base64
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError
 
 class KsgOperationalHpp(models.Model):
     _name = 'ksg.operational.hpp'
@@ -16,7 +15,6 @@ class KsgOperationalHpp(models.Model):
     currency_id = fields.Many2one('res.currency', string='Mata Uang', default=lambda self: self.env.company.currency_id)
     tanggal = fields.Date(string='Tanggal', default=fields.Date.context_today)
 
-    # Dihubungkan otomatis via project_id
     manpower_id = fields.Many2one('ksg.operational.manpower.request', string='Dokumen SDM Terkait')
     supply_id = fields.Many2one('ksg.operational.supply.request', string='Dokumen Perlengkapan Terkait')
     source_status_info = fields.Char(string='Status Dokumen Terkait', compute='_compute_source_status_info')
@@ -36,11 +34,14 @@ class KsgOperationalHpp(models.Model):
 
     profit_bulan = fields.Monetary(string='Selisih (Profit) / Bulan', compute='_compute_summary', store=True, currency_field='currency_id')
     profit_tahun = fields.Monetary(string='Selisih (Profit) / Tahun', compute='_compute_summary', store=True, currency_field='currency_id')
-    margin_percentage = fields.Float(string='Margin Keuntungan (%)', compute='_compute_summary', store=True)
+    margin_percentage = fields.Float(string='Margin Keuntungan (%)', compute='_compute_summary', store=True, digits=(16, 4))
+
+    alasan_penolakan = fields.Text(string='Alasan Penolakan', tracking=True)
 
     state = fields.Selection([
         ('draft', 'Draft'),
-        ('approved', 'Disetujui Direktur')
+        ('approved', 'Disetujui Direktur'),
+        ('rejected', 'Ditolak')
     ], string='Status', default='draft', tracking=True)
 
     @api.depends('project_id', 'manpower_id', 'supply_id')
@@ -60,7 +61,7 @@ class KsgOperationalHpp(models.Model):
 
             rec.profit_bulan = rec.total_tagihan_bulan - rec.total_hpp_bulan
             rec.profit_tahun = rec.total_tagihan_tahun - rec.total_hpp_tahun
-            rec.margin_percentage = (rec.profit_tahun / rec.total_tagihan_tahun * 100) if rec.total_tagihan_tahun > 0 else 0.0
+            rec.margin_percentage = (rec.profit_tahun / rec.total_tagihan_tahun) if rec.total_tagihan_tahun > 0 else 0.0
 
     @api.onchange('project_id')
     def _onchange_project_id(self):
@@ -100,11 +101,10 @@ class KsgOperationalHpp(models.Model):
         new_lines = []
         mk = self.mk_bulan or 12
 
-        # 1. Pos SDM
+        # 1. Baris SDM (Ambil Gapok asli dari Dokumen SDM)
         if self.manpower_id:
             for cost in self.manpower_id.cost_line_ids:
-                is_tl = 'LEADER' in (cost.jabatan or '').upper() or 'TL' in (cost.jabatan or '').upper()
-                uang_pokok = 2100000.0 if is_tl else 1700000.0
+                uang_pokok = cost.gapok
                 tunj = cost.tunjangan
                 new_lines.append((0, 0, {
                     'pos_type': 'sdm',
@@ -120,7 +120,7 @@ class KsgOperationalHpp(models.Model):
                     'tagihan_bulan': cost.total_biaya,
                 }))
 
-        # 2. Pos Alat dan Bahan (Sub A + Sub B)
+        # 2. Baris ALAT DAN BAHAN
         if self.supply_id:
             alat_bahan_bln = self.supply_id.total_alat_bahan_bulan
             new_lines.append((0, 0, {
@@ -134,7 +134,7 @@ class KsgOperationalHpp(models.Model):
                 'tagihan_tahun': alat_bahan_bln * mk,
             }))
 
-            # 3. Pos Jasa (Sub C)
+            # 3. Baris JASA
             jasa_bln = self.supply_id.total_jasa_bulan
             new_lines.append((0, 0, {
                 'pos_type': 'jasa',
@@ -184,6 +184,20 @@ class KsgOperationalHpp(models.Model):
     def action_reset_draft(self):
         self.write({'state': 'draft'})
 
+    def action_reject_wizard(self):
+        self.ensure_one()
+        return {
+            'name': _('Tolak Lembar HPP'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'ksg.operational.reject.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_res_model': self._name,
+                'default_res_id': self.id,
+            }
+        }
+
     def action_export_excel(self):
         self.ensure_one()
         wb = openpyxl.Workbook()
@@ -193,6 +207,8 @@ class KsgOperationalHpp(models.Model):
         font_bold = Font(name="Calibri", size=10, bold=True)
         font_title = Font(name="Calibri", size=11, bold=True)
         fill_header = PatternFill(start_color="D9E1F2", end_color="D9E1F2", fill_type="solid")
+        fill_yellow = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
+        fill_green = PatternFill(start_color="00B050", end_color="00B050", fill_type="solid")
         border_thin = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
 
         proj_name = self.project_id.display_name if self.project_id else ''
@@ -214,16 +230,16 @@ class KsgOperationalHpp(models.Model):
             ws.cell(row=r, column=2, value=no).border = border_thin
             ws.cell(row=r, column=3, value=l.bagian).border = border_thin
             ws.cell(row=r, column=4, value=l.mk).border = border_thin
-            ws.cell(row=r, column=5, value=l.tk or '-').border = border_thin
-            ws.cell(row=r, column=6, value=l.uang_pokok or '-').border = border_thin
-            ws.cell(row=r, column=7, value=l.tunj or '-').border = border_thin
-            ws.cell(row=r, column=8, value=l.thr or '-').border = border_thin
-            ws.cell(row=r, column=9, value=l.seragam or '-').border = border_thin
-            ws.cell(row=r, column=10, value=l.ovh or '-').border = border_thin
-            ws.cell(row=r, column=11, value=l.sistem or '-').border = border_thin
-            ws.cell(row=r, column=12, value=l.bpjstk or '-').border = border_thin
-            ws.cell(row=r, column=13, value=l.bpjkes or '-').border = border_thin
-            ws.cell(row=r, column=14, value=l.ex_pengeluaran or '-').border = border_thin
+            ws.cell(row=r, column=5, value=l.tk or '').border = border_thin
+            ws.cell(row=r, column=6, value=l.uang_pokok or '').border = border_thin
+            ws.cell(row=r, column=7, value=l.tunj or '').border = border_thin
+            ws.cell(row=r, column=8, value=l.thr or '').border = border_thin
+            ws.cell(row=r, column=9, value=l.seragam or '').border = border_thin
+            ws.cell(row=r, column=10, value=l.ovh or '').border = border_thin
+            ws.cell(row=r, column=11, value=l.sistem or '').border = border_thin
+            ws.cell(row=r, column=12, value=l.bpjstk or '').border = border_thin
+            ws.cell(row=r, column=13, value=l.bpjkes or '').border = border_thin
+            ws.cell(row=r, column=14, value=l.ex_pengeluaran or '').border = border_thin
             ws.cell(row=r, column=15, value=l.jumlah_bulan).border = border_thin
             ws.cell(row=r, column=16, value=l.hpp_tahun).border = border_thin
             ws.cell(row=r, column=17, value=l.tagihan_bulan).border = border_thin
@@ -231,20 +247,38 @@ class KsgOperationalHpp(models.Model):
             no += 1
             r += 1
 
-        ws.cell(row=r, column=3, value="TOTAL").font = font_bold
-        ws.cell(row=r, column=15, value=self.total_hpp_bulan).font = font_bold
-        ws.cell(row=r, column=16, value=self.total_hpp_tahun).font = font_bold
-        ws.cell(row=r, column=17, value=self.total_tagihan_bulan).font = font_bold
-        ws.cell(row=r, column=18, value=self.total_tagihan_tahun).font = font_bold
+        c_tot = ws.cell(row=r, column=3, value="TOTAL")
+        c_tot.font = font_bold
+        for col_idx, val in [(15, self.total_hpp_bulan), (16, self.total_hpp_tahun), (17, self.total_tagihan_bulan), (18, self.total_tagihan_tahun)]:
+            c = ws.cell(row=r, column=col_idx, value=val)
+            c.font = font_bold
+            c.fill = fill_green
+            c.border = border_thin
         r += 1
 
-        ws.cell(row=r, column=3, value="SELISIH (MARGIN)").font = font_bold
-        ws.cell(row=r, column=17, value=self.profit_bulan).font = font_bold
-        ws.cell(row=r, column=18, value=self.profit_tahun).font = font_bold
+        ws.cell(row=r, column=3, value="SELISIH (PROFIT)").font = font_bold
+        c_prof_m = ws.cell(row=r, column=17, value=self.profit_bulan)
+        c_prof_m.font = font_bold
+        c_prof_m.fill = fill_yellow
+        c_prof_m.border = border_thin
+
+        c_prof_y = ws.cell(row=r, column=18, value=self.profit_tahun)
+        c_prof_y.font = font_bold
+        c_prof_y.fill = fill_yellow
+        c_prof_y.border = border_thin
         r += 1
 
         ws.cell(row=r, column=3, value="MARGIN %").font = font_bold
-        ws.cell(row=r, column=18, value=f"{self.margin_percentage:.2f}%").font = font_bold
+        pct_str = f"{(self.margin_percentage * 100):.4f}%"
+        c_pct_m = ws.cell(row=r, column=17, value=pct_str)
+        c_pct_m.font = font_bold
+        c_pct_m.fill = fill_yellow
+        c_pct_m.border = border_thin
+
+        c_pct_y = ws.cell(row=r, column=18, value=pct_str)
+        c_pct_y.font = font_bold
+        c_pct_y.fill = fill_yellow
+        c_pct_y.border = border_thin
 
         fp = io.BytesIO()
         wb.save(fp)
@@ -284,36 +318,37 @@ class KsgOperationalHppLine(models.Model):
 
     uang_pokok = fields.Monetary(string='Uang Pokok', currency_field='currency_id')
     tunj = fields.Monetary(string='Tunjangan', currency_field='currency_id')
-    thr = fields.Monetary(string='THR', compute='_compute_sdm_line', store=True, currency_field='currency_id')
+    thr = fields.Monetary(string='THR', compute='_compute_sdm_costs', store=True, currency_field='currency_id')
     seragam = fields.Monetary(string='Seragam', currency_field='currency_id')
-    ovh = fields.Monetary(string='OVH', compute='_compute_sdm_line', store=True, currency_field='currency_id')
+    ovh = fields.Monetary(string='OVH', compute='_compute_sdm_costs', store=True, currency_field='currency_id')
     sistem = fields.Monetary(string='Sistem', currency_field='currency_id')
     bpjstk = fields.Monetary(string='BPJS TK', currency_field='currency_id')
     bpjkes = fields.Monetary(string='BPJS Kes', currency_field='currency_id')
 
-    ex_pengeluaran = fields.Monetary(string='Ex Pengeluaran', compute='_compute_sdm_line', store=True, currency_field='currency_id')
-    jumlah_bulan = fields.Monetary(string='Jumlah / Bulan (HPP)', compute='_compute_sdm_line', store=True, currency_field='currency_id')
-    hpp_tahun = fields.Monetary(string='HPP / Tahun', compute='_compute_sdm_line', store=True, currency_field='currency_id')
+    ex_pengeluaran = fields.Monetary(string='Ex Pengeluaran', compute='_compute_sdm_costs', store=True, currency_field='currency_id')
+    jumlah_bulan = fields.Monetary(string='Jumlah / Bulan (HPP)', compute='_compute_sdm_costs', store=True, readonly=False, currency_field='currency_id')
+    hpp_tahun = fields.Monetary(string='HPP / Tahun', compute='_compute_line_totals', store=True, currency_field='currency_id')
 
     tagihan_bulan = fields.Monetary(string='Tagihan / Bulan', currency_field='currency_id')
-    tagihan_tahun = fields.Monetary(string='Tagihan / Tahun', compute='_compute_sdm_line', store=True, currency_field='currency_id')
+    tagihan_tahun = fields.Monetary(string='Tagihan / Tahun', compute='_compute_line_totals', store=True, currency_field='currency_id')
 
-    @api.depends('pos_type', 'mk', 'tk', 'uang_pokok', 'tunj', 'seragam', 'sistem', 'bpjstk', 'bpjkes', 'tagihan_bulan', 'hpp_id.ovh_rate_hpp')
-    def _compute_sdm_line(self):
+    @api.depends('pos_type', 'mk', 'tk', 'uang_pokok', 'tunj', 'seragam', 'sistem', 'bpjstk', 'bpjkes', 'hpp_id.ovh_rate_hpp')
+    def _compute_sdm_costs(self):
         for line in self:
-            m = line.mk or 12
             if line.pos_type == 'sdm':
                 rate_ovh = line.hpp_id.ovh_rate_hpp or 0.005
                 line.thr = (line.uang_pokok + line.tunj) / 12.0
                 line.ovh = line.uang_pokok * rate_ovh
                 line.ex_pengeluaran = line.uang_pokok + line.tunj + line.thr + line.seragam + line.ovh + line.sistem + line.bpjstk + line.bpjkes
                 line.jumlah_bulan = line.ex_pengeluaran * line.tk
-                line.hpp_tahun = line.jumlah_bulan * m
-                line.tagihan_tahun = line.tagihan_bulan * m
             else:
                 line.thr = 0.0
                 line.ovh = 0.0
                 line.ex_pengeluaran = 0.0
-                if not line.hpp_tahun:
-                    line.hpp_tahun = line.jumlah_bulan * m
-                line.tagihan_tahun = line.tagihan_bulan * m
+
+    @api.depends('jumlah_bulan', 'tagihan_bulan', 'mk')
+    def _compute_line_totals(self):
+        for line in self:
+            m = line.mk or 12
+            line.hpp_tahun = line.jumlah_bulan * m
+            line.tagihan_tahun = line.tagihan_bulan * m

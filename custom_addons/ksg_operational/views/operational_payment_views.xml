@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_operational_payment_request_form" model="ir.ui.view">
+        <field name="name">ksg.operational.payment.request.form</field>
+        <field name="model">ksg.operational.payment.request</field>
+        <field name="arch" type="xml">
+            <form string="Pengajuan Pembayaran &amp; Dana Operasional">
+                <header>
+                    <button name="action_submit" type="object" string="Ajukan ke Keuangan" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_keuangan_approve" type="object" string="Review Keuangan (Lanjut Direktur)" class="btn-primary" invisible="state != 'waiting_keuangan'"/>
+                    <button name="action_direktur_approve" type="object" string="Setujui (Approval Direktur)" class="btn-success" invisible="state != 'waiting_direktur'"/>
+                    <button name="action_pay" type="object" string="Konfirmasi Sudah Dibayarkan" class="btn-success" invisible="state != 'approved'"/>
+                    <button name="action_submit_pjk" type="object" string="Kirimkan Dokumen PJK" class="btn-primary" invisible="state not in ['paid'] or state_pjk == 'submitted'"/>
+                    <button name="action_verify_pjk" type="object" string="Verifikasi PJK (Selesai)" class="btn-success" invisible="state_pjk != 'submitted'"/>
+                    
+                    <button name="action_reject_wizard" type="object" string="Tolak Pengajuan" class="btn-danger" invisible="state in ['draft', 'paid', 'done', 'rejected']"/>
+                    <button name="action_reset_draft" type="object" string="Setel Ulang ke Draft" invisible="state not in ['rejected']"/>
+                    
+                    <field name="state" widget="statusbar" statusbar_visible="draft,waiting_keuangan,waiting_direktur,approved,paid,done"/>
+                </header>
+                <sheet>
+                    <div class="alert alert-danger" role="alert" invisible="state != 'rejected'">
+                        <h4 class="alert-heading">Dokumen Pengajuan Ditolak!</h4>
+                        <p class="mb-0"><strong>Alasan Penolakan: </strong><field name="alasan_penolakan" readonly="1"/></p>
+                    </div>
+
+                    <div class="oe_title">
+                        <label for="name" string="Nomor Pengajuan Dana"/>
+                        <h1 class="text-primary"><field name="name" readonly="1"/></h1>
+                    </div>
+
+                    <group>
+                        <group string="Informasi Pengajuan">
+                            <field name="project_id" options="{'no_create': True}" readonly="state != 'draft'"/>
+                            <field name="kategori_dana" readonly="state != 'draft'"/>
+                            <field name="nominal_pengajuan" widget="monetary" readonly="state != 'draft'"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group string="Pemohon &amp; Waktu">
+                            <field name="tanggal_pengajuan" readonly="state != 'draft'"/>
+                            <field name="requested_by" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <group string="Uraian Keperluan">
+                        <field name="keperluan" placeholder="Jelaskan kebutuhan pengadaan barang atau peruntukan dana lapangan..." readonly="state != 'draft'"/>
+                    </group>
+
+                    <notebook>
+                        <!-- Tab 1: Rekening Tujuan -->
+                        <page string="Tujuan Pembayaran (Rekening)" name="rekening_tab">
+                            <group>
+                                <group>
+                                    <field name="bank_tujuan" readonly="state != 'draft'"/>
+                                    <field name="nomor_rekening" readonly="state != 'draft'"/>
+                                    <field name="atas_nama_rekening" readonly="state != 'draft'"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- Tab 2: Berkas Pra-Pembayaran -->
+                        <page string="Berkas Pra-Pembayaran" name="lampiran_tab">
+                            <group string="Dokumen Acuan Pembayaran">
+                                <group>
+                                    <field name="file_nota" filename="filename_nota" readonly="state != 'draft'"/>
+                                    <field name="filename_nota" invisible="1"/>
+                                    <field name="file_penawaran" filename="filename_penawaran" readonly="state != 'draft'"/>
+                                    <field name="filename_penawaran" invisible="1"/>
+                                </group>
+                                <group>
+                                    <field name="file_brosur" filename="filename_brosur" readonly="state != 'draft'"/>
+                                    <field name="filename_brosur" invisible="1"/>
+                                </group>
+                            </group>
+
+                            <group string="Dokumen Pendukung / Lain-lain (Bebas Diberi Judul/Nama)">
+                                <field name="document_ids" readonly="state in ['done']">
+                                    <list editable="bottom">
+                                        <field name="name" placeholder="Ketik nama dokumen (misal: Foto Barang, Proforma Invoice, Kuitansi DP)"/>
+                                        <field name="file" filename="filename"/>
+                                        <field name="filename" column_invisible="True"/>
+                                        <field name="keterangan" placeholder="Keterangan dokumen..."/>
+                                    </list>
+                                </field>
+                            </group>
+                        </page>
+
+                        <!-- Tab 3: Pencairan Keuangan -->
+                        <page string="Pencairan Keuangan" name="pencairan_tab" invisible="state in ['draft', 'waiting_keuangan', 'waiting_direktur']">
+                            <group>
+                                <group>
+                                    <field name="tanggal_bayar" readonly="state in ['done']"/>
+                                    <field name="file_bukti_transfer" filename="filename_transfer" readonly="state in ['done']"/>
+                                    <field name="filename_transfer" invisible="1"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- Tab 4: Laporan Pertanggungjawaban (PJK) -->
+                        <page string="Laporan Pertanggungjawaban (PJK)" name="pjk_tab" invisible="state in ['draft', 'waiting_keuangan', 'waiting_direktur', 'approved']">
+                            <group string="Dokumen Bukti Serah Terima Lapangan">
+                                <group>
+                                    <field name="file_bast" filename="filename_bast" readonly="state_pjk == 'verified'"/>
+                                    <field name="filename_bast" invisible="1"/>
+                                </group>
+                                <group>
+                                    <field name="state_pjk" widget="badge"/>
+                                    <field name="catatan_pjk" placeholder="Catatan pengeluaran riil..." readonly="state_pjk == 'verified'"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_operational_payment_request_list" model="ir.ui.view">
+        <field name="name">ksg.operational.payment.request.list</field>
+        <field name="model">ksg.operational.payment.request</field>
+        <field name="arch" type="xml">
+            <list string="Pengajuan Dana &amp; Pembayaran Operasional" decoration-success="state == 'done'" decoration-warning="state in ['waiting_keuangan', 'waiting_direktur']" decoration-danger="state == 'rejected'">
+                <field name="currency_id" column_invisible="True"/>
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="tanggal_pengajuan"/>
+                <field name="kategori_dana"/>
+                <field name="nominal_pengajuan" widget="monetary"/>
+                <field name="bank_tujuan"/>
+                <field name="atas_nama_rekening"/>
+                <field name="state" widget="badge"/>
+                <field name="state_pjk" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_operational_payment_request" model="ir.actions.act_window">
+        <field name="name">Pengajuan Dana &amp; Pembayaran</field>
+        <field name="res_model">ksg.operational.payment.request</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

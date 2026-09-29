@@ -14,6 +14,7 @@ class KsgOperationalMonthlyReport(models.Model):
     ], string='Bulan Periode', required=True, default='01')
     tahun = fields.Char(string='Tahun', default='2026', required=True)
     progres_fisik = fields.Float(string='Progres Fisik (%)', default=0.0)
+    pekerjaan = fields.Char(string='Pekerjaan')
     pekerja_aktif_count = fields.Integer(string='Jumlah Pekerja Aktif', compute='_compute_pekerja_aktif', store=True)
     kendala = fields.Text(string='Kendala Lapangan')
     solusi = fields.Text(string='Tindakan / Solusi')

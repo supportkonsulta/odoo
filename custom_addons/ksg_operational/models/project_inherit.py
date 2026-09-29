@@ -3,7 +3,6 @@ from odoo import models, fields, api
 class KsgSalesProjectInherit(models.Model):
     _inherit = 'ksg.sales.project'
 
-    # Relasi Operasional
     assignment_ids = fields.One2many(
         'ksg.operational.assignment', 
         'project_id', 
@@ -18,6 +17,16 @@ class KsgSalesProjectInherit(models.Model):
         'ksg.operational.monthly.report', 
         'project_id', 
         string='Laporan Bulanan'
+    )
+    bast_ids = fields.One2many(
+        'ksg.operational.bast', 
+        'project_id', 
+        string='Daftar BAST'
+    )
+    work_report_ids = fields.One2many(
+        'ksg.operational.work.report', 
+        'project_id', 
+        string='Laporan Pekerjaan'
     )
     billing_document_ids = fields.One2many(
         'ksg.operational.billing.document', 
@@ -45,7 +54,6 @@ class KsgSalesProjectInherit(models.Model):
         string='Lembar HPP Operasional'
     )
 
-    # Format Tampilan Proyek: "26001 (Instalasi RS)"
     @api.depends('kode_proyek')
     def _compute_display_name(self):
         for rec in self:
@@ -64,23 +72,3 @@ class KsgSalesProjectInherit(models.Model):
                 rec.display_name = name
             else:
                 rec.display_name = f"Proyek #{rec.id}"
-
-    # Pencarian Dropdown Bisa Menggunakan Kode Maupun Nama Pekerjaan
-    @api.model
-    def _name_search(self, name='', args=None, operator='ilike', limit=100, order=None):
-        args = args or []
-        domain = []
-        if name:
-            subdomains = [('kode_proyek', operator, name)]
-            for f in ['nama_pekerjaan', 'nama_proyek', 'name']:
-                if f in self._fields:
-                    subdomains.append((f, operator, name))
-            if len(subdomains) > 1:
-                or_domain = []
-                for _ in range(len(subdomains) - 1):
-                    or_domain.append('|')
-                or_domain.extend(subdomains)
-                domain = or_domain
-            else:
-                domain = subdomains
-        return self._search(domain + args, limit=limit, order=order)

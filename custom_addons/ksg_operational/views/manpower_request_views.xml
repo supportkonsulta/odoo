@@ -1,78 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Form View Permintaan SDM -->
     <record id="view_operational_manpower_request_form" model="ir.ui.view">
         <field name="name">ksg.operational.manpower.request.form</field>
         <field name="model">ksg.operational.manpower.request</field>
         <field name="arch" type="xml">
-            <form string="Permintaan Tenaga Kerja (Detail SDM)">
+            <form string="Permintaan Tenaga Kerja Lapangan">
                 <header>
-                    <button name="action_generate_cost_lines" type="object" string="Hitung Rincian Biaya SDM" class="btn-primary" invisible="state != 'draft'" icon="fa-calculator"/>
-                    <button name="action_export_excel" type="object" string="Cetak Excel SDM (.xlsx)" class="btn-success" icon="fa-file-excel-o"/>
-                    <button name="action_submit" type="object" string="Ajukan ke HC" class="oe_highlight" invisible="state != 'draft'"/>
-                    <button name="action_approve" type="object" string="Setujui" class="btn-success" invisible="state != 'submitted'"/>
-                    <button name="action_reject" type="object" string="Tolak" class="btn-danger" invisible="state != 'submitted'"/>
-                    <button name="action_reset_draft" type="object" string="Setel Draft" invisible="state == 'draft'"/>
+                    <button name="action_submit" type="object" string="Kirimkan ke HC" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_approve" type="object" string="Setujui / Terpenuhi" class="btn-success" invisible="state != 'submitted'"/>
+                    <button name="action_reject_wizard" type="object" string="Tolak Permintaan" class="btn-danger" invisible="state != 'submitted'"/>
+                    <button name="action_reset_draft" type="object" string="Setel Draft" invisible="state not in ['rejected']"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,submitted,approved"/>
                 </header>
                 <sheet>
+                    <div class="alert alert-danger" role="alert" invisible="state != 'rejected'">
+                        <h4 class="alert-heading">Permintaan SDM Ditolak oleh HC!</h4>
+                        <p class="mb-0"><strong>Alasan Penolakan: </strong><field name="alasan_penolakan" readonly="1"/></p>
+                    </div>
+
                     <div class="oe_title">
                         <label for="name" string="Nomor Permintaan SDM"/>
                         <h1 class="text-primary"><field name="name" readonly="1"/></h1>
                     </div>
+
                     <group>
                         <group string="Informasi Proyek">
                             <field name="project_id" options="{'no_create': True}" readonly="state != 'draft'"/>
                             <field name="tanggal_pengajuan" readonly="state != 'draft'"/>
-                            <field name="currency_id" invisible="1"/>
                         </group>
-                        <group string="Parameter Dasar Kalkulasi">
-                            <field name="dasar_umk" widget="monetary" readonly="state != 'draft'"/>
-                            <field name="bpjs_kes_rate" widget="percentage" readonly="state != 'draft'"/>
-                            <field name="bpjs_tk_rate" widget="percentage" readonly="state != 'draft'"/>
-                            <field name="seragam_biaya" widget="monetary" readonly="state != 'draft'"/>
+                        <group string="Kebutuhan Penugasan">
+                            <field name="kebutuhan_waktu" placeholder="Contoh: 12 Bulan / Mulai 1 Oktober 2026" readonly="state != 'draft'"/>
+                            <field name="total_tenaga_kerja" class="text-primary fs-4 fw-bold"/>
                         </group>
                     </group>
+
                     <notebook>
-                        <page string="Plotingan SDM &amp; Shift" name="plot_page">
-                            <field name="plot_line_ids" readonly="state != 'draft'">
+                        <page string="Daftar Posisi &amp; Jumlah Tenaga Kerja yang Dibutuhkan" name="sdm_lines">
+                            <field name="line_ids" readonly="state != 'draft'">
                                 <list editable="bottom">
-                                    <field name="jabatan" placeholder="Contoh: TEAM LEADER, CSO"/>
-                                    <field name="shift_1"/>
-                                    <field name="shift_2"/>
-                                    <field name="libur"/>
-                                    <field name="total_tk" sum="Total TK"/>
+                                    <field name="jabatan" placeholder="Contoh: Cleaning Service, Team Leader, Teknisi ME"/>
+                                    <field name="jumlah" sum="Total Personil"/>
+                                    <field name="kualifikasi_khusus" placeholder="Kriteria / keahlian khusus..."/>
                                 </list>
                             </field>
                         </page>
-                        <page string="Rincian Unit Cost &amp; Tagihan Bulanan" name="cost_page">
-                            <field name="cost_line_ids" readonly="state != 'draft'">
-                                <list editable="bottom">
-                                    <field name="currency_id" column_invisible="True"/>
-                                    <field name="jabatan"/>
-                                    <field name="unit_tk" sum="Total Unit"/>
-                                    <field name="gapok" widget="monetary"/>
-                                    <field name="tunjangan" widget="monetary"/>
-                                    <field name="total_upah_tetap" widget="monetary"/>
-                                    <field name="bpjs_kes" widget="monetary"/>
-                                    <field name="bpjs_tk" widget="monetary"/>
-                                    <field name="thr" widget="monetary"/>
-                                    <field name="overhead" widget="monetary"/>
-                                    <field name="fee" widget="monetary"/>
-                                    <field name="unit_cost" widget="monetary"/>
-                                    <field name="total_biaya" widget="monetary" sum="Total Tagihan/Bln"/>
-                                </list>
-                            </field>
-                            <group class="oe_subtotal_footer oe_right">
-                                <field name="total_biaya_sdm_bulan" widget="monetary" class="oe_subtotal_footer_separator"/>
-                                <field name="total_biaya_sdm_tahun" widget="monetary"/>
-                            </group>
-                        </page>
-                        <page string="Kualifikasi &amp; Catatan" name="kriteria_page">
+                        <page string="Catatan Operasional untuk HC" name="catatan_page">
                             <group>
-                                <field name="kriteria" placeholder="Kriteria kualifikasi tenaga kerja untuk HC..."/>
-                                <field name="kebutuhan_waktu" placeholder="Durasi penugasan lapangan..."/>
-                                <field name="catatan" placeholder="Catatan operasional tambahan..."/>
+                                <field name="catatan" placeholder="Tuliskan catatan tambahan untuk tim HC / Recruitment..." readonly="state != 'draft'"/>
                             </group>
                         </page>
                     </notebook>
@@ -82,25 +56,21 @@
         </field>
     </record>
 
-    <!-- List View Permintaan SDM -->
     <record id="view_operational_manpower_request_list" model="ir.ui.view">
         <field name="name">ksg.operational.manpower.request.list</field>
         <field name="model">ksg.operational.manpower.request</field>
         <field name="arch" type="xml">
-            <list string="Permintaan Tenaga Kerja (SDM)" decoration-success="state == 'approved'" decoration-warning="state == 'submitted'">
-                <field name="currency_id" column_invisible="True"/>
+            <list string="Permintaan Tenaga Kerja (SDM)" decoration-success="state == 'approved'" decoration-warning="state == 'submitted'" decoration-danger="state == 'rejected'">
                 <field name="name"/>
                 <field name="project_id"/>
                 <field name="tanggal_pengajuan"/>
+                <field name="kebutuhan_waktu"/>
                 <field name="total_tenaga_kerja"/>
-                <field name="total_biaya_sdm_bulan" widget="monetary"/>
-                <field name="total_biaya_sdm_tahun" widget="monetary"/>
                 <field name="state" widget="badge"/>
             </list>
         </field>
     </record>
 
-    <!-- Action Window -->
     <record id="action_operational_manpower_request" model="ir.actions.act_window">
         <field name="name">Permintaan Tenaga Kerja</field>
         <field name="res_model">ksg.operational.manpower.request</field>

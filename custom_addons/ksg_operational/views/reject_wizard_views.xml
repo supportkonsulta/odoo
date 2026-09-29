@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_operational_reject_wizard_form" model="ir.ui.view">
+        <field name="name">ksg.operational.reject.wizard.form</field>
+        <field name="model">ksg.operational.reject.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Alasan Penolakan Dokumen">
+                <group>
+                    <field name="alasan_penolakan" placeholder="Tuliskan alasan penolakan atau instruksi perbaikan..." required="1"/>
+                    <field name="res_model" invisible="1"/>
+                    <field name="res_id" invisible="1"/>
+                </group>
+                <footer>
+                    <button name="action_confirm_reject" string="Konfirmasi Tolak" type="object" class="btn-danger"/>
+                    <button string="Batal" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

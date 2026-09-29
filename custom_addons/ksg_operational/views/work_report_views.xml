@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_operational_work_report_form" model="ir.ui.view">
+        <field name="name">ksg.operational.work.report.form</field>
+        <field name="model">ksg.operational.work.report</field>
+        <field name="arch" type="xml">
+            <form string="Laporan Pekerjaan Bulanan">
+                <header>
+                    <button name="action_print_report" type="object" string="Cetak Laporan PDF" class="btn-primary" icon="fa-print"/>
+                    <button name="action_submit" type="object" string="Serahkan ke Manajemen" class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_approve" type="object" string="Setujui" class="btn-success" invisible="state != 'submitted'"/>
+                    <button name="action_reset_draft" type="object" string="Setel Draft" invisible="state == 'draft'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,approved"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" string="Nomor Laporan Pekerjaan"/>
+                        <h1 class="text-primary"><field name="name" readonly="1"/></h1>
+                    </div>
+
+                    <group>
+                        <group string="Informasi Proyek">
+                            <field name="project_id" options="{'no_create': True}" readonly="state != 'draft'"/>
+                            <field name="pekerjaan" readonly="state != 'draft'"/>
+                            <field name="kontraktor" readonly="state != 'draft'"/>
+                            <field name="no_pekerjaan" string="Nomor SPK / Dokumen" readonly="state != 'draft'"/>
+                        </group>
+                        <group string="Periode Pelaksanaan">
+                            <field name="tanggal_laporan" readonly="state != 'draft'"/>
+                            <field name="bulan" readonly="state != 'draft'"/>
+                            <field name="tahun" readonly="state != 'draft'"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Dokumentasi Mingguan (Before - Progress - After)" name="lines_page">
+                            <field name="line_ids" readonly="state != 'draft'">
+                                <list editable="bottom">
+                                    <field name="minggu_ke"/>
+                                    <field name="tanggal"/>
+                                    <field name="deskripsi"/>
+                                    <field name="foto_before" widget="image" options="{'size': [70, 70]}"/>
+                                    <field name="foto_progress" widget="image" options="{'size': [70, 70]}"/>
+                                    <field name="foto_after" widget="image" options="{'size': [70, 70]}"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Catatan &amp; Evaluasi" name="catatan_page">
+                            <group>
+                                <field name="catatan" placeholder="Catatan pekerjaan atau evaluasi operasional..." readonly="state != 'draft'"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_operational_work_report_list" model="ir.ui.view">
+        <field name="name">ksg.operational.work.report.list</field>
+        <field name="model">ksg.operational.work.report</field>
+        <field name="arch" type="xml">
+            <list string="Laporan Pekerjaan" decoration-success="state == 'approved'" decoration-warning="state == 'submitted'">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="pekerjaan"/>
+                <field name="no_pekerjaan" string="No. SPK"/>
+                <field name="bulan"/>
+                <field name="tahun"/>
+                <field name="tanggal_laporan"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_ksg_operational_work_report" model="ir.actions.act_window">
+        <field name="name">Laporan Pekerjaan</field>
+        <field name="res_model">ksg.operational.work.report</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

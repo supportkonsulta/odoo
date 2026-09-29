@@ -41,10 +41,18 @@
             <field name="company_id" eval="False"/>
         </record>
 
-        <record id="seq_operational_monthly" model="ir.sequence">
-            <field name="name">Nomor Laporan Bulanan</field>
-            <field name="code">ksg.operational.monthly.report</field>
-            <field name="prefix">BLN/%(year)s/%(month)s/</field>
+        <record id="seq_operational_bast" model="ir.sequence">
+            <field name="name">Nomor BAST Operasional</field>
+            <field name="code">ksg.operational.bast</field>
+            <field name="prefix">BAST/%(year)s/%(month)s/</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <record id="seq_operational_work_report" model="ir.sequence">
+            <field name="name">Nomor Laporan Pekerjaan</field>
+            <field name="code">ksg.operational.work.report</field>
+            <field name="prefix">LPK/%(year)s/%(month)s/</field>
             <field name="padding">4</field>
             <field name="company_id" eval="False"/>
         </record>
