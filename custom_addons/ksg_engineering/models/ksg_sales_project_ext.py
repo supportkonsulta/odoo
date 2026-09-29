@@ -136,34 +136,20 @@ class KsgSalesProjectExt(models.Model):
         cum_planned = 0.0
         cum_actual = 0.0
         
-        top_wbs = project.wbs_ids.filtered(lambda w: not w.parent_id)
-        total_bobot = sum(top_wbs.mapped('bobot')) or 1.0 # Hindari div by zero
-        
         for w in weeks:
             labels.append(f"W{w.no_minggu}")
             
             # Hitung Rencana Kumulatif s/d minggu ini
-            # Bobot WBS yang dialokasikan s/d minggu ini dari wbs.target
-            week_planned = 0.0
-            for wbs in top_wbs:
-                target = wbs.target_ids.filtered(lambda t: t.periode_minggu_id.id == w.id)
-                if target:
-                    week_planned += sum(target.mapped('target_progress'))
+            # Total Rencana adalah penjumlahan semua target_progress (skala 0-100% dari total proyek) pada minggu tersebut
+            targets_this_week = self.env['ksg.engineering.wbs.target'].search([
+                ('wbs_id.project_id', '=', project.id),
+                ('periode_minggu_id', '=', w.id)
+            ])
+            week_planned = sum(targets_this_week.mapped('target_progress'))
             cum_planned += week_planned
             planned.append(round(min(cum_planned, 100.0), 2))
             
             # Hitung Realisasi Kumulatif s/d minggu ini
-            # Ambil semua Laporan Harian yang dikonsolidasi s/d minggu ini
-            cons = self.env['ksg.engineering.report.consolidation'].search([
-                ('project_id', '=', project.id),
-                ('periode_minggu_id.tanggal_selesai', '<=', w.tanggal_selesai),
-                ('state', '=', 'approved')
-            ])
-            
-            # Total progress = sum(line.progress * bobot)
-            # Karena logic ini cukup berat, kita ambil actual_progress_kumulatif dari WBS saat ini saja
-            # tapi itu tidak mencerminkan per minggu. 
-            # Solusi cepat: gunakan data dari Laporan Mingguan jika ada.
             weekly_rep = self.env['ksg.engineering.weekly.report'].search([
                 ('project_id', '=', project.id),
                 ('periode_minggu_id', '=', w.id),
@@ -254,14 +240,32 @@ class KsgSalesProjectExt(models.Model):
                 # Targets (Rencana) per minggu
                 c = 3
                 for wk in weeks:
-                    target = w.target_ids.filtered(lambda t: t.periode_minggu_id.id == wk.id)
-                    val = sum(target.mapped('target_progress')) / 100.0 if target else 0.0
+                    # Fungsi untuk mengambil semua ID anak dan dirinya sendiri
+                    def get_all_child_ids(parent_w):
+                        ids = [parent_w.id]
+                        for ch in parent_w.child_ids:
+                            ids.extend(get_all_child_ids(ch))
+                        return ids
+                        
+                    all_ids = get_all_child_ids(w)
+                    all_targets = self.env['ksg.engineering.wbs.target'].search([
+                        ('wbs_id', 'in', all_ids),
+                        ('periode_minggu_id', '=', wk.id)
+                    ])
+                    
+                    val = sum(all_targets.mapped('target_progress')) / 100.0 if all_targets else 0.0
+                    
                     if val > 0:
                         sheet.write(current_row, c, val, percent_format)
                     else:
                         sheet.write(current_row, c, '', cell_format)
                     c += 1
-                sheet.write(current_row, c, sum(w.target_ids.mapped('target_progress')) / 100.0, percent_format)
+                    
+                # Total baris ini
+                all_targets_total = self.env['ksg.engineering.wbs.target'].search([
+                    ('wbs_id', 'in', get_all_child_ids(w))
+                ])
+                sheet.write(current_row, c, sum(all_targets_total.mapped('target_progress')) / 100.0, percent_format)
                 current_row += 1
                 
                 # Children

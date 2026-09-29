@@ -84,9 +84,9 @@
                                         <group>
                                             <group string="Pekerjaan">
                                                 <field name="project_id" invisible="1"/>
-                                                <field name="wbs_id" string="Pilih Pekerjaan (WBS)"
-                                                       domain="[('project_id', '=', parent.project_id)]"
-                                                       options="{'no_create': 1}"/>
+                                    <field name="wbs_id" string="Pilih Pekerjaan (WBS)"
+                                           domain="[('project_id', '=', parent.project_id), ('child_ids', '=', False)]"
+                                           options="{'no_create': 1}"/>
                                                 <field name="progress" string="Progress Hari ini (%)"
                                                        placeholder="Contoh: 10"/>
                                             </group>

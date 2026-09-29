@@ -53,12 +53,19 @@ class KsgEngineeringWeeklyReport(models.Model):
         for rec in self:
             approved_cons = rec.consolidation_ids.filtered(
                 lambda c: c.state == 'approved')
-            total_progress = 0.0
+            
+            # Hitung Actual Progress secara absolut (Progress Fisik * Bobot WBS)
+            total_progress_by_cost = 0.0
             for cons in approved_cons:
                 for dr in cons.daily_report_ids:
                     for line in dr.line_ids:
-                        total_progress += line.progress
-            rec.actual_progress = total_progress
+                        wbs_bobot = line.wbs_id.bobot or 0.0
+                        # Progress by cost = (Progress Phisik / 100) * Bobot WBS
+                        cost_progress = (line.progress / 100.0) * wbs_bobot
+                        total_progress_by_cost += cost_progress
+                        
+            rec.actual_progress = total_progress_by_cost
+            
             # Kumulatif: sum all weekly reports up to this week
             prev_weeks = self.search([
                 ('project_id', '=', rec.project_id.id),

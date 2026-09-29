@@ -147,7 +147,7 @@ class KsgEngineeringWbs(models.Model):
             else:
                 rec.bobot = 0.0
 
-    @api.depends('target_ids.target_progress', 'child_ids.planned_progress_kumulatif', 'child_ids.bobot')
+    @api.depends('target_ids.target_progress', 'child_ids.planned_progress_kumulatif', 'child_ids.bobot', 'bobot')
     def _compute_planned(self):
         """Hitung planned progress kumulatif berdasarkan tabel target atau rata-rata anak."""
         for rec in self:
@@ -156,7 +156,13 @@ class KsgEngineeringWbs(models.Model):
                 planned = sum(c.planned_progress_kumulatif * c.bobot for c in rec.child_ids) / total_bobot_anak
                 rec.planned_progress_kumulatif = min(planned, 100.0)
             else:
-                rec.planned_progress_kumulatif = sum(rec.target_ids.mapped('target_progress'))
+                total_target_absolut = sum(rec.target_ids.mapped('target_progress'))
+                # Konversi dari absolut (terhadap proyek) ke relatif (terhadap WBS ini)
+                if rec.bobot > 0:
+                    relatif = (total_target_absolut / rec.bobot) * 100.0
+                else:
+                    relatif = 0.0
+                rec.planned_progress_kumulatif = min(relatif, 100.0)
 
     @api.onchange('tanggal_mulai', 'tanggal_selesai', 'mode_distribusi', 'bobot')
     def _onchange_generate_targets(self):
@@ -182,7 +188,7 @@ class KsgEngineeringWbs(models.Model):
 
     def _compute_actual(self):
         """Actual progress agregat: jika punya anak, rata-rata tertimbang dari anak.
-        Jika leaf, dari daily report lines."""
+        Jika leaf, dari daily report lines (karena input daily report adalah progress fisik 0-100%)."""
         DailyLine = self.env['ksg.engineering.daily.report.line']
         for rec in self:
             if rec.child_ids:

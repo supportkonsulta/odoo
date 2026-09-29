@@ -50,6 +50,8 @@ class KsgEngineeringMonthlyReport(models.Model):
     @api.depends('weekly_report_ids.actual_progress')
     def _compute_progress(self):
         for rec in self:
+            # Karena laporan mingguan sudah menyimpan nilai absolute (Progress By Cost),
+            # kita cukup menjumlahkannya saja.
             rec.actual_progress = sum(
                 rec.weekly_report_ids.mapped('actual_progress'))
 
