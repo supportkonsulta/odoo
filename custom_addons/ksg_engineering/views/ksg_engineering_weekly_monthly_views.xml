@@ -41,7 +41,7 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="action_export_weekly_report" string="Cetak Laporan (Excel)" type="object" class="btn-primary" invisible="state != 'done'"/>
+                    <button name="action_export_weekly_report" string="Cetak Laporan (Excel)" type="object" class="btn-primary"/>
                     <field name="state" widget="statusbar"/>
                 </header>
                 <sheet>
@@ -112,6 +112,7 @@
         <field name="arch" type="xml">
             <form>
                 <header>
+                    <button name="action_export_monthly_report" string="Cetak Laporan (Excel)" type="object" class="btn-primary"/>
                     <field name="state" widget="statusbar"/>
                 </header>
                 <sheet>

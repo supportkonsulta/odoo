@@ -246,11 +246,12 @@ class KsgSalesProjectExt(models.Model):
                     no_str = f"{parent_idx_str}.{idx}"
                 prefix = "  " * (level - 1)
                     
+                # Hanya 1 baris per WBS (Rencana / Target)
                 sheet.write(current_row, 0, no_str, center_format)
                 sheet.write(current_row, 1, prefix + w.nama_pekerjaan, cell_format)
                 sheet.write(current_row, 2, w.bobot / 100.0, percent_format)
                 
-                # Targets
+                # Targets (Rencana) per minggu
                 c = 3
                 for wk in weeks:
                     target = w.target_ids.filtered(lambda t: t.periode_minggu_id.id == wk.id)
@@ -260,7 +261,6 @@ class KsgSalesProjectExt(models.Model):
                     else:
                         sheet.write(current_row, c, '', cell_format)
                     c += 1
-                    
                 sheet.write(current_row, c, sum(w.target_ids.mapped('target_progress')) / 100.0, percent_format)
                 current_row += 1
                 
