@@ -78,12 +78,6 @@ class KsgSalesHpp(models.Model):
     # =========================================================
     # DETAIL HPP
     # =========================================================
-    #
-    # Detail HPP menjadi tabel utama yang digunakan
-    # untuk perhitungan HPP.
-    #
-    # Tabel ini bersifat common sehingga dapat digunakan
-    # baik untuk proyek Operational maupun Engineering.
 
     line_ids = fields.One2many(
         comodel_name="ksg.sales.hpp.line",
@@ -93,25 +87,29 @@ class KsgSalesHpp(models.Model):
     )
 
     # =========================================================
-    # KEBUTUHAN OPERATIONAL
+    # DETAIL SDM
     # =========================================================
 
     tenaga_kerja_ids = fields.One2many(
         comodel_name="ksg.sales.hpp.tenaga.kerja",
         inverse_name="hpp_id",
-        string="Kebutuhan Tenaga Kerja",
-        copy=True,
-    )
-
-    perlengkapan_ids = fields.One2many(
-        comodel_name="ksg.sales.hpp.perlengkapan",
-        inverse_name="hpp_id",
-        string="Kebutuhan Perlengkapan dan Chemical",
+        string="Detail SDM",
         copy=True,
     )
 
     # =========================================================
-    # KEBUTUHAN ENGINEERING
+    # PERLENGKAPAN & CHEMICAL
+    # =========================================================
+
+    perlengkapan_ids = fields.One2many(
+        comodel_name="ksg.sales.hpp.perlengkapan",
+        inverse_name="hpp_id",
+        string="Perlengkapan & Chemical",
+        copy=True,
+    )
+
+    # =========================================================
+    # ENGINEERING
     # =========================================================
 
     engineering_ids = fields.One2many(
@@ -173,51 +171,41 @@ class KsgSalesHpp(models.Model):
     # =========================================================
     # TOTAL HPP
     # =========================================================
-    #
-    # Total HPP tetap berasal dari Detail HPP.
-    #
-    # Detail HPP:
-    # Uang Pokok
-    # + Tunjangan
-    # + THR
-    # + Seragam
-    # + OVH
-    # + Sistem
-    # + BPJS TK
-    # + BPJS KES
-    # + Ex. Pengeluaran
-    #
-    # = Jumlah / Bulan
-    #
-    # Kemudian:
-    # Jumlah / Bulan x 12
-    # = HPP / Tahun
-    #
-    # Kebutuhan Operational tidak ditambahkan lagi
-    # ke Total HPP agar tidak terjadi double counting.
 
     @api.depends(
         "line_ids.jumlah_bulan",
         "tenaga_kerja_ids.total_biaya",
+        "perlengkapan_ids.subtotal",
+        "engineering_ids.subtotal",
     )
     def _compute_total_hpp(self):
+        """
+        Menghitung total HPP.
+
+        HPP bersifat standalone dan tidak mengambil atau
+        melakukan sinkronisasi data dari modul Operational
+        maupun HC.
+
+        Detail SDM dan Perlengkapan & Chemical digunakan
+        sebagai detail pendukung perhitungan HPP.
+
+        Total HPP utama tetap dihitung dari Detail HPP
+        (line_ids) agar tidak terjadi double counting apabila
+        detail SDM/perlengkapan juga dicatat pada Detail HPP.
+        """
+
         for hpp in self:
 
             # -------------------------------------------------
-            # Informasi total kebutuhan tenaga kerja
+            # Total tenaga kerja
             # -------------------------------------------------
-            #
-            # Nilai ini hanya sebagai informasi dari tabel
-            # Kebutuhan Tenaga Kerja.
-            #
-            # Tidak ditambahkan kembali ke Total HPP.
 
             hpp.total_tenaga_kerja = sum(
                 hpp.tenaga_kerja_ids.mapped("total_biaya")
             )
 
             # -------------------------------------------------
-            # Total HPP berasal dari Detail HPP
+            # Total HPP utama
             # -------------------------------------------------
 
             total_bulanan = sum(
@@ -226,17 +214,20 @@ class KsgSalesHpp(models.Model):
 
             hpp.total_hpp_bulanan = total_bulanan
 
-            # Sementara menggunakan 12 bulan.
-            # Nanti dapat disesuaikan dengan durasi kontrak.
+            # -------------------------------------------------
+            # Total tahunan
+            # -------------------------------------------------
 
             hpp.total_hpp_tahunan = total_bulanan * 12
 
-            # Compatibility dengan field lama.
+            # -------------------------------------------------
+            # Total HPP
+            # -------------------------------------------------
 
             hpp.total_hpp = hpp.total_hpp_tahunan
 
     # =========================================================
-    # WORKFLOW
+    # WORKFLOW - SUBMIT
     # =========================================================
 
     def action_submit(self):
@@ -244,11 +235,12 @@ class KsgSalesHpp(models.Model):
 
             if hpp.state != "draft":
                 raise ValidationError(
-                    "Hanya HPP dengan status Draft yang dapat diajukan."
+                    "Hanya HPP dengan status Draft yang "
+                    "dapat diajukan."
                 )
 
             # -------------------------------------------------
-            # Detail HPP wajib diisi untuk semua scope
+            # Detail HPP wajib diisi
             # -------------------------------------------------
 
             if not hpp.line_ids:
@@ -258,7 +250,7 @@ class KsgSalesHpp(models.Model):
                 )
 
             # -------------------------------------------------
-            # Validasi tambahan untuk Operational
+            # Validasi HPP Operational
             # -------------------------------------------------
 
             if hpp.scope == "operational":
@@ -267,8 +259,8 @@ class KsgSalesHpp(models.Model):
                     and not hpp.perlengkapan_ids
                 ):
                     raise ValidationError(
-                        "Untuk HPP Operational, isi minimal satu "
-                        "kebutuhan tenaga kerja atau "
+                        "Untuk HPP Operational, isi minimal "
+                        "satu kebutuhan tenaga kerja atau "
                         "perlengkapan/chemical."
                     )
 
@@ -285,6 +277,10 @@ class KsgSalesHpp(models.Model):
             )
 
         return True
+
+    # =========================================================
+    # WORKFLOW - APPROVE
+    # =========================================================
 
     def action_approve(self):
         for hpp in self:
@@ -312,18 +308,22 @@ class KsgSalesHpp(models.Model):
 
     def write(self, vals):
         for hpp in self:
+
             if hpp.state == "approved":
                 raise ValidationError(
-                    "HPP yang sudah Approved tidak dapat diubah."
+                    "HPP yang sudah Approved tidak dapat "
+                    "diubah."
                 )
 
         return super().write(vals)
 
     def unlink(self):
         for hpp in self:
+
             if hpp.state == "approved":
                 raise ValidationError(
-                    "HPP yang sudah Approved tidak dapat dihapus."
+                    "HPP yang sudah Approved tidak dapat "
+                    "dihapus."
                 )
 
         return super().unlink()

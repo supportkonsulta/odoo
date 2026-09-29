@@ -4,11 +4,11 @@ from odoo.exceptions import ValidationError
 
 class KsgSalesHppLine(models.Model):
     _name = "ksg.sales.hpp.line"
-    _description = "KSG Sales HPP Line"
+    _description = "KSG Sales HPP Detail"
     _order = "sequence, id"
 
     hpp_id = fields.Many2one(
-        comodel_name="ksg.sales.hpp",
+        "ksg.sales.hpp",
         string="HPP",
         required=True,
         ondelete="cascade",
@@ -21,38 +21,33 @@ class KsgSalesHppLine(models.Model):
     )
 
     # =========================================================
-    # DATA DASAR HPP
+    # IDENTITAS / KOMPONEN HPP
     # =========================================================
 
-    kategori = fields.Selection(
-        selection=[
-            ("material", "Material"),
-            ("tenaga_kerja", "Tenaga Kerja"),
-            ("equipment", "Equipment"),
-            ("lainnya", "Lainnya"),
-        ],
-        string="Kategori",
+    bagian = fields.Char(
+        string="Bagian",
         required=True,
+        tracking=True,
+        help="Bagian atau komponen HPP, misalnya Team Leader, CSO, Alat dan Bahan, atau Jasa.",
     )
 
-    uraian = fields.Char(
-        string="Uraian",
-        required=True,
+    mk = fields.Float(
+        string="MK",
+        default=12.0,
+        tracking=True,
+        help="Masa kerja dalam bulan.",
     )
 
-    spesifikasi = fields.Char(
-        string="Spesifikasi",
+    tk = fields.Float(
+        string="TK",
+        default=0.0,
+        tracking=True,
+        help="Jumlah tenaga kerja.",
     )
 
-    satuan = fields.Char(
-        string="Satuan",
-    )
-
-    qty = fields.Float(
-        string="Qty",
-        required=True,
-        default=1.0,
-    )
+    # =========================================================
+    # KOMPONEN BIAYA
+    # =========================================================
 
     currency_id = fields.Many2one(
         related="hpp_id.currency_id",
@@ -61,122 +56,114 @@ class KsgSalesHppLine(models.Model):
         readonly=True,
     )
 
-    harga_satuan = fields.Monetary(
-        string="Harga Satuan",
-        currency_field="currency_id",
-        required=True,
-        default=0.0,
-    )
-
-    subtotal = fields.Monetary(
-        string="Subtotal",
-        currency_field="currency_id",
-        compute="_compute_subtotal",
-        store=True,
-    )
-
-    keterangan = fields.Text(
-        string="Keterangan",
-    )
-
-    # =========================================================
-    # STRUKTUR HPP OPERATIONAL
-    # Mengikuti struktur HPP Operational yang sudah dibahas
-    # =========================================================
-
-    bagian = fields.Char(
-        string="Bagian",
-        help="Bagian atau posisi/item yang dihitung dalam HPP.",
-    )
-
-    mk = fields.Float(
-        string="MK",
-        default=0.0,
-        help="Jumlah kebutuhan/man-month atau nilai kuantitas tenaga kerja sesuai kebutuhan perhitungan HPP.",
-    )
-
-    tk = fields.Float(
-        string="TK",
-        default=0.0,
-        help="Jumlah tenaga kerja.",
-    )
-
     uang_pokok = fields.Monetary(
         string="Uang Pokok",
         currency_field="currency_id",
         default=0.0,
+        tracking=True,
     )
 
     tunj = fields.Monetary(
         string="Tunj.",
         currency_field="currency_id",
         default=0.0,
+        tracking=True,
     )
 
     thr = fields.Monetary(
         string="THR",
         currency_field="currency_id",
         default=0.0,
+        tracking=True,
     )
 
     seragam = fields.Monetary(
         string="Seragam",
         currency_field="currency_id",
         default=0.0,
+        tracking=True,
     )
 
     ovh = fields.Monetary(
         string="OVH",
         currency_field="currency_id",
         default=0.0,
+        tracking=True,
     )
 
     sistem = fields.Monetary(
         string="Sistem",
         currency_field="currency_id",
         default=0.0,
+        tracking=True,
     )
 
     bpjs_tk = fields.Monetary(
         string="BPJS TK",
         currency_field="currency_id",
         default=0.0,
+        tracking=True,
     )
 
     bpjs_kes = fields.Monetary(
         string="BPJS KES",
         currency_field="currency_id",
         default=0.0,
+        tracking=True,
     )
 
     ex_pengeluaran = fields.Monetary(
         string="Ex. Pengeluaran",
         currency_field="currency_id",
         default=0.0,
+        tracking=True,
     )
 
+    # =========================================================
+    # HASIL PERHITUNGAN HPP
+    # =========================================================
+
     jumlah_bulan = fields.Monetary(
-        string="Jumlah / Bulan",
+        string="Jumlah/Bulan",
         currency_field="currency_id",
-        compute="_compute_hpp_operational",
+        compute="_compute_hpp",
         store=True,
     )
 
     hpp_tahun = fields.Monetary(
-        string="HPP / Tahun",
+        string="HPP/Tahun",
         currency_field="currency_id",
-        compute="_compute_hpp_operational",
+        compute="_compute_hpp",
         store=True,
     )
 
     # =========================================================
-    # COMPUTE
+    # PENAGIHAN
     # =========================================================
 
-    @api.depends("qty", "harga_satuan")
-    def _compute_subtotal(self):
-        for line in self:
-            line.subtotal = line.qty * line.harga_satuan
+    tagihan_bulan = fields.Monetary(
+        string="Tagihan/Bulan",
+        currency_field="currency_id",
+        default=0.0,
+        tracking=True,
+        help="Nilai tagihan per bulan. Diinput sesuai hasil penawaran/RAB.",
+    )
+
+    tagihan_tahun = fields.Monetary(
+        string="Tagihan/Tahun",
+        currency_field="currency_id",
+        compute="_compute_tagihan_tahun",
+        store=True,
+    )
+
+    keterangan = fields.Text(
+        string="Keterangan",
+        tracking=True,
+    )
+
+    # =========================================================
+    # COMPUTE HPP
+    # =========================================================
 
     @api.depends(
         "uang_pokok",
@@ -188,10 +175,11 @@ class KsgSalesHppLine(models.Model):
         "bpjs_tk",
         "bpjs_kes",
         "ex_pengeluaran",
+        "mk",
     )
-    def _compute_hpp_operational(self):
+    def _compute_hpp(self):
         for line in self:
-            line.jumlah_bulan = (
+            total_bulan = (
                 line.uang_pokok
                 + line.tunj
                 + line.thr
@@ -203,23 +191,25 @@ class KsgSalesHppLine(models.Model):
                 + line.ex_pengeluaran
             )
 
-            # Template Operational menggunakan periode 12 bulan.
-            line.hpp_tahun = line.jumlah_bulan * 12
+            line.jumlah_bulan = total_bulan
+            line.hpp_tahun = total_bulan * (line.mk or 12.0)
+
+    # =========================================================
+    # COMPUTE TAGIHAN TAHUN
+    # =========================================================
+
+    @api.depends("tagihan_bulan")
+    def _compute_tagihan_tahun(self):
+        for line in self:
+            line.tagihan_tahun = line.tagihan_bulan * 12
 
     # =========================================================
     # VALIDATION
     # =========================================================
 
-    @api.constrains("qty")
-    def _check_qty(self):
-        for line in self:
-            if line.qty <= 0:
-                raise ValidationError(
-                    "Qty harus lebih besar dari 0."
-                )
-
     @api.constrains(
-        "harga_satuan",
+        "mk",
+        "tk",
         "uang_pokok",
         "tunj",
         "thr",
@@ -229,27 +219,33 @@ class KsgSalesHppLine(models.Model):
         "bpjs_tk",
         "bpjs_kes",
         "ex_pengeluaran",
+        "tagihan_bulan",
     )
-    def _check_amounts(self):
-        amount_fields = [
-            "harga_satuan",
-            "uang_pokok",
-            "tunj",
-            "thr",
-            "seragam",
-            "ovh",
-            "sistem",
-            "bpjs_tk",
-            "bpjs_kes",
-            "ex_pengeluaran",
-        ]
-
+    def _check_positive_values(self):
         for line in self:
+            if line.mk < 0:
+                raise ValidationError("MK tidak boleh bernilai negatif.")
+
+            if line.tk < 0:
+                raise ValidationError("TK tidak boleh bernilai negatif.")
+
+            amount_fields = [
+                "uang_pokok",
+                "tunj",
+                "thr",
+                "seragam",
+                "ovh",
+                "sistem",
+                "bpjs_tk",
+                "bpjs_kes",
+                "ex_pengeluaran",
+                "tagihan_bulan",
+            ]
+
             for field_name in amount_fields:
                 if getattr(line, field_name) < 0:
                     raise ValidationError(
-                        f"{line._fields[field_name].string} "
-                        "tidak boleh bernilai negatif."
+                        f"{line._fields[field_name].string} tidak boleh bernilai negatif."
                     )
 
     # =========================================================
@@ -258,24 +254,18 @@ class KsgSalesHppLine(models.Model):
 
     def write(self, vals):
         for line in self:
-            if (
-                line.hpp_id
-                and line.hpp_id.state == "approved"
-            ):
+            if line.hpp_id.state == "approved":
                 raise ValidationError(
-                    "Detail HPP yang sudah Approved tidak dapat diubah."
+                    "Detail HPP tidak dapat diubah karena HPP sudah disetujui."
                 )
 
         return super().write(vals)
 
     def unlink(self):
         for line in self:
-            if (
-                line.hpp_id
-                and line.hpp_id.state == "approved"
-            ):
+            if line.hpp_id.state == "approved":
                 raise ValidationError(
-                    "Detail HPP yang sudah Approved tidak dapat dihapus."
+                    "Detail HPP tidak dapat dihapus karena HPP sudah disetujui."
                 )
 
         return super().unlink()

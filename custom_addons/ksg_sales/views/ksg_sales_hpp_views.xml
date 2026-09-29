@@ -1,17 +1,21 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 
 <odoo>
 
-    <!-- ===================================================== -->
-    <!-- HPP LIST VIEW -->
-    <!-- ===================================================== -->
+    <!-- =========================================================
+         LIST VIEW - HPP
+         ========================================================= -->
 
     <record id="view_ksg_sales_hpp_list" model="ir.ui.view">
         <field name="name">ksg.sales.hpp.list</field>
         <field name="model">ksg.sales.hpp</field>
+
         <field name="arch" type="xml">
 
-            <list string="HPP">
+            <list
+                string="HPP"
+                default_order="id desc"
+            >
 
                 <field name="name"/>
                 <field name="project_id"/>
@@ -27,36 +31,37 @@
     </record>
 
 
-    <!-- ===================================================== -->
-    <!-- HPP FORM VIEW -->
-    <!-- ===================================================== -->
+    <!-- =========================================================
+         FORM VIEW - HPP
+         ========================================================= -->
 
     <record id="view_ksg_sales_hpp_form" model="ir.ui.view">
         <field name="name">ksg.sales.hpp.form</field>
         <field name="model">ksg.sales.hpp</field>
+
         <field name="arch" type="xml">
 
             <form string="HPP">
 
-                <!-- ================================================= -->
-                <!-- HEADER -->
-                <!-- ================================================= -->
+                <!-- =================================================
+                     HEADER
+                     ================================================= -->
 
                 <header>
 
                     <button
                         name="action_submit"
-                        type="object"
                         string="Ajukan"
+                        type="object"
                         class="btn-primary"
                         invisible="state != 'draft'"
                     />
 
                     <button
                         name="action_approve"
+                        string="Setujui"
                         type="object"
-                        string="Approve"
-                        class="btn-success"
+                        class="btn-primary"
                         invisible="state != 'submitted'"
                     />
 
@@ -69,46 +74,54 @@
                 </header>
 
 
-                <!-- ================================================= -->
-                <!-- MAIN SHEET -->
-                <!-- ================================================= -->
-
                 <sheet>
 
-                    <!-- ============================================= -->
-                    <!-- JUDUL -->
-                    <!-- ============================================= -->
+                    <!-- =================================================
+                         TITLE
+                         ================================================= -->
 
                     <div class="oe_title">
 
+                        <label
+                            for="name"
+                            class="oe_edit_only"
+                        />
+
                         <h1>
+
                             <field
                                 name="name"
                                 readonly="1"
                             />
+
                         </h1>
 
                     </div>
 
 
-                    <!-- ============================================= -->
-                    <!-- INFORMASI HPP -->
-                    <!-- ============================================= -->
+                    <!-- =================================================
+                         INFORMASI HPP
+                         ================================================= -->
 
                     <group string="Informasi HPP">
 
                         <group>
 
-                            <field name="project_id"/>
+                            <field
+                                name="project_id"
+                                options="{'no_create': True}"
+                                readonly="state == 'approved'"
+                            />
 
                             <field
                                 name="scope"
-                                widget="radio"
-                                options="{'horizontal': true}"
                                 readonly="1"
                             />
 
-                            <field name="tanggal_hpp"/>
+                            <field
+                                name="tanggal_hpp"
+                                readonly="state == 'approved'"
+                            />
 
                         </group>
 
@@ -116,105 +129,107 @@
 
                             <field
                                 name="currency_id"
-                                invisible="1"
+                                readonly="1"
                             />
 
-                            <field name="deskripsi"/>
+                            <field
+                                name="deskripsi"
+                                readonly="state == 'approved'"
+                            />
 
                         </group>
 
                     </group>
 
 
-                    <!-- ============================================= -->
-                    <!-- INFORMASI -->
-                    <!-- ============================================= -->
+                    <!-- =================================================
+                         INFO SCOPE OPERATIONAL
+                         ================================================= -->
 
                     <div
                         class="alert alert-info"
                         role="alert"
+                        invisible="scope != 'operational'"
                     >
 
-                        <strong>Informasi:</strong>
+                        <strong>HPP Operational</strong>
 
-                        Detail HPP digunakan sebagai rincian
-                        perhitungan modal proyek.
+                        <br/>
 
-                        Kebutuhan Operational dan Engineering
-                        digunakan sesuai scope proyek.
-
-                        HPP menjadi dasar perhitungan sebelum
-                        digunakan dalam proses pembuatan RAB.
+                        Detail HPP digunakan untuk menghitung komponen
+                        biaya tenaga kerja, perlengkapan, chemical,
+                        jasa, dan kebutuhan biaya lainnya.
 
                     </div>
 
 
-                    <!-- ============================================= -->
-                    <!-- NOTEBOOK -->
-                    <!-- ============================================= -->
+                    <!-- =================================================
+                         INFO SCOPE ENGINEERING
+                         ================================================= -->
+
+                    <div
+                        class="alert alert-info"
+                        role="alert"
+                        invisible="scope != 'engineering'"
+                    >
+
+                        <strong>HPP Engineering</strong>
+
+                        <br/>
+
+                        Struktur HPP digunakan untuk mendukung
+                        perhitungan biaya pekerjaan Engineering.
+
+                    </div>
+
+
+                    <!-- =================================================
+                         NOTEBOOK
+                         ================================================= -->
 
                     <notebook>
 
 
-                        <!-- ========================================= -->
-                        <!-- TAB 1 : DETAIL HPP -->
-                        <!-- ========================================= -->
+                        <!-- =============================================
+                             TAB 1 - DETAIL HPP
+                             ============================================= -->
 
                         <page
                             string="Detail HPP"
                             name="detail_hpp"
                         >
 
-                            <div
-                                class="alert alert-secondary"
-                                role="alert"
-                            >
+                            <group>
 
-                                Detail HPP dapat digunakan untuk
-                                proyek Operational maupun Engineering.
+                                <div class="o_form_label">
+                                    Detail utama perhitungan HPP
+                                </div>
 
-                                Nilai HPP bulanan dihitung dari
-                                komponen biaya pada tabel ini.
-
-                            </div>
+                            </group>
 
 
                             <field
                                 name="line_ids"
-                                context="{'default_hpp_id': id}"
+                                readonly="state == 'approved'"
                             >
 
                                 <list
                                     editable="bottom"
-                                    create="1"
-                                    delete="1"
+                                    default_order="sequence,id"
                                 >
 
-                                    <field
-                                        name="sequence"
-                                        widget="handle"
-                                    />
-
-                                    <!-- DATA DASAR -->
+                                    <field name="sequence"/>
 
                                     <field name="bagian"/>
-
-                                    <field name="kategori"/>
-
-                                    <field name="uraian"/>
-
-                                    <field name="spesifikasi"/>
-
-                                    <field name="satuan"/>
-
-                                    <field name="qty"/>
 
                                     <field name="mk"/>
 
                                     <field name="tk"/>
 
-
-                                    <!-- KOMPONEN HPP -->
+                                    <field
+                                        name="currency_id"
+                                        column_invisible="True"
+                                    />
 
                                     <field name="uang_pokok"/>
 
@@ -234,9 +249,6 @@
 
                                     <field name="ex_pengeluaran"/>
 
-
-                                    <!-- HASIL -->
-
                                     <field
                                         name="jumlah_bulan"
                                         readonly="1"
@@ -247,6 +259,73 @@
                                         readonly="1"
                                     />
 
+                                    <field name="tagihan_bulan"/>
+
+                                    <field
+                                        name="tagihan_tahun"
+                                        readonly="1"
+                                    />
+
+                                    <field name="keterangan"/>
+
+                                </list>
+
+                            </field>
+
+                        </page>
+
+
+                        <!-- =============================================
+                             TAB 2 - DETAIL SDM
+                             ============================================= -->
+
+                        <page
+                            string="Detail SDM"
+                            name="detail_sdm"
+                            invisible="scope != 'operational'"
+                        >
+
+                            <group>
+
+                                <div class="o_form_label">
+                                    Detail kebutuhan tenaga kerja
+                                </div>
+
+                            </group>
+
+
+                            <field
+                                name="tenaga_kerja_ids"
+                                readonly="state == 'approved'"
+                            >
+
+                                <list
+                                    editable="bottom"
+                                    default_order="sequence,id"
+                                >
+
+                                    <field name="sequence"/>
+
+                                    <field name="tenaga_kerja"/>
+
+                                    <field name="posisi"/>
+
+                                    <field name="jumlah"/>
+
+                                    <field
+                                        name="currency_id"
+                                        column_invisible="True"
+                                    />
+
+                                    <field
+                                        name="estimasi_biaya_satuan"
+                                    />
+
+                                    <field
+                                        name="total_biaya"
+                                        readonly="1"
+                                    />
+
                                     <field name="keterangan"/>
 
                                 </list>
@@ -254,185 +333,7 @@
                             </field>
 
 
-                            <!-- ===================================== -->
-                            <!-- TOTAL DETAIL HPP -->
-                            <!-- ===================================== -->
-
-                            <group
-                                class="mt-3"
-                                col="4"
-                            >
-
-                                <group>
-
-                                    <field
-                                        name="total_hpp_bulanan"
-                                        readonly="1"
-                                    />
-
-                                </group>
-
-                                <group>
-
-                                    <field
-                                        name="total_hpp_tahunan"
-                                        readonly="1"
-                                    />
-
-                                </group>
-
-                            </group>
-
-                        </page>
-
-
-                        <!-- ========================================= -->
-                        <!-- TAB 2 : KEBUTUHAN OPERATIONAL -->
-                        <!-- ========================================= -->
-
-                        <page
-                            string="Kebutuhan Operational"
-                            name="kebutuhan_operational"
-                            invisible="scope != 'operational'"
-                        >
-
-                            <div
-                                class="alert alert-info"
-                                role="alert"
-                            >
-
-                                <strong>Kebutuhan Operational</strong>
-
-                                <br/>
-
-                                Data kebutuhan tenaga kerja,
-                                perlengkapan dan chemical
-                                untuk mendukung perhitungan HPP proyek.
-
-                            </div>
-
-
-                            <!-- ===================================== -->
-                            <!-- TENAGA KERJA -->
-                            <!-- ===================================== -->
-
-                            <group string="Kebutuhan Tenaga Kerja">
-
-                                <field
-                                    name="tenaga_kerja_ids"
-                                    context="{'default_hpp_id': id}"
-                                >
-
-                                    <list
-                                        editable="bottom"
-                                        create="1"
-                                        delete="1"
-                                    >
-
-                                        <field
-                                            name="sequence"
-                                            widget="handle"
-                                        />
-
-                                        <field
-                                            name="posisi"
-                                            string="Peran / Posisi"
-                                        />
-
-                                        <field
-                                            name="jumlah"
-                                            string="Jumlah Pekerja"
-                                        />
-
-                                        <field
-                                            name="estimasi_biaya_satuan"
-                                            string="Estimasi Biaya / Orang (Inc. BPJS)"
-                                        />
-
-                                        <field
-                                            name="total_biaya"
-                                            string="Total Biaya"
-                                            readonly="1"
-                                        />
-
-                                        <field
-                                            name="keterangan"
-                                            string="Catatan Kebutuhan"
-                                        />
-
-                                    </list>
-
-                                </field>
-
-                            </group>
-
-
-                            <!-- ===================================== -->
-                            <!-- PERLENGKAPAN -->
-                            <!-- ===================================== -->
-
-                            <group
-                                string="Kebutuhan Perlengkapan &amp; Chemical"
-                                class="mt-4"
-                            >
-
-                                <field
-                                    name="perlengkapan_ids"
-                                    context="{'default_hpp_id': id}"
-                                >
-
-                                    <list
-                                        editable="bottom"
-                                        create="1"
-                                        delete="1"
-                                    >
-
-                                        <field
-                                            name="sequence"
-                                            widget="handle"
-                                        />
-
-                                        <field
-                                            name="item"
-                                            string="Nama Barang / Alat"
-                                        />
-
-                                        <field
-                                            name="spesifikasi"
-                                            string="Spesifikasi"
-                                        />
-
-                                        <field
-                                            name="satuan"
-                                            string="Satuan"
-                                        />
-
-                                        <field
-                                            name="jumlah"
-                                            string="Jumlah"
-                                        />
-
-                                        <field
-                                            name="keterangan"
-                                            string="Keterangan"
-                                        />
-
-                                    </list>
-
-                                </field>
-
-                            </group>
-
-
-                            <!-- ===================================== -->
-                            <!-- RINGKASAN OPERATIONAL -->
-                            <!-- ===================================== -->
-
-                            <group
-                                string="Ringkasan Kebutuhan Operational"
-                                class="mt-4"
-                                col="4"
-                            >
+                            <group class="mt16">
 
                                 <group>
 
@@ -448,58 +349,50 @@
                         </page>
 
 
-                        <!-- ========================================= -->
-                        <!-- TAB 3 : KEBUTUHAN ENGINEERING -->
-                        <!-- ========================================= -->
+                        <!-- =============================================
+                             TAB 3 - PERLENGKAPAN & CHEMICAL
+                             ============================================= -->
 
                         <page
-                            string="Kebutuhan Engineering"
-                            name="kebutuhan_engineering"
-                            invisible="scope != 'engineering'"
+                            string="Perlengkapan &amp; Chemical"
+                            name="perlengkapan_chemical"
+                            invisible="scope != 'operational'"
                         >
 
-                            <div
-                                class="alert alert-info"
-                                role="alert"
-                            >
+                            <group>
 
-                                <strong>Kebutuhan Engineering</strong>
+                                <div class="o_form_label">
+                                    Detail kebutuhan perlengkapan
+                                    dan chemical
+                                </div>
 
-                                <br/>
-
-                                Bagian ini digunakan untuk mencatat
-                                kebutuhan dasar Engineering pada proyek.
-
-                                Struktur ini masih dibuat sederhana
-                                dan dapat dikembangkan sesuai kebutuhan
-                                Engineering berikutnya.
-
-                            </div>
+                            </group>
 
 
                             <field
-                                name="engineering_ids"
-                                context="{'default_hpp_id': id}"
+                                name="perlengkapan_ids"
+                                readonly="state == 'approved'"
                             >
 
                                 <list
                                     editable="bottom"
-                                    create="1"
-                                    delete="1"
+                                    default_order="sequence,id"
                                 >
 
-                                    <field
-                                        name="sequence"
-                                        widget="handle"
-                                    />
+                                    <field name="sequence"/>
 
-                                    <field name="uraian"/>
+                                    <field name="item"/>
 
                                     <field name="spesifikasi"/>
 
                                     <field name="satuan"/>
 
-                                    <field name="qty"/>
+                                    <field name="jumlah"/>
+
+                                    <field
+                                        name="currency_id"
+                                        column_invisible="True"
+                                    />
 
                                     <field name="harga_satuan"/>
 
@@ -516,17 +409,119 @@
 
                         </page>
 
+
+                        <!-- =============================================
+                             TAB 4 - PENAWARAN / RAB
+                             ============================================= -->
+
+                        <page
+                            string="Penawaran / RAB"
+                            name="penawaran_rab"
+                        >
+
+                            <div
+                                class="alert alert-secondary"
+                                role="alert"
+                            >
+
+                                <strong>Penawaran / RAB</strong>
+
+                                <br/>
+
+                                Tab ini digunakan sebagai dasar
+                                penyusunan Penawaran / RAB berdasarkan
+                                hasil perhitungan HPP.
+
+                                <br/>
+
+                                Struktur detail Penawaran / RAB akan
+                                dikembangkan pada tahap berikutnya.
+
+                            </div>
+
+                        </page>
+
+
+                        <!-- =============================================
+                             TAB 5 - ENGINEERING
+                             ============================================= -->
+
+                        <page
+                            string="Engineering"
+                            name="engineering"
+                            invisible="scope != 'engineering'"
+                        >
+
+                            <group>
+
+                                <div class="o_form_label">
+                                    Detail kebutuhan Engineering
+                                </div>
+
+                            </group>
+
+
+                            <field
+                                name="engineering_ids"
+                                readonly="state == 'approved'"
+                            >
+
+                                <list
+                                    editable="bottom"
+                                    default_order="sequence,id"
+                                >
+
+                                    <field name="sequence"/>
+
+                                    <field name="uraian"/>
+
+                                    <field name="spesifikasi"/>
+
+                                    <field name="satuan"/>
+
+                                    <field name="qty"/>
+
+                                    <field
+                                        name="currency_id"
+                                        column_invisible="True"
+                                    />
+
+                                    <field name="harga_satuan"/>
+
+                                    <field
+                                        name="subtotal"
+                                        readonly="1"
+                                    />
+
+                                    <field name="keterangan"/>
+
+                                </list>
+
+                            </field>
+
+                        </page>
+
+
                     </notebook>
 
 
-                    <!-- ============================================= -->
-                    <!-- RINGKASAN TOTAL HPP -->
-                    <!-- ============================================= -->
+                    <!-- =================================================
+                         TOTAL SUMMARY
+                         ================================================= -->
 
                     <group
                         string="Ringkasan HPP"
-                        class="mt-4"
+                        class="mt16"
                     >
+
+                        <group>
+
+                            <field
+                                name="total_tenaga_kerja"
+                                readonly="1"
+                            />
+
+                        </group>
 
                         <group>
 
@@ -540,10 +535,6 @@
                                 readonly="1"
                             />
 
-                        </group>
-
-                        <group>
-
                             <field
                                 name="total_hpp"
                                 readonly="1"
@@ -553,14 +544,14 @@
 
                     </group>
 
+
+                    <!-- =================================================
+                         CHATTER
+                         ================================================= -->
+
+                    <chatter/>
+
                 </sheet>
-
-
-                <!-- ================================================= -->
-                <!-- CHATTER ODOO 19 -->
-                <!-- ================================================= -->
-
-                <chatter/>
 
             </form>
 
@@ -568,14 +559,11 @@
     </record>
 
 
-    <!-- ===================================================== -->
-    <!-- HPP ACTION -->
-    <!-- ===================================================== -->
+    <!-- =========================================================
+         ACTION
+         ========================================================= -->
 
-    <record
-        id="action_ksg_sales_hpp"
-        model="ir.actions.act_window"
-    >
+    <record id="action_ksg_sales_hpp" model="ir.actions.act_window">
 
         <field name="name">HPP</field>
 
@@ -595,9 +583,9 @@
             </p>
 
             <p>
-                HPP digunakan untuk menghitung
-                modal proyek sebelum digunakan
-                sebagai dasar pembuatan RAB.
+                Gunakan HPP untuk melakukan perhitungan
+                biaya proyek sebelum menghasilkan
+                Penawaran / RAB.
             </p>
 
         </field>
@@ -605,16 +593,16 @@
     </record>
 
 
-    <!-- ===================================================== -->
-    <!-- HPP MENU -->
-    <!-- ===================================================== -->
+    <!-- =========================================================
+         MENU
+         ========================================================= -->
 
     <menuitem
         id="menu_ksg_sales_hpp"
         name="HPP"
         parent="ksg_sales.menu_ksg_sales_root"
         action="action_ksg_sales_hpp"
-        sequence="50"
+        sequence="30"
     />
 
 </odoo>

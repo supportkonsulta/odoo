@@ -311,18 +311,13 @@
         <field name="view_mode">list,form</field>
 
     </record>
-
-
     <!-- ====================================================== -->
-    <!-- RAB MENU -->
+    <!-- HAPUS MENU RAB LAMA -->
     <!-- ====================================================== -->
 
-    <menuitem
+    <delete
+        model="ir.ui.menu"
         id="menu_ksg_sales_rab"
-        name="RAB"
-        parent="menu_ksg_sales_root"
-        action="action_ksg_sales_rab"
-        sequence="30"
     />
 
-</odoo>
+    </odoo>
