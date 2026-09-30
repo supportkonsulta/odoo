@@ -1,6 +1,6 @@
 {
     'name': 'Presenly SaaS',
-    'version': '19.0.2.2.0',
+    'version': '19.0.2.7.0',
     'category': 'Productivity',
     'summary': 'Langganan Presenly SaaS untuk instalasi Odoo ini',
     'description': """

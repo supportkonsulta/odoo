@@ -306,6 +306,7 @@ msgstr "Presenly Pegawai (cermin)"
 
 #. module: presenly_saas_hr
 #: model:ir.model.fields,field_description:presenly_saas_hr.field_hr_employee__presenly_nopeg
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_res_users__presenly_nopeg
 msgid "Presenly Nopeg"
 msgstr "Nopeg Presenly"
 
@@ -840,12 +841,16 @@ msgid ""
 "Which branch this employee works for, from their primary placement. Kept as "
 "a field of its own instead of making the employee belong to the client "
 "company, so the employee list stays in one company and remains visible "
-"without the multi-company selector. Empty until a placement names one."
+"without the multi-company selector. Empty until a placement names one. Not "
+"shown on the employee form: the Branches list is the one to read, because "
+"this value is only part of it."
 msgstr ""
 "Cabang tempat pegawai ini bekerja, dari penempatan utamanya. Disimpan "
 "sebagai kolom sendiri alih-alih menjadikan pegawai milik perusahaan klien, "
 "supaya daftar pegawai tetap di satu perusahaan dan tetap terlihat tanpa "
-"pemilih multi-company. Kosong sampai ada penempatan yang menyebutkannya."
+"pemilih multi-company. Kosong sampai ada penempatan yang menyebutkannya. "
+"Tidak ditampilkan di form pegawai: yang dibaca adalah daftar Cabang, karena "
+"nilai ini hanya sebagian darinya."
 
 #. module: presenly_saas_hr
 #: code:addons/presenly_saas_hr/models/presenly_saas_placement.py:0
@@ -892,3 +897,37 @@ msgstr ""
 #: model_terms:ir.ui.view,arch_db:presenly_saas_hr.view_presenly_saas_employee_list
 msgid "Integration Company"
 msgstr "Perusahaan Integrasi"
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_presenly_saas_leave__hr_work_location_id
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_presenly_saas_overtime__hr_work_location_id
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_presenly_saas_medical_certificate__hr_work_location_id
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_presenly_saas_attendance_correction__hr_work_location_id
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_presenly_saas_shift_swap__hr_work_location_id
+msgid "Odoo Work Location"
+msgstr "Lokasi Kerja Odoo"
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_presenly_saas_employee_slot__schedule_id
+msgid "Weekly Schedule"
+msgstr "Jadwal Mingguan"
+
+#. module: presenly_saas_hr
+#: model:ir.model.fields,field_description:presenly_saas_hr.field_presenly_saas_leave__presenly_decide_hint
+msgid "Decision Note"
+msgstr "Catatan Keputusan"
+
+#. module: presenly_saas_hr
+#: code:addons/presenly_saas_hr/models/presenly_saas_approval_hr.py:0
+msgid "Decision on this request"
+msgstr "Keputusan atas pengajuan ini"
+
+#. module: presenly_saas_hr
+#: code:addons/presenly_saas_hr/models/presenly_saas_approval_hr.py:0
+msgid "Decision sent"
+msgstr "Keputusan terkirim"
+
+#. module: presenly_saas_hr
+#: code:addons/presenly_saas_hr/static/src/submission_notice/submission_notice.js:0
+msgid "Request updated in Presenly"
+msgstr "Pengajuan berubah di Presenly"

@@ -69,6 +69,45 @@ class TestPresenlyAclCoverage(TransactionCase):
         ])
         self.assertTrue(boleh, 'wizard tidak punya hak akses')
 
+    def test_cermin_presensi_terpagar_perusahaan(self):
+        """Cermin presensi tidak boleh membiarkan perusahaan lain terlihat.
+
+        Model ini dulu tidak punya aturan sama sekali, dan Odoo tidak menambahkan
+        saringan perusahaan sendiri: `company_ids` hanya variabel yang bisa
+        dipakai di domain. Akibatnya baris dari semua perusahaan terlihat oleh
+        pengguna internal mana pun yang membuka daftarnya.
+
+        Yang diperiksa di sini pagarnya, bukan siapa pemegangnya: modul HR
+        memindahkan grupnya ke Approver dan menambahkan aturan "milik sendiri",
+        jadi aturan ini memang berpindah tangan di pemasangan yang memakai HR.
+        """
+        model = self.env['ir.model'].search(
+            [('model', '=', 'presenly.saas.attendance.log')], limit=1,
+        )
+        aturan = self.env['ir.rule'].search([('model_id', '=', model.id)])
+        pagar = aturan.filtered(
+            lambda satu: 'company_id' in (satu.domain_force or '')
+            and 'company_ids' in (satu.domain_force or '')
+        )
+        self.assertTrue(pagar, 'tidak ada pagar perusahaan pada cermin presensi')
+
+        pemegang = self.env.ref('base.group_user')
+        approver = self.env.ref(
+            'presenly_saas_hr.group_presenly_saas_approver', raise_if_not_found=False,
+        )
+        if approver:
+            pemegang |= approver
+        self.assertTrue(
+            pagar.mapped('groups') & pemegang,
+            'pagar perusahaan tidak dipegang grup mana pun',
+        )
+
+        manajer = self.env.ref('presenly_saas.group_presenly_saas_manager')
+        self.assertIn(
+            manajer, pagar.mapped('groups'),
+            'pengelola harus melihat perusahaannya, bukan hanya miliknya',
+        )
+
     def test_menyerahkan_hak_tulis_hanya_ke_manajer(self):
         # Cermin hanya boleh diubah oleh sinkronisasi, dan sinkronisasi berjalan
         # sebagai superuser. Pengguna biasa tidak perlu hak tulis.

@@ -43,13 +43,14 @@
                     </group>
                     <group>
                         <group string="Branch">
+                            <!-- Hanya daftarnya yang ditampilkan. Kolom tunggal
+                                 (`presenly_client_name`) sengaja TIDAK ada di
+                                 sini: isinya bagian dari daftar ini, dan kalau
+                                 keduanya tampil, yang terbaca adalah cabang yang
+                                 belum tentu lengkap — persis kebingungan yang
+                                 pernah terjadi. Datanya tetap disimpan dan tetap
+                                 terpakai sinkronisasi; ia hanya tidak ditampilkan. -->
                             <field name="presenly_client_ids" widget="many2many_tags"/>
-                            <!-- Kolom tunggal ini hanya tampil bila daftar di atas
-                                 kosong: daftarnya berasal dari penempatan,
-                                 sedangkan kolom ini dari data pegawai. Dua kolom
-                                 cabang yang tampil bersamaan hanya membingungkan. -->
-                            <field name="presenly_client_name"
-                                   invisible="presenly_client_ids"/>
                             <!-- Hanya muncul kalau orang ini memang punya
                                  baris pegawai di perusahaan lain, jadi tidak
                                  ada baris kosong yang harus dibaca. -->

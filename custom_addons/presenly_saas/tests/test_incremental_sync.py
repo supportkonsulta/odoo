@@ -84,7 +84,7 @@ class SyncTestBase(TransactionCase):
         `TestPresenlyRefreshOnOpen`, dan itu memang menulis permanen ke database
         uji; karena itu hanya satu tes yang menempuhnya.
         """
-        return self.config._refresh_requests_now(self.company.id)
+        return self.config._refresh_requests_now(self.config.id)
 
 
 @tagged('post_install', '-at_install')

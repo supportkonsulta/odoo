@@ -24,19 +24,17 @@
     </record>
 
     <!--
-        Menu induk dibuka untuk Approver, kalau tidak anaknya tidak akan muncul:
-        anak tidak tampil bila induknya tidak terlihat. Akibatnya anak-anak lain
-        yang **tidak** punya penjagaan sendiri ikut terbuka — Subscription,
-        Timesheet, dan Sync Log — jadi ketiganya dikunci ke Manager di sini.
+        Menu induk dibuka untuk **semua pengguna internal**, bukan hanya Approver:
+        pegawai perlu jalan ke presensi dan pengajuannya sendiri, dan yang
+        membatasi isinya adalah aturan akses per baris.
 
-        Anak yang lebih dalam (Attendance Data, Monitoring, isi Reference)
-        tidak perlu dikunci: induknya sudah Manager, dan menu tanpa induk yang
-        terlihat tidak akan muncul di pohon menu.
+        Karena itu anak yang tidak untuk mereka dikunci sendiri, bukan
+        mengandalkan induknya: menu yang induknya tersaring grup tetap muncul
+        sebagai butir lepas. Subscription, Timesheet, dan Sync Log dikunci ke
+        Manager; Monitoring dan isi Reference sudah dikunci di modulnya.
     -->
     <record id="presenly_saas.menu_presenly_saas_root" model="ir.ui.menu">
-        <field name="group_ids"
-               eval="[(6, 0, [ref('presenly_saas.group_presenly_saas_manager'),
-                              ref('group_presenly_saas_approver')])]"/>
+        <field name="group_ids" eval="[(6, 0, [ref('base.group_user')])]"/>
     </record>
 
     <record id="presenly_saas.menu_presenly_saas_subscription" model="ir.ui.menu">
@@ -60,9 +58,7 @@
         terlihat oleh approver — memang itu yang dibutuhkan.
     -->
     <record id="presenly_saas.menu_presenly_saas_submission" model="ir.ui.menu">
-        <field name="group_ids"
-               eval="[(6, 0, [ref('presenly_saas.group_presenly_saas_manager'),
-                              ref('group_presenly_saas_approver')])]"/>
+        <field name="group_ids" eval="[(6, 0, [ref('base.group_user')])]"/>
     </record>
 
     <!--
@@ -78,9 +74,13 @@
         Ini ditemukan dari percobaan pada akun nyata, bukan dari membaca kode:
         `Monitoring` sempat muncul terlihat walaupun induknya Manager-only.
     -->
+    <!--
+        Daftar presensi dibuka untuk pengguna internal; aturan akses yang membuat
+        pengguna biasa hanya melihat barisnya sendiri. Monitoring tetap Manager
+        karena isinya lintas pegawai.
+    -->
     <record id="presenly_saas.menu_presenly_saas_attendance_log" model="ir.ui.menu">
-        <field name="group_ids"
-               eval="[(6, 0, [ref('presenly_saas.group_presenly_saas_manager')])]"/>
+        <field name="group_ids" eval="[(6, 0, [ref('base.group_user')])]"/>
     </record>
     <record id="presenly_saas.menu_presenly_saas_monitoring" model="ir.ui.menu">
         <field name="group_ids"
@@ -114,9 +114,7 @@
          sendiri: berkas keamanan dimuat lebih dulu, sebelum menu itu ada. -->
 
     <record id="presenly_saas.menu_presenly_saas_submission" model="ir.ui.menu">
-        <field name="group_ids"
-               eval="[(6, 0, [ref('presenly_saas.group_presenly_saas_manager'),
-                              ref('group_presenly_saas_approver')])]"/>
+        <field name="group_ids" eval="[(6, 0, [ref('base.group_user')])]"/>
     </record>
 
 </odoo>

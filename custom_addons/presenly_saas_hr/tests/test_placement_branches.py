@@ -25,6 +25,9 @@ class TestPresenlyPlacementBranches(TransactionCase):
 
     def setUp(self):
         super().setUp()
+        # Setelannya harus menyala: penempatan hanya diterapkan atas pilihan
+        # pemilik, jadi tesnya menyalakannya lebih dulu.
+        self.config.sync_employee_placements = True
         self.cabang_a = self.env['res.company'].create({
             'name': 'Cabang A', 'presenly_client_id': 9001,
         })
@@ -259,6 +262,96 @@ class TestPresenlyPlacementBranches(TransactionCase):
                 ('endpoint', '=', 'access.companies'),
             ]),
             'pemberiannya juga tercatat',
+        )
+
+    # ------------------------------------------------------------------
+    # Klien baru muncul: akibatnya harus ikut seketika
+    # ------------------------------------------------------------------
+    def _klien_dan_penempatan(self, klien_rows, penempatan_rows):
+        """Server palsu yang menjawab dua resource sekaligus."""
+        def resource(nama, params=None):
+            isi = {
+                'internal-companies': klien_rows,
+                'placements': penempatan_rows,
+            }.get(nama, [])
+            return {'data': isi, 'meta': {'total': len(isi), 'total_pages': 1}}
+
+        client = mock.Mock()
+        client.get_resource.side_effect = resource
+        return client
+
+    def _penempatan_klien_tanpa_perusahaan(self, nopeg, klien_id, nama, external_id=41):
+        return {
+            'id': external_id,
+            'employee': {'id': external_id, 'nopeg': nopeg, 'name': 'Pegawai Uji'},
+            'internal_company': {'id': klien_id, 'name': nama},
+            'status': 'active', 'is_primary': True, 'valid_from': '2026-01-01',
+        }
+
+    def test_klien_baru_langsung_menempel_ke_penempatannya(self):
+        """Perusahaan dibuat, daftar cabang dan aksesnya ikut saat itu juga.
+
+        Sebelum ini, perusahaan cabangnya muncul seketika dari peristiwa klien,
+        tetapi penempatan yang menunjuknya baru diterapkan pada tarikan pegawai
+        berikutnya, yaitu sehari kemudian.
+        """
+        hr = self._pegawai('uji-klien-menyusul')
+        client = self._klien_dan_penempatan(
+            [{'id': 9100, 'name': 'Cabang Menyusul'}],
+            [self._penempatan_klien_tanpa_perusahaan(
+                'uji-klien-menyusul', 9100, 'Cabang Menyusul')],
+        )
+
+        with mock.patch.object(type(self.config), '_client', lambda self: client):
+            ringkas, error = self.config._pull_clients()
+
+        self.assertFalse(error)
+        self.assertEqual(ringkas['created'], 1, 'perusahaannya dibuat')
+        self.assertIn('placements', ringkas, 'penempatannya ikut diterapkan')
+        perusahaan = self.env['res.company'].sudo().search(
+            [('presenly_client_id', '=', 9100)], limit=1)
+        self.assertEqual(hr.presenly_client_ids, perusahaan)
+        self.assertIn(perusahaan, self.pengguna.company_ids, 'aksesnya ikut seketika')
+
+    def test_setelan_penempatan_mati_tidak_ikut_menarik(self):
+        """Tanpa setelannya, klien saja yang ditarik.
+
+        Menarik penempatan yang tidak diminta akan mengubah `hr.employee` padahal
+        pemiliknya memilih untuk tidak menyentuhnya.
+        """
+        self._pegawai('uji-setelan-mati')
+        self.config.sync_employee_placements = False
+        client = self._klien_dan_penempatan(
+            [{'id': 9200, 'name': 'Cabang Lain'}], [],
+        )
+
+        with mock.patch.object(type(self.config), '_client', lambda self: client):
+            ringkas, error = self.config._pull_clients()
+
+        self.assertFalse(error)
+        self.assertNotIn('placements', ringkas)
+
+    def test_form_pegawai_hanya_menampilkan_daftar_cabang(self):
+        """Kolom tunggal cabang tidak lagi ditampilkan di form pegawai.
+
+        Dua kolom cabang yang tampil bersamaan pernah membuat pembaca mengira
+        cabangnya hanya satu, padahal daftarnya belum ditarik. Datanya tetap
+        disimpan; yang dijaga di sini hanya tampilannya.
+
+        Diperiksa dengan mengurai arch, bukan dengan mencari teks: arch-nya
+        memuat komentar, dan komentar memang menyebut nama kolom itu.
+        """
+        from lxml import etree
+        arch = etree.fromstring(
+            self.env.ref('presenly_saas_hr.view_employee_form_presenly').arch
+        )
+        self.assertFalse(
+            arch.xpath("//field[@name='presenly_client_name']"),
+            'kolom tunggal cabang tidak boleh tampil di form pegawai',
+        )
+        self.assertTrue(
+            arch.xpath("//field[@name='presenly_client_ids']"),
+            'daftar cabangnya yang ditampilkan',
         )
 
     def test_pegawai_tanpa_akun_tidak_diganggu(self):

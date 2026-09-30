@@ -151,13 +151,13 @@ action = config.action_unregister_webhook()
                     </group>
                     <group>
                         <group string="Branches">
-                            <!-- Yang berlaku: dari penempatan pegawai tertaut. -->
+                            <!-- Yang berlaku: dari penempatan pegawai tertaut.
+                                 Kolom tunggal dari payload sengaja tidak
+                                 ditampilkan di sini, supaya tidak ada dua kolom
+                                 cabang yang bersaing. Isinya tetap tersimpan dan
+                                 tetap bisa dibuka sebagai kolom opsional di
+                                 daftarnya. -->
                             <field name="branch_ids" widget="many2many_tags"/>
-                            <!-- Kolom tunggal dari payload pegawai. Sering kosong,
-                                 karena klien memang datang dari penempatan; hanya
-                                 tampil bila daftar di atas belum terisi. -->
-                            <field name="internal_company_name"
-                                   invisible="branch_ids"/>
                         </group>
                         <group string="Manager">
                             <field name="manager_name" string="Manager"/>

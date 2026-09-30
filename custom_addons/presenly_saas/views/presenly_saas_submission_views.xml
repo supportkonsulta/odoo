@@ -15,12 +15,15 @@
                 <field name="start_date"/>
                 <field name="end_date"/>
                 <field name="total_days" sum="Total days"/>
-                <field name="location_name" optional="hide"/>
                 <field name="status" widget="badge" decoration-success="status == 'approved'"
                        decoration-warning="status == 'pending'"
                        decoration-danger="status == 'rejected'"/>
                 <field name="approver_name" optional="hide"/>
                 <field name="approval_waiting_for" optional="hide"/>
+                <field name="location_name" optional="show"/>
+                <field name="tenant_client_name" optional="show"/>
+                <field name="tenant_location_id" optional="hide"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
             </list>
         </field>
     </record>
@@ -30,6 +33,9 @@
         <field name="model">presenly.saas.leave</field>
         <field name="arch" type="xml">
             <search>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="tenant_client_name"/>
+                <field name="location_name"/>
                 <field name="reference_number"/>
                 <field name="employee_name"/>
                 <field name="employee_nopeg"/>
@@ -56,7 +62,11 @@
                             context="{'group_by': 'approval_current_level'}"/>
                     <filter name="group_month"
                             context="{'group_by': 'leave_date:month'}"/>
-                </group>
+                                    <filter name="group_internal_company" string="Internal Company"
+                            context="{'group_by': 'tenant_client_name'}"/>
+                    <filter name="group_location" string="Location"
+                            context="{'group_by': 'location_name'}"/>
+</group>
             </search>
         </field>
     </record>
@@ -183,12 +193,21 @@
                 <field name="day_type"/>
                 <field name="overtime_pay" sum="Total pay"/>
                 <field name="within_radius" optional="hide"/>
-                <field name="location_name" optional="hide"/>
+                <field name="location_name" optional="show"/>
+                <!-- Cabang tempat lembur itu terjadi, diturunkan dari lokasinya.
+                     Ditampilkan seperti di daftar presensi, supaya kedua daftar
+                     menjawab pertanyaan yang sama dengan cara yang sama. -->
+                <field name="tenant_client_name" optional="show"/>
+                <field name="tenant_location_id" optional="hide"/>
                 <field name="status" widget="badge" decoration-success="status == 'approved'"
                        decoration-warning="status == 'pending'"
                        decoration-danger="status == 'rejected'"/>
                 <field name="approver_name" optional="hide"/>
                 <field name="approval_waiting_for" optional="hide"/>
+                <!-- Perusahaan yang memiliki baris cermin ini. Tersembunyi secara
+                     bawaan karena biasanya hanya satu, dan hanya muncul untuk
+                     pengguna multi-company. -->
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
             </list>
         </field>
     </record>
@@ -200,6 +219,11 @@
             <search>
                 <field name="employee_name"/>
                 <field name="employee_nopeg"/>
+                <!-- Penyaring perusahaan: hanya berguna bagi pengguna yang boleh
+                     bekerja di lebih dari satu perusahaan. -->
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="tenant_client_name"/>
+                <field name="location_name"/>
                 <filter name="pending" string="Pending" domain="[('status', '=', 'pending')]"/>
                 <filter name="approved" string="Approved" domain="[('status', '=', 'approved')]"/>
                 <filter name="rejected" string="Rejected" domain="[('status', '=', 'rejected')]"/>
@@ -220,6 +244,10 @@
                             context="{'group_by': 'approval_flow_status'}"/>
                     <filter name="group_approval_level" string="Awaiting Level"
                             context="{'group_by': 'approval_current_level'}"/>
+                    <filter name="group_internal_company" string="Internal Company"
+                            context="{'group_by': 'tenant_client_name'}"/>
+                    <filter name="group_location" string="Location"
+                            context="{'group_by': 'location_name'}"/>
                     <filter name="group_month"
                             context="{'group_by': 'overtime_date:month'}"/>
                 </group>
@@ -254,8 +282,11 @@
                 <field name="end_date"/>
                 <field name="status" widget="badge"/>
                 <field name="approver_name" optional="hide"/>
-                <field name="location_name" optional="hide"/>
                 <field name="approval_waiting_for" optional="hide"/>
+                <field name="location_name" optional="show"/>
+                <field name="tenant_client_name" optional="show"/>
+                <field name="tenant_location_id" optional="hide"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
             </list>
         </field>
     </record>
@@ -265,6 +296,9 @@
         <field name="model">presenly.saas.medical.certificate</field>
         <field name="arch" type="xml">
             <search>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="tenant_client_name"/>
+                <field name="location_name"/>
                 <field name="dc_number"/>
                 <field name="employee_name"/>
                 <field name="employee_nopeg"/>
@@ -284,7 +318,11 @@
                             context="{'group_by': 'approval_current_level'}"/>
                     <filter name="group_month"
                             context="{'group_by': 'certificate_date:month'}"/>
-                </group>
+                                    <filter name="group_internal_company" string="Internal Company"
+                            context="{'group_by': 'tenant_client_name'}"/>
+                    <filter name="group_location" string="Location"
+                            context="{'group_by': 'location_name'}"/>
+</group>
             </search>
         </field>
     </record>
@@ -319,6 +357,9 @@
                 <field name="tl_approver_name" optional="hide"/>
                 <field name="manager_approver_name" optional="hide"/>
                 <field name="approval_waiting_for" optional="hide"/>
+                <field name="tenant_client_name" optional="show"/>
+                <field name="tenant_location_id" optional="hide"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
             </list>
         </field>
     </record>
@@ -328,6 +369,8 @@
         <field name="model">presenly.saas.attendance.correction</field>
         <field name="arch" type="xml">
             <search>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="tenant_client_name"/>
                 <field name="employee_name"/>
                 <field name="employee_nopeg"/>
                 <filter name="pending" string="Pending" domain="[('status', '=', 'pending')]"/>
@@ -350,7 +393,9 @@
                             context="{'group_by': 'approval_current_level'}"/>
                     <filter name="group_month"
                             context="{'group_by': 'date:month'}"/>
-                </group>
+                                    <filter name="group_internal_company" string="Internal Company"
+                            context="{'group_by': 'tenant_client_name'}"/>
+</group>
             </search>
         </field>
     </record>
@@ -382,6 +427,9 @@
                        decoration-danger="status == 'rejected'"/>
                 <field name="approver_name" optional="hide"/>
                 <field name="approval_waiting_for" optional="hide"/>
+                <field name="tenant_client_name" optional="show"/>
+                <field name="tenant_location_id" optional="hide"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
             </list>
         </field>
     </record>
@@ -391,6 +439,8 @@
         <field name="model">presenly.saas.shift.swap</field>
         <field name="arch" type="xml">
             <search>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="tenant_client_name"/>
                 <field name="requester_name"/>
                 <field name="requester_nopeg"/>
                 <field name="target_name"/>
@@ -416,7 +466,9 @@
                             context="{'group_by': 'approval_current_level'}"/>
                     <filter name="group_month"
                             context="{'group_by': 'requester_date:month'}"/>
-                </group>
+                                    <filter name="group_internal_company" string="Internal Company"
+                            context="{'group_by': 'tenant_client_name'}"/>
+</group>
             </search>
         </field>
     </record>

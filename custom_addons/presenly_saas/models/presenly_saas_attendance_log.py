@@ -45,8 +45,16 @@ class PresenlySaasAttendanceLog(models.Model):
     user_id = fields.Integer(
         aggregator=False,string='Employee ID (SaaS)')
     employee_name = fields.Char(string='Employee')
-    employee_nopeg = fields.Char(string='Nopeg')
-    project_name = fields.Char(string='Project')
+    # Indeks karena aturan akses "milik sendiri" menyaring dengan kolom ini.
+    employee_nopeg = fields.Char(string='Nopeg', index=True)
+    # Proyek diambil dari objeknya di payload, jadi kodenya ikut tersimpan.
+    # `project_label` yang ditampilkan, supaya bentuknya satu kolom.
+    project_code = fields.Char(string='Project Code')
+    project_name = fields.Char(string='Project Name')
+    project_label = fields.Char(
+        string='Project', compute='_compute_project_label', store=False,
+        help='Project code and name, as one column.',
+    )
 
     location_id = fields.Integer(
         aggregator=False,string='Location ID (SaaS)')
@@ -404,6 +412,16 @@ class PresenlySaasAttendanceLog(models.Model):
         for log in self:
             log.display_name = '%s - %s' % (log.employee_name or '?', log.work_date or '?')
 
+    @api.depends('project_code', 'project_name')
+    def _compute_project_label(self):
+        for log in self:
+            kode = (log.project_code or '').strip()
+            nama = (log.project_name or '').strip()
+            if kode and nama:
+                log.project_label = '[%s] %s' % (kode, nama)
+            else:
+                log.project_label = nama or kode or False
+
     # ------------------------------------------------------------------
     # Penarikan
     # ------------------------------------------------------------------
@@ -414,6 +432,16 @@ class PresenlySaasAttendanceLog(models.Model):
             return None
 
         employee = row.get('employee') if isinstance(row.get('employee'), dict) else {}
+        # Proyek datang sebagai objek, dan dulu objek itu diserahkan apa adanya ke
+        # kolom Char - di layar hasilnya repr JSON. Sekarang yang diambil hanya
+        # kode dan namanya.
+        project = employee.get('project') if isinstance(employee.get('project'), dict) else {}
+        if employee.get('project') and not project:
+            _logger.info(
+                'Presenly SaaS: proyek pada sesi %s tidak berbentuk objek (%s), '
+                'kolomnya dibiarkan kosong.',
+                row.get('id'), type(employee.get('project')).__name__,
+            )
         location = row.get('location') if isinstance(row.get('location'), dict) else {}
         shift = row.get('shift') if isinstance(row.get('shift'), dict) else {}
         in_mode = row.get('checkInMode') if isinstance(row.get('checkInMode'), dict) else {}
@@ -432,7 +460,11 @@ class PresenlySaasAttendanceLog(models.Model):
             'user_id': int(row.get('user_id') or 0),
             'employee_name': employee.get('name') or False,
             'employee_nopeg': employee.get('nopeg') or False,
-            'project_name': employee.get('project') or False,
+            'project_code': project.get('project_code') or False,
+            # Resource lokasi memakai `name`, resource pegawai memakai
+            # `project_name`; keduanya diterima supaya bentuk payload boleh
+            # berbeda tanpa menghasilkan kolom kosong.
+            'project_name': project.get('project_name') or project.get('name') or False,
             'location_id': int(row.get('location_id') or 0),
             'location_name': location.get('name') or False,
             'tenant_client_name': tenant_client.get('name') or False,
@@ -504,3 +536,39 @@ class PresenlySaasAttendanceLog(models.Model):
                 Log.create(values)
             written += 1
         return written
+
+    @api.model
+    def _repair_project_columns(self, company=None):
+        """Betulkan kolom proyek yang terisi repr payload.
+
+        Dipakai migrasi `19.0.2.5.0`. Yang dicari hanya baris yang kolomnya masih
+        berbentuk repr (diawali `{`), jadi nama proyek yang sudah disunting orang
+        tidak pernah tersentuh, dan tarikan berikutnya tetap bisa memperbarui
+        barisnya lewat `_upsert_rows`.
+
+        Baris rusak yang payload-nya tidak memuat proyek **dikosongkan**, bukan
+        dibiarkan: repr di layar lebih buruk daripada kolom kosong, dan jumlahnya
+        perlu dipisah supaya bisa dibedakan dari yang benar-benar terisi.
+
+        Mengembalikan `(diperbaiki, dikosongkan)`.
+        """
+        domain = [('project_name', '=like', '{%')]
+        if company:
+            domain = [('company_id', '=', company.id)] + domain
+
+        diperbaiki = 0
+        dikosongkan = 0
+        for log in self.sudo().search(domain):
+            payload = log.raw_payload if isinstance(log.raw_payload, dict) else {}
+            employee = payload.get('employee') if isinstance(payload.get('employee'), dict) else {}
+            project = employee.get('project') if isinstance(employee.get('project'), dict) else {}
+            nilai = {
+                'project_code': project.get('project_code') or False,
+                'project_name': project.get('project_name') or project.get('name') or False,
+            }
+            log.write(nilai)
+            if nilai['project_code'] or nilai['project_name']:
+                diperbaiki += 1
+            else:
+                dikosongkan += 1
+        return diperbaiki, dikosongkan

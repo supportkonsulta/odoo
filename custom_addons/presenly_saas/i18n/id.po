@@ -1477,13 +1477,17 @@ msgstr "Profil"
 
 #. module: presenly_saas
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__project_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__project_name
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__project_label
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_recap__project_name
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_work_location__project_name
+#: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_attendance_log_search
 #: model_terms:ir.ui.view,arch_db:presenly_saas.view_presenly_saas_timesheet_search
 msgid "Project"
 msgstr "Proyek"
 
 #. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_log__project_code
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_project__project_code
 #: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_timesheet__project_code
 msgid "Project Code"
@@ -3832,3 +3836,56 @@ msgstr "Kosongkan untuk memakai kunci yang sekarang."
 #: model_terms:ir.ui.view,arch_db:presenly_saas.blocked_page
 msgid "Paste the key from the Presenly integration page."
 msgstr "Tempel kunci dari halaman integrasi Presenly."
+
+#. module: presenly_saas
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_attendance_correction__tenant_client_id
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_leave__tenant_client_id
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_medical_certificate__tenant_client_id
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_overtime__tenant_client_id
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_shift_swap__tenant_client_id
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_submission_mixin__tenant_client_id
+msgid ""
+"Branch this request happened at, as an id on the Presenly side. Derived from"
+" the work location, because the request itself does not carry a client."
+msgstr ""
+"Cabang tempat pengajuan ini terjadi, sebagai id di sisi Presenly. Diturunkan"
+" dari lokasi kerja, karena pengajuannya sendiri tidak membawa klien."
+
+#. module: presenly_saas
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_attendance_correction__tenant_client_name
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_leave__tenant_client_name
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_medical_certificate__tenant_client_name
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_overtime__tenant_client_name
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_shift_swap__tenant_client_name
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_submission_mixin__tenant_client_name
+msgid ""
+"Branch this request happened at. Filled once, from the work location, and "
+"kept as it was at that time: a request is a record of the past, so re-"
+"deriving it later would rewrite history."
+msgstr ""
+"Cabang tempat pengajuan ini terjadi. Diisi sekali, dari lokasi kerja, lalu "
+"dipertahankan seperti saat itu: pengajuan adalah catatan masa lalu, jadi "
+"menurunkannya ulang akan menulis kembali sejarahnya."
+
+#. module: presenly_saas
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_attendance_correction__location_id
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_leave__location_id
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_medical_certificate__location_id
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_overtime__location_id
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_shift_swap__location_id
+#: model:ir.model.fields,help:presenly_saas.field_presenly_saas_submission_mixin__location_id
+msgid ""
+"Work location id on the Presenly side. Kept because the branch is derived "
+"from it, and because matching by id survives a rename."
+msgstr ""
+"Id lokasi kerja di sisi Presenly. Disimpan karena cabangnya diturunkan "
+"darinya, dan karena pencocokan lewat id tetap utuh walau namanya diubah."
+
+#. module: presenly_saas
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_leave__tenant_location_id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_overtime__tenant_location_id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_medical_certificate__tenant_location_id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_attendance_correction__tenant_location_id
+#: model:ir.model.fields,field_description:presenly_saas.field_presenly_saas_shift_swap__tenant_location_id
+msgid "Work Location (mirror)"
+msgstr "Lokasi Kerja (cermin)"

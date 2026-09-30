@@ -301,6 +301,28 @@ daftar dibuka lagi 1 menit kemudian: tidak ada panggilan baru (penjagaan waktu)
 
 ---
 
+## 4d. Cabang pengajuan dan pemisahan per perusahaan (19.0.2.3.0) — **selesai**
+
+Dikerjakan dengan fokus lembur lebih dulu, karena lembur yang dipakai payroll.
+
+| Bagian | Hasil |
+|---|---|
+| Kolom cabang | `location_id`, `tenant_client_id`, `tenant_client_name` di mixin pengajuan, jadi kelima jenis memakainya |
+| Penurunan | Dari cermin lokasi kerja lewat `location_id`, satu pencarian per tarikan |
+| Isi lama | Migrasi `19.0.2.3.0` mengisi dari `raw_payload`; pada basis data uji, 10 baris terisi dan semuanya mendapat cabangnya |
+| Pemisahan perusahaan dan cabang | Tiga `ir.rule` per model: cabang (`tenant_client_company_id in company_ids`), pengelola, dan HR (keduanya `company_id in company_ids` sebagai pagar tenant). Aturan HR ada di `presenly_saas_hr` supaya `presenly_saas` tetap bisa dipasang tanpa HR |
+| Perusahaan cabang di baris | `tenant_client_company_id`, dipakai aturan isolasi dan disiapkan untuk payroll |
+| Tampilan lembur | Kolom cabang dan lokasi, kolom perusahaan untuk pengguna multi-company, serta penyaring grup per cabang dan per lokasi |
+
+Keputusan pemilik yang dijalankan: lintas cabang hanya untuk HR di perusahaan
+pusat; payroll memakai perusahaan cabang. Baris cermin berada di perusahaan pusat,
+dan itu yang membuat aturan perusahaan biasa tidak cukup: pengguna cabang akan
+kehilangan barisnya sendiri. Karena itu yang dibandingkan adalah perusahaan
+cabangnya, dan pagar tenant-nya tetap `company_ids`.
+
+Yang belum: sisi payroll-nya. Lihat catatan di README §4d dan pertanyaan yang
+masih terbuka soal pemilihan pegawai per cabang.
+
 ## 5. Yang perlu Anda putuskan
 
 1. **Menunggu (~1 detik) atau menitipkan ke cron?** Usulan: menunggu, dengan

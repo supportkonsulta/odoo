@@ -32,6 +32,11 @@ SUBMISSION_STATUSES = [
     ('rejected', 'Rejected'),
 ]
 
+# Sampai jumlah ini, pembacaan dianggap "membuka satu formulir" dan cerminnya
+# disegarkan lebih dulu. Membaca banyak baris sekaligus bukan membuka formulir,
+# dan penyegaran di situ hanya menambah permintaan tanpa ada yang melihatnya.
+_FORM_REFRESH_MAX_RECORDS = 10
+
 # Kosakata Presenly yang berbeda dari kosakata di atas, dipetakan ke sini.
 #
 # `t` adalah "tunggu", bukan "tidak": pengajuan lembur dibuat dengan
@@ -283,6 +288,70 @@ class PresenlySaasSubmissionMixin(models.AbstractModel):
 
     _name = 'presenly.saas.submission.mixin'
     _description = 'Presenly SaaS Submission Mixin'
+
+    @api.readonly
+    def web_read(self, specification):
+        """Segarkan cermin sebelum formulirnya dibaca.
+
+        Daftar sudah disegarkan oleh `web_search_read` di mixin cermin, tetapi
+        formulir membacanya lewat jalur lain - termasuk saat barisnya diklik dari
+        daftar. Tanpa ini, satu pengajuan bisa ditampilkan dengan status dan level
+        yang sudah lewat: keputusan yang diambil orang lain di aplikasi tidak
+        terlihat sampai halamannya dimuat ulang sendiri.
+
+        Hanya pembacaan sedikit record yang memicunya. `web_read` juga dipakai
+        membaca banyak baris sekaligus, dan penyegaran di situ tidak ada gunanya.
+
+        Penyegarannya sendiri tetap murah: perubahan yang diperiksa lebih dulu,
+        dan penarikan hanya terjadi kalau ada yang berubah.
+
+        **Bukan `@api.model`, dan itu bukan pilihan gaya.** `call_kw` memisahkan
+        argumen pertama sebagai daftar id hanya untuk metode yang bukan
+        `@api.model`. Dengan dekorasi itu, daftar id ikut masuk sebagai argumen
+        dan pemanggilan dari klien web gagal dengan "got multiple values for
+        argument 'specification'" - sedangkan pemanggilan langsung dari uji
+        tetap lolos, karena `self` sudah berupa recordset di sana.
+        """
+        if len(self) <= _FORM_REFRESH_MAX_RECORDS:
+            self.env['presenly.saas.config']._refresh_from_page(
+                getattr(self, '_mirror_resource', None),
+            )
+        return super().web_read(specification)
+
+    # ------------------------------------------------------------------
+    # Cabang tempat pengajuan terjadi
+    # ------------------------------------------------------------------
+    # Payload pengajuan tidak membawa kliennya, hanya lokasi kerjanya. Karena itu
+    # cabangnya **diturunkan**: satu lokasi menempel pada satu klien, jadi satu
+    # lokasi tidak pernah milik dua klien. Penurunannya memakai id lokasi, bukan
+    # namanya, supaya penggantian nama tidak memutus kaitannya.
+    location_id = fields.Integer(
+        string='Location ID (SaaS)', index=True, aggregator=False,
+        help='Work location id on the Presenly side. Kept because the branch is '
+             'derived from it, and because matching by id survives a rename.',
+    )
+    tenant_client_id = fields.Integer(
+        string='Internal Company ID', index=True,
+        help='Branch this request happened at, as an id on the Presenly side. '
+             'Derived from the work location, because the request itself does '
+             'not carry a client.',
+    )
+    tenant_client_company_id = fields.Many2one(
+        'res.company',
+        string='Branch Company',
+        index=True,
+        ondelete='set null',
+        help='The Odoo company of the branch this request happened at. Kept as a '
+             'company and not only as an id, so the row can be isolated and paid '
+             'per branch company by comparing companies the user is actually '
+             'allowed in.',
+    )
+    tenant_client_name = fields.Char(
+        string='Internal Company',
+        help='Branch this request happened at. Filled once, from the work '
+             'location, and kept as it was at that time: a request is a record '
+             'of the past, so re-deriving it later would rewrite history.',
+    )
 
     status = fields.Selection(
         SUBMISSION_STATUSES, string='Status', index=True, readonly=True,

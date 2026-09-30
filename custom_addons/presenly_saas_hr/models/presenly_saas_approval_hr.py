@@ -30,13 +30,19 @@ from odoo.addons.presenly_saas.services.saas_client import SaasClientError
 _logger = logging.getLogger(__name__)
 
 # Model pengajuan yang bisa diputuskan dari Odoo, beserta nama resource-nya di API.
-# Hanya yang sudah diverifikasi namanya; sisanya dibiarkan tanpa tombol sampai
-# benar-benar dipakai, daripada menebak nama resource dan gagal saat diklik.
-# Hanya yang backend-nya juga sudah melayani keputusan. Lembur sengaja belum di
-# sini: kalau tombolnya muncul padahal endpoint-nya belum ada, yang terjadi adalah
-# penolakan yang membingungkan — lebih baik tombolnya belum ada.
+#
+# Namanya persis sama dengan nama resource di tarikan, dan backend harus melayani
+# keputusan untuk semuanya sebelum tombolnya dinyalakan di sini: tombol yang muncul
+# padahal endpoint-nya belum ada menghasilkan penolakan yang membingungkan.
+# Kelimanya sudah dilayani (`POST /v1/submissions/{resource}/{id}/decision`).
+#
+# SPPD belum ada di daftar ini karena belum ikut dicerminkan modul sama sekali.
 RESOURCE_BY_MODEL = {
     'presenly.saas.leave': 'leaves',
+    'presenly.saas.overtime': 'overtimes',
+    'presenly.saas.medical.certificate': 'medical-certificates',
+    'presenly.saas.attendance.correction': 'attendance-corrections',
+    'presenly.saas.shift.swap': 'shift-swaps',
 }
 
 
@@ -64,6 +70,12 @@ class PresenlySaasSubmissionMixin(models.AbstractModel):
         compute='_compute_presenly_approver',
         help='Whether this request type can be decided from Odoo at all.',
     )
+    presenly_decide_hint = fields.Char(
+        string='Decision Note',
+        compute='_compute_presenly_approver',
+        help='Why a decision cannot be sent from here, filled only for the user '
+             'who may send it. Empty means nothing stands in the way.',
+    )
 
     # `employee_nopeg` sengaja TIDAK ada di daftar ini: hanya sebagian model
     # pengajuan yang punya kolom itu, dan Odoo menolak dependensi yang tidak ada
@@ -82,11 +94,49 @@ class PresenlySaasSubmissionMixin(models.AbstractModel):
     # yang salah.
     @api.depends_context('uid')
     def _compute_presenly_approver(self):
+        # Dua syarat yang tidak terlihat dari barisnya, tetapi menentukan apakah
+        # tombolnya berguna: keputusan harus diizinkan pada koneksinya, dan
+        # pengguna yang menekannya harus punya nopeg. Tombol yang muncul lalu
+        # ditolak lebih buruk daripada tombol yang tidak muncul dengan alasannya.
+        config = self.env['presenly.saas.config'].sudo()._config_for_company(
+            self.env.company,
+        )
+        boleh_kirim = bool(config and config.allow_approval_from_odoo)
+        nopeg = self.env.user.presenly_nopeg
+
         for pengajuan in self:
             pengguna = pengajuan._presenly_approver_user()
+            bisa_diputuskan = pengajuan._presenly_resource() in RESOURCE_BY_MODEL.values()
+            berhak = bool(pengguna) and pengguna == self.env.user
+
             pengajuan.presenly_odoo_approver_id = pengguna
-            pengajuan.presenly_can_decide = bool(pengguna) and pengguna == self.env.user
-            pengajuan.presenly_decidable = pengajuan._presenly_resource() in RESOURCE_BY_MODEL.values()
+            pengajuan.presenly_decidable = bisa_diputuskan
+            pengajuan.presenly_can_decide = (
+                berhak and bisa_diputuskan and boleh_kirim and bool(nopeg)
+            )
+            pengajuan.presenly_decide_hint = pengajuan._presenly_decide_hint(
+                berhak, bisa_diputuskan, boleh_kirim, nopeg,
+            )
+
+    def _presenly_decide_hint(self, berhak, bisa_diputuskan, boleh_kirim, nopeg):
+        """Alasan keputusan tidak bisa dikirim dari sini, untuk yang berhak.
+
+        Pengguna lain tidak perlu penjelasan kenapa tombolnya tidak ada: yang
+        dicari mereka bukan tombol itu.
+        """
+        self.ensure_one()
+        if not berhak:
+            return ''
+        if not bisa_diputuskan:
+            return _('This request type cannot be decided from Odoo yet.')
+        if not boleh_kirim:
+            return _('Deciding requests from Odoo is turned off for this connection. '
+                     'Turn on "Decide Requests from Odoo" first.')
+        if not nopeg:
+            return _('Your Odoo user has no Presenly nopeg yet, and Presenly identifies '
+                     'who decided by the nopeg. Fill in the Presenly Nopeg on your '
+                     'employee record first.')
+        return ''
 
     # ------------------------------------------------------------------
     # Pencocokan approver
@@ -153,6 +203,19 @@ class PresenlySaasSubmissionMixin(models.AbstractModel):
     def action_presenly_reject(self):
         return self._presenly_decide('reject')
 
+    def _presenly_actor_nopeg(self):
+        """Nopeg pengguna yang sedang menekan tombol keputusan.
+
+        Dibaca dari `res.users.presenly_nopeg`, **bukan** lewat
+        `user.employee_id.presenly_nopeg`. `employee_id` adalah pegawai pada
+        perusahaan yang sedang aktif (`addons/hr/models/res_users.py`),
+        sedangkan record pegawai di sini berada di perusahaan integrasi. Pegawai
+        cabang - yang perusahaan aktifnya perusahaan cabang - karena itu dicap
+        "belum tertaut nopeg" walaupun nopegnya sudah terisi, dan itulah satu-
+        satunya yang menghalanginya memutuskan pengajuan dari Odoo.
+        """
+        return self.env.user.presenly_nopeg or ''
+
     def _presenly_decide(self, decision):
         """Kirim keputusan ke Presenly, lalu segarkan keadaan barunya.
 
@@ -175,12 +238,33 @@ class PresenlySaasSubmissionMixin(models.AbstractModel):
                 '"Decide Requests from Odoo" on the Presenly connection first.'
             ))
 
-        nopeg = self.env.user.employee_id.presenly_nopeg
+        # Salinan kita bisa tertinggal: keputusan level sebelumnya bisa diambil
+        # dari aplikasi, sedangkan pemberitahuan perubahannya tidak selalu sampai
+        # ke sini. Menyegarkan lebih dulu lalu membaca ulang levelnya membuat
+        # keputusan dikirim dengan level yang benar - mengirim level yang basi
+        # hanya menghasilkan penolakan yang membingungkan.
+        config._refresh_recent_from_decision()
+        self.invalidate_recordset(
+            ['approval_current_level', 'approval_step_ids', 'status',
+             'presenly_odoo_approver_id'],
+        )
+
+        # Setelah disegarkan, mungkin tidak ada lagi yang menunggu diputuskan:
+        # level terakhirnya sudah diputuskan orang lain. Itu bukan galat, hanya
+        # keadaan yang sudah berubah - dan yang dibutuhkan pengguna adalah layar
+        # yang menampilkan keadaannya, bukan pesan untuk memuat ulang sendiri.
+        if not self.approval_current_level:
+            return self._presenly_notice(_(
+                'This request is no longer waiting for a decision. The screen has '
+                'been refreshed.'
+            ))
+
+        nopeg = self._presenly_actor_nopeg()
         if not nopeg:
             raise UserError(_(
                 'Your Odoo user is not linked to a Presenly nopeg. Ask for the nopeg '
-                'to be filled in on your employee record first — Presenly identifies '
-                'who decided by the nopeg.'
+                'to be filled in on your employee record first, because Presenly '
+                'identifies who decided by the nopeg.'
             ))
 
         if self._presenly_approver_user() != self.env.user:
@@ -196,16 +280,28 @@ class PresenlySaasSubmissionMixin(models.AbstractModel):
                 'level': self.approval_current_level,
             })
         except SaasClientError as exc:
-            # Pesan server diteruskan apa adanya: ia yang tahu kenapa ditolak,
-            # dan menyembunyikannya membuat tombol tampak tidak bekerja.
-            raise UserError(_('Presenly refused this decision: %(error)s', error=exc)) from exc
+            # Ditolak berarti salinan kita yang tertinggal, jadi disegarkan lagi
+            # lalu pesannya dikembalikan sebagai pemberitahuan - bukan galat.
+            #
+            # Perbedaan itu bukan soal gaya: pemberitahuan bisa membawa aksi muat
+            # ulang, sedangkan `UserError` tidak. Dan `UserError` juga membatalkan
+            # transaksi yang sedang berjalan, jadi penyegaran yang ditulis di
+            # transaksi ini akan ikut hilang bersama pesannya.
+            error_tarik = config._refresh_recent_from_decision()
+            catatan = ''
+            if error_tarik:
+                catatan = _(' The refresh failed too: %(error)s', error=error_tarik)
+            return self._presenly_notice(_(
+                'Presenly refused this decision: %(error)s%(catatan)s',
+                error=exc, catatan=catatan,
+            ), tipe='warning')
 
         # Jendela tarikan disegarkan supaya keadaan barunya terlihat. Bukan hanya
         # baris ini: tarikan bekerja per jendela, dan menyempitkannya untuk satu
         # baris akan menjadi jalur kedua yang harus dijaga sama.
         #
         # Kegagalannya **dilaporkan**, bukan ditelan. Kalau tarikannya gagal,
-        # layarnya akan tetap menunjukkan keadaan lama setelah dimuat ulang — dan
+        # layarnya akan tetap menunjukkan keadaan lama setelah dimuat ulang - dan
         # tanpa pesan, itu terbaca sebagai "keputusannya tidak berpengaruh".
         _ringkas, error_tarik = config._pull_recent_data()
 
@@ -218,28 +314,36 @@ class PresenlySaasSubmissionMixin(models.AbstractModel):
             catatan = _(' The refresh failed, so this screen may still show the old '
                         'state: %(error)s', error=error_tarik)
 
+        # Keputusannya terkirim, tetapi layarnya tidak bisa dipastikan benar:
+        # itu galat, bukan kabar baik.
+        return self._presenly_notice(
+            _('Decision sent to Presenly.%(catatan)s', catatan=catatan),
+            tipe='error' if error_tarik else 'alert',
+        )
+
+    def _presenly_notice(self, message, tipe='alert'):
+        """Pemberitahuan sebagai dialog bawaan Odoo, sesuai tingkatannya.
+
+        Dialog, bukan toast: pesan yang menjelaskan kenapa sebuah keputusan
+        ditolak harus bisa dibaca sampai selesai, dan toast menghilang sendiri.
+
+        Layarnya tidak dimuat ulang sendiri, melainkan lewat tombol di dialognya:
+        pengguna bisa sedang menyunting hal lain di layar yang sama, dan memuat
+        ulang tanpa izin berarti membuang isian itu.
+        """
         return {
             'type': 'ir.actions.client',
-            'tag': 'display_notification',
+            'tag': 'presenly_saas.notice',
             'params': {
-                'type': 'warning' if error_tarik else 'success',
-                'message': _('Decision sent to Presenly.%(catatan)s', catatan=catatan),
-                # Formulirnya dimuat ulang supaya status dan langkah barunya
-                # terlihat. Tanpa ini keputusannya berhasil tetapi layarnya tetap
-                # menunjukkan keadaan lama — dan itu terbaca sebagai tombol yang
-                # tidak bekerja.
-                'next': {'type': 'ir.actions.client', 'tag': 'reload'},
-            },
-        }
-
-
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'type': 'success',
-                'message': _('Decision sent to Presenly. The request has been refreshed.'),
-                'next': {'type': 'ir.actions.act_window_close'},
+                'title': _('Decision on this request') if tipe != 'alert'
+                         else _('Decision sent'),
+                'body': message,
+                # Tingkatannya dipetakan ke dialog bawaan Odoo di sisi klien:
+                # `alert`, `warning`, dan `error`.
+                'kind': tipe,
+                # Layarnya disegarkan supaya tombol yang sudah tidak berhak tidak
+                # tertinggal di layar.
+                'reload': True,
             },
         }
 

@@ -12,6 +12,8 @@
                 <field name="employee_name"/>
                 <field name="employee_nopeg" optional="show"/>
                 <field name="location_name"/>
+                <field name="project_label" optional="show"/>
+                <field name="project_code" optional="hide"/>
                 <field name="tenant_client_name" optional="show"/>
                 <field name="shift_name" optional="show"/>
                 <field name="status" widget="badge"
@@ -41,6 +43,7 @@
                 <field name="employee_name"/>
                 <field name="employee_nopeg"/>
                 <field name="location_name"/>
+                <field name="project_code"/>
                 <filter name="late" string="Late" domain="[('is_late', '=', True)]"/>
                 <filter name="on_time" string="On Time" domain="[('is_late', '=', False)]"/>
                 <filter name="overtime" string="Overtime Session" domain="[('is_overtime', '=', True)]"/>
@@ -63,6 +66,7 @@
                 <group>
                     <filter name="group_employee" string="Employee" context="{'group_by': 'employee_name'}"/>
                     <filter name="group_location" string="Location" context="{'group_by': 'location_name'}"/>
+                    <filter name="group_project" string="Project" context="{'group_by': 'project_name'}"/>
                     <filter name="group_geofence" string="Check-in Geofence"
                             context="{'group_by': 'check_in_radius_state'}"/>
                     <filter name="group_internal_company" string="Internal Company"
@@ -195,7 +199,7 @@
                         <group string="Session">
                             <field name="employee_nopeg"/>
                             <field name="tenant_client_name"/>
-                            <field name="project_name"/>
+                            <field name="project_label"/>
                             <field name="shift_name"/>
                         </group>
                         <group string="Attendance">

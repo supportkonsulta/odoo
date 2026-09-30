@@ -927,6 +927,39 @@ class PresenlySaasConfig(models.Model):
         return (fields.Datetime.now() - terakhir.create_date).total_seconds()
 
     @api.model
+    def _refresh_recent_from_decision(self):
+        """Segarkan perubahan terakhir di **transaksi tersendiri**, lalu commit.
+
+        Dipakai jalur keputusan persetujuan, dan dua kali: sebelum keputusan
+        dikirim (supaya levelnya yang benar), dan sesudah server menolak (supaya
+        keadaannya yang baru yang terlihat).
+
+        Transaksi tersendiri bukan pilihan gaya. Jalur penolakan berakhir dengan
+        pemberitahuan alih-alih galat, tetapi pemanggilnya bisa saja membatalkan
+        transaksi karena sebab lain - dan penyegaran yang ikut batal berarti
+        layarnya tetap menampilkan keadaan yang sudah dibantah server.
+
+        Mengembalikan pesan kegagalan sebagai teks, atau ``''`` bila berhasil.
+        Kegagalannya tidak dilempar: keputusannya sudah terkirim, dan gagal
+        menyegarkan bukan alasan membatalkan kabar itu.
+        """
+        self.ensure_one()
+        config_id = self.id
+        try:
+            with self.env.registry.cursor() as cr:
+                env = api.Environment(cr, SUPERUSER_ID, {})
+                _ringkas, error = env['presenly.saas.config'].browse(
+                    config_id,
+                )._pull_recent_data()
+                cr.commit()
+        except Exception as exc:                  # noqa: BLE001 - hanya dilaporkan
+            _logger.exception(
+                'presenly_saas: penyegaran sebelum/sesudah keputusan gagal '
+                '(config id %s)', config_id,
+            )
+            return str(exc)
+        return error or ''
+
     def _refresh_from_page(self, resource=None):
         """Segarkan cermin karena ada yang membuka halamannya.
 
@@ -948,19 +981,28 @@ class PresenlySaasConfig(models.Model):
 
         Seluruh kegagalannya ditelan: halaman tidak boleh gagal karena server
         Presenly sedang tidak bisa dihubungi.
+
+        Konfigurasinya dicari lewat `_config_for_company`, **bukan** lewat
+        pencarian langsung pada perusahaan yang sedang aktif. Pengguna cabang
+        berperusahaan aktif perusahaan cabang, dan di sana tidak ada konfigurasi
+        apa pun - pencarian langsung membuat penyegaran halaman diam-diam tidak
+        pernah berjalan untuk mereka, walaupun koneksinya menyala.
         """
-        company_id = self.env.company.id
+        config = self.sudo()._config_for_company(self.env.company)
+        if not config:
+            return False
+        config_id = config.id
         try:
             with self.env.registry.cursor() as cr:
                 env = api.Environment(cr, SUPERUSER_ID, {})
                 dijalankan = env['presenly.saas.config']._refresh_requests_now(
-                    company_id, resource,
+                    config_id, resource,
                 )
                 cr.commit()
         except Exception:                      # noqa: BLE001 - halaman tidak boleh gagal
             _logger.exception(
-                'presenly_saas: penyegaran cermin dari halaman gagal (company id %s)',
-                company_id,
+                'presenly_saas: penyegaran cermin dari halaman gagal (config id %s)',
+                config_id,
             )
             return False
         return dijalankan
@@ -1096,6 +1138,24 @@ class PresenlySaasConfig(models.Model):
             )
 
         self._log_pull(path, True, None, started)
+
+        # Klien yang baru ada bisa jadi cabang yang tadinya belum punya perusahaan
+        # Odoo, sehingga penempatan yang menunjuknya belum bisa diterapkan. Tanpa
+        # langkah ini, perusahaan cabangnya muncul seketika tetapi daftar cabang
+        # pegawai dan akses perusahaannya baru menyusul pada tarikan pegawai
+        # berikutnya, yaitu sehari kemudian — dan itu terbaca sebagai "webhooknya
+        # tidak bekerja", padahal yang tertinggal hanya akibatnya.
+        #
+        # `getattr` dan `hasattr` karena penempatan hanya ada bila `presenly_saas_hr`
+        # terpasang, sedangkan berkas ini milik modul tanpa `hr`.
+        if (ringkasan['created'] or ringkasan['updated']) and getattr(
+                self, 'sync_employee_placements', False) and hasattr(
+                self, '_pull_placements'):
+            ringkasan_tempat, error_tempat = self._pull_placements()
+            ringkasan['placements'] = ringkasan_tempat
+            if error_tempat:
+                return ringkasan, error_tempat
+
         return ringkasan, False
 
     def _changed_datasets(self):
@@ -1151,22 +1211,28 @@ class PresenlySaasConfig(models.Model):
             )
         return True
 
-    def _refresh_requests_now(self, company_id, resource=None):
+    def _refresh_requests_now(self, config_id, resource=None):
         """Segarkan cermin karena halamannya dibuka.
+
+        `config_id` sudah dipilih pemanggilnya, dan pemilihannya sengaja tidak
+        diulang di sini: perusahaan pengguna cabang berbeda dari perusahaan
+        pemilik koneksi, dan pencarian langsung pada perusahaan yang aktif membuat
+        penyegarannya tidak pernah berjalan.
 
         Dijalankan dari pembacaan daftar, jadi seluruh kegagalannya ditelan:
         membuka daftar tidak boleh gagal karena server Presenly sedang tidak bisa
         dihubungi.
 
-        Mengembalikan True kalau ada yang ditarik, False kalau tidak ada yang
-        berubah atau penarikannya dilewati.
+        Dijalankan di transaksi tersendiri, jadi yang dikembalikannya hanya
+        penanda: True kalau ada yang ditarik, False kalau tidak ada yang berubah
+        atau penarikannya dilewati.
         """
-        config = self.sudo().search([
-            ('company_id', '=', company_id),
-            ('enabled', '=', True),
-            ('active', '=', True),
-        ], limit=1)
-        if not config or not config.request_auto_refresh:
+        config = self.sudo().browse(config_id).exists()
+        if not config or not config.enabled or not config.active:
+            return False
+        company_id = config.company_id.id
+
+        if not config.request_auto_refresh:
             return False
 
         # Kunci penasihat, dan sengaja yang "try": kalau ada penarikan yang

@@ -64,6 +64,20 @@ class PresenlySaasMirrorMixin(models.AbstractModel):
     # yang hilang hanya karena belum dibuatkan kolomnya.
     raw_payload = fields.Json(string='Raw Payload')
 
+    # Relasi ke cermin lokasinya, bukan hanya id. Dipakai menyaring per lokasi,
+    # dan menjadi kunci untuk menautkan ke `hr.work.location` (di modul yang
+    # memang punya `hr`).
+    tenant_location_id = fields.Many2one(
+        'presenly.saas.work.location',
+        string='Work Location (mirror)',
+        index=True,
+        ondelete='set null',
+        readonly=True,
+        help='The mirrored work location this row happened at. Kept as a '
+             'relation, not only as an id, so rows can be filtered and grouped '
+             'per location without comparing names.',
+    )
+
     _mirror_company_external_uniq = models.Constraint(
         'unique(company_id, external_id)',
         'A row may only be mirrored once per company.',
@@ -185,7 +199,174 @@ class PresenlySaasMirrorMixin(models.AbstractModel):
             else:
                 Mirror.create(values)
             ditulis += 1
+        self._mirror_fill_branches(company)
         return ditulis
+
+    @api.model
+    def _mirror_fill_location_ids_from_payload(self, company):
+        """Isi id lokasi baris lama dari payload yang tersimpan.
+
+        Dipakai migrasi, bukan penarikan: baris yang ditarik sebelum kolom
+        `location_id` ada tidak punya id lokasinya, padahal payloadnya disimpan
+        utuh. Mengisinya dari sana berarti tidak perlu memanggil API sama sekali.
+
+        Model yang tidak punya kolom itu dilewati tanpa biaya. Mengembalikan
+        jumlah baris yang diisi.
+        """
+        if 'location_id' not in self._fields or 'raw_payload' not in self._fields:
+            return 0
+        baris = self.sudo().search([
+            ('company_id', '=', company.id),
+            ('location_id', '=', 0),
+            ('raw_payload', '!=', False),
+        ])
+        diisi = 0
+        for record in baris:
+            lokasi = (record.raw_payload or {}).get('location')
+            if not isinstance(lokasi, dict) or not lokasi.get('id'):
+                continue
+            record.sudo().write({'location_id': int(lokasi['id'])})
+            diisi += 1
+        return diisi
+
+    @staticmethod
+    def _payload_client(record):
+        """Klien dari payload, bila server mengirimnya.
+
+        Sejak server menyertakan `location.internal_company` pada pengajuan,
+        kliennya bisa dibaca langsung dari sana. Itu lebih pasti daripada
+        menurunkannya dari cermin lokasi, yang bisa belum tersegarkan, jadi ia
+        didahulukan. Bentuk yang tidak terduga diabaikan, bukan ditebak.
+        """
+        payload = record.raw_payload
+        if not isinstance(payload, dict):
+            return {}
+        lokasi = payload.get('location')
+        if not isinstance(lokasi, dict):
+            return {}
+        klien = lokasi.get('internal_company')
+        if not isinstance(klien, dict) or not klien.get('id'):
+            return {}
+        return {'id': int(klien['id']), 'name': klien.get('name') or False}
+
+    # Catatan: hook `_mirror_fill_links` sengaja TIDAK didefinisikan di sini,
+    # melainkan hanya di `presenly_saas_hr`. Definisi kosong di modul ini akan
+    # muncul lebih dulu di urutan warisan model, dan menutupi definisi aslinya —
+    # persis yang terjadi saat ia masih ada di sini.
+
+    @api.model
+    def _mirror_fill_branches(self, company):
+        """Isi turunan baris cermin: cabang, lokasi, dan tautan native.
+
+        Dua bagian, dengan sengaja dipisah:
+
+        1. **kolom cabang**, hanya untuk model yang memilikinya (cermin
+           pengajuan). Kliennya dibaca dari dua tempat, berurutan: dari payload
+           (`location.internal_company`) bila server mengirimnya, karena itu yang
+           paling pasti; kalau tidak, diturunkan dari cermin lokasinya lewat id
+           lokasi, bukan lewat namanya.
+        2. **tautan native** (`hr.employee`, `hr.work.location`), lewat hook yang
+           diisi modul pemilik `hr`. Bagian ini dipanggil untuk semua model, dan
+           tidak bergantung pada kolom cabang.
+
+        Hanya kolom yang masih kosong yang diisi, dan itu disengaja: sebuah
+        pengajuan adalah catatan masa lalu, jadi kalau lokasinya suatu saat
+        berpindah klien, mengisi ulang akan menulis kembali sejarahnya.
+        """
+        diisi = 0
+        if 'tenant_client_name' in self._fields and 'location_id' in self._fields:
+            diisi = self._mirror_fill_branch_columns(company)
+        # Dipanggil hanya bila ada yang mendefinisikannya, yaitu modul pemilik `hr`.
+        fill_links = getattr(self, '_mirror_fill_links', None)
+        if fill_links:
+            fill_links(company)
+        return diisi
+
+    @api.model
+    def _mirror_fill_branch_columns(self, company):
+        """Bagian kolom cabang, dan lokasinya, untuk satu perusahaan."""
+        ada_perusahaan = 'tenant_client_company_id' in self._fields
+        # Baris dicari bila salah satu kolom turunannya masih kosong: baris lama
+        # bisa sudah punya cabangnya tetapi belum punya perusahaannya atau
+        # tautan lokasinya.
+        domain = [
+            ('company_id', '=', company.id),
+            ('location_id', '!=', 0),
+            '|', '|', ('tenant_client_name', '=', False),
+            ('tenant_location_id', '=', False),
+        ]
+        if ada_perusahaan:
+            domain += [('tenant_client_company_id', '=', False)]
+        pending = self.sudo().search(domain)
+        if not pending:
+            return 0
+
+        peta = {
+            lokasi.external_id: lokasi
+            for lokasi in self.env['presenly.saas.work.location'].sudo().search([
+                ('company_id', '=', company.id),
+                ('external_id', 'in', pending.mapped('location_id')),
+            ])
+        }
+
+        # Klien yang muncul, entah dari payload atau dari cermin lokasinya.
+        klien_ids = set()
+        for baris in pending:
+            klien = self._payload_client(baris)
+            if klien.get('id'):
+                klien_ids.add(klien['id'])
+                continue
+            lokasi = peta.get(baris.location_id)
+            if lokasi and lokasi.internal_company_id:
+                klien_ids.add(lokasi.internal_company_id)
+        # Perusahaan cabangnya dicari sekali untuk semua klien itu, bukan sekali
+        # per baris.
+        perusahaan = {}
+        if ada_perusahaan and klien_ids:
+            perusahaan = {
+                baris.presenly_client_id: baris
+                for baris in self.env['res.company'].sudo().search([
+                    ('presenly_client_id', 'in', sorted(klien_ids)),
+                ])
+            }
+
+        diisi = 0
+        for baris in pending:
+            lokasi = peta.get(baris.location_id)
+            klien = self._payload_client(baris)
+            if not lokasi and not klien:
+                # Lokasinya belum tercermin dan payloadnya tidak membawa kliennya:
+                # dilaporkan di bawah, tidak ditebak.
+                continue
+            klien_id = klien.get('id') or (lokasi.internal_company_id if lokasi else 0)
+            klien_nama = klien.get('name') or (
+                lokasi.internal_company_name if lokasi else False
+            )
+            nilai = {}
+            if not baris.tenant_client_id:
+                nilai['tenant_client_id'] = klien_id or 0
+            if not baris.tenant_client_name:
+                nilai['tenant_client_name'] = klien_nama or False
+            if not baris.tenant_location_id and lokasi:
+                nilai['tenant_location_id'] = lokasi.id
+            if ada_perusahaan and not baris.tenant_client_company_id and klien_id:
+                cabang = perusahaan.get(klien_id)
+                if cabang:
+                    nilai['tenant_client_company_id'] = cabang.id
+            if not nilai:
+                continue
+            baris.write(nilai)
+            diisi += 1
+
+        if diisi < len(pending):
+            # Dilaporkan, tidak ditebak: cabang yang salah lebih berbahaya daripada
+            # cabang yang kosong, karena yang salah tidak terlihat.
+            _logger.info(
+                'Presenly SaaS: %s dari %s baris %s belum punya cabang karena '
+                'lokasinya belum tercermin dan payloadnya tidak membawanya.',
+                len(pending) - diisi, len(pending), self._name,
+            )
+        return diisi
 
     @api.model
     def _mirror_write(self, company, rows, domain):
@@ -213,6 +394,9 @@ class PresenlySaasMirrorMixin(models.AbstractModel):
 
             if values_list:
                 Mirror.create(values_list)
+        # Cabang diturunkan setelah barisnya ada, dalam satu langkah untuk semua
+        # baris: satu pencarian per tarikan, bukan satu per baris.
+        self._mirror_fill_branches(company)
         return len(values_list)
 
     @api.model

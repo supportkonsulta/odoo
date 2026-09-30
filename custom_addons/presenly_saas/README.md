@@ -529,6 +529,161 @@ tanpa sebab.
 
 ---
 
+## 4d. Cabang pada pengajuan, dan pemisahan per perusahaan
+
+Pengajuan (cuti, lembur, surat sakit, koreksi presensi, tukar shift) berisi
+`location {id, name}` di payloadnya, **tanpa klien**. Padahal untuk payroll yang
+perlu diketahui bukan lokasinya, melainkan cabangnya, karena cabang itulah yang
+membayar.
+
+Karena itu cabangnya **diturunkan**, bukan ditebak:
+
+| Langkah | Keterangan |
+|---|---|
+| 1 | Payload pengajuan menyimpan `location.id` di kolom `location_id` |
+| 2 | Id itu dicocokkan ke cermin lokasi kerja lewat `external_id`, satu pencarian per tarikan, bukan per baris |
+| 3 | Cabang lokasi itu (`internal_company_id`, `internal_company_name`) disalin ke baris pengajuannya sebagai `tenant_client_id` dan `tenant_client_name` |
+| 4 | Perusahaan Odoo dari cabang itu (`res.company` dengan `presenly_client_id` yang sama) disalin sebagai `tenant_client_company_id` |
+
+Aturan yang dipegang, dan alasannya:
+
+- **Lewat id, bukan nama.** Nama lokasi bisa diubah di Presenly; id tidak.
+- **Sekali isi.** Cabang hanya diisi kalau masih kosong. Pengajuan adalah catatan
+  masa lalu: kalau lokasinya suatu saat berpindah klien, baris lama tetap memakai
+  klien saat pengajuan itu terjadi. Penarikan memakai `_mirror_upsert`, jadi
+  barisnya diperbarui, bukan dibuat ulang; penggantian menyeluruh memang membuat
+  ulang, dan di sana cabangnya wajar diturunkan lagi.
+- **Kosong kalau lokasinya belum tercermin.** Tidak ditebak, dan jumlahnya
+  dilaporkan di log. Cabang yang salah lebih berbahaya daripada cabang yang
+  kosong, karena yang salah tidak terlihat.
+- **Isi lama tidak perlu API.** Baris yang ditarik sebelum kolom ini ada diisi
+  dari `raw_payload` yang tersimpan, lewat migrasi `19.0.2.3.0`.
+- **Koreksi presensi dan tukar shift tidak punya lokasi** di payloadnya, jadi
+  cabangnya dibiarkan kosong. Kalau nanti diperlukan, sumbernya harus pegawai,
+  dan itu ditandai berbeda supaya tidak tertukar dengan yang pasti.
+
+Sejak Presenly mengirim klien lokasi di dalam payload pengajuan
+(`location.internal_company`), klien itu dipakai lebih dulu dan pencocokan ke
+cermin lokasi hanya menjadi cadangan. Urutannya sengaja begitu: payload adalah
+catatan saat pengajuan dibuat, sedangkan cermin lokasi bisa saja sudah berpindah
+klien sejak itu. Untuk baris lama yang payloadnya belum memuat klien, jalur
+cadangannya tetap bekerja seperti sebelumnya.
+
+Pemisahan **per cabang** dijalankan lewat tiga aturan per model, dan ketiganya
+memang diperlukan:
+
+| Aturan | Berlaku untuk | Domain | Alasan |
+|---|---|---|---|
+| Cabang | pengguna internal | `tenant_client_company_id in company_ids` | Baris cermin berada di perusahaan pusat, jadi aturan perusahaan biasa akan menyembunyikannya dari pengguna cabang. Yang dibandingkan adalah **perusahaan** cabangnya, bukan id kliennya: dua tenant bisa punya id klien yang sama |
+| Pengelola | grup Manager | `company_id in company_ids` | Seluruh cabang **di perusahaan yang ia diizinkan**; `company_ids` di situ adalah pagar tenant-nya |
+| HR | grup HR | idem | Keputusan pemilik: lintas cabang hanya untuk HR di perusahaan pusat. Aturannya di `presenly_saas_hr`, karena modul ini dipakai juga tanpa HR |
+
+Baris yang cabangnya belum diketahui hanya terlihat oleh pengelola dan HR. Sengaja:
+baris tanpa cabang bisa milik cabang mana pun, jadi menampilkannya ke semua orang
+berarti membocorkan cabang lain. Jumlahnya dilaporkan di log supaya bisa
+ditindaklanjuti, dan kolom perusahaan cabang itu yang nanti dipakai payroll.
+
+### Lokasi dan pegawai sebagai relasi
+
+Cabang saja tidak cukup untuk payroll: yang dihitung adalah lembur **seorang
+pegawai** di **sebuah lokasi kerja**. Karena itu pengajuannya juga menyimpan tiga
+relasi:
+
+| Kolom | Menunjuk ke | Cara mencocokkan |
+|---|---|---|
+| `tenant_location_id` | `presenly.saas.work.location` | `location.id` payload ke cermin lokasi (`external_id`) |
+| `hr_work_location_id` | `hr.work.location` | `presenly_external_id` lokasi itu |
+| `hr_employee_id` | `hr.employee` | nomor pegawai (`nopeg`) lewat cermin pegawai |
+
+Ketiganya ada di `presenly_saas_hr`, bukan di `presenly_saas`, sebab semuanya
+menyentuh model HR. Kalau lokasinya punya perusahaan yang sama dengan cabang
+barisnya, lokasi itulah yang dipilih; kalau tidak ada yang cocok, kolomnya
+dibiarkan kosong dan jumlahnya dilaporkan di log. Mencocokkan lokasi berdasarkan
+nama sengaja tidak dilakukan: di lapangan ada lokasi bernama sama di dua cabang,
+dan payroll akan menagih lembur ke cabang yang salah tanpa ada yang menyadarinya.
+
+### Yang payroll butuhkan dari baris ini
+
+`hr_payroll_custom` **tidak diubah** oleh pekerjaan ini. Yang disiapkan hanya
+datanya, dan kontraknya empat kunci - persis yang sudah dipakai
+`_presenly_overtime_domain` di modul payroll:
+
+| Kunci | Sumber di cermin lembur |
+|---|---|
+| `employee_id` | `hr_employee_id` |
+| `state` | `status` (`approved`) |
+| rentang tanggal | `overtime_date`, plus `start_time` dan `end_time` untuk jamnya |
+| `work_location_id` | `hr_work_location_id` |
+
+Keempatnya dibuktikan bisa dijawab dari baris cermin oleh
+`tests/test_submission_payroll_ready.py`. Jadi ketika payroll mulai menyaring per
+lokasi, yang perlu ditambahkan hanya penyaringnya - bukan kolom baru di sini.
+
+## 4e. Kolom proyek cermin presensi
+
+Kolom Project pada form Detail Data Presensi pernah menampilkan repr payload:
+
+```
+{'id': 3, 'project_name': 'MAMBU KECUT', 'project_code': '987364', 'client': ...}
+```
+
+Sebabnya satu baris: `employee.get('project')` - sebuah objek - diserahkan apa
+adanya ke kolom `Char`. Odoo menyimpan repr-nya, dan tidak ada yang mengeluh
+karena hasilnya tetap "ada isinya". Yang menemukannya adalah pemilik data, dari
+layar, bukan dari uji.
+
+Sekarang objeknya dipisah menjadi `project_code` dan `project_name`, dan yang
+ditampilkan satu kolom `project_label` berbentuk `[KODE] Nama`. Nama diambil dari
+`project_name` dengan `name` sebagai cadangan, karena resource lokasi dan resource
+pegawai menyebutnya berbeda. Proyek yang datang bukan sebagai objek **tidak**
+disimpan sebagai teks mentah: kolomnya dibiarkan kosong dan kejadiannya dicatat di
+log - menampilkan JSON dengan cara lain bukan perbaikan.
+
+Baris lama diperbaiki migrasi `19.0.2.5.0` dari `raw_payload` yang tersimpan.
+Yang disentuh hanya baris yang kolomnya masih berbentuk repr (diawali `{`), jadi
+nama proyek yang sudah disunting orang tidak tertimpa. Baris rusak yang payload-nya
+tidak memuat proyek dikosongkan, dan jumlahnya dilaporkan di log.
+
+Kolomnya sengaja hanya kode, nama, dan labelnya. Sebuah relasi ke cermin proyek
+(`presenly.saas.project`) sempat ditambahkan, lalu dibuang lagi: kode dan namanya
+sudah tersimpan di barisnya sendiri, dan kolom relasinya hanya menggandakan kolom
+yang sama di layar. Cermin proyeknya sendiri tetap ada dan tetap dipakai halaman
+Projects; yang tidak diperlukan adalah tautan dari log presensi ke sana.
+
+Daftar dan form menampilkan `project_label` - kode dan nama dalam satu kolom -
+dengan `project_code` sebagai kolom opsional, dan `project_name` sebagai kunci
+group by.
+
+## 4f. Siapa melihat apa
+
+Menu akar Presenly SaaS sebelumnya hanya untuk Manager, dan cermin presensi tidak
+punya aturan akses sama sekali. Dua hal itu bersama membuat data tidak bisa dipakai
+oleh orang yang paling membutuhkannya: pegawainya sendiri. Perlu ditegaskan bahwa
+Odoo **tidak** menambahkan saringan perusahaan sendiri - `company_ids` hanya
+variabel yang bisa dipakai di domain - jadi model dengan `company_id` tanpa aturan
+menampilkan baris dari semua perusahaan.
+
+Yang berlaku sekarang:
+
+| Siapa | Melihat |
+|---|---|
+| Pengguna internal | Barisnya sendiri, pada cermin presensi dan kelima jenis pengajuan |
+| Approver | Satu cabang, karena dialah yang memutuskan pengajuannya |
+| Manager | Seluruh cabang di perusahaan yang ia izinkan |
+| HR | Idem, dan ditambah di modul HR karena grupnya hanya ada di sana |
+
+Aturan "milik sendiri" tinggal di `presenly_saas_hr` karena butuh `user.presenly_nopeg`,
+dan kolom itu butuh `hr`. Kolom tersebut dibuat karena `res.users.employee_id`
+adalah pegawai pada **perusahaan yang sedang aktif**, sedangkan record pegawai di
+sini berada di perusahaan integrasi.
+
+Satu keputusan yang mudah "diperbaiki" orang dan justru merusak: aturan "milik
+sendiri" **tidak** diberi pagar `company_id in company_ids`. Di basis nyata,
+pengguna cabang hanya punya perusahaan cabangnya (`yusril` punya CLIENT 1 dan
+CLIENT 2), sedangkan seluruh baris cermin berada di perusahaan integrasi. Pagar itu
+akan membuat pegawai cabang kehilangan datanya sendiri. Yang menjaga batas tenant
+adalah aturan pengelola, Approver, dan HR, ditambah awalan tenant pada nopeg.
+
 ## 5. Aturan yang dipegang modul ini
 
 | Aturan                                          | Perilaku                                                                           |
@@ -714,7 +869,7 @@ odoo-bin -d <db> -i presenly_saas \
   --stop-after-init --no-http
 ```
 
-474 kasus uji pada basis data yang memasang `presenly_saas` **dan**
+510 kasus uji pada basis data yang memasang `presenly_saas` **dan**
 `presenly_saas_hr` (0 gagal, 0 error):
 
 | Berkas                         | Cakupan                                                                                                  |
@@ -729,6 +884,7 @@ odoo-bin -d <db> -i presenly_saas \
 | `tests/test_presenly_endpoints.py` | cermin presensi & rekap, paginasi, wizard |                                            
 | `tests/test_monitoring.py` | uji silang agregat vs rekap server, penarikan rentang bulan |                                                 
 | `tests/test_submissions.py` | pemetaan lima jenis pengajuan, ganti per rentang |
+| `tests/test_submission_company.py` | cabang pengajuan diturunkan dari lokasi (lewat id, sekali isi, dibiarkan kosong bila lokasinya belum tercermin), pengisian dari payload lama, dan aturan perusahaan benar-benar menyaring |
 | `tests/test_retention.py` | jendela bergulir, cron penarikan, setelan baru, peringatan wizard |
 | `tests/test_timesheets.py` | hitungan jam, pemetaan timesheet & proyek, penarikan |
 | `tests/test_approval.py` | kosakata status, pemetaan level alur, waktu keputusan, bagian Persetujuan yang wajib tampil, dan syarat pemuatan data widget langkah |
@@ -993,7 +1149,7 @@ presenly_saas/
 ├── security/       group, ACL, record rule multi-company
 ├── services/       klien HTTP (tanpa dependensi Odoo, mudah diuji)
 ├── static/         ikon + komponen OWL banner dan peta
-├── tests/          474 kasus uji (kedua modul)
+├── tests/          510 kasus uji (kedua modul)
 ├── views/          form, list, search, menu
 └── wizard/         pemilih periode penarikan (presensi + pengajuan)
 ```

@@ -155,7 +155,7 @@ class PresenlySaasEmployeeSlot(models.Model):
 
     schedule_id = fields.Many2one(
         'presenly.saas.employee.schedule',
-        string='Day',
+        string='Weekly Schedule',
         index=True,
         ondelete='cascade',
         help='The weekly schedule row this slot belongs to. The slot payload only '

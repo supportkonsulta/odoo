@@ -81,6 +81,9 @@ class PresenlySaasLeave(models.Model):
             'employee_name': employee.get('name') or False,
             'leave_type_name': _named(row.get('leave_type')).get('name') or False,
             'location_name': _named(row.get('location')).get('name') or False,
+            # Id lokasinya dipakai untuk menurunkan cabang. Namanya tidak
+            # dipakai untuk itu: nama bisa berubah, id tidak.
+            'location_id': _named(row.get('location')).get('id') or 0,
             'leave_date': parse_date(row.get('leave_date')),
             'start_date': parse_date(row.get('start_date')),
             'end_date': parse_date(row.get('end_date')),
@@ -154,6 +157,9 @@ class PresenlySaasOvertime(models.Model):
             'employee_nopeg': employee.get('nopeg') or False,
             'employee_name': employee.get('name') or False,
             'location_name': _named(row.get('location')).get('name') or False,
+            # Id lokasinya dipakai untuk menurunkan cabang. Namanya tidak
+            # dipakai untuk itu: nama bisa berubah, id tidak.
+            'location_id': _named(row.get('location')).get('id') or 0,
             'overtime_date': parse_date(row.get('overtime_date')),
             'purpose': row.get('purpose') or False,
             'start_time': row.get('start_time') or False,
@@ -225,6 +231,9 @@ class PresenlySaasMedicalCertificate(models.Model):
             'employee_nopeg': employee.get('nopeg') or False,
             'employee_name': employee.get('name') or False,
             'location_name': _named(row.get('location')).get('name') or False,
+            # Id lokasinya dipakai untuk menurunkan cabang. Namanya tidak
+            # dipakai untuk itu: nama bisa berubah, id tidak.
+            'location_id': _named(row.get('location')).get('id') or 0,
             'certificate_date': parse_date(row.get('certificate_date')),
             'start_date': parse_date(row.get('start_date')),
             'end_date': parse_date(row.get('end_date')),

@@ -193,6 +193,229 @@ klien, sedangkan konfigurasi dimiliki perusahaan pemasang) membuat kirim balik
 tidak pernah terkirim tanpa galat apa pun; dan jalur yang saya tulis
 (`/api/external/v1/...`) menggandakan prefiks karena `_request` sudah menambahkannya.
 
+## Tautan pegawai dan lokasi pada pengajuan
+
+Cabang saja belum cukup untuk payroll: yang dihitung adalah lembur **seorang
+pegawai** di **sebuah lokasi kerja**. Baris cermin pengajuan karena itu menyimpan
+tiga tautan:
+
+| Kolom | Menunjuk ke | Dicocokkan lewat |
+| --- | --- | --- |
+| `tenant_location_id` | `presenly.saas.work.location` | `location.id` di payload ke `external_id` lokasi |
+| `hr_work_location_id` | `hr.work.location` | `presenly_external_id` lokasi itu |
+| `hr_employee_id` | `hr.employee` | nomor pegawai (`nopeg`) di payload ke cermin pegawai |
+
+Ketiganya diisi dari hook yang sama, dijalankan **sekali per tarikan** dan
+sekaligus untuk semua baris - bukan satu kueri per baris. Cermin bisa berisi
+ribuan baris, dan pencarian per baris membuat tarikan melambat tanpa terlihat
+sebabnya.
+
+Aturan yang dipegang:
+
+- **Sekali isi.** Tautan hanya diisi kalau masih kosong, sama seperti cabang.
+  Pengajuan adalah catatan masa lalu; pegawai yang pindah lokasi bulan depan tidak
+  boleh memindahkan lembur bulan lalu.
+- **Lokasi dipilih menurut perusahaan cabangnya.** Kalau ada beberapa
+  `hr.work.location` dengan id Presenly yang sama, yang dipakai adalah yang
+  perusahaannya sama dengan perusahaan cabang baris itu. Kalau tidak ada yang
+  cocok, kolomnya dibiarkan kosong dan jumlahnya dicatat di log - lokasi yang salah
+  membuat payroll menagih ke cabang yang salah, dan itu tidak terlihat.
+- **Nama tidak pernah dipakai untuk mencocokkan.** Di lapangan ada lokasi bernama
+  sama di dua cabang.
+- **Kolom lokasi native dipakai apa adanya.** `hr_work_location_id` diisi langsung
+  dari `location_id` bila tautannya sudah ada, tanpa menunggu cermin lokasi.
+
+Modul ini sengaja **tidak** menambah model baru untuk tautan ini: yang ditambahkan
+hanyalah kolom pada model pengajuan yang sudah ada, lewat mixin
+`presenly.saas.submission.hr.mixin`. Mixin itu dinamai `...mixin` supaya tidak
+diminta punya aturan akses sendiri, karena ia tidak pernah ditampilkan.
+
+Empat kunci yang dibutuhkan payroll dibuktikan bisa dijawab dari baris cermin oleh
+`tests/test_submission_payroll_ready.py`: `employee_id`, `state`, rentang
+tanggalnya, dan `work_location_id`. `hr_payroll_custom` sendiri tidak disentuh.
+
+## Data milik sendiri
+
+Pegawai perlu melihat presensi dan pengajuannya sendiri, dan sebelumnya itu tidak
+mungkin: menu Presenly hanya untuk Manager, dan aturan pengajuan memberi pengguna
+internal **satu cabang penuh** - artinya rekan sekerja ikut terlihat.
+
+Dua hal dikerjakan bersama, dan keduanya harus ada:
+
+1. Menu akar, Attendance, dan Requests dibuka untuk pengguna internal. Menu yang
+   bukan untuk mereka dikunci sendiri (Monitoring, Subscription, Reference,
+   Timesheet, Sync Log), karena menu yang induknya tersaring grup tetap muncul
+   sebagai butir lepas.
+2. Aturan "milik sendiri" ditambahkan untuk cermin presensi dan kelima jenis
+   pengajuan, dan grup internal **dikeluarkan** dari aturan cabang. Tanpa langkah
+   kedua ini aturan barunya tidak mengubah apa pun: aturan grup digabung dengan
+   OR, jadi satu aturan cabang yang masih menyebut pengguna internal cukup untuk
+   membuat semua rekan sekerja terlihat kembali. Aturan cabangnya diserahkan ke
+   grup Approver, yang memang memutuskan pengajuan.
+
+Kuncinya `res.users.presenly_nopeg`, bukan `user.employee_id`:
+`employee_id` adalah pegawai pada **perusahaan yang sedang aktif**, sedangkan
+record pegawai di sini berada di perusahaan integrasi. Aturan yang memakai
+`employee_id` akan buta bagi pegawai yang sedang bekerja di perusahaan cabang.
+
+Aturan "milik sendiri" sengaja **tidak** berpagar perusahaan. Pengguna cabang tidak
+punya perusahaan integrasi di daftar perusahaannya - di basis nyata, `yusril` hanya
+punya CLIENT 1 dan CLIENT 2, sedangkan semua baris cermin berada di perusahaan
+integrasi - jadi pagar itu akan membuatnya kehilangan datanya sendiri. Batas tenant
+dijaga oleh aturan pengelola, Approver, dan HR, ditambah awalan tenant pada nopeg.
+
+Pengguna yang belum tertaut ke pegawai melihat nol baris, bukan semuanya. Domainnya
+memakai sentinel `'__tanpa_nopeg__'` supaya baris yang nopeg-nya kosong tidak ikut
+cocok.
+
+## Memutuskan pengajuan dari Odoo
+
+Cermin pengajuan bersifat baca saja: keputusan tetap milik Presenly. Yang bisa
+dilakukan dari Odoo adalah **mengirim keputusan** ke sana, dan hanya bila pemilik
+data menyalakannya (`Decide Requests from Odoo` pada konfigurasi koneksi, mati
+secara bawaan - keputusan itu meninggalkan aplikasi).
+
+Yang dikirim hanya tiga hal: `actor_nopeg`, `decision`, `level`. Identitas pembuat
+keputusan adalah **nopeg**, bukan id pengguna Odoo, karena di sanalah aplikasi
+mengenal orang. Karena itu nopeg yang salah atau kosong bukan sekadar kolom yang
+belum diisi: keputusannya akan tercatat atas nama orang lain, atau ditolak.
+
+Yang berhak menekan tombol bukan "siapa pun yang bisa membuka menunya", melainkan
+satu orang: pemegang langkah yang **sedang berjalan**. Langkahnya disalin dari
+payload, lengkap dengan `level`, `approver_type`, dan `expected_nopeg`. Tiga
+keadaan karena itu tidak punya tombol sama sekali, dan itu disengaja - lebih baik
+tidak ada tombol daripada tombol yang ditolak:
+
+| Keadaan | Kenapa |
+|---|---|
+| Langkahnya milik sekumpulan orang (`role`, `permission`) | Yang berhak bukan satu orang, jadi tidak ada satu pengguna Odoo yang bisa ditunjuk |
+| Atasan langsungnya belum punya akun Odoo | Sama: tidak ada orangnya |
+| Jenis pengajuannya belum dilayani | Ditentukan `RESOURCE_BY_MODEL`. Kelimanya sudah dilayani: `leaves`, `overtimes`, `medical-certificates`, `attendance-corrections`, `shift-swaps` |
+
+Kolom `Approver Now` menunjukkan siapa yang ditunjuk untuk langkah berjalan, dan
+`You May Decide` hanya menyala untuk orang itu.
+
+Tiga penjagaan dijalankan berurutan saat tombolnya ditekan, dan masing-masing
+punya pesannya sendiri:
+
+| Penjagaan | Pesan |
+|---|---|
+| Setelan `Decide Requests from Odoo` menyala untuk perusahaan yang aktif | "Deciding requests from Odoo is not enabled..." |
+| Pengguna punya nopeg | "Your Odoo user is not linked to a Presenly nopeg..." |
+| Pengguna memang pemegang langkah yang berjalan | "You are not the approver for the level that is running now..." |
+
+**Nopeg untuk keputusan dibaca dari `res.users.presenly_nopeg`, bukan dari
+`user.employee_id.presenly_nopeg`.** `employee_id` adalah pegawai pada perusahaan
+yang **sedang aktif**, sedangkan record pegawai di sini berada di perusahaan
+integrasi. Pengguna cabang - yang perusahaan aktifnya perusahaan cabang, dan yang
+memang tidak punya perusahaan integrasi - karena itu dicap "belum tertaut nopeg"
+walaupun nopegnya sudah terisi, dan itu satu-satunya yang menghalanginya
+memutuskan. Perilakunya diuji di `tests/test_own_data_rules.py`.
+
+### Salinan yang tertinggal
+
+Cermin bisa tertinggal dari kenyataan: keputusan level sebelumnya bisa diambil
+dari aplikasi, sedangkan pemberitahuan perubahannya tidak selalu sampai ke Odoo.
+Salinan yang tertinggal tidak berbahaya selama tidak dipakai untuk memutuskan —
+dan di situlah ia berbahaya: level yang dikirim ikut yang tertinggal, lalu server
+menolaknya dengan *"Level yang berjalan untuk pengajuan ini 2, bukan 1. Muat ulang
+pengajuannya."*
+
+Karena itu alurnya sekarang begini:
+
+| Langkah | Kenapa |
+|---|---|
+| Perubahan terakhir ditarik **sebelum** keputusan dikirim | Levelnya jadi yang benar, bukan yang tertinggal |
+| Kalau ternyata tidak ada lagi level berjalan, keputusannya tidak dikirim | Pengajuan itu sudah diputuskan orang lain; mengirimnya hanya menghasilkan penolakan |
+| Ditolak server ⇒ perubahan ditarik lagi, lalu layarnya **dimuat ulang** | Pemberitahuan bisa membawa aksi muat ulang; `UserError` tidak |
+
+Penyegarannya dijalankan di **transaksi tersendiri** yang commit sendiri
+(`_refresh_recent_from_decision`). Bukan pilihan gaya: `UserError` membatalkan
+transaksi yang sedang berjalan, jadi penyegaran yang ditulis di transaksi yang sama
+akan ikut hilang bersama pesannya — dan layarnya kembali menampilkan keadaan yang
+baru saja dibantah server.
+
+Penolakan server karena itu dikembalikan sebagai **pemberitahuan**, bukan galat.
+Perbedaannya bukan kosmetik: pemberitahuan bisa membawa aksi muat ulang, sedangkan
+galat tidak, dan yang dibutuhkan pengguna di situasi ini adalah layar yang
+menampilkan keadaan barunya.
+
+### Kenapa salinannya bisa tertinggal
+
+Pemberitahuan webhook (`leave.updated`) yang mendorong penyegaran itu **per
+endpoint terdaftar**. Selama pendaftarannya masih menunjuk instance lain, tidak ada
+yang memberi tahu Odoo bahwa pengajuannya berubah, dan yang menyegarkan hanya cron
+— jadi salinannya bisa tertinggal sampai jadwal berikutnya. Gejalanya persis seperti
+di atas: tombolnya masih ada pada level yang sudah lewat.
+
+### Kesegaran di layar, dan syarat tombolnya
+
+Daftar sudah menyegarkan dirinya saat dibuka (`web_search_read` di mixin cermin),
+tetapi formulir membacanya lewat jalur lain - termasuk saat barisnya diklik dari
+daftar.
+
+Konfigurasi koneksinya dicari lewat `_config_for_company`, bukan lewat pencarian
+langsung pada perusahaan yang sedang aktif. Pengguna cabang berperusahaan aktif
+perusahaan cabang, dan di sana tidak ada konfigurasi apa pun; pencarian langsung
+membuat penyegaran halaman diam-diam tidak pernah berjalan untuk mereka - daftar
+maupun formulir - walaupun koneksinya menyala. Karena itu `web_read` pada cermin pengajuan ikut menyegarkan lebih dulu,
+dengan batas jumlah record: membaca banyak baris sekaligus bukan membuka formulir,
+dan penyegaran di situ tidak ada gunanya. Biayanya kecil, karena yang diperiksa
+lebih dulu hanya "ada perubahan?", dan penarikan terjadi kalau memang ada.
+
+Tombolnya ada di **kelima** form pengajuan - cuti, lembur, surat dokter, koreksi
+presensi, tukar shift - dengan blok view yang sama. Bloknya tidak bisa ditulis
+sekali lalu dipakai lima kali: arch view tidak menjalankan QWeb, jadi `t-call` di
+sana tidak akan diperluas.
+
+Tombol keputusannya punya empat syarat, dan keempatnya diperiksa **sebelum**
+tombolnya muncul:
+
+| Syarat | Kalau tidak terpenuhi |
+|---|---|
+| Jenis pengajuannya dilayani | Catatan: jenis ini belum bisa diputuskan dari Odoo |
+| Setelan `Decide Requests from Odoo` menyala | Catatan: setelannya masih mati, beserta cara menyalakannya |
+| Pengguna punya nopeg | Catatan: nopegnya belum diisi, dan Presenly mengenali pemutusnya dari nopeg |
+| Pengguna memang pemegang level yang berjalan | Tidak ada catatan |
+
+Catatan itu hanya muncul untuk orang yang **berhak** di level yang berjalan.
+Pembedaannya disengaja: pengguna lain tidak mencari tombol itu, jadi menjelaskan
+kenapa tombolnya tidak ada hanya menambah kebisingan. Yang berhak, sebaliknya,
+tidak perlu menekan tombol lebih dulu untuk tahu apa yang menghalanginya.
+
+### Kabar ke layar yang sedang terbuka
+
+Pengajuan bisa diputuskan di aplikasi, dan cermin di Odoo baru mengetahuinya saat
+ditarik. Ketika tarikan itu menulis perubahan status atau level, yang dikabari
+lewat bus hanya **dua orang**: pemohonnya, dan pemegang level yang sedang
+berjalan. Menyiarkannya ke semua pengguna berarti memberi tahu bahwa pengajuan itu
+ada, lengkap dengan statusnya.
+
+Isi pesannya **data**, bukan kalimat yang sudah dirangkai: `model`, `id`, status,
+level, total level, dan siapa yang ditunggu. Kalimatnya disusun di sisi klien
+(`static/src/submission_notice/`), supaya bahasanya bahasa penerima, bukan bahasa
+proses sinkronisasi yang kebetulan sedang menjalankan tarikan.
+
+Pesan itu muncul sebagai dialog **bawaan Odoo**, sesuai tingkatannya: `AlertDialog`
+untuk pemberitahuan, `WarningDialog` untuk peringatan, dan `ErrorDialog` untuk
+galat. Dialog buatan sendiri tidak dipakai: bentuk, ukuran huruf, dan tombolnya
+sudah dikenal pengguna, dan tidak ada yang perlu dirawat di sini.
+
+Layarnya **disegarkan sendiri**, tetapi hanya ketika yang sedang dibuka adalah
+**record itu sendiri**. Pengguna lain yang kebetulan membuka daftar tidak
+diganggu: memuat ulang daftar membuang posisi gulir dan pencariannya, dan itu
+kerugian yang tidak sebanding dengan kabar yang bisa dilihat kapan saja. Formulir
+cermin juga hanya-baca, jadi memuat ulangnya tidak mungkin membuang isian siapa
+pun.
+
+Efek sampingnya yang justru diminta: sesudah level itu diputuskan, tombol
+**Approve/Reject** hilang dengan sendirinya. Tombolnya muncul dari perhitungan atas
+level yang sedang berjalan, dan penyegaran itulah yang membuat hitungannya ulang.
+
+Hal yang sama berlaku untuk jalur tombol: keputusan yang ditolak server dijelaskan
+lewat dialog bawaan yang sama, bukan toast. Toast menghilang sendiri, dan pesan
+yang hilang sebelum dibaca sama saja dengan tombol yang tidak bekerja.
+
 ## Pemberitahuan perubahan
 
 `employee.created/updated`, `client.created/updated`, `work_location.created/updated`.

@@ -1,6 +1,6 @@
 {
     'name': 'Presenly SaaS: HR Integration',
-    'version': '19.0.1.1.0',
+    'version': '19.0.1.2.0',
     'category': 'Productivity',
     'summary': 'Sinkronkan pegawai antara Presenly SaaS dan hr.employee',
     'description': """
@@ -28,10 +28,20 @@ Rincian pemetaan kolom dan aturan konflik ada di `PLAN_HR_SYNC.md`.
     'author': 'Presenly',
     'license': 'LGPL-3',
     'depends': ['presenly_saas', 'hr', 'hr_homeworking'],
+    'assets': {
+        # Kabar pengajuan yang bergerak, dan dialog untuk keputusannya.
+        'web.assets_backend': [
+            'presenly_saas_hr/static/src/submission_notice/submission_notice.js',
+        ],
+    },
     'excludes': ['hr_attendance', 'hr_holidays'],
     'data': [
         'security/ir.model.access.csv',
         'security/presenly_saas_approver.xml',
+        'security/presenly_saas_submission_rules.xml',
+        # Dimuat sesudah dua berkas di atas: ia mempersempit aturan yang dibuat
+        # `presenly_saas` dan menambah aturan milik sendiri.
+        'security/presenly_saas_own_data_rules.xml',
         'data/ir_cron_data.xml',
         'views/presenly_saas_employee_views.xml',
         'views/presenly_saas_employee_menus.xml',

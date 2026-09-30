@@ -18,15 +18,26 @@
          Settings native Odoo, di blok "Presenly SaaS", supaya hanya ada satu
          tempat untuk mengubahnya. Menu aplikasi ini hanya berisi hal yang
          bersifat operasional. -->
+    <!--
+         Menu induk dibuka untuk semua pengguna internal: yang membatasi isinya
+         adalah aturan akses per baris, bukan menunya. Tanpa ini, pegawai tidak
+         punya jalan sama sekali untuk melihat presensi dan pengajuannya sendiri.
+
+         Konsekuensinya anak-anak yang bukan untuk mereka harus dikunci sendiri:
+         menu yang induknya tersaring grup tetap muncul sebagai butir lepas -
+         pernah terjadi pada Monitoring, dan itu ditemukan dari percobaan, bukan
+         dari membaca kode.
+    -->
     <menuitem id="menu_presenly_saas_root"
               name="Presenly SaaS"
               sequence="95"
               web_icon="presenly_saas,static/description/icon.png"
-              groups="presenly_saas.group_presenly_saas_manager"/>
+              groups="base.group_user"/>
 
     <menuitem id="menu_presenly_saas_subscription"
               name="Subscription"
               parent="menu_presenly_saas_root"
+              groups="presenly_saas.group_presenly_saas_manager"
               action="action_presenly_saas_open_subscription"
               sequence="10"/>
 
@@ -37,7 +48,7 @@
               name="Attendance"
               parent="menu_presenly_saas_root"
               sequence="20"
-              groups="presenly_saas.group_presenly_saas_manager"/>
+              groups="base.group_user"/>
 
     <menuitem id="menu_presenly_saas_attendance_log"
               name="Attendance Data"
@@ -45,9 +56,11 @@
               action="action_presenly_saas_attendance_log"
               sequence="10"/>
 
+    <!-- Lintas pegawai: bukan untuk pengguna biasa. -->
     <menuitem id="menu_presenly_saas_monitoring"
               name="Monitoring"
               parent="menu_presenly_saas_attendance"
+              groups="presenly_saas.group_presenly_saas_manager"
               action="action_presenly_saas_monitoring"
               sequence="20"/>
 
@@ -57,7 +70,7 @@
               name="Requests"
               parent="menu_presenly_saas_root"
               sequence="35"
-              groups="presenly_saas.group_presenly_saas_manager"/>
+              groups="base.group_user"/>
 
     <menuitem id="menu_presenly_saas_leave"
               name="Leave"
@@ -92,12 +105,14 @@
     <menuitem id="menu_presenly_saas_timesheet"
               name="Timesheet"
               parent="menu_presenly_saas_root"
+              groups="presenly_saas.group_presenly_saas_manager"
               action="action_presenly_saas_timesheet"
               sequence="37"/>
 
     <menuitem id="menu_presenly_saas_sync_log"
               name="Sync Log"
               parent="menu_presenly_saas_root"
+              groups="presenly_saas.group_presenly_saas_manager"
               action="action_presenly_saas_sync_log"
               sequence="50"/>
 

@@ -264,7 +264,13 @@ class TestPresenlyPivotMeasures(TransactionCase):
 
     def test_cermin_lain_juga_tidak_menawarkan_external_id(self):
         # Mixin dipakai seluruh cermin, jadi satu perbaikan berlaku untuk semua.
+        # Sebagian cermin ada di modul lain (`presenly.saas.employee` di
+        # `presenly_saas_hr`), dan modul itu bisa saja tidak terpasang. Yang
+        # tidak ada dilewati, bukan dianggap gagal: yang diperiksa di sini
+        # mixin-nya, bukan kelengkapan modulnya.
         for model_name in ('presenly.saas.employee', 'presenly.saas.timesheet',
                            'presenly.saas.leave', 'presenly.saas.project'):
+            if model_name not in self.env.registry.models:
+                continue
             ukuran = self._ukuran_pivot(model_name)
             self.assertNotIn('external_id', ukuran, model_name)

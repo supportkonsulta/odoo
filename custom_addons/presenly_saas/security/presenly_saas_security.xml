@@ -41,5 +41,130 @@
         <field name="global" eval="True"/>
         <field name="domain_force">[('company_id', 'in', company_ids)]</field>
     </record>
+    <!-- Pemisahan data pengajuan: per perusahaan, lalu per cabang.
+
+         Bentuknya tiga aturan per model, dan ketiganya memang diperlukan:
+
+         1. **Cabang** (pengguna internal). Satu baris pengajuan terjadi di satu
+            cabang, dan baris cerminnya berada di perusahaan pusat, jadi aturan
+            perusahaan biasa akan menyembunyikannya dari pengguna cabang. Karena
+            itu yang dibandingkan adalah **perusahaan cabangnya**
+            (`tenant_client_company_id`) dengan perusahaan yang diizinkan
+            pengguna. Dibandingkan sebagai perusahaan, bukan sebagai id klien,
+            supaya tidak ada dua tenant yang bisa tertukar hanya karena id
+            kliennya kebetulan sama.
+         2. **Pengelola integrasi** melihat seluruh cabang tenant: `company_ids`
+            di situ adalah pagar tenant-nya, karena baris cermin berada di
+            perusahaan pusat.
+         3. **HR** melihat seluruh cabang tenant. Aturannya ada di
+            `presenly_saas_hr`, karena modul ini dipakai juga tanpa HR.
+
+         Baris yang cabangnya belum diketahui tidak terlihat oleh pengguna
+         cabang, dan hanya terlihat oleh pengelola dan HR. Sengaja: baris tanpa
+         cabang bisa milik cabang mana pun, jadi menampilkannya ke semua orang
+         berarti membocorkan cabang lain — sedangkan jumlahnya dilaporkan di log
+         supaya bisa ditindaklanjuti.
+    -->
+
+    <record id="rule_presenly_saas_overtime_branch" model="ir.rule">
+        <field name="name">Presenly SaaS overtime: own branch only</field>
+        <field name="model_id" ref="model_presenly_saas_overtime"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="domain_force">[('tenant_client_company_id', 'in', company_ids)]</field>
+    </record>
+
+    <record id="rule_presenly_saas_overtime_branch_manager" model="ir.rule">
+        <field name="name">Presenly SaaS overtime: managers see every branch</field>
+        <field name="model_id" ref="model_presenly_saas_overtime"/>
+        <field name="groups" eval="[(4, ref('group_presenly_saas_manager'))]"/>
+        <!-- Seluruh cabang di perusahaan yang ia diizinkan: itulah pagar tenant,
+             dan baris cermin memang berada di perusahaan pusat. -->
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_presenly_saas_leave_branch" model="ir.rule">
+        <field name="name">Presenly SaaS leave: own branch only</field>
+        <field name="model_id" ref="model_presenly_saas_leave"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="domain_force">[('tenant_client_company_id', 'in', company_ids)]</field>
+    </record>
+
+    <record id="rule_presenly_saas_leave_branch_manager" model="ir.rule">
+        <field name="name">Presenly SaaS leave: managers see every branch</field>
+        <field name="model_id" ref="model_presenly_saas_leave"/>
+        <field name="groups" eval="[(4, ref('group_presenly_saas_manager'))]"/>
+        <!-- Seluruh cabang di perusahaan yang ia diizinkan: itulah pagar tenant,
+             dan baris cermin memang berada di perusahaan pusat. -->
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_presenly_saas_medical_certificate_branch" model="ir.rule">
+        <field name="name">Presenly SaaS medical certificate: own branch only</field>
+        <field name="model_id" ref="model_presenly_saas_medical_certificate"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="domain_force">[('tenant_client_company_id', 'in', company_ids)]</field>
+    </record>
+
+    <record id="rule_presenly_saas_medical_certificate_branch_manager" model="ir.rule">
+        <field name="name">Presenly SaaS medical certificate: managers see every branch</field>
+        <field name="model_id" ref="model_presenly_saas_medical_certificate"/>
+        <field name="groups" eval="[(4, ref('group_presenly_saas_manager'))]"/>
+        <!-- Seluruh cabang di perusahaan yang ia diizinkan: itulah pagar tenant,
+             dan baris cermin memang berada di perusahaan pusat. -->
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_presenly_saas_attendance_correction_branch" model="ir.rule">
+        <field name="name">Presenly SaaS attendance correction: own branch only</field>
+        <field name="model_id" ref="model_presenly_saas_attendance_correction"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="domain_force">[('tenant_client_company_id', 'in', company_ids)]</field>
+    </record>
+
+    <record id="rule_presenly_saas_attendance_correction_branch_manager" model="ir.rule">
+        <field name="name">Presenly SaaS attendance correction: managers see every branch</field>
+        <field name="model_id" ref="model_presenly_saas_attendance_correction"/>
+        <field name="groups" eval="[(4, ref('group_presenly_saas_manager'))]"/>
+        <!-- Seluruh cabang di perusahaan yang ia diizinkan: itulah pagar tenant,
+             dan baris cermin memang berada di perusahaan pusat. -->
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_presenly_saas_shift_swap_branch" model="ir.rule">
+        <field name="name">Presenly SaaS shift swap: own branch only</field>
+        <field name="model_id" ref="model_presenly_saas_shift_swap"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="domain_force">[('tenant_client_company_id', 'in', company_ids)]</field>
+    </record>
+
+    <record id="rule_presenly_saas_shift_swap_branch_manager" model="ir.rule">
+        <field name="name">Presenly SaaS shift swap: managers see every branch</field>
+        <field name="model_id" ref="model_presenly_saas_shift_swap"/>
+        <field name="groups" eval="[(4, ref('group_presenly_saas_manager'))]"/>
+        <!-- Seluruh cabang di perusahaan yang ia diizinkan: itulah pagar tenant,
+             dan baris cermin memang berada di perusahaan pusat. -->
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <!-- Cermin presensi: pagar perusahaan.
+
+         Model ini sebelumnya tidak punya aturan sama sekali. Karena Odoo tidak
+         menambahkan saringan perusahaan sendiri (company_ids hanya variabel yang
+         bisa dipakai di domain), artinya baris dari **semua** perusahaan terlihat
+         oleh pengguna internal mana pun yang membuka daftarnya.
+
+         Aturan pertama adalah jaring untuk pemasangan tanpa `presenly_saas_hr`:
+         tanpa HR tidak ada cara mengenali "milik sendiri", jadi yang bisa
+         dipagari hanya perusahaannya. Modul HR memindahkan aturan itu ke grup
+         Approver begitu terpasang, dan menambahkan aturan "milik sendiri". -->
+
+    <record id="rule_presenly_saas_attendance_log_company" model="ir.rule">
+        <field name="name">Presenly SaaS attendance log: own companies only</field>
+        <field name="model_id" ref="model_presenly_saas_attendance_log"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+
+    <record id="rule_presenly_saas_attendance_log_manager" model="ir.rule">
+        <field name="name">Presenly SaaS attendance log: managers see their companies</field>
+        <field name="model_id" ref="model_presenly_saas_attendance_log"/>
+        <field name="groups" eval="[(4, ref('group_presenly_saas_manager'))]"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
 
 </odoo>
