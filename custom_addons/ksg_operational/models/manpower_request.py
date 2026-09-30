@@ -11,7 +11,7 @@ class KsgOperationalManpowerRequest(models.Model):
     tanggal_pengajuan = fields.Date(string='Tanggal Pengajuan', default=fields.Date.context_today)
     kebutuhan_waktu = fields.Char(string='Kebutuhan Durasi Lapangan', placeholder='Contoh: 12 Bulan / Mulai 1 Oktober 2026')
 
-    line_ids = fields.One2many('ksg.operational.manpower.request.line', 'request_id', string='Rincian Kebutuhan SDM')
+    plot_line_ids = fields.One2many('ksg.operational.manpower.plot.line', 'request_id', string='Plotingan Kebutuhan SDM')
     total_tenaga_kerja = fields.Integer(string='Total Kebutuhan Personil', compute='_compute_total_tenaga_kerja', store=True)
 
     catatan = fields.Text(string='Catatan Operasional untuk Tim HC')
@@ -20,14 +20,15 @@ class KsgOperationalManpowerRequest(models.Model):
     state = fields.Selection([
         ('draft', 'Draft (Operasional)'),
         ('submitted', 'Diajukan ke HC'),
-        ('approved', 'Disetujui / Terpenuhi'),
+        ('in_progress', 'Diproses Rekrutmen HC'),
+        ('approved', 'Disetujui / Terpenuhi HC'),
         ('rejected', 'Ditolak')
     ], string='Status', default='draft', tracking=True)
 
-    @api.depends('line_ids.jumlah')
+    @api.depends('plot_line_ids.total_tk')
     def _compute_total_tenaga_kerja(self):
         for rec in self:
-            rec.total_tenaga_kerja = sum(rec.line_ids.mapped('jumlah'))
+            rec.total_tenaga_kerja = sum(rec.plot_line_ids.mapped('total_tk'))
 
     def action_submit(self):
         self.write({'state': 'submitted', 'alasan_penolakan': False})
@@ -60,11 +61,37 @@ class KsgOperationalManpowerRequest(models.Model):
         return super().create(vals_list)
 
 
-class KsgOperationalManpowerRequestLine(models.Model):
-    _name = 'ksg.operational.manpower.request.line'
-    _description = 'Item Permintaan Tenaga Kerja'
+class KsgOperationalManpowerPlotLine(models.Model):
+    _name = 'ksg.operational.manpower.plot.line'
+    _description = 'Plotingan Shift Kebutuhan SDM'
 
     request_id = fields.Many2one('ksg.operational.manpower.request', string='Dokumen SDM', ondelete='cascade')
-    jabatan = fields.Char(string='Posisi / Jabatan yang Dibutuhkan', required=True, placeholder='Contoh: Cleaning Service, Team Leader, Teknisi ME, Gardener')
-    jumlah = fields.Integer(string='Jumlah (Orang)', required=True, default=1)
-    kualifikasi_khusus = fields.Char(string='Kualifikasi / Keterangan Khusus', placeholder='Contoh: Pria, maks 35 th, punya sertifikat K3')
+    jabatan = fields.Char(string='Posisi / Jabatan yang Dibutuhkan', required=True, placeholder='Contoh: Team Leader, CSO, Teknisi')
+    shift_1 = fields.Integer(string='Shift 1 (Pagi)', default=0)
+    shift_2 = fields.Integer(string='Shift 2 (Siang/Sore)', default=0)
+    libur = fields.Integer(string='Cadangan / Libur', default=0)
+    total_tk = fields.Integer(string='Total Personil (TK)', compute='_compute_total_tk', store=True)
+    kualifikasi_khusus = fields.Char(string='Kualifikasi / Keterangan Khusus', placeholder='Contoh: Pria, maks 35 th, sertifikat K3')
+
+    @api.depends('shift_1', 'shift_2', 'libur')
+    def _compute_total_tk(self):
+        for rec in self:
+            rec.total_tk = rec.shift_1 + rec.shift_2 + rec.libur
+
+
+# Model legacy agar kompatibel dengan tabel database lama
+class KsgOperationalManpowerRequestLine(models.Model):
+    _name = 'ksg.operational.manpower.request.line'
+    _description = 'Permintaan SDM Line (Legacy)'
+    request_id = fields.Many2one('ksg.operational.manpower.request', string='Dokumen SDM', ondelete='cascade')
+    jabatan = fields.Char(string='Posisi / Jabatan')
+    jumlah = fields.Integer(string='Jumlah (Orang)', default=1)
+    kualifikasi_khusus = fields.Char(string='Kualifikasi Khusus')
+
+
+class KsgOperationalManpowerCostLine(models.Model):
+    _name = 'ksg.operational.manpower.cost.line'
+    _description = 'Rincian Biaya SDM (Legacy)'
+    request_id = fields.Many2one('ksg.operational.manpower.request', string='Dokumen SDM', ondelete='cascade')
+    jabatan = fields.Char(string='Jabatan')
+    unit_tk = fields.Integer(string='Unit TK', default=1)

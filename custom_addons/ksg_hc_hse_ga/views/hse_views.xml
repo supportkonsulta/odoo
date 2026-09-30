@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- GATE SAFETY INDUCTION & WORKING PERMIT -->
+    <record id="view_hse_safety_induction_list" model="ir.ui.view">
+        <field name="name">ksg.hse.safety.induction.list</field>
+        <field name="model">ksg.hse.safety.induction</field>
+        <field name="arch" type="xml">
+            <list string="Gate Safety Induction &amp; Working Permit">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="is_proyek_lapangan"/>
+                <field name="safety_induction_ready" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_hse_safety_induction" model="ir.actions.act_window">
+        <field name="name">Safety Induction &amp; Permit</field>
+        <field name="res_model">ksg.hse.safety.induction</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- MANPOWER EFFECTIVE HOURS -->
+    <record id="view_hse_manpower_hours_list" model="ir.ui.view">
+        <field name="name">ksg.hse.manpower.hours.list</field>
+        <field name="model">ksg.hse.manpower.hours</field>
+        <field name="arch" type="xml">
+            <list string="Manpower Effective Hours">
+                <field name="name"/>
+                <field name="cakupan_tenaga_kerja"/>
+                <field name="periode_bulan"/>
+                <field name="tahun"/>
+                <field name="total_jam_kerja"/>
+                <field name="jumlah_tenaga_kerja"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_hse_manpower_hours" model="ir.actions.act_window">
+        <field name="name">Manpower Effective Hours</field>
+        <field name="res_model">ksg.hse.manpower.hours</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- e-FORM KECELAKAAN KERJA KK1 / KK2 -->
+    <record id="view_hse_accident_report_list" model="ir.ui.view">
+        <field name="name">ksg.hse.accident.report.list</field>
+        <field name="model">ksg.hse.accident.report</field>
+        <field name="arch" type="xml">
+            <list string="Laporan Kecelakaan Kerja (KK1/KK2)" decoration-danger="is_late == True">
+                <field name="name"/>
+                <field name="jenis_form"/>
+                <field name="worker_id"/>
+                <field name="project_id"/>
+                <field name="tanggal_kejadian"/>
+                <field name="deadline_2x24"/>
+                <field name="is_late" widget="badge"/>
+                <field name="tingkat_keparahan"/>
+                <field name="status_klaim_bpjs" widget="badge"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_hse_accident_report" model="ir.actions.act_window">
+        <field name="name">Laporan Kecelakaan (KK1/KK2)</field>
+        <field name="res_model">ksg.hse.accident.report</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

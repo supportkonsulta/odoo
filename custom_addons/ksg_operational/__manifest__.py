@@ -2,8 +2,8 @@
     'name': 'KSG Operational Management',
     'version': '19.0.1.0.0',
     'category': 'Operations',
-    'summary': 'Manajemen Operasional: SDM, Perlengkapan, Pengadaan Dana, Presensi, BAST, & Laporan Pekerjaan',
-    'author': 'Dewa Bagus Martsetyo - PT Multi Clean Global',
+    'summary': 'Manajemen Operasional',
+    'author': 'IT KSG',
     'depends': ['base', 'mail', 'ksg_sales'],
     'data': [
         'security/ir.model.access.csv',

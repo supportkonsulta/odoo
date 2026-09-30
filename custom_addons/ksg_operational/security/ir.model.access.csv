@@ -1,6 +1,8 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_ksg_operational_manpower_request,ksg.operational.manpower.request,model_ksg_operational_manpower_request,base.group_user,1,1,1,1
+access_ksg_operational_manpower_plot_line,ksg.operational.manpower.plot.line,model_ksg_operational_manpower_plot_line,base.group_user,1,1,1,1
 access_ksg_operational_manpower_request_line,ksg.operational.manpower.request.line,model_ksg_operational_manpower_request_line,base.group_user,1,1,1,1
+access_ksg_operational_manpower_cost_line,ksg.operational.manpower.cost.line,model_ksg_operational_manpower_cost_line,base.group_user,1,1,1,1
 access_ksg_operational_supply_request,ksg.operational.supply.request,model_ksg_operational_supply_request,base.group_user,1,1,1,1
 access_ksg_operational_supply_line,ksg.operational.supply.line,model_ksg_operational_supply_line,base.group_user,1,1,1,1
 access_ksg_operational_hpp,ksg.operational.hpp,model_ksg_operational_hpp,base.group_user,1,1,1,1

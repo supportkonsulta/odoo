@@ -1,0 +1,16 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ksg_sales_worker,ksg.sales.worker,model_ksg_sales_worker,base.group_user,1,1,1,1
+access_ksg_hc_manpower_cost_sheet,ksg.hc.manpower.cost.sheet,model_ksg_hc_manpower_cost_sheet,base.group_user,1,1,1,1
+access_ksg_hc_manpower_cost_sheet_line,ksg.hc.manpower.cost.sheet.line,model_ksg_hc_manpower_cost_sheet_line,base.group_user,1,1,1,1
+access_ksg_hc_assignment_request,ksg.hc.assignment.request,model_ksg_hc_assignment_request,base.group_user,1,1,1,1
+access_ksg_hc_recruitment,ksg.hc.recruitment,model_ksg_hc_recruitment,base.group_user,1,1,1,1
+access_ksg_hc_payroll_sync,ksg.hc.payroll.sync,model_ksg_hc_payroll_sync,base.group_user,1,1,1,1
+access_ksg_hc_exit_clearance,ksg.hc.exit.clearance,model_ksg_hc_exit_clearance,base.group_user,1,1,1,1
+access_ksg_hc_exit_clearance_line,ksg.hc.exit.clearance.line,model_ksg_hc_exit_clearance_line,base.group_user,1,1,1,1
+access_ksg_hc_sppd_sync,ksg.hc.sppd.sync,model_ksg_hc_sppd_sync,base.group_user,1,1,1,1
+access_ksg_hse_safety_induction,ksg.hse.safety.induction,model_ksg_hse_safety_induction,base.group_user,1,1,1,1
+access_ksg_hse_manpower_hours,ksg.hse.manpower.hours,model_ksg_hse_manpower_hours,base.group_user,1,1,1,1
+access_ksg_hse_accident_report,ksg.hse.accident.report,model_ksg_hse_accident_report,base.group_user,1,1,1,1
+access_ksg_ga_request,ksg.ga.request,model_ksg_ga_request,base.group_user,1,1,1,1
+access_ksg_ga_umo,ksg.ga.umo,model_ksg_ga_umo,base.group_user,1,1,1,1
+access_ksg_ga_correspondence,ksg.ga.correspondence,model_ksg_ga_correspondence,base.group_user,1,1,1,1

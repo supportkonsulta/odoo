@@ -6,13 +6,18 @@
         <field name="arch" type="xml">
             <form string="Permintaan Tenaga Kerja Lapangan">
                 <header>
+                    <!-- Operasional HANYA bisa mengirimkan ke HC & setel ulang jika ditolak -->
                     <button name="action_submit" type="object" string="Kirimkan ke HC" class="btn-primary" invisible="state != 'draft'"/>
-                    <button name="action_approve" type="object" string="Setujui / Terpenuhi" class="btn-success" invisible="state != 'submitted'"/>
-                    <button name="action_reject_wizard" type="object" string="Tolak Permintaan" class="btn-danger" invisible="state != 'submitted'"/>
-                    <button name="action_reset_draft" type="object" string="Setel Draft" invisible="state not in ['rejected']"/>
+                    <button name="action_reset_draft" type="object" string="Setel Ulang ke Draft" invisible="state not in ['rejected']"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,submitted,approved"/>
                 </header>
                 <sheet>
+                    <div class="alert alert-info" role="alert" invisible="state != 'submitted'">
+                        <p class="mb-0"><i class="fa fa-info-circle me-1"/> <strong>Permintaan telah diajukan ke HC.</strong> Menunggu peninjauan, kalkulasi upah/biaya, dan persetujuan oleh Tim Human Capital (HC).</p>
+                    </div>
+                    <div class="alert alert-success" role="alert" invisible="state != 'approved'">
+                        <p class="mb-0"><i class="fa fa-check-circle me-1"/> <strong>Telah Disetujui oleh HC.</strong> Rincian biaya dan perhitungan SDM telah disahkan untuk acuan HPP Penjualan.</p>
+                    </div>
                     <div class="alert alert-danger" role="alert" invisible="state != 'rejected'">
                         <h4 class="alert-heading">Permintaan SDM Ditolak oleh HC!</h4>
                         <p class="mb-0"><strong>Alasan Penolakan: </strong><field name="alasan_penolakan" readonly="1"/></p>
@@ -28,25 +33,28 @@
                             <field name="project_id" options="{'no_create': True}" readonly="state != 'draft'"/>
                             <field name="tanggal_pengajuan" readonly="state != 'draft'"/>
                         </group>
-                        <group string="Kebutuhan Penugasan">
+                        <group string="Kebutuhan Penugasan Lapangan">
                             <field name="kebutuhan_waktu" placeholder="Contoh: 12 Bulan / Mulai 1 Oktober 2026" readonly="state != 'draft'"/>
                             <field name="total_tenaga_kerja" class="text-primary fs-4 fw-bold"/>
                         </group>
                     </group>
 
                     <notebook>
-                        <page string="Daftar Posisi &amp; Jumlah Tenaga Kerja yang Dibutuhkan" name="sdm_lines">
-                            <field name="line_ids" readonly="state != 'draft'">
+                        <page string="Plotingan Shift &amp; Posisi Tenaga Kerja (Operasional)" name="plot_lines">
+                            <field name="plot_line_ids" readonly="state != 'draft'">
                                 <list editable="bottom">
-                                    <field name="jabatan" placeholder="Contoh: Cleaning Service, Team Leader, Teknisi ME"/>
-                                    <field name="jumlah" sum="Total Personil"/>
-                                    <field name="kualifikasi_khusus" placeholder="Kriteria / keahlian khusus..."/>
+                                    <field name="jabatan" placeholder="Contoh: TEAM LEADER, CSO"/>
+                                    <field name="shift_1" string="Shift 1"/>
+                                    <field name="shift_2" string="Shift 2"/>
+                                    <field name="libur" string="Libur"/>
+                                    <field name="total_tk" sum="Total TK" string="Total"/>
+                                    <field name="kualifikasi_khusus"/>
                                 </list>
                             </field>
                         </page>
-                        <page string="Catatan Operasional untuk HC" name="catatan_page">
+                        <page string="Catatan untuk Tim HC" name="catatan_page">
                             <group>
-                                <field name="catatan" placeholder="Tuliskan catatan tambahan untuk tim HC / Recruitment..." readonly="state != 'draft'"/>
+                                <field name="catatan" placeholder="Catatan operasional tambahan untuk tim HC..." readonly="state != 'draft'"/>
                             </group>
                         </page>
                     </notebook>

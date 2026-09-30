@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- TOP MENU: HUMAN CAPITAL (HC) -->
+    <menuitem id="menu_ksg_hc_root" 
+              name="Human Capital (HC)" 
+              sequence="26" 
+              web_icon="fa fa-users"/>
+
+    <!-- SUB-MENU: SDM PROYEK (Menggantikan Kalkulasi SDM & Approval) -->
+    <menuitem id="menu_hc_sdm_calculation_sub" 
+              name="SDM Proyek" 
+              parent="menu_ksg_hc_root" 
+              sequence="10"/>
+
+    <menuitem id="menu_hc_cost_sheet_action" 
+              name="Permintaan SDM &amp; Kalkulasi HPP" 
+              parent="menu_hc_sdm_calculation_sub" 
+              action="action_hc_manpower_cost_sheet" 
+              sequence="10"/>
+
+    <menuitem id="menu_hc_assignment_action" 
+              name="Penetapan Assignment Proyek" 
+              parent="menu_hc_sdm_calculation_sub" 
+              action="action_hc_assignment_request" 
+              sequence="20"/>
+
+    <menuitem id="menu_hc_recruitment_sub" 
+              name="Rekrutmen &amp; Kepegawaian" 
+              parent="menu_ksg_hc_root" 
+              sequence="20"/>
+
+    <menuitem id="menu_hc_worker_action" 
+              name="Master Data Tenaga Kerja" 
+              parent="menu_hc_recruitment_sub" 
+              action="action_ksg_sales_worker" 
+              sequence="5"/>
+
+    <menuitem id="menu_hc_recruitment_action" 
+              name="Rekrutmen &amp; PKWT" 
+              parent="menu_hc_recruitment_sub" 
+              action="action_hc_recruitment" 
+              sequence="10"/>
+
+    <menuitem id="menu_hc_exit_clearance_action" 
+              name="Exit Clearance (Resign H-30)" 
+              parent="menu_hc_recruitment_sub" 
+              action="action_hc_exit_clearance" 
+              sequence="20"/>
+
+    <menuitem id="menu_hc_payroll_sub" 
+              name="Payroll &amp; SPPD" 
+              parent="menu_ksg_hc_root" 
+              sequence="30"/>
+
+    <menuitem id="menu_hc_payroll_action" 
+              name="Integrasi &amp; Approval Payroll" 
+              parent="menu_hc_payroll_sub" 
+              action="action_hc_payroll_sync" 
+              sequence="10"/>
+
+    <!-- TOP MENU: HSE (K3) -->
+    <menuitem id="menu_ksg_hse_root" 
+              name="HSE (K3)" 
+              sequence="27" 
+              web_icon="fa fa-shield"/>
+
+    <menuitem id="menu_hse_safety_induction_action" 
+              name="Safety Induction &amp; Permit" 
+              parent="menu_ksg_hse_root" 
+              action="action_hse_safety_induction" 
+              sequence="10"/>
+
+    <menuitem id="menu_hse_manpower_hours_action" 
+              name="Manpower Effective Hours" 
+              parent="menu_ksg_hse_root" 
+              action="action_hse_manpower_hours" 
+              sequence="20"/>
+
+    <menuitem id="menu_hse_accident_action" 
+              name="Laporan Kecelakaan (KK1/KK2)" 
+              parent="menu_ksg_hse_root" 
+              action="action_hse_accident_report" 
+              sequence="30"/>
+
+    <!-- TOP MENU: GENERAL AFFAIRS (GA) -->
+    <menuitem id="menu_ksg_ga_root" 
+              name="General Affairs (GA)" 
+              sequence="28" 
+              web_icon="fa fa-building-o"/>
+
+    <menuitem id="menu_ga_request_action" 
+              name="Ticketing Permintaan GA" 
+              parent="menu_ksg_ga_root" 
+              action="action_ga_request" 
+              sequence="10"/>
+
+    <menuitem id="menu_ga_umo_action" 
+              name="Pencairan Dana UMO" 
+              parent="menu_ksg_ga_root" 
+              action="action_ga_umo" 
+              sequence="20"/>
+
+    <menuitem id="menu_ga_correspondence_action" 
+              name="Surat-Menyurat &amp; Arsip" 
+              parent="menu_ksg_ga_root" 
+              action="action_ga_correspondence" 
+              sequence="30"/>
+</odoo>

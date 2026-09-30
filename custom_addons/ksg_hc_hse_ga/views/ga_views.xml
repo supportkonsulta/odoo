@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- GA REQUEST TICKETING -->
+    <record id="view_ga_request_list" model="ir.ui.view">
+        <field name="name">ksg.ga.request.list</field>
+        <field name="model">ksg.ga.request</field>
+        <field name="arch" type="xml">
+            <list string="Permintaan Kebutuhan GA" decoration-success="state == 'disetujui'" decoration-warning="state == 'diajukan'">
+                <field name="name"/>
+                <field name="jenis"/>
+                <field name="requester_id"/>
+                <field name="deskripsi"/>
+                <field name="nominal" widget="monetary"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_ga_request" model="ir.actions.act_window">
+        <field name="name">Ticketing Kebutuhan GA</field>
+        <field name="res_model">ksg.ga.request</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- UANG MUKA OPERASIONAL (UMO) -->
+    <record id="view_ga_umo_list" model="ir.ui.view">
+        <field name="name">ksg.ga.umo.list</field>
+        <field name="model">ksg.ga.umo</field>
+        <field name="arch" type="xml">
+            <list string="Pencairan Uang Muka Operasional (UMO)" decoration-success="state == 'dicairkan'">
+                <field name="name"/>
+                <field name="request_id"/>
+                <field name="nominal" widget="monetary"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_ga_umo" model="ir.actions.act_window">
+        <field name="name">Pencairan UMO GA</field>
+        <field name="res_model">ksg.ga.umo</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- SURAT MENYURAT & PENOMORAN OTOMATIS -->
+    <record id="view_ga_correspondence_list" model="ir.ui.view">
+        <field name="name">ksg.ga.correspondence.list</field>
+        <field name="model">ksg.ga.correspondence</field>
+        <field name="arch" type="xml">
+            <list string="Surat-Menyurat &amp; Arsip Digital">
+                <field name="name"/>
+                <field name="jenis"/>
+                <field name="pengelola"/>
+                <field name="tanggal"/>
+                <field name="perihal"/>
+                <field name="akses_terbatas"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_ga_correspondence" model="ir.actions.act_window">
+        <field name="name">Surat-Menyurat &amp; Arsip</field>
+        <field name="res_model">ksg.ga.correspondence</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

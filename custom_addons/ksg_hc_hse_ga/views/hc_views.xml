@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- MASTER DATA TENAGA KERJA (HC) -->
+    <record id="view_sales_worker_form" model="ir.ui.view">
+        <field name="name">ksg.sales.worker.form</field>
+        <field name="model">ksg.sales.worker</field>
+        <field name="arch" type="xml">
+            <form string="Data Tenaga Kerja">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" string="Nama Lengkap"/>
+                        <h1><field name="name" placeholder="Nama Karyawan/Pekerja..."/></h1>
+                    </div>
+                    <group>
+                        <group string="Identitas &amp; WLKP">
+                            <field name="nik"/>
+                            <field name="gender"/>
+                            <field name="pendidikan_terakhir"/>
+                            <field name="posisi"/>
+                        </group>
+                        <group string="Status Kepegawaian &amp; Kontak">
+                            <field name="status_kontrak"/>
+                            <field name="status_resign"/>
+                            <field name="kompensasi_locked"/>
+                            <field name="no_hp"/>
+                            <field name="alamat"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sales_worker_list" model="ir.ui.view">
+        <field name="name">ksg.sales.worker.list</field>
+        <field name="model">ksg.sales.worker</field>
+        <field name="arch" type="xml">
+            <list string="Master Data Tenaga Kerja">
+                <field name="name"/>
+                <field name="nik"/>
+                <field name="posisi"/>
+                <field name="gender"/>
+                <field name="pendidikan_terakhir"/>
+                <field name="status_kontrak" widget="badge"/>
+                <field name="status_resign" widget="boolean"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_ksg_sales_worker" model="ir.actions.act_window">
+        <field name="name">Master Data Tenaga Kerja</field>
+        <field name="res_model">ksg.sales.worker</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- BASE DOKUMEN PERHITUNGAN SDM (DETAIL SDM UNTUK PENJUALAN HPP & APPROVAL HC) -->
+    <record id="view_hc_manpower_cost_sheet_form" model="ir.ui.view">
+        <field name="name">ksg.hc.manpower.cost.sheet.form</field>
+        <field name="model">ksg.hc.manpower.cost.sheet</field>
+        <field name="arch" type="xml">
+            <form string="Base Dokumen Perhitungan SDM &amp; Persetujuan HC">
+                <header>
+                    <!-- Tombol Approval & Penolakan HC Berada Disini -->
+                    <button name="action_approve" type="object" string="Setujui Permintaan &amp; Sahkan HPP" class="btn-success" invisible="state == 'approved'"/>
+                    <button name="action_reject_to_operational" type="object" string="Tolak Permintaan ke Operasional" class="btn-danger" invisible="state == 'approved'"/>
+                    <button name="action_pull_from_operational" type="object" string="Tarik / Refresh Data Operasional" class="btn-secondary" icon="fa-refresh" invisible="state == 'approved'"/>
+                    <button name="action_export_excel" type="object" string="Cetak Excel (DETAIL SDM)" class="btn-primary" icon="fa-file-excel-o"/>
+                    <button name="action_reset_draft" type="object" string="Setel Draft" invisible="state != 'approved'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,approved"/>
+                </header>
+                <sheet>
+                    <div class="alert alert-success" role="alert" invisible="state != 'approved'">
+                        <p class="mb-0"><i class="fa fa-check-circle me-1"/> <strong>Dokumen SDM Telah Disetujui &amp; Disahkan.</strong> Nilai rincian biaya SDM ini telah menjadi acuan resmi HPP untuk modul Penjualan.</p>
+                    </div>
+                    <div class="alert alert-danger" role="alert" invisible="state != 'rejected'">
+                        <p class="mb-0"><i class="fa fa-times-circle me-1"/> <strong>Permintaan SDM Ditolak ke Operasional.</strong> Alasan: <field name="alasan_penolakan" readonly="1"/></p>
+                    </div>
+
+                    <div class="oe_title">
+                        <label for="name" string="Nomor Perhitungan SDM HC"/>
+                        <h1 class="text-primary"><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Proyek &amp; Pengajuan Operasional">
+                            <field name="project_id" options="{'no_create': True}" readonly="state == 'approved'"/>
+                            <field name="operational_request_id" options="{'no_create': True}" readonly="1"/>
+                            <field name="tanggal" readonly="state == 'approved'"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group string="Parameter Dasar Upah &amp; BPJS (HC)">
+                            <field name="dasar_umk" widget="monetary" readonly="state == 'approved'"/>
+                            <field name="bpjs_kes_rate" widget="percentage" readonly="state == 'approved'"/>
+                            <field name="bpjs_tk_rate" widget="percentage" readonly="state == 'approved'"/>
+                            <field name="seragam_biaya" widget="monetary" readonly="state == 'approved'"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Kalkulasi Rincian Biaya SDM (HPP Penjualan)" name="cost_page">
+                            <field name="line_ids" readonly="state == 'approved'">
+                                <list editable="bottom">
+                                    <field name="currency_id" column_invisible="True"/>
+                                    <field name="jabatan"/>
+                                    <field name="shift_1"/>
+                                    <field name="shift_2"/>
+                                    <field name="libur"/>
+                                    <field name="unit_tk" sum="Total Personil" string="Total TK"/>
+                                    <field name="gapok" widget="monetary" string="Gaji Pokok"/>
+                                    <field name="tunjangan" widget="monetary" string="Tunjangan"/>
+                                    <field name="total_upah_tetap" widget="monetary"/>
+                                    <field name="bpjs_kes" widget="monetary"/>
+                                    <field name="bpjs_tk" widget="monetary"/>
+                                    <field name="seragam" widget="monetary"/>
+                                    <field name="thr" widget="monetary"/>
+                                    <field name="overhead" widget="monetary"/>
+                                    <field name="fee" widget="monetary"/>
+                                    <field name="unit_cost" widget="monetary"/>
+                                    <field name="total_biaya" widget="monetary" sum="Total Tagihan SDM/Bln"/>
+                                </list>
+                            </field>
+                            <group class="oe_subtotal_footer oe_right">
+                                <field name="total_biaya_sdm_bulan" widget="monetary" class="oe_subtotal_footer_separator"/>
+                                <field name="total_biaya_sdm_tahun" widget="monetary"/>
+                            </group>
+                        </page>
+                        <page string="Catatan Evaluasi HC" name="catatan_page">
+                            <group>
+                                <field name="catatan_hc" placeholder="Catatan internal HC terkait upah, rekrutmen, atau ketentuan klien..." readonly="state == 'approved'"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_hc_manpower_cost_sheet_list" model="ir.ui.view">
+        <field name="name">ksg.hc.manpower.cost.sheet.list</field>
+        <field name="model">ksg.hc.manpower.cost.sheet</field>
+        <field name="arch" type="xml">
+            <list string="Permintaan Masuk &amp; Kalkulasi SDM (HPP)" decoration-success="state == 'approved'" decoration-danger="state == 'rejected'">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="operational_request_id"/>
+                <field name="tanggal"/>
+                <field name="total_tenaga_kerja"/>
+                <field name="total_biaya_sdm_bulan" widget="monetary"/>
+                <field name="total_biaya_sdm_tahun" widget="monetary"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_hc_manpower_cost_sheet" model="ir.actions.act_window">
+        <field name="name">Permintaan SDM &amp; Kalkulasi HPP</field>
+        <field name="res_model">ksg.hc.manpower.cost.sheet</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- ASSIGNMENT PEKERJA OLEH HC -->
+    <record id="view_hc_assignment_request_list" model="ir.ui.view">
+        <field name="name">ksg.hc.assignment.request.list</field>
+        <field name="model">ksg.hc.assignment.request</field>
+        <field name="arch" type="xml">
+            <list string="Penetapan Assignment Proyek">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="worker_id"/>
+                <field name="sumber_kebutuhan"/>
+                <field name="tanggal_assign"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_hc_assignment_request" model="ir.actions.act_window">
+        <field name="name">Penetapan Assignment Proyek</field>
+        <field name="res_model">ksg.hc.assignment.request</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- REKRUTMEN & e-SIGN PKWT -->
+    <record id="view_hc_recruitment_list" model="ir.ui.view">
+        <field name="name">ksg.hc.recruitment.list</field>
+        <field name="model">ksg.hc.recruitment</field>
+        <field name="arch" type="xml">
+            <list string="Rekrutmen &amp; e-Sign PKWT">
+                <field name="name"/>
+                <field name="kandidat_name"/>
+                <field name="posisi"/>
+                <field name="project_id"/>
+                <field name="status_seleksi" widget="badge"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_hc_recruitment" model="ir.actions.act_window">
+        <field name="name">Rekrutmen &amp; PKWT</field>
+        <field name="res_model">ksg.hc.recruitment</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- INTEGRASI PAYROLL & CROSS-CHECK EXCEL -->
+    <record id="view_hc_payroll_sync_list" model="ir.ui.view">
+        <field name="name">ksg.hc.payroll.sync.list</field>
+        <field name="model">ksg.hc.payroll.sync</field>
+        <field name="arch" type="xml">
+            <list string="Integrasi &amp; Approval Payroll">
+                <field name="name"/>
+                <field name="periode"/>
+                <field name="total_gaji_diajukan" widget="monetary"/>
+                <field name="status_kirim" widget="badge"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_hc_payroll_sync" model="ir.actions.act_window">
+        <field name="name">Integrasi &amp; Approval Payroll</field>
+        <field name="res_model">ksg.hc.payroll.sync</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- EXIT CLEARANCE -->
+    <record id="view_hc_exit_clearance_list" model="ir.ui.view">
+        <field name="name">ksg.hc.exit.clearance.list</field>
+        <field name="model">ksg.hc.exit.clearance</field>
+        <field name="arch" type="xml">
+            <list string="Exit Clearance">
+                <field name="name"/>
+                <field name="worker_id"/>
+                <field name="tanggal_pengajuan_resign"/>
+                <field name="tanggal_efektif_resign"/>
+                <field name="notice_period_valid"/>
+                <field name="status" widget="badge"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_hc_exit_clearance" model="ir.actions.act_window">
+        <field name="name">Exit Clearance (Resign)</field>
+        <field name="res_model">ksg.hc.exit.clearance</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>
