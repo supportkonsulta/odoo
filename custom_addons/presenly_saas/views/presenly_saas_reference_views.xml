@@ -1,0 +1,347 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Lokasi kerja ==================================================== -->
+
+    <record id="view_presenly_saas_work_location_list" model="ir.ui.view">
+        <field name="name">presenly.saas.work.location.list</field>
+        <field name="model">presenly.saas.work.location</field>
+        <field name="arch" type="xml">
+            <list string="Work Location" create="false" edit="false" delete="false">
+                <field name="name"/>
+                <field name="internal_company_name"/>
+                <field name="attendance_type"/>
+                <field name="radius_meters"/>
+                <field name="timezone" optional="show"/>
+                <field name="is_active"/>
+                <field name="project_name" optional="hide"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+                <field name="fetched_at" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_presenly_saas_work_location_form" model="ir.ui.view">
+        <field name="name">presenly.saas.work.location.form</field>
+        <field name="model">presenly.saas.work.location</field>
+        <field name="arch" type="xml">
+            <form create="false" edit="false" delete="false">
+                <sheet>
+                    <div class="oe_title">
+                        <h2>
+                            <field name="name" class="oe_inline"/>
+                            <field name="is_active" widget="boolean_toggle" class="ms-2"/>
+                        </h2>
+                        <div class="text-muted">
+                            <field name="internal_company_name" class="oe_inline"/>
+                        </div>
+                    </div>
+
+                    <!-- Dua kolom yang seimbang: aturan geofence di kiri, keterangan
+                         tempatnya di kanan. Sebelumnya lima field berdampingan
+                         dengan satu, dan separuh barisnya kosong. -->
+                    <group>
+                        <group string="Geofence">
+                            <field name="radius_meters"/>
+                            <field name="timezone"/>
+                            <field name="attendance_type"/>
+                        </group>
+                        <group string="Place">
+                            <field name="address"/>
+                            <field name="project_name"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+
+                    <!-- Peta memakai lebar penuh.
+
+                         `colspan="2"` wajib: tanpa itu petanya jatuh ke kolom label
+                         yang hanya selebar 150px, dan kolom nilainya yang lebar
+                         justru kosong.
+
+                         Mode ringkas mematikan tombol pintasannya, dan
+                         `person_field` sengaja tidak diisi: perusahaan internalnya
+                         sudah tertulis di bawah judul, jadi mengulanginya di legenda
+                         hanya menambah baris tanpa menambah keterangan. -->
+                    <group string="Location">
+                        <!-- Wajib ada di arch; lihat catatan di form presensi. -->
+                        <field name="longitude" invisible="1"/>
+                        <!-- Tanpa `office_lat_field`, widget memperlakukan titik ini
+                             sebagai kantornya — memang itu isinya. -->
+                        <field name="latitude" widget="presenly_map" nolabel="1"
+                               colspan="2"
+                               options="{'lon_field': 'longitude',
+                                         'radius_field': 'radius_meters',
+                                         'label_field': 'name',
+                                         'point_label': 'Office location',
+                                         'compact': True}"/>
+                    </group>
+
+                    <!-- Dua kolom di dalamnya supaya tidak menyisakan separuh halaman
+                         kosong; satu grup tanpa kolom dalam akan menumpuk ketiga
+                         barisnya di kiri. -->
+                    <group string="Data Source">
+                        <group>
+                            <field name="fetched_at"/>
+                            <field name="source_created_at"/>
+                        </group>
+                        <group>
+                            <field name="source_updated_at"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_presenly_saas_work_location_search" model="ir.ui.view">
+        <field name="name">presenly.saas.work.location.search</field>
+        <field name="model">presenly.saas.work.location</field>
+        <field name="arch" type="xml">
+            <search string="Work Location">
+                <field name="name"/>
+                <field name="internal_company_name"/>
+                <filter name="active" string="Active" domain="[('is_active', '=', True)]"/>
+                <group>
+                    <filter name="group_company" string="Internal Company"
+                            context="{'group_by': 'internal_company_name'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_presenly_saas_work_location" model="ir.actions.act_window">
+        <field name="name">Work Location</field>
+        <field name="res_model">presenly.saas.work.location</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- Shift =========================================================== -->
+
+    <record id="view_presenly_saas_shift_list" model="ir.ui.view">
+        <field name="name">presenly.saas.shift.list</field>
+        <field name="model">presenly.saas.shift</field>
+        <field name="arch" type="xml">
+            <list string="Shift" create="false" edit="false" delete="false">
+                <field name="shift_name"/>
+                <field name="location_name"/>
+                <field name="start_time"/>
+                <field name="end_time"/>
+                <field name="late_index" optional="show"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+                <field name="fetched_at" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_presenly_saas_shift_search" model="ir.ui.view">
+        <field name="name">presenly.saas.shift.search</field>
+        <field name="model">presenly.saas.shift</field>
+        <field name="arch" type="xml">
+            <search string="Shift">
+                <field name="shift_name"/>
+                <field name="location_name"/>
+                <group>
+                    <filter name="group_location" string="Location"
+                            context="{'group_by': 'location_name'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_presenly_saas_shift" model="ir.actions.act_window">
+        <field name="name">Shift</field>
+        <field name="res_model">presenly.saas.shift</field>
+        <field name="view_mode">list</field>
+        <!-- Shift selalu milik satu lokasi kerja, dan daftarnya jadi masuk akal
+             hanya kalau dikelompokkan begitu. Dijadikan bawaan supaya tidak
+             perlu diklik dulu setiap kali halamannya dibuka. -->
+        <field name="context">{'search_default_group_location': 1}</field>
+    </record>
+
+    <!-- Mode absen ====================================================== -->
+
+    <record id="view_presenly_saas_attendance_mode_list" model="ir.ui.view">
+        <field name="name">presenly.saas.attendance.mode.list</field>
+        <field name="model">presenly.saas.attendance.mode</field>
+        <field name="arch" type="xml">
+            <list string="Attendance Mode" create="false" edit="false" delete="false">
+                <field name="name"/>
+                <field name="fetched_at" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_presenly_saas_attendance_mode" model="ir.actions.act_window">
+        <field name="name">Attendance Mode</field>
+        <field name="res_model">presenly.saas.attendance.mode</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <!-- Hari libur ====================================================== -->
+
+    <record id="view_presenly_saas_holiday_list" model="ir.ui.view">
+        <field name="name">presenly.saas.holiday.list</field>
+        <field name="model">presenly.saas.holiday</field>
+        <field name="arch" type="xml">
+            <list string="Public Holidays" create="false" edit="false" delete="false">
+                <field name="date"/>
+                <field name="name"/>
+                <field name="holiday_type"/>
+                <field name="location_name"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+                <field name="fetched_at" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_presenly_saas_holiday_search" model="ir.ui.view">
+        <field name="name">presenly.saas.holiday.search</field>
+        <field name="model">presenly.saas.holiday</field>
+        <field name="arch" type="xml">
+            <search string="Public Holidays">
+                <field name="name"/>
+                <field name="location_name"/>
+                <filter name="date" string="Date" date="date"/>
+                <group>
+                    <filter name="group_type" string="Type" context="{'group_by': 'holiday_type'}"/>
+                    <filter name="group_location" string="Location"
+                            context="{'group_by': 'location_name'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_presenly_saas_holiday" model="ir.actions.act_window">
+        <field name="name">Public Holidays</field>
+        <field name="res_model">presenly.saas.holiday</field>
+        <!-- Kalender lebih dulu: hari libur dibaca menurut tanggalnya, dan
+             daftarnya cuma jadi tampilan cadangan. -->
+        <field name="view_mode">calendar,list,form</field>
+    </record>
+
+    <record id="view_presenly_saas_holiday_calendar" model="ir.ui.view">
+        <field name="name">presenly.saas.holiday.calendar</field>
+        <field name="model">presenly.saas.holiday</field>
+        <field name="arch" type="xml">
+            <!-- `date` bertipe Date, jadi kalender menampilkannya sebagai
+                 kejadian sehari penuh — tidak ada jam yang perlu dikarang.
+                 `color` memakai jenisnya: libur nasional dan libur perusahaan
+                 berbeda warnanya tanpa perlu difilter dulu. -->
+            <calendar string="Public Holidays" date_start="date" color="holiday_type"
+                      mode="month" create="false" edit="false" delete="false"
+                      quick_create="false">
+                <field name="name"/>
+                <field name="holiday_type"/>
+                <field name="location_name"/>
+            </calendar>
+        </field>
+    </record>
+
+    <record id="view_presenly_saas_holiday_form" model="ir.ui.view">
+        <field name="name">presenly.saas.holiday.form</field>
+        <field name="model">presenly.saas.holiday</field>
+        <field name="arch" type="xml">
+            <form create="false" edit="false" delete="false">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="date"/>
+                            <field name="holiday_type"/>
+                        </group>
+                        <group>
+                            <field name="location_name"/>
+                        </group>
+                    </group>
+                    <group string="Data Source">
+                        <group>
+                            <field name="fetched_at"/>
+                            <field name="source_created_at"/>
+                        </group>
+                        <group>
+                            <field name="source_updated_at"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Setup hari kerja ================================================ -->
+
+    <record id="view_presenly_saas_work_day_setup_list" model="ir.ui.view">
+        <field name="name">presenly.saas.work.day.setup.list</field>
+        <field name="model">presenly.saas.work.day.setup</field>
+        <field name="arch" type="xml">
+            <list string="Work Day Setup" create="false" edit="false" delete="false">
+                <field name="year"/>
+                <field name="location_name"/>
+                <field name="total_days" sum="Total working days"/>
+                <field name="jan" optional="show"/>
+                <field name="feb" optional="hide"/>
+                <field name="mar" optional="hide"/>
+                <field name="apr" optional="hide"/>
+                <field name="may" optional="hide"/>
+                <field name="jun" optional="hide"/>
+                <field name="jul" optional="hide"/>
+                <field name="aug" optional="hide"/>
+                <field name="sep" optional="hide"/>
+                <field name="oct" optional="hide"/>
+                <field name="nov" optional="hide"/>
+                <field name="dec" optional="hide"/>
+                <field name="fetched_at" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_presenly_saas_work_day_setup" model="ir.actions.act_window">
+        <field name="name">Work Day Setup</field>
+        <field name="res_model">presenly.saas.work.day.setup</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="view_presenly_saas_work_day_setup_form" model="ir.ui.view">
+        <field name="name">presenly.saas.work.day.setup.form</field>
+        <field name="model">presenly.saas.work.day.setup</field>
+        <field name="arch" type="xml">
+            <form create="false" edit="false" delete="false">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="year"/>
+                            <field name="location_name"/>
+                        </group>
+                        <group>
+                            <!-- Angka resmi dari server; rincian di bawahnya
+                                 hanya memecahnya per bulan. -->
+                            <field name="total_days"/>
+                        </group>
+                    </group>
+                    <group string="Working Days per Month">
+                        <!-- Server mengirim dua belas kolom sekaligus; baris ini
+                             memecahnya supaya bisa dibaca dan dijumlahkan. -->
+                        <field name="month_ids" nolabel="1" colspan="2" readonly="1">
+                            <list create="false" edit="false" delete="false"
+                                  default_order="sequence">
+                                <field name="sequence" optional="hide"/>
+                                <field name="month"/>
+                                <field name="days" sum="Total working days"/>
+                            </list>
+                        </field>
+                    </group>
+                    <group string="Data Source">
+                        <group>
+                            <field name="fetched_at"/>
+                            <field name="source_created_at"/>
+                        </group>
+                        <group>
+                            <field name="source_updated_at"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+</odoo>

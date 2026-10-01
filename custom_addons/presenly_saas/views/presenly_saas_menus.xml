@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="action_presenly_saas_sync_log" model="ir.actions.act_window">
+        <field name="name">Sync Log</field>
+        <field name="res_model">presenly.saas.sync.log</field>
+        <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No sync entries yet</p>
+            <p>
+                Every call to the Presenly SaaS server is recorded here along with its result,
+                so a failed refresh can be traced without reading the server log.
+            </p>
+        </field>
+    </record>
+
+    <!-- Konfigurasi koneksi tidak punya menu sendiri. Ia berada di halaman
+         Settings native Odoo, di blok "Presenly SaaS", supaya hanya ada satu
+         tempat untuk mengubahnya. Menu aplikasi ini hanya berisi hal yang
+         bersifat operasional. -->
+    <!--
+         Menu induk dibuka untuk semua pengguna internal: yang membatasi isinya
+         adalah aturan akses per baris, bukan menunya. Tanpa ini, pegawai tidak
+         punya jalan sama sekali untuk melihat presensi dan pengajuannya sendiri.
+
+         Konsekuensinya anak-anak yang bukan untuk mereka harus dikunci sendiri:
+         menu yang induknya tersaring grup tetap muncul sebagai butir lepas -
+         pernah terjadi pada Monitoring, dan itu ditemukan dari percobaan, bukan
+         dari membaca kode.
+    -->
+    <menuitem id="menu_presenly_saas_root"
+              name="Presenly SaaS"
+              sequence="95"
+              web_icon="presenly_saas,static/description/icon.png"
+              groups="base.group_user"/>
+
+    <menuitem id="menu_presenly_saas_subscription"
+              name="Subscription"
+              parent="menu_presenly_saas_root"
+              groups="presenly_saas.group_presenly_saas_manager"
+              action="action_presenly_saas_open_subscription"
+              sequence="10"/>
+
+    <!-- Presensi dikelompokkan jadi satu menu: tiga menu terpisah di akar
+         membuat pengguna harus menebak di mana data, ringkasan, dan rekapnya
+         berada, padahal ketiganya satu pokok. -->
+    <menuitem id="menu_presenly_saas_attendance"
+              name="Attendance"
+              parent="menu_presenly_saas_root"
+              sequence="20"
+              groups="base.group_user"/>
+
+    <menuitem id="menu_presenly_saas_attendance_log"
+              name="Attendance Data"
+              parent="menu_presenly_saas_attendance"
+              action="action_presenly_saas_attendance_log"
+              sequence="10"/>
+
+    <!-- Lintas pegawai: bukan untuk pengguna biasa. -->
+    <menuitem id="menu_presenly_saas_monitoring"
+              name="Monitoring"
+              parent="menu_presenly_saas_attendance"
+              groups="presenly_saas.group_presenly_saas_manager"
+              action="action_presenly_saas_monitoring"
+              sequence="20"/>
+
+    <!-- Pengajuan: cuti, lembur, surat dokter, koreksi presensi, tukar shift.
+         Semuanya hanya baca. -->
+    <menuitem id="menu_presenly_saas_submission"
+              name="Requests"
+              parent="menu_presenly_saas_root"
+              sequence="35"
+              groups="base.group_user"/>
+
+    <menuitem id="menu_presenly_saas_leave"
+              name="Leave"
+              parent="menu_presenly_saas_submission"
+              action="action_presenly_saas_leave"
+              sequence="10"/>
+
+    <menuitem id="menu_presenly_saas_overtime"
+              name="Overtime"
+              parent="menu_presenly_saas_submission"
+              action="action_presenly_saas_overtime"
+              sequence="20"/>
+
+    <menuitem id="menu_presenly_saas_medical_certificate"
+              name="Medical Certificates"
+              parent="menu_presenly_saas_submission"
+              action="action_presenly_saas_medical_certificate"
+              sequence="30"/>
+
+    <menuitem id="menu_presenly_saas_attendance_correction"
+              name="Attendance Corrections"
+              parent="menu_presenly_saas_submission"
+              action="action_presenly_saas_attendance_correction"
+              sequence="40"/>
+
+    <menuitem id="menu_presenly_saas_shift_swap"
+              name="Shift Swaps"
+              parent="menu_presenly_saas_submission"
+              action="action_presenly_saas_shift_swap"
+              sequence="50"/>
+
+    <menuitem id="menu_presenly_saas_timesheet"
+              name="Timesheet"
+              parent="menu_presenly_saas_root"
+              groups="presenly_saas.group_presenly_saas_manager"
+              action="action_presenly_saas_timesheet"
+              sequence="37"/>
+
+    <menuitem id="menu_presenly_saas_sync_log"
+              name="Sync Log"
+              parent="menu_presenly_saas_root"
+              groups="presenly_saas.group_presenly_saas_manager"
+              action="action_presenly_saas_sync_log"
+              sequence="50"/>
+
+</odoo>

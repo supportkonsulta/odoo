@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Baris milik sendiri, dan pemindahan aturan cabang.
+
+        Sampai versi sebelumnya pengguna internal melihat **satu cabang penuh**
+        untuk pengajuan, dan cermin presensi bahkan tidak punya aturan sama
+        sekali. Akibatnya pegawai bisa membaca pengajuan rekan sekerjanya, dan
+        seluruh isi cermin presensi terbuka bagi siapa pun yang membuka daftarnya.
+
+        Dua hal yang dikerjakan di sini, dan keduanya harus bersama:
+
+        1. Aturan "milik sendiri" ditambahkan untuk pengguna internal. Kuncinya
+           nopeg pada `res.users` (lihat `models/res_users.py`), bukan id
+           pegawai: `user.employee_id` hanya melihat perusahaan yang sedang
+           aktif.
+        2. Grup internal **dikeluarkan** dari aturan cabang dan aturan dasar
+           perusahaan, lalu diganti grup Approver. Tanpa langkah ini aturan
+           "milik sendiri" tidak mengubah apa pun, karena aturan grup digabung
+           dengan OR: pengguna biasa tetap melihat satu cabang.
+
+        Manager dan HR tidak kehilangan pandangan: aturan mereka tetap berlaku,
+        dan aturan grup memang digabung.
+
+        Domain memakai sentinel `'__tanpa_nopeg__'` supaya pengguna yang belum
+        tertaut ke pegawai melihat nol baris, bukan baris yang nopeg-nya kosong.
+
+        **Tanpa pagar perusahaan, dan itu disengaja.** Pengguna cabang tidak
+        punya perusahaan integrasi di daftar perusahaannya - di basis nyata,
+        `yusril` hanya punya CLIENT 1 dan CLIENT 2, sedangkan seluruh baris cermin
+        berada di perusahaan integrasi. Menambahkan `company_id in company_ids`
+        di sini akan membuat pegawai cabang kehilangan datanya sendiri, persis
+        kebalikan dari yang diinginkan.
+
+        Yang menjaga batas tenant karena itu aturan lain: pengelola, Approver, dan
+        HR tetap memakai `company_id in company_ids`. Nopeg sendiri membawa
+        awalan tenant (`iksg-...`), jadi baris tenant lain tidak bisa cocok
+        dengan pengguna di sini.
+    -->
+
+    <record id="rule_presenly_saas_attendance_log_own" model="ir.rule">
+        <field name="name">Presenly SaaS attendance log: own rows only</field>
+        <field name="model_id" ref="presenly_saas.model_presenly_saas_attendance_log"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="domain_force">[('employee_nopeg', '=', user.presenly_nopeg or '__tanpa_nopeg__')]</field>
+    </record>
+
+    <record id="rule_presenly_saas_leave_own" model="ir.rule">
+        <field name="name">Presenly SaaS leave: own rows only</field>
+        <field name="model_id" ref="presenly_saas.model_presenly_saas_leave"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="domain_force">[('hr_employee_id.presenly_nopeg', '=', user.presenly_nopeg or '__tanpa_nopeg__')]</field>
+    </record>
+
+    <record id="rule_presenly_saas_overtime_own" model="ir.rule">
+        <field name="name">Presenly SaaS overtime: own rows only</field>
+        <field name="model_id" ref="presenly_saas.model_presenly_saas_overtime"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="domain_force">[('hr_employee_id.presenly_nopeg', '=', user.presenly_nopeg or '__tanpa_nopeg__')]</field>
+    </record>
+
+    <record id="rule_presenly_saas_medical_certificate_own" model="ir.rule">
+        <field name="name">Presenly SaaS medical certificate: own rows only</field>
+        <field name="model_id" ref="presenly_saas.model_presenly_saas_medical_certificate"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="domain_force">[('hr_employee_id.presenly_nopeg', '=', user.presenly_nopeg or '__tanpa_nopeg__')]</field>
+    </record>
+
+    <record id="rule_presenly_saas_attendance_correction_own" model="ir.rule">
+        <field name="name">Presenly SaaS attendance correction: own rows only</field>
+        <field name="model_id" ref="presenly_saas.model_presenly_saas_attendance_correction"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="domain_force">[('hr_employee_id.presenly_nopeg', '=', user.presenly_nopeg or '__tanpa_nopeg__')]</field>
+    </record>
+
+    <record id="rule_presenly_saas_shift_swap_own" model="ir.rule">
+        <field name="name">Presenly SaaS shift swap: own rows only</field>
+        <field name="model_id" ref="presenly_saas.model_presenly_saas_shift_swap"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="domain_force">[('hr_employee_id.presenly_nopeg', '=', user.presenly_nopeg or '__tanpa_nopeg__')]</field>
+    </record>
+
+    <!--
+        Aturan yang dibuat `presenly_saas` dipersempit kepemilikannya: grup
+        internal dikeluarkan, grup Approver ditambahkan.
+
+        Pemasangan tanpa modul ini tidak berubah perilakunya, karena aturan
+        aslinya tetap utuh.
+    -->
+
+    <record id="presenly_saas.rule_presenly_saas_attendance_log_company" model="ir.rule">
+        <field name="groups" eval="[(3, ref('base.group_user')), (4, ref('group_presenly_saas_approver'))]"/>
+    </record>
+
+    <record id="presenly_saas.rule_presenly_saas_leave_branch" model="ir.rule">
+        <field name="groups" eval="[(3, ref('base.group_user')), (4, ref('group_presenly_saas_approver'))]"/>
+    </record>
+
+    <record id="presenly_saas.rule_presenly_saas_overtime_branch" model="ir.rule">
+        <field name="groups" eval="[(3, ref('base.group_user')), (4, ref('group_presenly_saas_approver'))]"/>
+    </record>
+
+    <record id="presenly_saas.rule_presenly_saas_medical_certificate_branch" model="ir.rule">
+        <field name="groups" eval="[(3, ref('base.group_user')), (4, ref('group_presenly_saas_approver'))]"/>
+    </record>
+
+    <record id="presenly_saas.rule_presenly_saas_attendance_correction_branch" model="ir.rule">
+        <field name="groups" eval="[(3, ref('base.group_user')), (4, ref('group_presenly_saas_approver'))]"/>
+    </record>
+
+    <record id="presenly_saas.rule_presenly_saas_shift_swap_branch" model="ir.rule">
+        <field name="groups" eval="[(3, ref('base.group_user')), (4, ref('group_presenly_saas_approver'))]"/>
+    </record>
+
+</odoo>

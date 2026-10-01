@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Tombol Segarkan Referensi di header setiap daftar referensi, supaya
+         bisa ditarik dari halaman yang sedang dibuka tanpa membuka Settings. -->
+    <record id="action_presenly_saas_pull_reference" model="ir.actions.server">
+        <field name="name">Refresh Reference Data</field>
+        <field name="model_id" ref="model_presenly_saas_config"/>
+        <field name="state">code</field>
+        <field name="code">
+config = env['presenly.saas.config']._get_or_create()
+action = config.action_pull_reference_data()
+        </field>
+        <field name="group_ids" eval="[(4, ref('presenly_saas.group_presenly_saas_manager'))]"/>
+    </record>
+
+    <menuitem id="menu_presenly_saas_reference"
+              name="Reference"
+              parent="menu_presenly_saas_root"
+              sequence="40"
+              groups="presenly_saas.group_presenly_saas_manager"/>
+
+    <menuitem id="menu_presenly_saas_work_location"
+              name="Work Location"
+              parent="menu_presenly_saas_reference"
+              action="action_presenly_saas_work_location"
+              sequence="10"/>
+
+    <menuitem id="menu_presenly_saas_shift"
+              name="Shift"
+              parent="menu_presenly_saas_reference"
+              action="action_presenly_saas_shift"
+              sequence="20"/>
+
+    <menuitem id="menu_presenly_saas_attendance_mode"
+              name="Attendance Mode"
+              parent="menu_presenly_saas_reference"
+              action="action_presenly_saas_attendance_mode"
+              sequence="30"/>
+
+    <menuitem id="menu_presenly_saas_holiday"
+              name="Public Holidays"
+              parent="menu_presenly_saas_reference"
+              action="action_presenly_saas_holiday"
+              sequence="40"/>
+
+    <menuitem id="menu_presenly_saas_work_day_setup"
+              name="Work Day Setup"
+              parent="menu_presenly_saas_reference"
+              action="action_presenly_saas_work_day_setup"
+              sequence="50"/>
+
+    <menuitem id="menu_presenly_saas_project"
+              name="Projects"
+              parent="menu_presenly_saas_reference"
+              action="action_presenly_saas_project"
+              sequence="60"/>
+
+
+</odoo>

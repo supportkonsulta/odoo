@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_presenly_saas_employee_internal,presenly.saas.employee.internal,model_presenly_saas_employee,base.group_user,1,0,0,0
+access_presenly_saas_employee_manager,presenly.saas.employee.manager,model_presenly_saas_employee,presenly_saas.group_presenly_saas_manager,1,1,1,1
+access_presenly_saas_employee_schedule_internal,presenly.saas.employee.schedule.internal,model_presenly_saas_employee_schedule,base.group_user,1,0,0,0
+access_presenly_saas_employee_schedule_manager,presenly.saas.employee.schedule.manager,model_presenly_saas_employee_schedule,presenly_saas.group_presenly_saas_manager,1,1,1,1
+access_presenly_saas_employee_slot_internal,presenly.saas.employee.slot.internal,model_presenly_saas_employee_slot,base.group_user,1,0,0,0
+access_presenly_saas_employee_slot_manager,presenly.saas.employee.slot.manager,model_presenly_saas_employee_slot,presenly_saas.group_presenly_saas_manager,1,1,1,1

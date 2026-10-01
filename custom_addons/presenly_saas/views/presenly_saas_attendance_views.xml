@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Log presensi  -->
+
+    <record id="view_presenly_saas_attendance_log_list" model="ir.ui.view">
+        <field name="name">presenly.saas.attendance.log.list</field>
+        <field name="model">presenly.saas.attendance.log</field>
+        <field name="arch" type="xml">
+            <list string="Attendance Log" create="false" edit="false" delete="false">
+                <field name="work_date"/>
+                <field name="employee_name"/>
+                <field name="employee_nopeg" optional="show"/>
+                <field name="location_name"/>
+                <field name="project_label" optional="show"/>
+                <field name="project_code" optional="hide"/>
+                <field name="tenant_client_name" optional="show"/>
+                <field name="shift_name" optional="show"/>
+                <field name="status" widget="badge"
+                       decoration-success="status == 'closed'"
+                       decoration-info="status == 'open'"
+                       decoration-warning="status == 'alpha'"/>
+                <field name="is_late" widget="boolean_toggle" optional="show"
+                       string="Late"/>
+                <field name="late_minutes" optional="show" sum="Total minutes late"/>
+                <field name="session_hours" optional="hide" sum="Total hours"/>
+                <field name="check_in_radius_state" optional="hide"/>
+                <field name="check_out_radius_state" optional="hide"/>
+                <field name="check_in_time"/>
+                <field name="check_out_time"/>
+                <field name="is_overtime" optional="hide"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+                <field name="fetched_at" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_presenly_saas_attendance_log_search" model="ir.ui.view">
+        <field name="name">presenly.saas.attendance.log.search</field>
+        <field name="model">presenly.saas.attendance.log</field>
+        <field name="arch" type="xml">
+            <search string="Attendance Log">
+                <field name="employee_name"/>
+                <field name="employee_nopeg"/>
+                <field name="location_name"/>
+                <field name="project_code"/>
+                <filter name="late" string="Late" domain="[('is_late', '=', True)]"/>
+                <filter name="on_time" string="On Time" domain="[('is_late', '=', False)]"/>
+                <filter name="overtime" string="Overtime Session" domain="[('is_overtime', '=', True)]"/>
+                <!-- Satu saringan untuk dua titik: yang dicari adalah sesi yang
+                     titik masuk ATAU titik keluarnya di luar radius. -->
+                <filter name="outside_geofence" string="Outside Geofence"
+                        domain="['|', ('check_in_radius_state', '=', 'outside'),
+                                       ('check_out_radius_state', '=', 'outside')]"/>
+                <separator/>
+                <filter name="work_date" string="Work Date" date="work_date"/>
+                <separator/>
+                <filter name="closed" string="Finished" domain="[('status', '=', 'closed')]"/>
+                <filter name="open" string="Open" domain="[('status', '=', 'open')]"/>
+                <filter name="alpha" string="Absence" domain="[('status', '=', 'alpha')]"/>
+                <separator/>
+                <filter name="this_month" string="This Month"
+                        domain="[('work_date', '&gt;=', context_today().replace(day=1).strftime('%Y-%m-%d'))]"/>
+                <filter name="this_year" string="This Year"
+                        domain="[('work_date', '&gt;=', context_today().replace(month=1, day=1).strftime('%Y-%m-%d'))]"/>
+                <group>
+                    <filter name="group_employee" string="Employee" context="{'group_by': 'employee_name'}"/>
+                    <filter name="group_location" string="Location" context="{'group_by': 'location_name'}"/>
+                    <filter name="group_project" string="Project" context="{'group_by': 'project_name'}"/>
+                    <filter name="group_geofence" string="Check-in Geofence"
+                            context="{'group_by': 'check_in_radius_state'}"/>
+                    <filter name="group_internal_company" string="Internal Company"
+                            context="{'group_by': 'tenant_client_name'}"/>
+                    <filter name="group_shift" string="Shift" context="{'group_by': 'shift_name'}"/>
+                    <filter name="group_status" string="Status" context="{'group_by': 'status'}"/>
+                    <filter name="group_month" string="Month" context="{'group_by': 'work_date:month'}"/>
+                    <filter name="group_date" string="Date" context="{'group_by': 'work_date:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_presenly_saas_attendance_log_form" model="ir.ui.view">
+        <field name="name">presenly.saas.attendance.log.form</field>
+        <field name="model">presenly.saas.attendance.log</field>
+        <field name="arch" type="xml">
+            <form create="false" edit="false" delete="false">
+                <sheet>
+                    <div class="oe_title">
+                        <h2>
+                            <field name="employee_name" class="oe_inline"/>
+                            <field name="status" widget="badge" class="ms-2"
+                                   decoration-success="status == 'closed'"
+                                   decoration-info="status == 'open'"
+                                   decoration-danger="status == 'alpha'"/>
+                        </h2>
+                        <div class="text-muted">
+                            <field name="work_date" class="oe_inline"/>
+                            <span> · </span>
+                            <field name="location_name" class="oe_inline"/>
+                        </div>
+                    </div>
+
+                    <!-- Titik masuk dan titik keluar berdampingan, dengan susunan
+                         kolom yang sama persis: waktu, mode, jarak, putusan
+                         geofence. Berdampingan karena yang dicari pembaca adalah
+                         selisihnya, dan susunan yang sama membuat keduanya bisa
+                         dibandingkan baris per baris tanpa menggulir. -->
+                    <group>
+                        <group string="Check-in">
+                            <field name="check_in_time"/>
+                            <field name="check_in_mode_name"/>
+                            <field name="check_in_distance_text"/>
+                            <field name="check_in_radius_state" widget="badge"
+                                   decoration-success="check_in_radius_state == 'inside'"
+                                   decoration-danger="check_in_radius_state == 'outside'"/>
+                        </group>
+                        <group string="Check-out">
+                            <field name="check_out_time"/>
+                            <field name="check_out_mode_name"/>
+                            <field name="check_out_distance_text"/>
+                            <field name="check_out_radius_state" widget="badge"
+                                   decoration-success="check_out_radius_state == 'inside'"
+                                   decoration-danger="check_out_radius_state == 'outside'"/>
+                        </group>
+                    </group>
+
+                    <!-- Satu peta per titik, juga berdampingan: ditumpuk, dua peta
+                         setinggi 240px membuat formnya dua kali lebih panjang
+                         daripada isinya. Mode ringkas mematikan tombol pintasan di
+                         dalam peta — dua peta berarti dua baris tombol, dan itu
+                         bagian teramai dari halaman. -->
+                    <group>
+                        <group string="Check-in Location">
+                            <!-- Field ini harus ada di arch walau tidak
+                                 ditampilkan: `record.data` hanya memuat field yang
+                                 dideklarasikan di view, dan tanpa itu widget peta
+                                 membacanya sebagai kosong sehingga petanya tidak
+                                 pernah muncul. -->
+                            <field name="check_in_longitude" invisible="1"/>
+                            <field name="check_in_allowed_radius_meters" invisible="1"/>
+                            <field name="office_latitude" invisible="1"/>
+                            <field name="office_longitude" invisible="1"/>
+                            <field name="office_radius_meters" invisible="1"/>
+                            <!-- Tanpa label: label fieldnya adalah nama kolom
+                                 koordinat, dan bagi pembaca itu tidak berarti.
+                                 Judulnya sudah ada di kepala grup.
+
+                                 `colspan="2"` wajib: tanpa itu peta jatuh ke
+                                 kolom label yang hanya selebar 150px, dan kolom
+                                 nilainya yang lebar justru kosong. -->
+                            <field name="check_in_latitude" widget="presenly_map" nolabel="1"
+                                   colspan="2"
+                                   options="{'lon_field': 'check_in_longitude',
+                                                     'radius_field': 'check_in_allowed_radius_meters',
+                                                     'label_field': 'location_name',
+                                                     'person_field': 'employee_name',
+                                                     'time_field': 'check_in_time',
+                                                     'point_label': 'Check-in',
+                                                     'office_lat_field': 'office_latitude',
+                                                     'office_lon_field': 'office_longitude',
+                                                     'office_radius_field': 'office_radius_meters',
+                                                     'compact': True}"/>
+                        </group>
+                        <group string="Check-out Location">
+                            <!-- Field ini harus ada di arch walau tidak
+                                 ditampilkan: `record.data` hanya memuat field yang
+                                 dideklarasikan di view, dan tanpa itu widget peta
+                                 membacanya sebagai kosong sehingga petanya tidak
+                                 pernah muncul. -->
+                            <field name="check_out_longitude" invisible="1"/>
+                            <field name="check_out_allowed_radius_meters" invisible="1"/>
+                            <field name="office_latitude" invisible="1"/>
+                            <field name="office_longitude" invisible="1"/>
+                            <field name="office_radius_meters" invisible="1"/>
+                            <!-- Tanpa label: label fieldnya adalah nama kolom
+                                 koordinat, dan bagi pembaca itu tidak berarti.
+                                 Judulnya sudah ada di kepala grup.
+
+                                 `colspan="2"` wajib: tanpa itu peta jatuh ke
+                                 kolom label yang hanya selebar 150px, dan kolom
+                                 nilainya yang lebar justru kosong. -->
+                            <field name="check_out_latitude" widget="presenly_map" nolabel="1"
+                                   colspan="2"
+                                   options="{'lon_field': 'check_out_longitude',
+                                                     'radius_field': 'check_out_allowed_radius_meters',
+                                                     'label_field': 'location_name',
+                                                     'person_field': 'employee_name',
+                                                     'time_field': 'check_out_time',
+                                                     'point_label': 'Check-out',
+                                                     'office_lat_field': 'office_latitude',
+                                                     'office_lon_field': 'office_longitude',
+                                                     'office_radius_field': 'office_radius_meters',
+                                                     'compact': True}"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group string="Session">
+                            <field name="employee_nopeg"/>
+                            <field name="tenant_client_name"/>
+                            <field name="project_label"/>
+                            <field name="shift_name"/>
+                        </group>
+                        <group string="Attendance">
+                            <field name="is_overtime"/>
+                            <field name="late_text"/>
+                            <!-- Disembunyikan saat kosong: tidak ada lama sesi
+                                 yang bisa dihitung ketika check-out terlewat atau
+                                 shift-nya lewat tengah malam, dan baris kosong
+                                 terbaca seperti tampilan yang rusak.
+
+                                 `not`, bukan `!`: penanda `invisible` diperiksa
+                                 dengan Python, sedangkan ekspresi di templat OWL
+                                 diperiksa dengan JavaScript. -->
+                            <field name="session_text" invisible="not session_text"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+
+                    <!-- Aceman tarikan, di barisnya sendiri. Dua kolom di dalamnya
+                         supaya tidak menyisakan separuh halaman kosong; satu grup
+                         tanpa kolom dalam akan menumpuk ketiga barisnya di kiri. -->
+                    <group string="Data Source">
+                        <!-- Sengaja hanya waktu. Id dari sisi Presenly tidak
+                             ditampilkan: bagi pengguna itu angka yang tidak bisa
+                             dipakai untuk apa pun. -->
+                        <group>
+                            <field name="fetched_at"/>
+                            <field name="source_created_at"/>
+                        </group>
+                        <group>
+                            <field name="source_updated_at"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_presenly_saas_attendance_log" model="ir.actions.act_window">
+        <field name="name">Attendance Data</field>
+        <field name="res_model">presenly.saas.attendance.log</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_presenly_saas_attendance_log_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No attendance logs yet</p>
+            <p>Attendance is pulled once a day. Use <b>Pull Period Data</b> on the
+               Subscription page to fetch a single month right away.</p>
+        </field>
+    </record>
+
+</odoo>

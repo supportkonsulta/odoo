@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <data noupdate="1">
+
+        <record id="ir_cron_presenly_saas_refresh" model="ir.cron">
+            <field name="name">Presenly SaaS: Refresh Subscription</field>
+            <field name="model_id" ref="model_presenly_saas_config"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_refresh_all()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <!-- Odoo mengisi `user_id` dari pengguna yang memuat data XML, yaitu
+                 __system__. Nilainya di sini disamakan tetapi ditulis eksplisit
+                 supaya jelas siapa yang menjalankan cron ini, dan supaya tidak
+                 ikut berubah kalau cara pemuatan data berubah. -->
+            <field name="user_id" ref="base.user_root"/>
+        </record>
+
+        <!-- Penarikan data terpisah dari pemeriksaan langganan. Keduanya
+             harian, tetapi kegagalan salah satu tidak boleh menghentikan yang
+             lain: langganan yang tidak terjangkau tidak berarti presensi tidak
+             bisa ditarik. -->
+        <record id="ir_cron_presenly_saas_pull_period" model="ir.cron">
+            <field name="name">Presenly SaaS: Pull Period Data</field>
+            <field name="model_id" ref="model_presenly_saas_config"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_pull_periods_all()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="user_id" ref="base.user_root"/>
+        </record>
+
+
+        <!-- Penarikan tambahan: pengajuan, timesheet, dan log presensi, semuanya
+             lewat `updated_since`. Jauh lebih sering daripada penarikan periode,
+             dan tidak menulis ulang seluruh rentang seperti penarikan itu.
+
+             Cron ini juga yang dijalankan oleh pemicu dari halaman pengguna,
+             kalau cerminnya sudah tua saat daftar dibuka. Cermin referensi tidak
+             ikut di sini: isinya jarang berubah, dan disegarkan oleh penarikan
+             harian serta oleh pemicu dari halaman paling sering sekali sejam. -->
+        <record id="ir_cron_presenly_saas_sync_recent" model="ir.cron">
+            <field name="name">Presenly SaaS: Sync Recent Data</field>
+            <field name="model_id" ref="model_presenly_saas_config"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_pull_recent_all()</field>
+            <field name="interval_number">15</field>
+            <field name="interval_type">minutes</field>
+            <field name="user_id" ref="base.user_root"/>
+        </record>
+
+        <!-- Pembersihan mingguan, bukan harian: jendela bergulir dihitung dalam
+             bulan, jadi menjalankannya tiap hari hanya mengulang pekerjaan yang
+             sama tanpa menghapus apa pun. -->
+        <record id="ir_cron_presenly_saas_prune_mirrors" model="ir.cron">
+            <field name="name">Presenly SaaS: Clean Up Mirrored Data</field>
+            <field name="model_id" ref="model_presenly_saas_config"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_prune_mirrors_all()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">weeks</field>
+            <field name="user_id" ref="base.user_root"/>
+        </record>
+
+    </data>
+
+</odoo>

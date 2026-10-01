@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <data noupdate="1">
+
+        <!-- The connection record is created on install so the configuration
+             screen is usable straight away. It stays disabled until a manager
+             fills in the credentials and turns it on. -->
+        <record id="config_main_company" model="presenly.saas.config">
+            <field name="name">Presenly SaaS</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="environment">production</field>
+            <field name="enabled" eval="False"/>
+            <field name="guard_mode">warn</field>
+            <field name="grace_days">7</field>
+            <field name="show_banner" eval="True"/>
+            <field name="timeout_seconds">10</field>
+            <field name="retry_count">2</field>
+        </record>
+
+    </data>
+
+    <!-- `Presenly SaaS > Subscription` memakai server action karena act_window
+         biasa tidak bisa membuka form singleton yang recordnya belum ada.
+         Konfigurasi koneksi tidak lagi punya action di sini: pengaturannya
+         berada di halaman Settings native. -->
+
+    <record id="action_presenly_saas_open_subscription" model="ir.actions.server">
+        <field name="name">Subscription</field>
+        <field name="model_id" ref="model_presenly_saas_subscription"/>
+        <field name="state">code</field>
+        <field name="code">action = env['presenly.saas.subscription']._action_open_dashboard()</field>
+        <field name="group_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+</odoo>

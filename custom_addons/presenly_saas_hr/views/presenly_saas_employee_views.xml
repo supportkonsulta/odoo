@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Cermin pegawai: apa yang dikirim Presenly, apa adanya.
+
+        Halaman ini untuk memeriksa kiriman server, bukan untuk bekerja sehari-hari.
+        Karena itu dua aturan yang dipakai di sini:
+
+        1. **Labelnya memakai istilah Presenly**, bukan istilah karangan. Daftar
+           penyaringnya dulu menyebut `bagian` sebagai "Section", padahal isinya
+           nama jabatan seperti "IT Engineer", dan kolom `grup` dilabeli "SIK
+           Group" — singkatan yang tidak dijelaskan di mana pun dan tidak muncul
+           di aplikasi. Pembaca yang membandingkan dengan aplikasi harus menemukan
+           nama yang sama.
+        2. **Yang ditampilkan hanya yang menjawab pertanyaan**: pegawai ini siapa di
+           Presenly, ditempatkan di mana, jabatannya apa, sudah tertaut atau belum,
+           dan kapan terakhir berubah di sana. Kolom teknis disembunyikan kecuali
+           sedang dipakai memeriksa.
+    -->
+
+    <record id="action_presenly_saas_pull_employees" model="ir.actions.server">
+        <field name="name">Pull Employees</field>
+        <field name="model_id" ref="presenly_saas.model_presenly_saas_config"/>
+        <field name="state">code</field>
+        <field name="code">
+config = env['presenly.saas.config']._get_or_create()
+action = config.action_pull_employees()
+        </field>
+        <field name="group_ids" eval="[(4, ref('presenly_saas.group_presenly_saas_manager'))]"/>
+    </record>
+
+    <record id="action_presenly_saas_register_webhook" model="ir.actions.server">
+        <field name="name">Register This Odoo</field>
+        <field name="model_id" ref="presenly_saas.model_presenly_saas_config"/>
+        <field name="state">code</field>
+        <field name="code">
+config = env['presenly.saas.config']._get_or_create()
+action = config.action_register_webhook()
+        </field>
+        <field name="group_ids" eval="[(4, ref('presenly_saas.group_presenly_saas_manager'))]"/>
+    </record>
+
+    <record id="action_presenly_saas_unregister_webhook" model="ir.actions.server">
+        <field name="name">Stop Notifications</field>
+        <field name="model_id" ref="presenly_saas.model_presenly_saas_config"/>
+        <field name="state">code</field>
+        <field name="code">
+config = env['presenly.saas.config']._get_or_create()
+action = config.action_unregister_webhook()
+        </field>
+        <field name="group_ids" eval="[(4, ref('presenly_saas.group_presenly_saas_manager'))]"/>
+    </record>
+
+    <!--
+        Daftar: satu baris per pegawai, kolomnya sesuai urutan pertanyaan —
+        siapa, di mana, apa, sudah tertaut atau belum.
+    -->
+    <record id="view_presenly_saas_employee_list" model="ir.ui.view">
+        <field name="name">presenly.saas.employee.list</field>
+        <field name="model">presenly.saas.employee</field>
+        <field name="arch" type="xml">
+            <list create="false" edit="false" delete="false" default_order="name">
+                <field name="nopeg"/>
+                <field name="name"/>
+                <field name="bagian"/>
+                <!-- Perusahaan tempat baris cermin ini disimpan. Disembunyikan
+                     secara bawaan karena biasanya hanya ada satu, tetapi
+                     tersedia begitu ada lebih dari satu konfigurasi. -->
+                <field name="company_id" string="Integration Company" optional="hide"/>
+                <field name="branch_ids" widget="many2many_tags" optional="hide"/>
+                <field name="internal_company_name" optional="hide"/>
+                <field name="manager_name" optional="hide"/>
+                <field name="role_name" optional="hide"/>
+                <field name="is_active" optional="show"/>
+                <field name="synced_state" widget="badge"
+                       decoration-success="synced_state == 'linked'"
+                       decoration-warning="synced_state == 'unlinked'"
+                       decoration-danger="synced_state == 'no_nopeg'"/>
+                <field name="hr_employee_id" optional="show"/>
+                <field name="email" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <!--
+        Penyaring: yang dicari orang di halaman ini hampir selalu salah satu dari
+        tiga hal — yang belum tertaut, yang tanpa nopeg, dan yang aktif atau tidak.
+    -->
+    <record id="view_presenly_saas_employee_search" model="ir.ui.view">
+        <field name="name">presenly.saas.employee.search</field>
+        <field name="model">presenly.saas.employee</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="nopeg"/>
+                <field name="email"/>
+                <field name="bagian"/>
+                <separator/>
+                <filter name="unlinked" string="Not Linked Yet"
+                        domain="[('hr_employee_id', '=', False)]"/>
+                <filter name="no_nopeg" string="No Nopeg"
+                        domain="[('nopeg', '=', False)]"/>
+                <separator/>
+                <filter name="active" string="Active in Presenly"
+                        domain="[('is_active', '=', True)]"/>
+                <filter name="inactive" string="Inactive in Presenly"
+                        domain="[('is_active', '=', False)]"/>
+                <separator/>
+                <group>
+                    <filter name="group_bagian" string="Bagian"
+                            context="{'group_by': 'bagian'}"/>
+                    <filter name="group_internal_company" string="Branch"
+                            context="{'group_by': 'internal_company_name'}"/>
+                    <filter name="group_role" string="Role"
+                            context="{'group_by': 'role_name'}"/>
+                    <filter name="group_manager" string="Manager"
+                            context="{'group_by': 'manager_name'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!--
+        Form: nama pegawai jadi judul, jadi tidak diulang di dalam kelompok.
+        Sisanya dikelompokkan menurut asalnya di aplikasi.
+    -->
+    <record id="view_presenly_saas_employee_form" model="ir.ui.view">
+        <field name="name">presenly.saas.employee.form</field>
+        <field name="model">presenly.saas.employee</field>
+        <field name="arch" type="xml">
+            <form create="false" edit="false" delete="false">
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Identity">
+                            <field name="nopeg"/>
+                            <field name="email"/>
+                            <field name="phone"/>
+                            <field name="is_active"/>
+                        </group>
+                        <group string="Work">
+                            <field name="bagian"/>
+                            <field name="grup"/>
+                            <field name="role_name"/>
+                            <field name="shift_name"/>
+                            <field name="can_approve"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Branches">
+                            <!-- Yang berlaku: dari penempatan pegawai tertaut.
+                                 Kolom tunggal dari payload sengaja tidak
+                                 ditampilkan di sini, supaya tidak ada dua kolom
+                                 cabang yang bersaing. Isinya tetap tersimpan dan
+                                 tetap bisa dibuka sebagai kolom opsional di
+                                 daftarnya. -->
+                            <field name="branch_ids" widget="many2many_tags"/>
+                        </group>
+                        <group string="Manager">
+                            <field name="manager_name" string="Manager"/>
+                            <field name="manager_nopeg" string="Manager Nopeg"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Personal">
+                            <field name="birth_date" string="Birth Date"/>
+                            <field name="birth_place" string="Birth Place"/>
+                        </group>
+                        <group string="In Odoo">
+                            <field name="hr_employee_id" string="Odoo Employee"/>
+                            <field name="synced_state" widget="badge"/>
+                        </group>
+                    </group>
+                    <group string="Address">
+                        <field name="address" nolabel="1" colspan="2"/>
+                    </group>
+                    <group string="Source">
+                        <group>
+                            <field name="external_id" string="ID in Presenly"/>
+                            <field name="source_updated_at" string="Changed in Presenly"/>
+                        </group>
+                        <group>
+                            <field name="fetched_at" string="Pulled At"/>
+                            <!-- Perusahaan yang memiliki baris cermin ini, yaitu
+                                 tempat integrasi dipasang. Bukan cabang pegawai,
+                                 jadi namanya tidak boleh terbaca sebagai cabang. -->
+                            <field name="company_id" string="Integration Company"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_presenly_saas_employee" model="ir.actions.act_window">
+        <field name="name">Employees (mirror)</field>
+        <field name="res_model">presenly.saas.employee</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_presenly_saas_employee_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No employees mirrored yet</p>
+            <p>Use <b>Pull Employees</b> on the Subscription page. This page shows
+               what Presenly sent — the working employee records live in the
+               Employees app, in the <b>Presenly</b> tab of each employee.</p>
+        </field>
+    </record>
+
+</odoo>

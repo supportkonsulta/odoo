@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- HR melihat seluruh cabang tenant.
+
+         Keputusan pemilik: yang boleh melihat data lintas cabang adalah HR di
+         perusahaan pusat. Pagar tenant-nya tetap `company_ids`: HR melihat
+         seluruh cabang, tetapi hanya di perusahaan yang ia diizinkan. "Perusahaan pusat" sudah dijaga aturan perusahaan di
+         `presenly_saas` (seluruh baris cermin berada di perusahaan tempat
+         integrasi dipasang, dan hanya pengguna yang perusahaan itu diizinkan
+         yang melihat barisnya). Yang ditambahkan di sini pintunya untuk HR.
+
+         Aturan ini diletakkan di modul ini, bukan di `presenly_saas`, karena
+         grup HR hanya ada bila `hr` terpasang, sedangkan `presenly_saas` dipakai
+         juga tanpa HR.
+    -->
+
+    <record id="rule_presenly_saas_overtime_branch_hr" model="ir.rule">
+        <field name="name">Presenly SaaS overtime: HR sees every branch</field>
+        <field name="model_id" ref="presenly_saas.model_presenly_saas_overtime"/>
+        <field name="groups" eval="[(4, ref('hr.group_hr_user'))]"/>
+        <!-- Seluruh cabang di perusahaan yang ia diizinkan: itulah pagar tenant,
+             dan baris cermin memang berada di perusahaan pusat. -->
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+
+    <record id="rule_presenly_saas_leave_branch_hr" model="ir.rule">
+        <field name="name">Presenly SaaS leave: HR sees every branch</field>
+        <field name="model_id" ref="presenly_saas.model_presenly_saas_leave"/>
+        <field name="groups" eval="[(4, ref('hr.group_hr_user'))]"/>
+        <!-- Seluruh cabang di perusahaan yang ia diizinkan: itulah pagar tenant,
+             dan baris cermin memang berada di perusahaan pusat. -->
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+
+    <record id="rule_presenly_saas_medical_certificate_branch_hr" model="ir.rule">
+        <field name="name">Presenly SaaS medical certificate: HR sees every branch</field>
+        <field name="model_id" ref="presenly_saas.model_presenly_saas_medical_certificate"/>
+        <field name="groups" eval="[(4, ref('hr.group_hr_user'))]"/>
+        <!-- Seluruh cabang di perusahaan yang ia diizinkan: itulah pagar tenant,
+             dan baris cermin memang berada di perusahaan pusat. -->
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+
+    <record id="rule_presenly_saas_attendance_correction_branch_hr" model="ir.rule">
+        <field name="name">Presenly SaaS attendance correction: HR sees every branch</field>
+        <field name="model_id" ref="presenly_saas.model_presenly_saas_attendance_correction"/>
+        <field name="groups" eval="[(4, ref('hr.group_hr_user'))]"/>
+        <!-- Seluruh cabang di perusahaan yang ia diizinkan: itulah pagar tenant,
+             dan baris cermin memang berada di perusahaan pusat. -->
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+
+    <record id="rule_presenly_saas_shift_swap_branch_hr" model="ir.rule">
+        <field name="name">Presenly SaaS shift swap: HR sees every branch</field>
+        <field name="model_id" ref="presenly_saas.model_presenly_saas_shift_swap"/>
+        <field name="groups" eval="[(4, ref('hr.group_hr_user'))]"/>
+        <!-- Seluruh cabang di perusahaan yang ia diizinkan: itulah pagar tenant,
+             dan baris cermin memang berada di perusahaan pusat. -->
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_presenly_saas_attendance_log_branch_hr" model="ir.rule">
+        <field name="name">Presenly SaaS attendance log: HR sees every branch</field>
+        <field name="model_id" ref="presenly_saas.model_presenly_saas_attendance_log"/>
+        <field name="groups" eval="[(4, ref('hr.group_hr_user'))]"/>
+        <!-- Seluruh cabang di perusahaan yang ia diizinkan: itulah pagar tenant,
+             dan baris cermin memang berada di perusahaan pusat. -->
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+
+</odoo>

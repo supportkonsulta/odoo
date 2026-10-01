@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Kelompok Approver: melihat permintaan dan memutuskannya, tanpa akses ke
+        konfigurasi koneksi.
+
+        Sebelumnya hanya ada dua tingkat — baca untuk semua pengguna internal, dan
+        Manager untuk segalanya. Memberi Manager agar seseorang bisa menyetujui
+        berarti sekaligus memberinya kunci koneksi dan pengaturan integrasinya.
+        Kelompok ini menutup celah itu.
+
+        Keanggotaannya **dikelola sinkronisasi** dari hak efektif yang dikirim
+        Presenly, bukan diisi tangan: yang berhak ditentukan konfigurasi alur di
+        sana, dan salinan aturan itu di sini akan berbeda pendapat dengan aslinya.
+    -->
+
+    <record id="group_presenly_saas_approver" model="res.groups">
+        <field name="name">Approver</field>
+        <field name="sequence">20</field>
+        <field name="privilege_id" ref="presenly_saas.res_groups_privilege_presenly_saas"/>
+        <field name="comment">See requests and decide them. No access to the Presenly
+            connection settings, the mirrors, or the sync log.</field>
+    </record>
+
+    <!--
+        Menu induk dibuka untuk **semua pengguna internal**, bukan hanya Approver:
+        pegawai perlu jalan ke presensi dan pengajuannya sendiri, dan yang
+        membatasi isinya adalah aturan akses per baris.
+
+        Karena itu anak yang tidak untuk mereka dikunci sendiri, bukan
+        mengandalkan induknya: menu yang induknya tersaring grup tetap muncul
+        sebagai butir lepas. Subscription, Timesheet, dan Sync Log dikunci ke
+        Manager; Monitoring dan isi Reference sudah dikunci di modulnya.
+    -->
+    <record id="presenly_saas.menu_presenly_saas_root" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <record id="presenly_saas.menu_presenly_saas_subscription" model="ir.ui.menu">
+        <field name="group_ids"
+               eval="[(6, 0, [ref('presenly_saas.group_presenly_saas_manager')])]"/>
+    </record>
+
+    <record id="presenly_saas.menu_presenly_saas_timesheet" model="ir.ui.menu">
+        <field name="group_ids"
+               eval="[(6, 0, [ref('presenly_saas.group_presenly_saas_manager')])]"/>
+    </record>
+
+    <record id="presenly_saas.menu_presenly_saas_sync_log" model="ir.ui.menu">
+        <field name="group_ids"
+               eval="[(6, 0, [ref('presenly_saas.group_presenly_saas_manager')])]"/>
+    </record>
+
+    <!--
+        Requests: Manager dan Approver. Anak-anaknya (Leave, Overtime, Medical,
+        Corrections, Shift Swaps) tidak punya penjagaan sendiri, jadi ikut
+        terlihat oleh approver — memang itu yang dibutuhkan.
+    -->
+    <record id="presenly_saas.menu_presenly_saas_submission" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <!--
+        Sisa anak dari induk yang Manager-only dikunci satu per satu.
+
+        Sebabnya ada di cara Odoo menyusun menu: hanya menu ber-aksi yang masuk
+        daftar, lalu induknya ikut bila **lolos saring grup**. Menu yang induknya
+        tersaring karena grup tetap masuk daftar lewat pintu lain — sebagai butir
+        lepas, tanpa induk. Karena itu tidak cukup mengandalkan induknya saja:
+        setiap menu yang tidak boleh dilihat approver harus menyebutkan grupnya
+        sendiri.
+
+        Ini ditemukan dari percobaan pada akun nyata, bukan dari membaca kode:
+        `Monitoring` sempat muncul terlihat walaupun induknya Manager-only.
+    -->
+    <!--
+        Daftar presensi dibuka untuk pengguna internal; aturan akses yang membuat
+        pengguna biasa hanya melihat barisnya sendiri. Monitoring tetap Manager
+        karena isinya lintas pegawai.
+    -->
+    <record id="presenly_saas.menu_presenly_saas_attendance_log" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+    <record id="presenly_saas.menu_presenly_saas_monitoring" model="ir.ui.menu">
+        <field name="group_ids"
+               eval="[(6, 0, [ref('presenly_saas.group_presenly_saas_manager')])]"/>
+    </record>
+    <record id="presenly_saas.menu_presenly_saas_work_location" model="ir.ui.menu">
+        <field name="group_ids"
+               eval="[(6, 0, [ref('presenly_saas.group_presenly_saas_manager')])]"/>
+    </record>
+    <record id="presenly_saas.menu_presenly_saas_shift" model="ir.ui.menu">
+        <field name="group_ids"
+               eval="[(6, 0, [ref('presenly_saas.group_presenly_saas_manager')])]"/>
+    </record>
+    <record id="presenly_saas.menu_presenly_saas_attendance_mode" model="ir.ui.menu">
+        <field name="group_ids"
+               eval="[(6, 0, [ref('presenly_saas.group_presenly_saas_manager')])]"/>
+    </record>
+    <record id="presenly_saas.menu_presenly_saas_holiday" model="ir.ui.menu">
+        <field name="group_ids"
+               eval="[(6, 0, [ref('presenly_saas.group_presenly_saas_manager')])]"/>
+    </record>
+    <record id="presenly_saas.menu_presenly_saas_work_day_setup" model="ir.ui.menu">
+        <field name="group_ids"
+               eval="[(6, 0, [ref('presenly_saas.group_presenly_saas_manager')])]"/>
+    </record>
+    <record id="presenly_saas.menu_presenly_saas_project" model="ir.ui.menu">
+        <field name="group_ids"
+               eval="[(6, 0, [ref('presenly_saas.group_presenly_saas_manager')])]"/>
+    </record>
+    <!-- Menu "Employees (mirror)" milik modul ini dikunci di berkas menunya
+         sendiri: berkas keamanan dimuat lebih dulu, sebelum menu itu ada. -->
+
+    <record id="presenly_saas.menu_presenly_saas_submission" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+</odoo>

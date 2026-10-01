@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates xml:space="preserve">
+    <!--
+        Templat ini sengaja dangkal: setiap elemen bersyarat hanya memuat satu
+        simpul `t-out`, dan seluruh perakitan teks dikerjakan di JavaScript.
+
+        Alasannya bukan selera. Di bundel produksi, versi yang menaruh teks
+        bercampur `<t t-out>` di dalam elemen bersyarat membuat OWL gagal
+        memasang widget ini: `TypeError: this.child.mount is not a function`
+        dari `VToggler.mount`, dan satu form penuh ikut mati. Bentuk dangkal
+        ini sudah diuji di bundel produksi.
+    -->
+    <t t-name="presenly_saas.MapField">
+        <div t-att-class="compact ? 'o_presenly_map_wrapper o_presenly_map_compact' : 'o_presenly_map_wrapper'">
+            <div t-if="hasCoordinates" t-ref="map" class="o_presenly_map"/>
+            <div t-else="" class="o_presenly_map_empty text-muted">
+                No coordinates were recorded for this entry.
+            </div>
+
+            <!-- Pintasan: pindahkan peta ke kantor, ke titik presensi, atau
+                 kembalikan keduanya ke tampilan awal.
+
+                 Disembunyikan di mode ringkas: peta sudah memuat kedua penanda di
+                 tampilan awal, jadi tombolnya hanya menambah baris tombol. Di form
+                 yang memuat dua peta, dua baris berisi tiga tombol adalah bagian
+                 teramai dari halaman. -->
+            <div t-if="punyaPintasan" class="o_presenly_map_actions">
+                <!-- Tombol kantor disembunyikan kalau titiknya sendiri adalah
+                     kantornya: dua tombol yang memindahkan peta ke tempat yang sama
+                     hanya membuat pembaca memilih tanpa alasan. -->
+                <button t-if="punyaDuaTitik"
+                        type="button"
+                        class="btn btn-sm btn-secondary"
+                        t-att-class="state.zoomed === 'office' ? 'active' : ''"
+                        t-on-click="keKantor">Office</button>
+                <button type="button"
+                        class="btn btn-sm btn-secondary"
+                        t-att-class="state.zoomed === 'user' ? 'active' : ''"
+                        t-on-click="keUser"><span t-out="pointLabel"/></button>
+                <button type="button" class="btn btn-sm btn-link" t-on-click="reset">
+                    Reset view
+                </button>
+            </div>
+
+            <!-- Legenda: warna penanda dan radiusnya tidak perlu ditebak. -->
+            <div t-if="punyaPeta" class="o_presenly_legend small">
+                <div t-if="legendOffice" class="o_presenly_legend_item">
+                    <span class="o_presenly_dot o_presenly_dot_office"/>
+                    <span t-out="legendOffice"/>
+                </div>
+                <div t-if="legendPoint" class="o_presenly_legend_item">
+                    <span class="o_presenly_dot o_presenly_dot_point"/>
+                    <span t-out="legendPoint"/>
+                </div>
+            </div>
+
+            <div t-if="officeNotMirrored" class="small text-muted mt-1">
+                The office location is not mirrored yet, so its position and radius cannot be
+                shown. Run <strong>Refresh Reference</strong> on the Subscription page.
+            </div>
+
+            <div t-if="coordinatesText" class="small text-muted mt-1">
+                <span t-out="coordinatesText"/>
+                <a t-if="openStreetMapUrl"
+                   class="ms-2"
+                   t-att-href="openStreetMapUrl"
+                   target="_blank"
+                   rel="noopener noreferrer">
+                    Open in OpenStreetMap
+                </a>
+            </div>
+
+            <div t-if="missingFields.length" class="small text-danger mt-1">
+                <span>This map cannot read: </span>
+                <span t-out="missingFieldsText"/>
+                <span>. Those fields are named in the widget options but are not in this view, so Odoo never loads them. Add them as hidden fields, e.g. &lt;field name="check_in_longitude" invisible="1"/&gt;.</span>
+            </div>
+
+            <div t-if="state.error" class="small text-danger mt-1" t-out="state.error"/>
+            <div t-if="state.tileErrors" class="small text-warning mt-1">
+                <span t-out="state.tileErrors"/>
+                <span> map tile(s) could not be loaded. This Odoo may not have internet access to tile.openstreetmap.org.</span>
+            </div>
+        </div>
+    </t>
+</templates>

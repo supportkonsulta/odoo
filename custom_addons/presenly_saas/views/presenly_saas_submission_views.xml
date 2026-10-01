@@ -1,0 +1,820 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Pengajuan: lima jenis, satu pola tampilan. Semua hanya baca: keputusan
+         tetap di Presenly, Odoo tidak menyetujui atau menolak. -->
+
+    <record id="view_presenly_saas_leave_list" model="ir.ui.view">
+        <field name="name">presenly.saas.leave.list</field>
+        <field name="model">presenly.saas.leave</field>
+        <field name="arch" type="xml">
+            <list create="false" edit="false" delete="false" default_order="source_created_at desc">
+                <field name="reference_number"/>
+                <field name="employee_name"/>
+                <field name="leave_type_name"/>
+                <field name="start_date"/>
+                <field name="end_date"/>
+                <field name="total_days" sum="Total days"/>
+                <field name="status" widget="badge" decoration-success="status == 'approved'"
+                       decoration-warning="status == 'pending'"
+                       decoration-danger="status == 'rejected'"/>
+                <field name="approver_name" optional="hide"/>
+                <field name="approval_waiting_for" optional="hide"/>
+                <field name="location_name" optional="show"/>
+                <field name="tenant_client_name" optional="show"/>
+                <field name="tenant_location_id" optional="hide"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_presenly_saas_leave_search" model="ir.ui.view">
+        <field name="name">presenly.saas.leave.search</field>
+        <field name="model">presenly.saas.leave</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="tenant_client_name"/>
+                <field name="location_name"/>
+                <field name="reference_number"/>
+                <field name="employee_name"/>
+                <field name="employee_nopeg"/>
+                <field name="leave_type_name"/>
+                <filter name="pending" string="Pending" domain="[('status', '=', 'pending')]"/>
+                <filter name="approved" string="Approved" domain="[('status', '=', 'approved')]"/>
+                <filter name="rejected" string="Rejected" domain="[('status', '=', 'rejected')]"/>
+                <separator/>
+                <filter name="this_month" string="This Month"
+                        domain="[('leave_date', '&gt;=', (context_today()).replace(day=1).strftime('%Y-%m-%d'))]"/>
+                <filter name="this_year" string="This Year"
+                        domain="[('leave_date', '&gt;=', (context_today()).replace(month=1, day=1).strftime('%Y-%m-%d'))]"/>
+                <separator/>
+                <group>
+                    <filter name="group_employee" string="Employee"
+                            context="{'group_by': 'employee_name'}"/>
+                    <filter name="group_type" string="Leave Type"
+                            context="{'group_by': 'leave_type_name'}"/>
+                    <filter name="group_status" string="Status"
+                            context="{'group_by': 'status'}"/>
+                    <filter name="group_flow_status" string="Approval Flow"
+                            context="{'group_by': 'approval_flow_status'}"/>
+                    <filter name="group_approval_level" string="Awaiting Level"
+                            context="{'group_by': 'approval_current_level'}"/>
+                    <filter name="group_month"
+                            context="{'group_by': 'leave_date:month'}"/>
+                                    <filter name="group_internal_company" string="Internal Company"
+                            context="{'group_by': 'tenant_client_name'}"/>
+                    <filter name="group_location" string="Location"
+                            context="{'group_by': 'location_name'}"/>
+</group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_presenly_saas_leave_form" model="ir.ui.view">
+        <field name="name">presenly.saas.leave.form</field>
+        <field name="model">presenly.saas.leave</field>
+        <field name="arch" type="xml">
+            <form create="false" edit="false" delete="false">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="reference_number"/>
+                            <field name="employee_name"/>
+                            <field name="employee_nopeg"/>
+                            <field name="leave_type_name"/>
+                            <field name="location_name"/>
+                        </group>
+                        <group>
+                            <field name="status" widget="badge"/>
+                            <field name="leave_date"/>
+                            <field name="start_date"/>
+                            <field name="end_date"/>
+                            <field name="total_days"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="purpose"/>
+                        <field name="leave_address"/>
+                    </group>
+                    <!-- Persetujuan. Bagian ini SELALU tampil, termasuk saat jenis
+                         pengajuan ini belum punya alur berjenjang.
+
+                         Presenly punya dua sumber keputusan dan keduanya
+                         ditampilkan di sini: alur berjenjang (satu baris per level),
+                         dan kolom keputusan pada pengajuannya sendiri. Sebelumnya
+                         seluruh bagian ini disembunyikan saat alurnya kosong,
+                         sehingga tenant yang belum menyiapkan alur tidak melihat
+                         siapa yang memutuskan — padahal datanya ada.
+
+                         Satu grup datar, bukan dua kolom bersarang: jumlah kolom
+                         alur berubah-ubah mengikuti ada atau tidaknya alur, dan
+                         kolom bersarang akan menyisakan sel kosong di separuh
+                         baris. -->
+                    <!-- Persetujuan: hanya rangkaian langkahnya.
+
+                         Ringkasan alur dan kolom keputusan pada pengajuannya sendiri
+                         tidak ditampilkan di form — datanya tetap ada di model untuk
+                         daftar, pivot, dan ekspor. Kalau jenis pengajuannya tidak
+                         punya alur, seluruh bagiannya disembunyikan: judul kosong
+                         lebih membingungkan daripada tidak ada judul. -->
+                    <group string="Approval" colspan="2" invisible="not approval_has_workflow">
+                        <field name="approval_has_workflow" invisible="1"/>
+                        <field name="approval_step_ids"
+                               widget="presenly_approval_steps"
+                               nolabel="1" colspan="2">
+                            <list create="false" edit="false" delete="false" default_order="level">
+                                <field name="level"/>
+                                <field name="step_status" widget="badge"
+                                       decoration-success="step_status == 'approved'"
+                                       decoration-warning="step_status == 'pending'"
+                                       decoration-danger="step_status == 'rejected'"/>
+                                <field name="approver_label"/>
+                                <field name="acted_by_name"/>
+                                <field name="acted_at"/>
+                                <field name="rejection_reason" optional="hide"/>
+                                <field name="acted_by_nopeg" optional="hide"/>
+                                <field name="approver_value" optional="hide"/>
+                            </list>
+                        </field>
+                    </group>
+
+                    <group string="Data Source" colspan="2">
+                        <field name="status_raw"/>
+                        <field name="fetched_at"/>
+                        <field name="source_updated_at"/>
+                    </group>
+</sheet>
+                <!-- Panel pratinjau lampiran, diletakkan SETELAH `</sheet>` seperti
+                     form Odoo sendiri: compiler mengganti div ini dengan komponen
+                     penampilnya, dan tata letak form menempatkannya di sisi kanan.
+                     Kalau ditaruh sebelum sheet, penampilnya muncul di belakang
+                     kartu informasi. -->
+                <div class="o_attachment_preview"/>
+                                    <!-- Chatter dipasang hanya untuk lampirannya: panel pratinjau
+                         di sisi kanan digambar oleh chatter, dan panel itu terbuka
+                         karena adanya elemen `o_attachment_preview` di atas. Tanpa
+                         salah satunya, berkas pengajuannya tidak bisa dilihat. -->
+                    <!-- Odoo 19 menggambar chatter dari elemen <chatter/>, bukan
+                         dari `div.oe_chatter`: form compiler memilih node dengan tag
+                         itu. Chatter-nya dipakai untuk lampirannya — panel pratinjau
+                         di sisi kanan digambar chatter, dan terbuka karena adanya
+                         `div.o_attachment_preview` di atas. -->
+                    <!-- `open_attachments` membuat kotak berkasnya langsung
+                         terbuka; tanpa itu pengguna menekan paperclip dulu. -->
+                    <chatter open_attachments="True" reload_on_attachment="True"/>
+
+            </form>
+        </field>
+    </record>
+
+    <record id="action_presenly_saas_leave" model="ir.actions.act_window">
+        <field name="name">Leave Requests</field>
+        <field name="res_model">presenly.saas.leave</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_presenly_saas_leave_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No leave requests mirrored yet</p>
+            <p>Use <b>Refresh Reference</b> on the Subscription page, or pull
+               a specific period through <b>Pull Period Data</b>.</p>
+        </field>
+    </record>
+
+    <record id="view_presenly_saas_overtime_list" model="ir.ui.view">
+        <field name="name">presenly.saas.overtime.list</field>
+        <field name="model">presenly.saas.overtime</field>
+        <field name="arch" type="xml">
+            <list create="false" edit="false" delete="false" default_order="source_created_at desc">
+                <field name="employee_name"/>
+                <field name="overtime_date"/>
+                <field name="start_time"/>
+                <field name="end_time"/>
+                <field name="total_hours" sum="Total hours"/>
+                <field name="day_type"/>
+                <field name="overtime_pay" sum="Total pay"/>
+                <field name="within_radius" optional="hide"/>
+                <field name="location_name" optional="show"/>
+                <!-- Cabang tempat lembur itu terjadi, diturunkan dari lokasinya.
+                     Ditampilkan seperti di daftar presensi, supaya kedua daftar
+                     menjawab pertanyaan yang sama dengan cara yang sama. -->
+                <field name="tenant_client_name" optional="show"/>
+                <field name="tenant_location_id" optional="hide"/>
+                <field name="status" widget="badge" decoration-success="status == 'approved'"
+                       decoration-warning="status == 'pending'"
+                       decoration-danger="status == 'rejected'"/>
+                <field name="approver_name" optional="hide"/>
+                <field name="approval_waiting_for" optional="hide"/>
+                <!-- Perusahaan yang memiliki baris cermin ini. Tersembunyi secara
+                     bawaan karena biasanya hanya satu, dan hanya muncul untuk
+                     pengguna multi-company. -->
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_presenly_saas_overtime_search" model="ir.ui.view">
+        <field name="name">presenly.saas.overtime.search</field>
+        <field name="model">presenly.saas.overtime</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="employee_name"/>
+                <field name="employee_nopeg"/>
+                <!-- Penyaring perusahaan: hanya berguna bagi pengguna yang boleh
+                     bekerja di lebih dari satu perusahaan. -->
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="tenant_client_name"/>
+                <field name="location_name"/>
+                <filter name="pending" string="Pending" domain="[('status', '=', 'pending')]"/>
+                <filter name="approved" string="Approved" domain="[('status', '=', 'approved')]"/>
+                <filter name="rejected" string="Rejected" domain="[('status', '=', 'rejected')]"/>
+                <separator/>
+                <filter name="this_month" string="This Month"
+                        domain="[('overtime_date', '&gt;=', (context_today()).replace(day=1).strftime('%Y-%m-%d'))]"/>
+                <filter name="this_year" string="This Year"
+                        domain="[('overtime_date', '&gt;=', (context_today()).replace(month=1, day=1).strftime('%Y-%m-%d'))]"/>
+                <separator/>
+                <group>
+                    <filter name="group_employee" string="Employee"
+                            context="{'group_by': 'employee_name'}"/>
+                    <filter name="group_day_type" string="Day Type"
+                            context="{'group_by': 'day_type'}"/>
+                    <filter name="group_status" string="Status"
+                            context="{'group_by': 'status'}"/>
+                    <filter name="group_flow_status" string="Approval Flow"
+                            context="{'group_by': 'approval_flow_status'}"/>
+                    <filter name="group_approval_level" string="Awaiting Level"
+                            context="{'group_by': 'approval_current_level'}"/>
+                    <filter name="group_internal_company" string="Internal Company"
+                            context="{'group_by': 'tenant_client_name'}"/>
+                    <filter name="group_location" string="Location"
+                            context="{'group_by': 'location_name'}"/>
+                    <filter name="group_month"
+                            context="{'group_by': 'overtime_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_presenly_saas_overtime" model="ir.actions.act_window">
+        <field name="name">Overtime Requests</field>
+        <field name="res_model">presenly.saas.overtime</field>
+        <!-- `form` wajib ada di sini. Tanpa itu formnya tidak bisa dibuka sama
+             sekali: mengeklik baris di daftar hanya mengembalikan ke daftar, tanpa
+             pesan apa pun — dan bagian Persetujuan di form itu jadi tidak pernah
+             terlihat. -->
+        <field name="view_mode">list,form,pivot,graph</field>
+        <field name="search_view_id" ref="view_presenly_saas_overtime_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No overtime requests mirrored yet</p>
+            <p>Run <b>Pull Period Data</b> to fill it.</p>
+        </field>
+    </record>
+
+    <record id="view_presenly_saas_medical_certificate_list" model="ir.ui.view">
+        <field name="name">presenly.saas.medical.certificate.list</field>
+        <field name="model">presenly.saas.medical.certificate</field>
+        <field name="arch" type="xml">
+            <list create="false" edit="false" delete="false" default_order="source_created_at desc">
+                <field name="dc_number"/>
+                <field name="employee_name"/>
+                <field name="certificate_date"/>
+                <field name="start_date"/>
+                <field name="end_date"/>
+                <field name="status" widget="badge"/>
+                <field name="approver_name" optional="hide"/>
+                <field name="approval_waiting_for" optional="hide"/>
+                <field name="location_name" optional="show"/>
+                <field name="tenant_client_name" optional="show"/>
+                <field name="tenant_location_id" optional="hide"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_presenly_saas_medical_certificate_search" model="ir.ui.view">
+        <field name="name">presenly.saas.medical.certificate.search</field>
+        <field name="model">presenly.saas.medical.certificate</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="tenant_client_name"/>
+                <field name="location_name"/>
+                <field name="dc_number"/>
+                <field name="employee_name"/>
+                <field name="employee_nopeg"/>
+                <filter name="this_month" string="This Month"
+                        domain="[('certificate_date', '&gt;=', (context_today()).replace(day=1).strftime('%Y-%m-%d'))]"/>
+                <filter name="this_year" string="This Year"
+                        domain="[('certificate_date', '&gt;=', (context_today()).replace(month=1, day=1).strftime('%Y-%m-%d'))]"/>
+                <separator/>
+                <group>
+                    <filter name="group_employee" string="Employee"
+                            context="{'group_by': 'employee_name'}"/>
+                    <filter name="group_status" string="Status"
+                            context="{'group_by': 'status'}"/>
+                    <filter name="group_flow_status" string="Approval Flow"
+                            context="{'group_by': 'approval_flow_status'}"/>
+                    <filter name="group_approval_level" string="Awaiting Level"
+                            context="{'group_by': 'approval_current_level'}"/>
+                    <filter name="group_month"
+                            context="{'group_by': 'certificate_date:month'}"/>
+                                    <filter name="group_internal_company" string="Internal Company"
+                            context="{'group_by': 'tenant_client_name'}"/>
+                    <filter name="group_location" string="Location"
+                            context="{'group_by': 'location_name'}"/>
+</group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_presenly_saas_medical_certificate" model="ir.actions.act_window">
+        <field name="name">Medical Certificate Requests</field>
+        <field name="res_model">presenly.saas.medical.certificate</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_presenly_saas_medical_certificate_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No medical certificates mirrored yet</p>
+            <p>Run <b>Pull Period Data</b> to fill it.</p>
+        </field>
+    </record>
+
+    <record id="view_presenly_saas_attendance_correction_list" model="ir.ui.view">
+        <field name="name">presenly.saas.attendance.correction.list</field>
+        <field name="model">presenly.saas.attendance.correction</field>
+        <field name="arch" type="xml">
+            <list create="false" edit="false" delete="false" default_order="source_created_at desc">
+                <field name="employee_name"/>
+                <field name="date"/>
+                <field name="original_check_in_time" optional="hide"/>
+                <field name="requested_check_in_time"/>
+                <field name="original_check_out_time" optional="hide"/>
+                <field name="requested_check_out_time"/>
+                <field name="original_shift_name" optional="hide"/>
+                <field name="shift_name"/>
+                <field name="status" widget="badge" decoration-success="status == 'approved'"
+                       decoration-warning="status == 'pending'"
+                       decoration-danger="status == 'rejected'"/>
+                <field name="tl_approver_name" optional="hide"/>
+                <field name="manager_approver_name" optional="hide"/>
+                <field name="approval_waiting_for" optional="hide"/>
+                <field name="tenant_client_name" optional="show"/>
+                <field name="tenant_location_id" optional="hide"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_presenly_saas_attendance_correction_search" model="ir.ui.view">
+        <field name="name">presenly.saas.attendance.correction.search</field>
+        <field name="model">presenly.saas.attendance.correction</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="tenant_client_name"/>
+                <field name="employee_name"/>
+                <field name="employee_nopeg"/>
+                <filter name="pending" string="Pending" domain="[('status', '=', 'pending')]"/>
+                <filter name="approved" string="Approved" domain="[('status', '=', 'approved')]"/>
+                <filter name="rejected" string="Rejected" domain="[('status', '=', 'rejected')]"/>
+                <separator/>
+                <filter name="this_month" string="This Month"
+                        domain="[('date', '&gt;=', (context_today()).replace(day=1).strftime('%Y-%m-%d'))]"/>
+                <filter name="this_year" string="This Year"
+                        domain="[('date', '&gt;=', (context_today()).replace(month=1, day=1).strftime('%Y-%m-%d'))]"/>
+                <separator/>
+                <group>
+                    <filter name="group_employee" string="Employee"
+                            context="{'group_by': 'employee_name'}"/>
+                    <filter name="group_status" string="Status"
+                            context="{'group_by': 'status'}"/>
+                    <filter name="group_flow_status" string="Approval Flow"
+                            context="{'group_by': 'approval_flow_status'}"/>
+                    <filter name="group_approval_level" string="Awaiting Level"
+                            context="{'group_by': 'approval_current_level'}"/>
+                    <filter name="group_month"
+                            context="{'group_by': 'date:month'}"/>
+                                    <filter name="group_internal_company" string="Internal Company"
+                            context="{'group_by': 'tenant_client_name'}"/>
+</group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_presenly_saas_attendance_correction" model="ir.actions.act_window">
+        <field name="name">Attendance Corrections</field>
+        <field name="res_model">presenly.saas.attendance.correction</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_presenly_saas_attendance_correction_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No attendance corrections mirrored yet</p>
+            <p>Run <b>Pull Period Data</b> to fill it.</p>
+        </field>
+    </record>
+
+    <record id="view_presenly_saas_shift_swap_list" model="ir.ui.view">
+        <field name="name">presenly.saas.shift.swap.list</field>
+        <field name="model">presenly.saas.shift.swap</field>
+        <field name="arch" type="xml">
+            <list create="false" edit="false" delete="false" default_order="source_created_at desc">
+                <field name="requester_name"/>
+                <field name="requester_date"/>
+                <field name="requester_shift_name"/>
+                <field name="target_name"/>
+                <field name="target_date"/>
+                <field name="target_shift_name"/>
+                <field name="status" widget="badge" decoration-success="status == 'approved'"
+                       decoration-warning="status == 'pending'"
+                       decoration-danger="status == 'rejected'"/>
+                <field name="approver_name" optional="hide"/>
+                <field name="approval_waiting_for" optional="hide"/>
+                <field name="tenant_client_name" optional="show"/>
+                <field name="tenant_location_id" optional="hide"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_presenly_saas_shift_swap_search" model="ir.ui.view">
+        <field name="name">presenly.saas.shift.swap.search</field>
+        <field name="model">presenly.saas.shift.swap</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="tenant_client_name"/>
+                <field name="requester_name"/>
+                <field name="requester_nopeg"/>
+                <field name="target_name"/>
+                <filter name="pending" string="Pending" domain="[('status', '=', 'pending')]"/>
+                <filter name="approved" string="Approved" domain="[('status', '=', 'approved')]"/>
+                <filter name="rejected" string="Rejected" domain="[('status', '=', 'rejected')]"/>
+                <separator/>
+                <filter name="this_month" string="This Month"
+                        domain="[('requester_date', '&gt;=', (context_today()).replace(day=1).strftime('%Y-%m-%d'))]"/>
+                <filter name="this_year" string="This Year"
+                        domain="[('requester_date', '&gt;=', (context_today()).replace(month=1, day=1).strftime('%Y-%m-%d'))]"/>
+                <separator/>
+                <group>
+                    <filter name="group_requester" string="Requester"
+                            context="{'group_by': 'requester_name'}"/>
+                    <filter name="group_target" string="Counterpart"
+                            context="{'group_by': 'target_name'}"/>
+                    <filter name="group_status" string="Status"
+                            context="{'group_by': 'status'}"/>
+                    <filter name="group_flow_status" string="Approval Flow"
+                            context="{'group_by': 'approval_flow_status'}"/>
+                    <filter name="group_approval_level" string="Awaiting Level"
+                            context="{'group_by': 'approval_current_level'}"/>
+                    <filter name="group_month"
+                            context="{'group_by': 'requester_date:month'}"/>
+                                    <filter name="group_internal_company" string="Internal Company"
+                            context="{'group_by': 'tenant_client_name'}"/>
+</group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_presenly_saas_shift_swap" model="ir.actions.act_window">
+        <field name="name">Shift Swaps</field>
+        <field name="res_model">presenly.saas.shift.swap</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_presenly_saas_shift_swap_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No shift swaps mirrored yet</p>
+            <p>Run <b>Pull Period Data</b> to fill it.</p>
+        </field>
+    </record>
+
+    <record id="view_presenly_saas_overtime_form" model="ir.ui.view">
+        <field name="name">presenly.saas.overtime.form</field>
+        <field name="model">presenly.saas.overtime</field>
+        <field name="arch" type="xml">
+            <form create="false" edit="false" delete="false">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="employee_name"/>
+                            <field name="employee_nopeg"/>
+                            <field name="location_name"/>
+                            <field name="overtime_date"/>
+                            <field name="start_time"/>
+                            <field name="end_time"/>
+                        </group>
+                        <group>
+                            <field name="status" widget="badge" decoration-success="status == 'approved'"
+                                   decoration-warning="status == 'pending'"
+                                   decoration-danger="status == 'rejected'"/>
+                            <field name="total_hours"/>
+                            <field name="day_type"/>
+                            <field name="within_radius"/>
+                            <field name="overtime_pay"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="purpose"/>
+                    </group>
+                    <!-- Persetujuan. Bagian ini SELALU tampil, termasuk saat jenis
+                         pengajuan ini belum punya alur berjenjang.
+
+                         Presenly punya dua sumber keputusan dan keduanya
+                         ditampilkan di sini: alur berjenjang (satu baris per level),
+                         dan kolom keputusan pada pengajuannya sendiri. Sebelumnya
+                         seluruh bagian ini disembunyikan saat alurnya kosong,
+                         sehingga tenant yang belum menyiapkan alur tidak melihat
+                         siapa yang memutuskan — padahal datanya ada.
+
+                         Satu grup datar, bukan dua kolom bersarang: jumlah kolom
+                         alur berubah-ubah mengikuti ada atau tidaknya alur, dan
+                         kolom bersarang akan menyisakan sel kosong di separuh
+                         baris. -->
+                    <!-- Persetujuan: hanya rangkaian langkahnya.
+
+                         Ringkasan alur dan kolom keputusan pada pengajuannya sendiri
+                         tidak ditampilkan di form — datanya tetap ada di model untuk
+                         daftar, pivot, dan ekspor. Kalau jenis pengajuannya tidak
+                         punya alur, seluruh bagiannya disembunyikan: judul kosong
+                         lebih membingungkan daripada tidak ada judul. -->
+                    <group string="Approval" colspan="2" invisible="not approval_has_workflow">
+                        <field name="approval_has_workflow" invisible="1"/>
+                        <field name="approval_step_ids"
+                               widget="presenly_approval_steps"
+                               nolabel="1" colspan="2">
+                            <list create="false" edit="false" delete="false" default_order="level">
+                                <field name="level"/>
+                                <field name="step_status" widget="badge"
+                                       decoration-success="step_status == 'approved'"
+                                       decoration-warning="step_status == 'pending'"
+                                       decoration-danger="step_status == 'rejected'"/>
+                                <field name="approver_label"/>
+                                <field name="acted_by_name"/>
+                                <field name="acted_at"/>
+                                <field name="rejection_reason" optional="hide"/>
+                                <field name="acted_by_nopeg" optional="hide"/>
+                                <field name="approver_value" optional="hide"/>
+                            </list>
+                        </field>
+                    </group>
+
+                    <group string="Data Source" colspan="2">
+                        <field name="status_raw"/>
+                        <field name="fetched_at"/>
+                        <field name="source_updated_at"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_presenly_saas_medical_certificate_form" model="ir.ui.view">
+        <field name="name">presenly.saas.medical.certificate.form</field>
+        <field name="model">presenly.saas.medical.certificate</field>
+        <field name="arch" type="xml">
+            <form create="false" edit="false" delete="false">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="dc_number"/>
+                            <field name="employee_name"/>
+                            <field name="employee_nopeg"/>
+                            <field name="location_name"/>
+                        </group>
+                        <group>
+                            <field name="status" widget="badge" decoration-success="status == 'approved'"
+                                   decoration-warning="status == 'pending'"
+                                   decoration-danger="status == 'rejected'"/>
+                            <field name="certificate_date"/>
+                            <field name="start_date"/>
+                            <field name="end_date"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="reason"/>
+                    </group>
+                    <!-- Persetujuan. Bagian ini SELALU tampil, termasuk saat jenis
+                         pengajuan ini belum punya alur berjenjang.
+
+                         Presenly punya dua sumber keputusan dan keduanya
+                         ditampilkan di sini: alur berjenjang (satu baris per level),
+                         dan kolom keputusan pada pengajuannya sendiri. Sebelumnya
+                         seluruh bagian ini disembunyikan saat alurnya kosong,
+                         sehingga tenant yang belum menyiapkan alur tidak melihat
+                         siapa yang memutuskan — padahal datanya ada.
+
+                         Satu grup datar, bukan dua kolom bersarang: jumlah kolom
+                         alur berubah-ubah mengikuti ada atau tidaknya alur, dan
+                         kolom bersarang akan menyisakan sel kosong di separuh
+                         baris. -->
+                    <!-- Persetujuan: hanya rangkaian langkahnya.
+
+                         Ringkasan alur dan kolom keputusan pada pengajuannya sendiri
+                         tidak ditampilkan di form — datanya tetap ada di model untuk
+                         daftar, pivot, dan ekspor. Kalau jenis pengajuannya tidak
+                         punya alur, seluruh bagiannya disembunyikan: judul kosong
+                         lebih membingungkan daripada tidak ada judul. -->
+                    <group string="Approval" colspan="2" invisible="not approval_has_workflow">
+                        <field name="approval_has_workflow" invisible="1"/>
+                        <field name="approval_step_ids"
+                               widget="presenly_approval_steps"
+                               nolabel="1" colspan="2">
+                            <list create="false" edit="false" delete="false" default_order="level">
+                                <field name="level"/>
+                                <field name="step_status" widget="badge"
+                                       decoration-success="step_status == 'approved'"
+                                       decoration-warning="step_status == 'pending'"
+                                       decoration-danger="step_status == 'rejected'"/>
+                                <field name="approver_label"/>
+                                <field name="acted_by_name"/>
+                                <field name="acted_at"/>
+                                <field name="rejection_reason" optional="hide"/>
+                                <field name="acted_by_nopeg" optional="hide"/>
+                                <field name="approver_value" optional="hide"/>
+                            </list>
+                        </field>
+                    </group>
+
+                    <group string="Data Source" colspan="2">
+                        <field name="status_raw"/>
+                        <field name="fetched_at"/>
+                        <field name="source_updated_at"/>
+                    </group>
+</sheet>
+                <!-- Panel pratinjau lampiran, diletakkan SETELAH `</sheet>` seperti
+                     form Odoo sendiri: compiler mengganti div ini dengan komponen
+                     penampilnya, dan tata letak form menempatkannya di sisi kanan.
+                     Kalau ditaruh sebelum sheet, penampilnya muncul di belakang
+                     kartu informasi. -->
+                <div class="o_attachment_preview"/>
+                                    <!-- Chatter dipasang hanya untuk lampirannya: panel pratinjau
+                         di sisi kanan digambar oleh chatter, dan panel itu terbuka
+                         karena adanya elemen `o_attachment_preview` di atas. Tanpa
+                         salah satunya, berkas pengajuannya tidak bisa dilihat. -->
+                    <!-- Odoo 19 menggambar chatter dari elemen <chatter/>, bukan
+                         dari `div.oe_chatter`: form compiler memilih node dengan tag
+                         itu. Chatter-nya dipakai untuk lampirannya — panel pratinjau
+                         di sisi kanan digambar chatter, dan terbuka karena adanya
+                         `div.o_attachment_preview` di atas. -->
+                    <!-- `open_attachments` membuat kotak berkasnya langsung
+                         terbuka; tanpa itu pengguna menekan paperclip dulu. -->
+                    <chatter open_attachments="True" reload_on_attachment="True"/>
+
+            </form>
+        </field>
+    </record>
+
+    <record id="view_presenly_saas_attendance_correction_form" model="ir.ui.view">
+        <field name="name">presenly.saas.attendance.correction.form</field>
+        <field name="model">presenly.saas.attendance.correction</field>
+        <field name="arch" type="xml">
+            <form create="false" edit="false" delete="false">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="employee_name"/>
+                            <field name="employee_nopeg"/>
+                            <field name="date"/>
+                            <field name="shift_name"/>
+                            <field name="original_shift_name"/>
+                            <field name="requested_check_in_time"/>
+                            <field name="requested_check_out_time"/>
+                        </group>
+                        <group>
+                            <field name="status" widget="badge" decoration-success="status == 'approved'"
+                                   decoration-warning="status == 'pending'"
+                                   decoration-danger="status == 'rejected'"/>
+                            <field name="original_check_in_time"/>
+                            <field name="original_check_out_time"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="reason"/>
+                    </group>
+                    <!-- Persetujuan. Bagian ini SELALU tampil, termasuk saat jenis
+                         pengajuan ini belum punya alur berjenjang.
+
+                         Presenly punya dua sumber keputusan dan keduanya
+                         ditampilkan di sini: alur berjenjang (satu baris per level),
+                         dan kolom keputusan pada pengajuannya sendiri. Sebelumnya
+                         seluruh bagian ini disembunyikan saat alurnya kosong,
+                         sehingga tenant yang belum menyiapkan alur tidak melihat
+                         siapa yang memutuskan — padahal datanya ada.
+
+                         Satu grup datar, bukan dua kolom bersarang: jumlah kolom
+                         alur berubah-ubah mengikuti ada atau tidaknya alur, dan
+                         kolom bersarang akan menyisakan sel kosong di separuh
+                         baris. -->
+                    <!-- Persetujuan: hanya rangkaian langkahnya.
+
+                         Ringkasan alur dan kolom keputusan pada pengajuannya sendiri
+                         tidak ditampilkan di form — datanya tetap ada di model untuk
+                         daftar, pivot, dan ekspor. Kalau jenis pengajuannya tidak
+                         punya alur, seluruh bagiannya disembunyikan: judul kosong
+                         lebih membingungkan daripada tidak ada judul. -->
+                    <group string="Approval" colspan="2" invisible="not approval_has_workflow">
+                        <field name="approval_has_workflow" invisible="1"/>
+                        <field name="approval_step_ids"
+                               widget="presenly_approval_steps"
+                               nolabel="1" colspan="2">
+                            <list create="false" edit="false" delete="false" default_order="level">
+                                <field name="level"/>
+                                <field name="step_status" widget="badge"
+                                       decoration-success="step_status == 'approved'"
+                                       decoration-warning="step_status == 'pending'"
+                                       decoration-danger="step_status == 'rejected'"/>
+                                <field name="approver_label"/>
+                                <field name="acted_by_name"/>
+                                <field name="acted_at"/>
+                                <field name="rejection_reason" optional="hide"/>
+                                <field name="acted_by_nopeg" optional="hide"/>
+                                <field name="approver_value" optional="hide"/>
+                            </list>
+                        </field>
+                    </group>
+
+                    <group string="Data Source" colspan="2">
+                        <field name="status_raw"/>
+                        <field name="fetched_at"/>
+                        <field name="source_updated_at"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_presenly_saas_shift_swap_form" model="ir.ui.view">
+        <field name="name">presenly.saas.shift.swap.form</field>
+        <field name="model">presenly.saas.shift.swap</field>
+        <field name="arch" type="xml">
+            <form create="false" edit="false" delete="false">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="requester_name"/>
+                            <field name="requester_nopeg"/>
+                            <field name="requester_date"/>
+                            <field name="requester_shift_name"/>
+                        </group>
+                        <group>
+                            <field name="status" widget="badge" decoration-success="status == 'approved'"
+                                   decoration-warning="status == 'pending'"
+                                   decoration-danger="status == 'rejected'"/>
+                            <field name="target_name"/>
+                            <field name="target_nopeg"/>
+                            <field name="target_date"/>
+                            <field name="target_shift_name"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="reason"/>
+                    </group>
+                    <!-- Persetujuan. Bagian ini SELALU tampil, termasuk saat jenis
+                         pengajuan ini belum punya alur berjenjang.
+
+                         Presenly punya dua sumber keputusan dan keduanya
+                         ditampilkan di sini: alur berjenjang (satu baris per level),
+                         dan kolom keputusan pada pengajuannya sendiri. Sebelumnya
+                         seluruh bagian ini disembunyikan saat alurnya kosong,
+                         sehingga tenant yang belum menyiapkan alur tidak melihat
+                         siapa yang memutuskan — padahal datanya ada.
+
+                         Satu grup datar, bukan dua kolom bersarang: jumlah kolom
+                         alur berubah-ubah mengikuti ada atau tidaknya alur, dan
+                         kolom bersarang akan menyisakan sel kosong di separuh
+                         baris. -->
+                    <!-- Persetujuan: hanya rangkaian langkahnya.
+
+                         Ringkasan alur dan kolom keputusan pada pengajuannya sendiri
+                         tidak ditampilkan di form — datanya tetap ada di model untuk
+                         daftar, pivot, dan ekspor. Kalau jenis pengajuannya tidak
+                         punya alur, seluruh bagiannya disembunyikan: judul kosong
+                         lebih membingungkan daripada tidak ada judul. -->
+                    <group string="Approval" colspan="2" invisible="not approval_has_workflow">
+                        <field name="approval_has_workflow" invisible="1"/>
+                        <field name="approval_step_ids"
+                               widget="presenly_approval_steps"
+                               nolabel="1" colspan="2">
+                            <list create="false" edit="false" delete="false" default_order="level">
+                                <field name="level"/>
+                                <field name="step_status" widget="badge"
+                                       decoration-success="step_status == 'approved'"
+                                       decoration-warning="step_status == 'pending'"
+                                       decoration-danger="step_status == 'rejected'"/>
+                                <field name="approver_label"/>
+                                <field name="acted_by_name"/>
+                                <field name="acted_at"/>
+                                <field name="rejection_reason" optional="hide"/>
+                                <field name="acted_by_nopeg" optional="hide"/>
+                                <field name="approver_value" optional="hide"/>
+                            </list>
+                        </field>
+                    </group>
+
+                    <group string="Data Source" colspan="2">
+                        <field name="status_raw"/>
+                        <field name="fetched_at"/>
+                        <field name="source_updated_at"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+</odoo>
