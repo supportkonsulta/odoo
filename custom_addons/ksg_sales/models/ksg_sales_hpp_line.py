@@ -128,6 +128,7 @@ class KsgSalesHppLine(models.Model):
         currency_field="currency_id",
         compute="_compute_hpp",
         store=True,
+        readonly=True,
     )
 
     hpp_tahun = fields.Monetary(
@@ -135,6 +136,7 @@ class KsgSalesHppLine(models.Model):
         currency_field="currency_id",
         compute="_compute_hpp",
         store=True,
+        readonly=True,
     )
 
     # =========================================================
@@ -154,6 +156,7 @@ class KsgSalesHppLine(models.Model):
         currency_field="currency_id",
         compute="_compute_tagihan_tahun",
         store=True,
+        readonly=True,
     )
 
     keterangan = fields.Text(
@@ -166,42 +169,53 @@ class KsgSalesHppLine(models.Model):
     # =========================================================
 
     @api.depends(
-        "uang_pokok",
-        "tunj",
-        "thr",
-        "seragam",
-        "ovh",
-        "sistem",
-        "bpjs_tk",
-        "bpjs_kes",
         "ex_pengeluaran",
+        "tk",
         "mk",
     )
     def _compute_hpp(self):
+        """
+        Rumus sesuai Excel:
+
+        Jumlah/Bulan
+            = Ex. Pengeluaran × TK
+
+        HPP/Tahun
+            = Jumlah/Bulan × MK
+        """
+
         for line in self:
-            total_bulan = (
-                line.uang_pokok
-                + line.tunj
-                + line.thr
-                + line.seragam
-                + line.ovh
-                + line.sistem
-                + line.bpjs_tk
-                + line.bpjs_kes
-                + line.ex_pengeluaran
+
+            # -------------------------------------------------
+            # JUMLAH / BULAN
+            # -------------------------------------------------
+            line.jumlah_bulan = (
+                line.ex_pengeluaran * line.tk
             )
 
-            line.jumlah_bulan = total_bulan
-            line.hpp_tahun = total_bulan * (line.mk or 12.0)
+            # -------------------------------------------------
+            # HPP / TAHUN
+            # -------------------------------------------------
+            line.hpp_tahun = (
+                line.jumlah_bulan * line.mk
+            )
 
     # =========================================================
     # COMPUTE TAGIHAN TAHUN
     # =========================================================
 
-    @api.depends("tagihan_bulan")
+    @api.depends(
+        "tagihan_bulan",
+        "mk",
+    )
     def _compute_tagihan_tahun(self):
+        # Rumus sesuai Excel:
+        # Tagihan/Tahun = Tagihan/Bulan × MK
+
         for line in self:
-            line.tagihan_tahun = line.tagihan_bulan * 12
+            line.tagihan_tahun = (
+                line.tagihan_bulan * line.mk
+            )
 
     # =========================================================
     # VALIDATION
@@ -222,12 +236,18 @@ class KsgSalesHppLine(models.Model):
         "tagihan_bulan",
     )
     def _check_positive_values(self):
+
         for line in self:
+
             if line.mk < 0:
-                raise ValidationError("MK tidak boleh bernilai negatif.")
+                raise ValidationError(
+                    "MK tidak boleh bernilai negatif."
+                )
 
             if line.tk < 0:
-                raise ValidationError("TK tidak boleh bernilai negatif.")
+                raise ValidationError(
+                    "TK tidak boleh bernilai negatif."
+                )
 
             amount_fields = [
                 "uang_pokok",
@@ -243,9 +263,12 @@ class KsgSalesHppLine(models.Model):
             ]
 
             for field_name in amount_fields:
+
                 if getattr(line, field_name) < 0:
+
                     raise ValidationError(
-                        f"{line._fields[field_name].string} tidak boleh bernilai negatif."
+                        f"{line._fields[field_name].string} "
+                        "tidak boleh bernilai negatif."
                     )
 
     # =========================================================
@@ -253,19 +276,27 @@ class KsgSalesHppLine(models.Model):
     # =========================================================
 
     def write(self, vals):
+
         for line in self:
+
             if line.hpp_id.state == "approved":
+
                 raise ValidationError(
-                    "Detail HPP tidak dapat diubah karena HPP sudah disetujui."
+                    "Detail HPP tidak dapat diubah "
+                    "karena HPP sudah disetujui."
                 )
 
         return super().write(vals)
 
     def unlink(self):
+
         for line in self:
+
             if line.hpp_id.state == "approved":
+
                 raise ValidationError(
-                    "Detail HPP tidak dapat dihapus karena HPP sudah disetujui."
+                    "Detail HPP tidak dapat dihapus "
+                    "karena HPP sudah disetujui."
                 )
 
         return super().unlink()

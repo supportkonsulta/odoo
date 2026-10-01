@@ -178,6 +178,10 @@ class KsgSalesProject(models.Model):
 
     # =========================================================
     # RELATION
+    #
+    # RAB SUDAH TIDAK MENJADI RELASI TERPISAH.
+    #
+    # HPP menjadi pusat pengelolaan HPP / RAB.
     # =========================================================
 
     addendum_ids = fields.One2many(
@@ -186,16 +190,10 @@ class KsgSalesProject(models.Model):
         string="Addendum Kontrak",
     )
 
-    rab_ids = fields.One2many(
-        comodel_name="ksg.sales.rab",
-        inverse_name="project_id",
-        string="RAB",
-    )
-
     hpp_ids = fields.One2many(
         comodel_name="ksg.sales.hpp",
         inverse_name="project_id",
-        string="HPP",
+        string="HPP / RAB",
     )
 
     term_ids = fields.One2many(
@@ -228,6 +226,7 @@ class KsgSalesProject(models.Model):
 
     keterangan = fields.Text(
         string="Keterangan",
+        tracking=True,
     )
 
     # =========================================================
@@ -239,7 +238,9 @@ class KsgSalesProject(models.Model):
         for vals in vals_list:
             if not vals.get("kode_proyek"):
                 vals["kode_proyek"] = (
-                    self.env["ir.sequence"].next_by_code("ksg.sales.project")
+                    self.env["ir.sequence"].next_by_code(
+                        "ksg.sales.project"
+                    )
                     or "/"
                 )
 
@@ -279,14 +280,17 @@ class KsgSalesProject(models.Model):
     )
     def _compute_nilai_kontrak_terkini(self):
         for project in self:
+
             approved_addenda = project.addendum_ids.filtered(
                 lambda addendum: addendum.state == "approved"
             )
 
             if approved_addenda:
+
                 latest_addendum = approved_addenda.sorted(
                     key=lambda addendum: (
-                        addendum.tanggal_perubahan or fields.Date.today(),
+                        addendum.tanggal_perubahan
+                        or fields.Date.today(),
                         addendum.id,
                     ),
                     reverse=True,
@@ -295,8 +299,11 @@ class KsgSalesProject(models.Model):
                 project.nilai_kontrak_terkini = (
                     latest_addendum.nilai_kontrak_baru
                 )
+
             else:
-                project.nilai_kontrak_terkini = project.nilai_kontrak_awal
+                project.nilai_kontrak_terkini = (
+                    project.nilai_kontrak_awal
+                )
 
     # =========================================================
     # SISA NILAI KONTRAK
@@ -309,14 +316,18 @@ class KsgSalesProject(models.Model):
     )
     def _compute_sisa_nilai_kontrak(self):
         for project in self:
+
             total_ditagih = sum(
                 project.term_ids
-                .filtered(lambda term: term.state == "sudah_ditagih")
+                .filtered(
+                    lambda term: term.state == "sudah_ditagih"
+                )
                 .mapped("nominal")
             )
 
             project.sisa_nilai_kontrak = (
-                project.nilai_kontrak_terkini - total_ditagih
+                project.nilai_kontrak_terkini
+                - total_ditagih
             )
 
     # =========================================================
@@ -359,10 +370,14 @@ class KsgSalesProject(models.Model):
             return self._generate_pelunasan_100()
 
         if self.sistem_penagihan == "per_bulan":
-            return self._generate_termin_berkala(month_interval=1)
+            return self._generate_termin_berkala(
+                month_interval=1
+            )
 
         if self.sistem_penagihan == "per_3_bulan":
-            return self._generate_termin_berkala(month_interval=3)
+            return self._generate_termin_berkala(
+                month_interval=3
+            )
 
         raise ValidationError(
             "Sistem Penagihan tidak dikenali."
@@ -434,6 +449,7 @@ class KsgSalesProject(models.Model):
             tanggal_list,
             start=1,
         ):
+
             if index == jumlah_termin:
                 persentase = round(
                     100.0 - total_persentase,
@@ -483,13 +499,18 @@ class KsgSalesProject(models.Model):
     # VALIDASI TANGGAL KONTRAK
     # =========================================================
 
-    @api.constrains("awal_kontrak", "akhir_kontrak")
+    @api.constrains(
+        "awal_kontrak",
+        "akhir_kontrak",
+    )
     def _check_contract_dates(self):
         for project in self:
+
             if (
                 project.awal_kontrak
                 and project.akhir_kontrak
-                and project.akhir_kontrak < project.awal_kontrak
+                and project.akhir_kontrak
+                < project.awal_kontrak
             ):
                 raise ValidationError(
                     "Tanggal Akhir Kontrak tidak boleh lebih kecil "
@@ -503,6 +524,7 @@ class KsgSalesProject(models.Model):
     @api.constrains("nilai_kontrak_awal")
     def _check_nilai_kontrak_awal(self):
         for project in self:
+
             if project.nilai_kontrak_awal < 0:
                 raise ValidationError(
                     "Nilai Kontrak tidak boleh bernilai negatif."
@@ -515,6 +537,7 @@ class KsgSalesProject(models.Model):
     @api.constrains("checklist_dokumen_ids")
     def _check_checklist_dokumen(self):
         for project in self:
+
             if not project.checklist_dokumen_ids:
                 raise ValidationError(
                     "Checklist Dokumen Engineering wajib diisi."
