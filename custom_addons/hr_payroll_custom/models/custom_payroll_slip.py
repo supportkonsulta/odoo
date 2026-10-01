@@ -26,9 +26,16 @@ class CustomPayrollSlip(models.Model):
     department_id = fields.Many2one(related='employee_id.department_id', string='Department', store=True)
     job_id = fields.Many2one(related='employee_id.job_id', string='Job Position', store=True)
     contract_wage = fields.Monetary(
-        related='employee_id.version_id.contract_wage',
+        related='contract_version_id.contract_wage',
         string='Contract Wage',
         currency_field='currency_id',
+    )
+    contract_version_id = fields.Many2one(
+        'hr.version', string='Contract Version',
+        check_company=True, tracking=True, ondelete='restrict',
+        help='The hr.version that owns this slip. Resolved automatically '
+             'from the matching version of the work location, with '
+             'fallback to the employee current version.',
     )
     total_gaji_pokok = fields.Monetary(
         string='Basic Salary',
@@ -341,12 +348,45 @@ class CustomPayrollSlip(models.Model):
 
     @api.onchange('employee_id')
     def _onchange_employee_id(self):
-        if self.employee_id and self.employee_id.version_id:
-            self.total_gaji_pokok = self.employee_id.version_id.contract_wage
+        if self.employee_id and self.work_location_id:
+            version = self.employee_id._get_version_for_location(
+                self.work_location_id,
+            )
+            self.contract_version_id = version
+            self.total_gaji_pokok = version.contract_wage if version else 0.0
+
+    @api.onchange('work_location_id')
+    def _onchange_work_location_id(self):
+        if (
+            self.employee_id
+            and self.work_location_id
+            and self.status == 'draft'
+        ):
+            version = self.employee_id._get_version_for_location(
+                self.work_location_id,
+            )
+            self.contract_version_id = version
+            self.total_gaji_pokok = version.contract_wage if version else 0.0
 
     def _auto_populate_basic_salary_and_bpjs(
         self, auto_create_basic=True, auto_populate_bpjs=True
     ):
+        # Resolve the contract version for this slip's work_location BEFORE
+        # the basic salary / BPJS / salary rules are computed, so all
+        # downstream amounts use the correct base. Covers both the
+        # generation wizard and the "Split by Location" action.
+        if (
+            self.status == 'draft'
+            and self.employee_id
+            and self.work_location_id
+            and not self.contract_version_id
+        ):
+            version = self.employee_id._get_version_for_location(
+                self.work_location_id,
+            )
+            if version:
+                self.contract_version_id = version
+                self.total_gaji_pokok = version.contract_wage or 0.0
         self.ensure_one()
         Detail = self.env['custom.payroll.slip.detail']
         existing_basic = self.detail_ids.filtered(lambda d: d.component_type == 'gaji_pokok')
@@ -677,11 +717,13 @@ class CustomPayrollSlip(models.Model):
             ))
         created = self.env['custom.payroll.slip']
         for loc in new_locations:
+            version = self.employee_id._get_version_for_location(loc)
             new_slip = self.create({
                 'payroll_batch_id': self.payroll_batch_id.id,
                 'employee_id': self.employee_id.id,
                 'work_location_id': loc.id,
-                'total_gaji_pokok': self.total_gaji_pokok,
+                'contract_version_id': version.id if version else False,
+                'total_gaji_pokok': version.contract_wage if version else 0.0,
                 'company_id': self.company_id.id,
             })
             new_slip._auto_populate_basic_salary_and_bpjs()

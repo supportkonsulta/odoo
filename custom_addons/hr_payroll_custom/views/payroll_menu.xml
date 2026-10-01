@@ -76,4 +76,14 @@
               parent="menu_payroll_configuration"
               action="action_custom_payroll_rule_category"
               sequence="40"/>
+
+    <!-- Direct access to hr.version (Employee Records) so payroll managers
+         can manage per-company / per-location wages without going through
+         the Employee form first. -->
+    <menuitem id="menu_payroll_employee_records"
+              name="Employee Records"
+              parent="menu_payroll_configuration"
+              action="hr.action_hr_version"
+              sequence="5"
+              groups="hr.group_hr_user"/>
 </odoo>

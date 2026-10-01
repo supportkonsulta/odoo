@@ -44,7 +44,10 @@ class CustomPayrollGenerateWizard(models.TransientModel):
             for emp in wiz._get_candidate_employees():
                 locations = wiz._employee_locations_for_period(emp, period_start, period_end)
                 for loc in locations:
-                    wage = emp.version_id.contract_wage if emp.version_id else 0.0
+                    version = emp._get_version_for_location(loc)
+                    wage = version.contract_wage if version else (
+                        emp.version_id.contract_wage if emp.version_id else 0.0
+                    )
                     will_skip = wiz.skip_existing and (emp.id, loc.id) in existing_pairs
                     lines |= Preview.new({
                         'employee_id': emp.id,
@@ -129,6 +132,13 @@ class CustomPayrollGenerateWizard(models.TransientModel):
                 'total_gaji_pokok': line.contract_wage,
                 'company_id': self.company_id.id,
             })
+            # Stamp the matching contract version on the slip so payroll rule
+            # engine evaluates against the correct contract_wage.
+            version = line.employee_id._get_version_for_location(
+                line.work_location_id,
+            )
+            if version:
+                slip.contract_version_id = version
             slip._auto_populate_basic_salary_and_bpjs(
                 auto_create_basic=self.auto_create_basic,
                 auto_populate_bpjs=self.auto_populate_bpjs,

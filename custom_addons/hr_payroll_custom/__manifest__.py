@@ -1,6 +1,6 @@
 {
     'name': 'Custom Payroll',
-    'version': '1.0.3',
+    'version': '19.0.1.0.6',
     'category': 'Human Resources/Payroll',
     'summary': 'Custom payroll management with payslip, allowances, and BPJS',
     'description': """
@@ -17,6 +17,7 @@ Custom Payroll Module
     'depends': [
         'hr',
         'mail',
+        'presenly_saas_hr',
     ],
     'data': [
         'security/payroll_security.xml',
